@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cptcg"
+version = "0.1.0"
+description = "Rules engine, AI agents and mass-simulation harness for the Cyberpunk Trading Card Game"
+requires-python = ">=3.11"
+dependencies = []          # the core engine is deliberately stdlib-only
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "hypothesis>=6"]
+analysis = ["numpy>=1.26", "scipy>=1.11"]
+images = ["pillow>=10"]    # only for tools/crop_cards.py, never imported by the engine
+
+[project.scripts]
+cptcg = "cptcg.cli.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cptcg"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
