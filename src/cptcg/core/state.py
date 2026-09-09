@@ -55,7 +55,7 @@ class GameState:
         # shared, immutable
         "cfg", "reg",
         # scalars
-        "rng", "turn", "active", "first_player", "turns_taken", "overtime",
+        "rng", "seed", "turn", "active", "first_player", "turns_taken", "overtime",
         "over", "winner", "end_reason", "pending", "stack", "atk", "once",
         # instance arrays (SoA)
         "i_card", "i_owner",                       # static after setup: shared by clones
@@ -74,6 +74,7 @@ class GameState:
         self.cfg = cfg
         self.reg = reg
         self.rng = Pcg32(seed)
+        self.seed = seed
         self.turn = 0
         self.active = 0
         self.first_player = 0
@@ -108,6 +109,7 @@ class GameState:
         s.cfg = self.cfg
         s.reg = self.reg
         s.rng = self.rng.copy()
+        s.seed = self.seed
         s.turn = self.turn
         s.active = self.active
         s.first_player = self.first_player

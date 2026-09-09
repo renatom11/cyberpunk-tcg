@@ -1,0 +1,25 @@
+{
+  "name": "Sample Mercs",
+  "legends": [
+    "v-streetkid",
+    "dexter-deshawn-off-the-grid",
+    "rogue-amendiares-preem-solo"
+  ],
+  "main": {
+    "the-heist": 3,
+    "over-the-edge": 3,
+    "swordwise-huscle": 3,
+    "kerry-eurodyne-the-last-rockerboy": 3,
+    "t-bug-amateur-philosopher": 3,
+    "rockn-rockerboy": 3,
+    "v-roamer-of-the-badlands": 3,
+    "jackie-welles-ride-or-die-choom": 3,
+    "johnny-silverhand-never-stop-fighting": 3,
+    "afterparty-at-lizzie-s": 3,
+    "all-is-lost": 1,
+    "kiroshi-optics": 3,
+    "mandibular-upgrade": 3,
+    "japantown-jonin": 3
+  },
+  "note": "Generated sample deck, not a retail starter list."
+}

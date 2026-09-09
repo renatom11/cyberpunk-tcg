@@ -1,0 +1,25 @@
+{
+  "name": "Sample Arasaka",
+  "legends": [
+    "goro-takemura-hands-unclean",
+    "saburo-arasaka-stubborn-patriarch",
+    "yorinobu-arasaka-embracing-destruction"
+  ],
+  "main": {
+    "industrial-assembly": 3,
+    "arasaka-emergency-radioport": 3,
+    "corpo-security": 3,
+    "corporate-surveillance": 3,
+    "satori-sword-of-saburo": 3,
+    "field-operator": 3,
+    "goro-takemura-losing-his-way": 3,
+    "meredith-stout-stone-cold-corpo": 3,
+    "minotaur": 3,
+    "sandayu-oda-hanako-s-guardian": 3,
+    "all-is-lost": 3,
+    "detonate": 1,
+    "japantown-jonin": 3,
+    "ruthless-lowlife": 3
+  },
+  "note": "Generated sample deck, not a retail starter list."
+}

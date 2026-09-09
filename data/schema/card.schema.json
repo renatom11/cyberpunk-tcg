@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Cyberpunk TCG card file",
+  "type": "object",
+  "required": ["cards"],
+  "properties": {
+    "set": {"type": "string"},
+    "cards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "type", "color", "ram", "sell_tag", "text", "verified"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9-]+$", "description": "Stable slug of name + subtitle"},
+          "name": {"type": "string"},
+          "subtitle": {"type": ["string", "null"]},
+          "type": {"enum": ["Legend", "Unit", "Program", "Gear"]},
+          "color": {"enum": ["Red", "Green", "Blue", "Yellow"]},
+          "ram": {"type": "integer", "minimum": 0},
+          "cost": {"type": ["integer", "null"], "description": "null = printed '—' (a Legend that cannot GO SOLO)"},
+          "power": {"type": ["integer", "string", "null"], "description": "Units/Legends/Gear. A string like '8+' means variable power"},
+          "sell_tag": {"type": "boolean"},
+          "tags": {"type": "array", "items": {"type": "string"}},
+          "keywords": {"type": "array", "items": {"enum": ["ADRENALINE", "GO SOLO", "QUICK", "BLOCKER"]}},
+          "text": {"type": "string", "description": "Rules text. Trigger words PLAY/CALL/ATTACK/DEFEATED as printed; ⊡ is the self-spend symbol; ★ is Street Cred"},
+          "flavor": {"type": "string"},
+          "set": {"type": "string"},
+          "number": {"type": "integer"},
+          "rarity": {"type": ["string", "null"]},
+          "verified": {"type": "boolean", "description": "Every rules-relevant field was read from the full card face"},
+          "notes": {"type": "string"}
+        }
+      }
+    }
+  }
+}

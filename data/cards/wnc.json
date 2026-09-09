@@ -1,0 +1,3048 @@
+{
+ "set": "Welcome to Night City (+ starter sets)",
+ "cards": [
+  {
+   "id": "6th-street-recruits",
+   "name": "6th Street Recruits",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Red",
+   "ram": 1,
+   "cost": 4,
+   "power": 6,
+   "sell_tag": false,
+   "tags": [
+    "6TH STREET",
+    "GANGER"
+   ],
+   "keywords": [],
+   "text": "When a friendly Unit steals a d6, increase a Gig by up to 6.",
+   "set": "MS01-WNC",
+   "number": 6,
+   "verified": false,
+   "notes": "Stats and tags read from a gameplay screenshot; the rules text was tiny and is a best guess. Needs a card-face screenshot."
+  },
+  {
+   "id": "adam-smasher-ender-of-legends",
+   "name": "Adam Smasher",
+   "subtitle": "Ender of Legends",
+   "type": "Legend",
+   "color": "Red",
+   "ram": 2,
+   "cost": 9,
+   "power": 9,
+   "sell_tag": true,
+   "tags": [],
+   "keywords": [
+    "GO SOLO"
+   ],
+   "text": "",
+   "set": "MS01-WNC",
+   "number": 1,
+   "verified": false,
+   "notes": "Summary row only: Legend, cost 9, power 9, RAM 2. GO SOLO inferred from having a cost. Text unread."
+  },
+  {
+   "id": "adam-smasher-metal-over-meat",
+   "name": "Adam Smasher",
+   "subtitle": "Metal Over Meat",
+   "type": "Unit",
+   "color": "Yellow",
+   "ram": 6,
+   "cost": 9,
+   "power": 15,
+   "sell_tag": false,
+   "tags": [],
+   "keywords": [],
+   "text": "",
+   "set": "MS01-WNC",
+   "number": 41,
+   "verified": false,
+   "notes": "Summary row only: cost 9, power 15, RAM 6. Text unread."
+  },
+  {
+   "id": "adrenaline-converter",
+   "name": "Adrenaline Converter",
+   "subtitle": null,
+   "type": "Gear",
+   "color": "Yellow",
+   "ram": 4,
+   "cost": 2,
+   "power": 3,
+   "sell_tag": true,
+   "tags": [
+    "CYBERWARE"
+   ],
+   "keywords": [],
+   "text": "",
+   "set": "MS01-WNC",
+   "number": 60,
+   "verified": false,
+   "notes": "Name partially visible ('Adrenaline Con...'); summary row: Gear, cost 2, power +3, RAM 4. Text unread."
+  },
+  {
+   "id": "afterparty-at-lizzie-s",
+   "name": "Afterparty at Lizzie's",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Yellow",
+   "ram": 1,
+   "cost": 1,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "BRAINDANCE",
+    "MOX"
+   ],
+   "keywords": [],
+   "text": "Adjust a Gig by up to 1. If you control 2 or more Gigs with different values, draw 1.",
+   "set": "MS01-WNC",
+   "number": 65,
+   "verified": true
+  },
+  {
+   "id": "all-is-lost",
+   "name": "All is Lost",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Red",
+   "ram": 2,
+   "cost": 1,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "ZETATECH"
+   ],
+   "keywords": [],
+   "text": "Trash 3. Add a Unit from among them to your hand.",
+   "set": "MS01-WNC",
+   "number": 27,
+   "verified": true
+  },
+  {
+   "id": "alt-cunningham-mother-of-daemons",
+   "name": "Alt Cunningham",
+   "subtitle": "Mother of Daemons",
+   "type": "Unit",
+   "color": "Yellow",
+   "ram": 3,
+   "cost": 7,
+   "power": 8,
+   "sell_tag": false,
+   "tags": [
+    "MERC",
+    "NETRUNNER"
+   ],
+   "keywords": [],
+   "text": "When a friendly equipped Unit or Legend is spent, draw 1.\nWhen a rival Unit would steal a Gig, you may discard 1 with cost equal to that Gig's value. If you do, the Gig isn't stolen.",
+   "set": "MS01-WNC",
+   "number": 42,
+   "verified": true
+  },
+  {
+   "id": "alt-cunningham-soulkiller-architect",
+   "name": "Alt Cunningham",
+   "subtitle": "Soulkiller Architect",
+   "type": "Legend",
+   "color": "Blue",
+   "ram": 2,
+   "cost": null,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [
+    "MERC",
+    "NETRUNNER"
+   ],
+   "keywords": [],
+   "text": "⊡: Your next Program this turn plays for -1 €$ for each friendly min Gig, to a minimum of 1 €$.\n1 €$, ⊡: Play a Program from your trash. Bottom-deck it after you play it. (You still pay its cost.)",
+   "set": "MS01-WNC",
+   "number": 106,
+   "verified": true
+  },
+  {
+   "id": "animals-wrecker",
+   "name": "Animals Wrecker",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Red",
+   "ram": 3,
+   "cost": 6,
+   "power": 10,
+   "sell_tag": false,
+   "tags": [
+    "ANIMAL",
+    "GANGER"
+   ],
+   "keywords": [],
+   "text": "",
+   "set": "MS01-WNC",
+   "number": 7,
+   "verified": true,
+   "flavor": "Takes a lot of juice to break bones like they do."
+  },
+  {
+   "id": "appetite-for-destruction",
+   "name": "Appetite for Destruction",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Red",
+   "ram": 4,
+   "cost": 3,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "GANGER"
+   ],
+   "keywords": [],
+   "text": "The next time a friendly Unit wins a fight by 3+ power this turn, it also steals a Gig.",
+   "set": "MS01-WNC",
+   "number": 28,
+   "verified": true
+  },
+  {
+   "id": "arasaka-emergency-radioport",
+   "name": "Arasaka Emergency Radioport",
+   "subtitle": null,
+   "type": "Gear",
+   "color": "Red",
+   "ram": 2,
+   "cost": 2,
+   "power": 2,
+   "sell_tag": true,
+   "tags": [
+    "ARASAKA",
+    "CYBERWARE"
+   ],
+   "keywords": [],
+   "text": "When this Unit or Legend is spent, you may look at a friendly face-down Legend. If that Legend is ARASAKA or has GO SOLO, you may Call it for free. (You may only Call a Legend once per turn.)",
+   "set": "MS01-WNC",
+   "number": 23,
+   "verified": true
+  },
+  {
+   "id": "augmented-negotiators",
+   "name": "Augmented Negotiators",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Yellow",
+   "ram": 1,
+   "cost": 3,
+   "power": 2,
+   "sell_tag": false,
+   "tags": [
+    "ARASAKA",
+    "CORPO"
+   ],
+   "keywords": [
+    "BLOCKER"
+   ],
+   "text": "BLOCKER.\nWhen this Unit uses BLOCKER, a Rival discards 1.",
+   "set": "MS01-WNC",
+   "number": 43,
+   "verified": true
+  },
+  {
+   "id": "bonnie-and-clyde",
+   "name": "Bonnie and Clyde",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Red",
+   "ram": 3,
+   "cost": 3,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "BRAINDANCE"
+   ],
+   "keywords": [],
+   "text": "Defeat a rival Unit with power 4 or less. You may defeat 2 instead if a Rival controls at least 2 Gigs more than you.",
+   "set": "MS01-WNC",
+   "number": 29,
+   "verified": true
+  },
+  {
+   "id": "bootleg-black-sapphire-show",
+   "name": "Bootleg Black Sapphire Show",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Yellow",
+   "ram": 4,
+   "cost": 5,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "BRAINDANCE"
+   ],
+   "keywords": [],
+   "text": "Sell the top card of your deck.\nIf you control a Gig with an even value and a Gig with an odd value, draw 2.",
+   "set": "MS01-WNC",
+   "number": 66,
+   "verified": true
+  },
+  {
+   "id": "caliber-totentanz-s-top-dog",
+   "name": "Caliber",
+   "subtitle": "Totentanz's Top Dog",
+   "type": "Unit",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": 5,
+   "power": 5,
+   "sell_tag": false,
+   "tags": [
+    "GANGER",
+    "MAELSTROM"
+   ],
+   "keywords": [],
+   "text": "PLAY: Defeat a rival Unit with cost 2 or less.\nDEFEATED: A Rival discards 1. If the card's cost equals the value of a friendly Gig, that Rival discards 1 more.",
+   "set": "MS01-WNC",
+   "number": 44,
+   "verified": true
+  },
+  {
+   "id": "carnage-at-the-colosseum",
+   "name": "Carnage at the Colosseum",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Red",
+   "ram": 3,
+   "cost": 6,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "BRAINDANCE",
+    "EXTREME"
+   ],
+   "keywords": [],
+   "text": "Play this Program for -1 €$ for each friendly Gig with 8+ value, to a minimum of 1 €$.\nDefeat a rival Unit with less power than a friendly Unit.",
+   "set": "MS01-WNC",
+   "number": 30,
+   "verified": true
+  },
+  {
+   "id": "chrome-fang",
+   "name": "Chrome Fang",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Red",
+   "ram": 1,
+   "cost": 5,
+   "power": 6,
+   "sell_tag": false,
+   "tags": [
+    "GANGER",
+    "NETRUNNER",
+    "TYGER CLAWS"
+   ],
+   "keywords": [],
+   "text": "PLAY: Until your next turn, rival Units can't steal friendly Gigs with value higher than their power.",
+   "set": "MS01-WNC",
+   "number": 8,
+   "verified": true
+  },
+  {
+   "id": "chrome-reverie",
+   "name": "Chrome Reverie",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Blue",
+   "ram": 1,
+   "cost": 3,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "BRAINDANCE"
+   ],
+   "keywords": [],
+   "text": "A rival Unit can't attack until your next turn. If you control a min Gig, you may Call a Legend for free. (You can only Call a Legend once per turn.)",
+   "set": "MS01-WNC",
+   "number": 131,
+   "verified": true
+  },
+  {
+   "id": "corporate-surveillance",
+   "name": "Corporate Surveillance",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Green",
+   "ram": 1,
+   "cost": 2,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "CORPO"
+   ],
+   "keywords": [],
+   "text": "Spend a rival Unit with cost 4 or less.",
+   "set": "MS01-WNC",
+   "number": 97,
+   "verified": true
+  },
+  {
+   "id": "corpo-security",
+   "name": "Corpo Security",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Green",
+   "ram": 1,
+   "cost": 2,
+   "power": 2,
+   "sell_tag": false,
+   "tags": [
+    "CORPO"
+   ],
+   "keywords": [
+    "BLOCKER"
+   ],
+   "text": "This Unit can't attack.\nBLOCKER",
+   "set": "MS01-WNC",
+   "number": 76,
+   "verified": true
+  },
+  {
+   "id": "cyberpsychosis",
+   "name": "Cyberpsychosis",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": 3,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "QUICKHACK"
+   ],
+   "keywords": [
+    "QUICK"
+   ],
+   "text": "QUICK: Give an equipped Unit +3 power this turn for each of its equipped Gears. If that Unit steals or fights, defeat it at the end of this turn.",
+   "set": "MS01-WNC",
+   "number": 67,
+   "verified": true
+  },
+  {
+   "id": "deadman-transmitter",
+   "name": "Deadman Transmitter",
+   "subtitle": null,
+   "type": "Gear",
+   "color": "Red",
+   "ram": 3,
+   "cost": 3,
+   "power": 1,
+   "sell_tag": true,
+   "tags": [
+    "CYBERWARE",
+    "TRAUMA TEAM"
+   ],
+   "keywords": [],
+   "text": "If this Unit would be defeated, defeat its \"DEADMAN TRANSMITTER\" instead.",
+   "set": "MS01-WNC",
+   "number": 24,
+   "verified": true
+  },
+  {
+   "id": "delamain-cab",
+   "name": "Delamain Cab",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Blue",
+   "ram": 2,
+   "cost": 4,
+   "power": 4,
+   "sell_tag": false,
+   "tags": [
+    "VEHICLE"
+   ],
+   "keywords": [],
+   "text": "At the end of your turn, if this Unit stole a Gig this turn, ready 1 Eddie.",
+   "set": "MS01-WNC",
+   "number": 112,
+   "verified": true
+  },
+  {
+   "id": "delamain-rideshare-ai",
+   "name": "Delamain",
+   "subtitle": "Rideshare AI",
+   "type": "Unit",
+   "color": "Blue",
+   "ram": 3,
+   "cost": 3,
+   "power": 0,
+   "sell_tag": false,
+   "tags": [
+    "AI"
+   ],
+   "keywords": [],
+   "text": "PLAY: Draw 2. (Units with power 0 don't steal Gigs.)",
+   "set": "MS01-WNC",
+   "number": 111,
+   "verified": true
+  },
+  {
+   "id": "detonate",
+   "name": "Detonate",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Red",
+   "ram": 2,
+   "cost": 1,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "QUICKHACK"
+   ],
+   "keywords": [
+    "QUICK"
+   ],
+   "text": "QUICK: Defeat a rival Gear with power 2 or less.",
+   "set": "MS01-WNC",
+   "number": 31,
+   "verified": true
+  },
+  {
+   "id": "dexter-deshawn-off-the-grid",
+   "name": "Dexter DeShawn",
+   "subtitle": "Off the Grid",
+   "type": "Legend",
+   "color": "Red",
+   "ram": 2,
+   "cost": null,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [
+    "FIXER"
+   ],
+   "keywords": [],
+   "text": "CALL: Choose one effect.\n- Give a friendly Unit +2 power this turn.\n- Draw 1.\n⊡: Increase a Gig by up to 2.",
+   "set": "MS01-WNC",
+   "number": 2,
+   "verified": true
+  },
+  {
+   "id": "dexter-deshawn-one-last-chance",
+   "name": "Dexter DeShawn",
+   "subtitle": "One Last Chance",
+   "type": "Unit",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": 3,
+   "power": 4,
+   "sell_tag": false,
+   "tags": [
+    "FIXER"
+   ],
+   "keywords": [],
+   "text": "PLAY / ATTACK: Adjust a Gig by up to 1.\nDEFEATED: If your ★ (Street Cred) differs from a Rival's by 10+, draw 2.",
+   "set": "S001-HEI",
+   "number": 9,
+   "verified": true
+  },
+  {
+   "id": "don-t-fear-the-reaper",
+   "name": "(Don't Fear) The Reaper",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Green",
+   "ram": 3,
+   "cost": 7,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "SAMURAI"
+   ],
+   "keywords": [],
+   "text": "Spend all rival Units. Then, defeat a spent Unit.",
+   "set": "MS01-WNC",
+   "number": 98,
+   "verified": true
+  },
+  {
+   "id": "dum-dum-maelstrom-triggerman",
+   "name": "Dum Dum",
+   "subtitle": "Maelstrom Triggerman",
+   "type": "Legend",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": null,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [
+    "GANGER",
+    "MAELSTROM"
+   ],
+   "keywords": [
+    "QUICK"
+   ],
+   "text": "CALL: You may defeat a friendly Gear. If you do, draw 2. Otherwise, draw 1.\nQUICK 1 €$, ⊡: Give a friendly Unit +1 power this turn for each of its equipped Gear.",
+   "set": "MS01-WNC",
+   "number": 36,
+   "verified": true
+  },
+  {
+   "id": "dying-night-v-s-pistol",
+   "name": "Dying Night",
+   "subtitle": "V's Pistol",
+   "type": "Gear",
+   "color": "Blue",
+   "ram": 2,
+   "cost": 2,
+   "power": 2,
+   "sell_tag": true,
+   "tags": [
+    "MERC",
+    "WEAPON"
+   ],
+   "keywords": [],
+   "text": "ATTACK: Decrease a Gig by up to 2. At the end of your turn, if this Unit is named \"V\", ready 2 Eddies.",
+   "set": "MS01-WNC",
+   "number": 128,
+   "verified": true
+  },
+  {
+   "id": "el-sombreron-la-venganza-lenta",
+   "name": "El Sombrerón",
+   "subtitle": "La Venganza Lenta",
+   "type": "Unit",
+   "color": "Red",
+   "ram": 4,
+   "cost": 5,
+   "power": "4+",
+   "sell_tag": false,
+   "tags": [
+    "GANGER",
+    "VALENTINO"
+   ],
+   "keywords": [],
+   "text": "ATTACK: You may pay 2 €$. If you do, this Unit gains power equal to a friendly max Gig this turn.",
+   "set": "MS01-WNC",
+   "number": 9,
+   "verified": true
+  },
+  {
+   "id": "emergency-atlus",
+   "name": "Emergency Atlus",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Green",
+   "ram": 1,
+   "cost": 3,
+   "power": 4,
+   "sell_tag": false,
+   "tags": [
+    "TRAUMA TEAM",
+    "VEHICLE",
+    "ZETATECH"
+   ],
+   "keywords": [],
+   "text": "",
+   "set": "MS01-WNC",
+   "number": 77,
+   "verified": true,
+   "flavor": "Grab the policyholder, leave the rest for the city meatwagon."
+  },
+  {
+   "id": "evelyn-parker-beautiful-enigma",
+   "name": "Evelyn Parker",
+   "subtitle": "Beautiful Enigma",
+   "type": "Legend",
+   "color": "Blue",
+   "ram": 2,
+   "cost": null,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [
+    "DOLL"
+   ],
+   "keywords": [],
+   "text": "When a friendly CORPO or GANGER Unit steals 1 or more Gigs, ready 1 Eddie.\n1 €$, ⊡: A rival Unit must attack next turn if it can.",
+   "set": "MS01-WNC",
+   "number": 107,
+   "verified": true
+  },
+  {
+   "id": "evelyn-parker-scheming-siren",
+   "name": "Evelyn Parker",
+   "subtitle": "Scheming Siren",
+   "type": "Unit",
+   "color": "Blue",
+   "ram": 3,
+   "cost": 2,
+   "power": 0,
+   "sell_tag": false,
+   "tags": [
+    "DOLL"
+   ],
+   "keywords": [],
+   "text": "ATTACK: Draw 1. Then, if you have more ★ (Street Cred) than a Rival, discard 1. (Units with power 0 don't steal Gigs.)",
+   "set": "MS01-WNC",
+   "number": 113,
+   "verified": true
+  },
+  {
+   "id": "field-operator",
+   "name": "Field Operator",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Green",
+   "ram": 2,
+   "cost": 3,
+   "power": 2,
+   "sell_tag": false,
+   "tags": [
+    "ARASAKA",
+    "CORPO",
+    "TECHIE"
+   ],
+   "keywords": [],
+   "text": "PLAY: If your ★ (Street Cred) is an even number, draw 1.",
+   "set": "MS01-WNC",
+   "number": 78,
+   "verified": true
+  },
+  {
+   "id": "floor-it",
+   "name": "Floor It",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Blue",
+   "ram": 1,
+   "cost": 1,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "MERC",
+    "QUICKHACK"
+   ],
+   "keywords": [
+    "QUICK"
+   ],
+   "text": "QUICK: Give a rival Unit -1 power this turn. Draw 1.",
+   "set": "MS01-WNC",
+   "number": 132,
+   "verified": true
+  },
+  {
+   "id": "fool-on-the-hill",
+   "name": "Fool on the Hill",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Green",
+   "ram": 3,
+   "cost": 2,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "MERC"
+   ],
+   "keywords": [],
+   "text": "Reveal the top 2 cards of your deck. A Rival chooses whether you add them to your hand or trash them. If you trash them, draw 2.",
+   "set": "MS01-WNC",
+   "number": 99,
+   "verified": true
+  },
+  {
+   "id": "gilded-maton",
+   "name": "Gilded Matón",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": 4,
+   "power": 3,
+   "sell_tag": false,
+   "tags": [
+    "GANGER",
+    "VALENTINO"
+   ],
+   "keywords": [],
+   "text": "PLAY: You may defeat a friendly Gear. If you do, defeat a rival Unit with cost 3 or less.",
+   "set": "MS01-WNC",
+   "number": 45,
+   "verified": true
+  },
+  {
+   "id": "gorilla-arms",
+   "name": "Gorilla Arms",
+   "subtitle": null,
+   "type": "Gear",
+   "color": "Yellow",
+   "ram": 3,
+   "cost": 4,
+   "power": 3,
+   "sell_tag": true,
+   "tags": [
+    "CYBERWARE"
+   ],
+   "keywords": [],
+   "text": "The first time this Unit steals 1 or more Gigs each turn, steal a rival Gig with a value not shared by a friendly Gig.",
+   "set": "MS01-WNC",
+   "number": 60,
+   "verified": true
+  },
+  {
+   "id": "goro-takemura-hands-unclean",
+   "name": "Goro Takemura",
+   "subtitle": "Hands Unclean",
+   "type": "Legend",
+   "color": "Green",
+   "ram": 2,
+   "cost": 5,
+   "power": 7,
+   "sell_tag": true,
+   "tags": [
+    "ARASAKA",
+    "CORPO"
+   ],
+   "keywords": [
+    "GO SOLO",
+    "BLOCKER"
+   ],
+   "text": "GO SOLO\nBLOCKER",
+   "set": "S002-EBP",
+   "number": 12,
+   "verified": true
+  },
+  {
+   "id": "goro-takemura-losing-his-way",
+   "name": "Goro Takemura",
+   "subtitle": "Losing His Way",
+   "type": "Unit",
+   "color": "Green",
+   "ram": 3,
+   "cost": 4,
+   "power": "4+",
+   "sell_tag": false,
+   "tags": [
+    "ARASAKA",
+    "CORPO"
+   ],
+   "keywords": [],
+   "text": "ATTACK: If all friendly Legends are face-up, this Unit has +5 power this turn.",
+   "set": "S002-EBP",
+   "number": 17,
+   "verified": true
+  },
+  {
+   "id": "goro-takemura-vengeful-bodyguard",
+   "name": "Goro Takemura",
+   "subtitle": "Vengeful Bodyguard",
+   "type": "Legend",
+   "color": "Green",
+   "ram": 2,
+   "cost": null,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [
+    "ARASAKA",
+    "CORPO"
+   ],
+   "keywords": [
+    "QUICK"
+   ],
+   "text": "QUICK 1 €$, ⊡: Give a friendly Unit with cost 4 or less BLOCKER this turn. If you control a value-pair of Gigs, also give it +1 power this turn.\nWhen a friendly Unit uses BLOCKER, you may discard 1. If you do, draw 1.",
+   "set": "MS01-WNC",
+   "number": 71,
+   "verified": true
+  },
+  {
+   "id": "gunpoint-diplomacy",
+   "name": "Gunpoint Diplomacy",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Red",
+   "ram": 3,
+   "cost": 4,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "GANGER",
+    "PLAN"
+   ],
+   "keywords": [],
+   "text": "Give a friendly Unit these effects. If you have less ★ (Street Cred) than a Rival, they instead choose one effect for you.\n- The next time this Unit attacks this turn, it may attack ready Units.\n- Give this Unit +3 power this turn.",
+   "set": "MS01-WNC",
+   "number": 32,
+   "verified": true
+  },
+  {
+   "id": "hacked-corpo",
+   "name": "Hacked Corpo",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Blue",
+   "ram": 1,
+   "cost": 4,
+   "power": 3,
+   "sell_tag": false,
+   "tags": [
+    "AI",
+    "CORPO"
+   ],
+   "keywords": [],
+   "text": "PLAY: Trash 3. Add a Program from among them to your hand.",
+   "set": "MS01-WNC",
+   "number": 114,
+   "verified": true
+  },
+  {
+   "id": "hanako-arasaka-daughter-of-the-emperor",
+   "name": "Hanako Arasaka",
+   "subtitle": "Daughter of the Emperor",
+   "type": "Legend",
+   "color": "Green",
+   "ram": 2,
+   "cost": null,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [
+    "ARASAKA",
+    "CORPO",
+    "NETRUNNER"
+   ],
+   "keywords": [],
+   "text": "⊡: Swap a friendly Gig with a rival Gig.\nAt the start of your turn, draw 1 for each friendly value-pair of Gigs.",
+   "set": "MS01-WNC",
+   "number": 72,
+   "verified": true
+  },
+  {
+   "id": "hanako-arasaka-in-a-gilded-cage",
+   "name": "Hanako Arasaka",
+   "subtitle": "In a Gilded Cage",
+   "type": "Unit",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": 4,
+   "power": 1,
+   "sell_tag": false,
+   "tags": [
+    "ARASAKA",
+    "CORPO",
+    "NETRUNNER"
+   ],
+   "keywords": [],
+   "text": "PLAY: Search the top 4 cards of your deck. Reveal any number of cards with cost equal to any friendly Gig values and add them to your hand. Bottom-deck the rest.",
+   "set": "MS01-WNC",
+   "number": 46,
+   "verified": true
+  },
+  {
+   "id": "heywood-ripperdoc",
+   "name": "Heywood Ripperdoc",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Yellow",
+   "ram": 1,
+   "cost": 6,
+   "power": 8,
+   "sell_tag": false,
+   "tags": [
+    "RIPPERDOC"
+   ],
+   "keywords": [],
+   "text": "PLAY: You may defeat a Gear. If its cost equals the value of a friendly Gig, draw 1.",
+   "set": "MS01-WNC",
+   "number": 47,
+   "verified": true
+  },
+  {
+   "id": "industrial-assembly",
+   "name": "Industrial Assembly",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Red",
+   "ram": 1,
+   "cost": 1,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "ARASAKA",
+    "BRAINDANCE"
+   ],
+   "keywords": [],
+   "text": "Increase a Gig by up to 4. If you control a Gig with 8+ value, draw 1.",
+   "set": "MS01-WNC",
+   "number": 33,
+   "verified": true
+  },
+  {
+   "id": "jacked-in-voodoo-boy",
+   "name": "Jacked-In Voodoo Boy",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Blue",
+   "ram": 2,
+   "cost": 2,
+   "power": 2,
+   "sell_tag": false,
+   "tags": [
+    "NETRUNNER",
+    "VOODOO BOYS"
+   ],
+   "keywords": [],
+   "text": "This Unit can't attack unless you played a Program this turn.",
+   "set": "MS01-WNC",
+   "number": 115,
+   "verified": true
+  },
+  {
+   "id": "jackie-welles-mama-s-favorite",
+   "name": "Jackie Welles",
+   "subtitle": "Mama's Favorite",
+   "type": "Legend",
+   "color": "Green",
+   "ram": 2,
+   "cost": 6,
+   "power": 8,
+   "sell_tag": true,
+   "tags": [
+    "MERC"
+   ],
+   "keywords": [
+    "GO SOLO"
+   ],
+   "text": "GO SOLO\nIf a friendly Unit would be defeated, you may pay 1 €$ to defeat this Legend instead. (Remove it from the game.)",
+   "set": "MS01-WNC",
+   "number": 73,
+   "verified": true
+  },
+  {
+   "id": "jackie-welles-pour-one-out-for-me",
+   "name": "Jackie Welles",
+   "subtitle": "Pour One Out For Me",
+   "type": "Legend",
+   "color": "Blue",
+   "ram": 2,
+   "cost": null,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [
+    "MERC"
+   ],
+   "keywords": [],
+   "text": "The first time you play a Blue Unit or Blue Gear each turn, you may decrease a friendly Gig by up to 2. If it becomes a min Gig, draw 1.",
+   "set": "S001-HEI",
+   "number": 11,
+   "verified": true
+  },
+  {
+   "id": "jackie-welles-ride-or-die-choom",
+   "name": "Jackie Welles",
+   "subtitle": "Ride or Die Choom",
+   "type": "Unit",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": 6,
+   "power": "8+",
+   "sell_tag": false,
+   "tags": [
+    "MERC",
+    "VALENTINO"
+   ],
+   "keywords": [],
+   "text": "ATTACK: Give this Unit +2 power this turn for each friendly Gig with an even value.\nDEFEATED: Draw 1 for each friendly Gig with an odd value.",
+   "set": "MS01-WNC",
+   "number": 48,
+   "verified": true
+  },
+  {
+   "id": "japantown-jonin",
+   "name": "Japantown Jonin",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Red",
+   "ram": 2,
+   "cost": 2,
+   "power": 0,
+   "sell_tag": false,
+   "tags": [
+    "TYGER CLAWS"
+   ],
+   "keywords": [],
+   "text": "PLAY: Give a friendly Unit +2 power this turn. (Units with power 0 don't steal Gigs.)",
+   "set": "MS01-WNC",
+   "number": 10,
+   "verified": true
+  },
+  {
+   "id": "johnny-silverhand-never-stop-fighting",
+   "name": "Johnny Silverhand",
+   "subtitle": "Never Stop Fighting",
+   "type": "Unit",
+   "color": "Red",
+   "ram": 2,
+   "cost": 6,
+   "power": 8,
+   "sell_tag": false,
+   "tags": [
+    "MERC",
+    "ROCKER",
+    "SAMURAI"
+   ],
+   "keywords": [],
+   "text": "The first time this Unit wins a fight each turn, ready it.\nThis Unit wins all fights against CORPO Units.",
+   "set": "MS01-WNC",
+   "number": 11,
+   "verified": true
+  },
+  {
+   "id": "johnny-silverhand-rocking-renegade",
+   "name": "Johnny Silverhand",
+   "subtitle": "Rocking Renegade",
+   "type": "Legend",
+   "color": "Red",
+   "ram": 2,
+   "cost": null,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [
+    "MERC",
+    "ROCKER",
+    "SAMURAI"
+   ],
+   "keywords": [],
+   "text": "2 €$, ⊡: A friendly Unit can attack spent rival Units the turn it's played. If it's a ROCKER Unit, also give it +2 power this turn. This effect costs -1 €$ for each friendly Gig with 8+ value.",
+   "set": "MS01-WNC",
+   "number": 3,
+   "verified": true
+  },
+  {
+   "id": "judy-alvarez-braindance-maestro",
+   "name": "Judy Álvarez",
+   "subtitle": "Braindance Maestro",
+   "type": "Legend",
+   "color": "Blue",
+   "ram": 2,
+   "cost": null,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [
+    "GANGER",
+    "MOX",
+    "TECHIE"
+   ],
+   "keywords": [],
+   "text": "When you play a BRAINDANCE Program, give a friendly Unit +1 power this turn.\n⊡: Trash the top card of your deck. If it's a Program, you may add it to your hand.",
+   "set": "MS01-WNC",
+   "number": 108,
+   "verified": true
+  },
+  {
+   "id": "judy-alvarez-nothing-to-doubt",
+   "name": "Judy Álvarez",
+   "subtitle": "Nothing to Doubt",
+   "type": "Unit",
+   "color": "Blue",
+   "ram": 5,
+   "cost": 6,
+   "power": 6,
+   "sell_tag": false,
+   "tags": [
+    "GANGER",
+    "MOX",
+    "TECHIE"
+   ],
+   "keywords": [],
+   "text": "1 €$, ⊡: Reveal the top card of your deck. You may play it for free. Otherwise, add it to your hand.",
+   "set": "MS01-WNC",
+   "number": 116,
+   "verified": true
+  },
+  {
+   "id": "kerry-eurodyne-axe-attitude-audience",
+   "name": "Kerry Eurodyne",
+   "subtitle": "Axe, Attitude, Audience",
+   "type": "Legend",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": null,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [
+    "ROCKER",
+    "SAMURAI"
+   ],
+   "keywords": [],
+   "text": "When you roll in a Gig from your fixer area, you may ignore the result and reroll it once.\nWhen you roll a min or max value on a Gig, draw 1. If it's a d20, draw 3 instead.",
+   "set": "MS01-WNC",
+   "number": 37,
+   "verified": true
+  },
+  {
+   "id": "kerry-eurodyne-the-last-rockerboy",
+   "name": "Kerry Eurodyne",
+   "subtitle": "The Last Rockerboy",
+   "type": "Unit",
+   "color": "Red",
+   "ram": 1,
+   "cost": 4,
+   "power": 5,
+   "sell_tag": false,
+   "tags": [
+    "ROCKER",
+    "SAMURAI"
+   ],
+   "keywords": [],
+   "text": "⊡: If you control a Gig with 8+ value, draw 2.",
+   "set": "MS01-WNC",
+   "number": 12,
+   "verified": true
+  },
+  {
+   "id": "kiroshi-optics",
+   "name": "Kiroshi Optics",
+   "subtitle": null,
+   "type": "Gear",
+   "color": "Yellow",
+   "ram": 1,
+   "cost": 1,
+   "power": 1,
+   "sell_tag": true,
+   "tags": [
+    "CYBERWARE"
+   ],
+   "keywords": [],
+   "text": "(Equip to a Unit or friendly face-up Legend.)\nATTACK: Look at a friendly face-down Legend. (Don't reveal it.)",
+   "set": "MS01-WNC",
+   "number": 61,
+   "verified": true
+  },
+  {
+   "id": "la-llorona-ghost-of-the-past",
+   "name": "La Llorona",
+   "subtitle": "Ghost of the Past",
+   "type": "Unit",
+   "color": "Red",
+   "ram": 1,
+   "cost": 3,
+   "power": 3,
+   "sell_tag": false,
+   "tags": [
+    "GANGER",
+    "VALENTINO"
+   ],
+   "keywords": [
+    "BLOCKER"
+   ],
+   "text": "BLOCKER\nWhen this Unit uses BLOCKER, increase a Gig by up to 3.",
+   "set": "MS01-WNC",
+   "number": 13,
+   "verified": true
+  },
+  {
+   "id": "les-elemens",
+   "name": "Les Élémens",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Blue",
+   "ram": 4,
+   "cost": 5,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "CORPO"
+   ],
+   "keywords": [],
+   "text": "Bottom-deck a Rival's lowest-power Unit. (If there are multiple, choose 1.)",
+   "set": "MS01-WNC",
+   "number": 133,
+   "verified": true
+  },
+  {
+   "id": "live-with-the-aftermath",
+   "name": "Live with the Aftermath",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Yellow",
+   "ram": 3,
+   "cost": 3,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "PLAN"
+   ],
+   "keywords": [],
+   "text": "Each player defeats one of their Units.",
+   "set": "MS01-WNC",
+   "number": 68,
+   "verified": true
+  },
+  {
+   "id": "lizzy-wizzy-delicate-weapon",
+   "name": "Lizzy Wizzy",
+   "subtitle": "Delicate Weapon",
+   "type": "Unit",
+   "color": "Blue",
+   "ram": 2,
+   "cost": 5,
+   "power": 2,
+   "sell_tag": false,
+   "tags": [
+    "ROCKER"
+   ],
+   "keywords": [
+    "BLOCKER"
+   ],
+   "text": "PLAY: You may play a Program with cost 3 or less from your hand or trash for free. Bottom-deck it after you play it.\nBLOCKER",
+   "set": "MS01-WNC",
+   "number": 117,
+   "verified": true
+  },
+  {
+   "id": "maelstrom-goons",
+   "name": "Maelstrom Goons",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": 3,
+   "power": 3,
+   "sell_tag": false,
+   "tags": [
+    "GANGER",
+    "MAELSTROM"
+   ],
+   "keywords": [],
+   "text": "When this Unit steals a Gig, if it's equipped, a Rival discards 1.",
+   "set": "MS01-WNC",
+   "number": 49,
+   "verified": true
+  },
+  {
+   "id": "maelstrom-zealots",
+   "name": "Maelstrom Zealots",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Green",
+   "ram": 1,
+   "cost": 4,
+   "power": 0,
+   "sell_tag": false,
+   "tags": [
+    "GANGER",
+    "MAELSTROM"
+   ],
+   "keywords": [],
+   "text": "When this Unit loses a fight, defeat the opposing rival Unit. (Units with power 0 don't steal Gigs.)",
+   "set": "MS01-WNC",
+   "number": 79,
+   "verified": true
+  },
+  {
+   "id": "maman-brigitte-spirit-of-death",
+   "name": "Maman Brigitte",
+   "subtitle": "Spirit of Death",
+   "type": "Unit",
+   "color": "Blue",
+   "ram": 4,
+   "cost": 5,
+   "power": 3,
+   "sell_tag": false,
+   "tags": [
+    "MYSTIC",
+    "NETRUNNER",
+    "VOODOO BOYS"
+   ],
+   "keywords": [],
+   "text": "PLAY: You may discard 2 Programs. If you do, bottom-deck a rival unequipped Unit.",
+   "set": "MS01-WNC",
+   "number": 118,
+   "verified": true
+  },
+  {
+   "id": "mandibular-upgrade",
+   "name": "Mandibular Upgrade",
+   "subtitle": null,
+   "type": "Gear",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": 1,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [
+    "CYBERWARE"
+   ],
+   "keywords": [
+    "BLOCKER"
+   ],
+   "text": "(Equip to a friendly Unit or face-up Legend.)\nBLOCKER",
+   "set": "MS01-WNC",
+   "number": 62,
+   "verified": true
+  },
+  {
+   "id": "mantis-blades",
+   "name": "Mantis Blades",
+   "subtitle": null,
+   "type": "Gear",
+   "color": "Red",
+   "ram": 1,
+   "cost": 1,
+   "power": 2,
+   "sell_tag": true,
+   "tags": [
+    "CYBERWARE"
+   ],
+   "keywords": [],
+   "text": "",
+   "set": "MS01-WNC",
+   "number": 25,
+   "verified": true,
+   "flavor": "One cut, one kill."
+  },
+  {
+   "id": "maxtac-av",
+   "name": "MaxTac AV",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Green",
+   "ram": 2,
+   "cost": 5,
+   "power": 8,
+   "sell_tag": false,
+   "tags": [
+    "NCPD",
+    "VEHICLE"
+   ],
+   "keywords": [],
+   "text": "PLAY: You may swap a friendly Gig with a rival Gig.",
+   "set": "MS01-WNC",
+   "number": 80,
+   "verified": true
+  },
+  {
+   "id": "maxtac-heavy",
+   "name": "MaxTac Heavy",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Green",
+   "ram": 3,
+   "cost": 7,
+   "power": 8,
+   "sell_tag": false,
+   "tags": [
+    "NCPD"
+   ],
+   "keywords": [],
+   "text": "Play this Unit for -1 €$ for each of a Rival's Units, to a minimum of 1 €$.",
+   "set": "MS01-WNC",
+   "number": 81,
+   "verified": true
+  },
+  {
+   "id": "maxtac-squadron",
+   "name": "MaxTac Squadron",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Green",
+   "ram": 3,
+   "cost": 3,
+   "power": 4,
+   "sell_tag": false,
+   "tags": [
+    "NCPD"
+   ],
+   "keywords": [],
+   "text": "At the end of your turn, if this Unit is spent, ready a friendly face-up Legend.",
+   "set": "MS01-WNC",
+   "number": 82,
+   "verified": true
+  },
+  {
+   "id": "maxtac-suppression-team",
+   "name": "MaxTac Suppression Team",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Yellow",
+   "ram": 1,
+   "cost": 5,
+   "power": 7,
+   "sell_tag": false,
+   "tags": [
+    "NCPD"
+   ],
+   "keywords": [],
+   "text": "Rival Units can't attack the turn they're played.",
+   "set": "MS01-WNC",
+   "number": 50,
+   "verified": true
+  },
+  {
+   "id": "memory-relapse",
+   "name": "Memory Relapse",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Green",
+   "ram": 2,
+   "cost": 4,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "BRAINDANCE"
+   ],
+   "keywords": [],
+   "text": "Spend a rival Unit. It can't ready until your next turn. If your ★ (Street Cred) is an even number, draw 1.",
+   "set": "MS01-WNC",
+   "number": 100,
+   "verified": true
+  },
+  {
+   "id": "meredith-stout-stone-cold-corpo",
+   "name": "Meredith Stout",
+   "subtitle": "Stone Cold Corpo",
+   "type": "Unit",
+   "color": "Red",
+   "ram": 1,
+   "cost": 4,
+   "power": "5+",
+   "sell_tag": false,
+   "tags": [
+    "CORPO",
+    "MILITECH"
+   ],
+   "keywords": [
+    "BLOCKER"
+   ],
+   "text": "BLOCKER\nThis Unit has +2 power while fighting a Legend.\nWhen a Rival adjusts or swaps 1 or more friendly Gigs, you may add a card from your trash to your hand.",
+   "set": "MS01-WNC",
+   "number": 14,
+   "verified": true
+  },
+  {
+   "id": "minotaur",
+   "name": "Minotaur",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Red",
+   "ram": 2,
+   "cost": 7,
+   "power": 9,
+   "sell_tag": false,
+   "tags": [
+    "ARASAKA",
+    "DRONE",
+    "MILITECH"
+   ],
+   "keywords": [],
+   "text": "PLAY: If you have more ★ (Street Cred) than a Rival, defeat a rival Unit with power 5 or less.",
+   "set": "S002-EBP",
+   "number": 3,
+   "verified": true
+  },
+  {
+   "id": "misty-olszewski-mender-of-broken-spirits",
+   "name": "Misty Olszewski",
+   "subtitle": "Mender of Broken Spirits",
+   "type": "Unit",
+   "color": "Blue",
+   "ram": 2,
+   "cost": 3,
+   "power": 0,
+   "sell_tag": false,
+   "tags": [
+    "MYSTIC"
+   ],
+   "keywords": [],
+   "text": "This Unit can't attack.\nAt the end of your turn, choose a card type. Then, reveal the top card of your deck. If it's the chosen type, add it to your hand and ready 1 Eddie. Otherwise, trash it. (Unit, Gear, and Program are card types.)",
+   "set": "MS01-WNC",
+   "number": 119,
+   "verified": true
+  },
+  {
+   "id": "modded-kusanagi",
+   "name": "Modded Kusanagi",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Blue",
+   "ram": 2,
+   "cost": 6,
+   "power": 8,
+   "sell_tag": false,
+   "tags": [
+    "TYGER CLAWS",
+    "VEHICLE"
+   ],
+   "keywords": [
+    "ADRENALINE"
+   ],
+   "text": "ADRENALINE\nAt the end of your turn, return this Unit to its owner's hand.",
+   "set": "MS01-WNC",
+   "number": 120,
+   "verified": true
+  },
+  {
+   "id": "modded-muramasa",
+   "name": "Modded Muramasa",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Blue",
+   "ram": 2,
+   "cost": 5,
+   "power": 4,
+   "sell_tag": false,
+   "tags": [
+    "VEHICLE"
+   ],
+   "keywords": [],
+   "text": "At the end of your turn, if you have less ★ (Street Cred) than a Rival, ready this Unit.",
+   "set": "MS01-WNC",
+   "number": 121,
+   "verified": true
+  },
+  {
+   "id": "mox-inciters",
+   "name": "Mox Inciters",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Blue",
+   "ram": 2,
+   "cost": 3,
+   "power": 2,
+   "sell_tag": false,
+   "tags": [
+    "GANGER",
+    "MOX"
+   ],
+   "keywords": [
+    "BLOCKER"
+   ],
+   "text": "PLAY: A rival Unit must attack next turn if it can.\nBLOCKER",
+   "set": "MS01-WNC",
+   "number": 122,
+   "verified": true
+  },
+  {
+   "id": "mtod12-flathead",
+   "name": "MTOD12 Flathead",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Blue",
+   "ram": 3,
+   "cost": 5,
+   "power": 7,
+   "sell_tag": true,
+   "tags": [
+    "DRONE",
+    "MILITECH"
+   ],
+   "keywords": [],
+   "text": "If you have less ★ (Street Cred) than a Rival, this Unit can't be blocked.",
+   "set": "S001-HEI",
+   "number": 15,
+   "verified": true
+  },
+  {
+   "id": "muamar-reyes-el-capitan",
+   "name": "Muamar Reyes",
+   "subtitle": "El Capitán",
+   "type": "Legend",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": null,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [
+    "FIXER"
+   ],
+   "keywords": [],
+   "text": "CALL: Choose one effect.\n- A friendly Unit can't be defeated in a fight this turn.\n- Draw 1.\n⊡: Adjust a Gig by 1.",
+   "set": "MS01-WNC",
+   "number": 38,
+   "verified": true
+  },
+  {
+   "id": "nadia-fighting-through-grief",
+   "name": "Nadia",
+   "subtitle": "Fighting Through Grief",
+   "type": "Unit",
+   "color": "Green",
+   "ram": 2,
+   "cost": 6,
+   "power": 8,
+   "sell_tag": false,
+   "tags": [
+    "MEDTECH",
+    "TRAUMA TEAM"
+   ],
+   "keywords": [],
+   "text": "If a Rival controls more Gigs than you, this Unit can attack their Gig area the turn it's played.",
+   "set": "MS01-WNC",
+   "number": 83,
+   "verified": true
+  },
+  {
+   "id": "netwatch-netdriver",
+   "name": "NetWatch Netdriver",
+   "subtitle": null,
+   "type": "Gear",
+   "color": "Blue",
+   "ram": 2,
+   "cost": 3,
+   "power": 2,
+   "sell_tag": true,
+   "tags": [
+    "CYBERWARE",
+    "NETRUNNER",
+    "NETWATCH"
+   ],
+   "keywords": [],
+   "text": "When this Unit or Legend is spent, draw 1.",
+   "set": "MS01-WNC",
+   "number": 129,
+   "verified": true
+  },
+  {
+   "id": "nocturne-op55n1",
+   "name": "Nocturne OP55N1",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Blue",
+   "ram": 2,
+   "cost": 3,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "ARASAKA",
+    "PLAN"
+   ],
+   "keywords": [],
+   "text": "If your fixer area is empty, play this Program for 1 €$.\nChoose one effect.\n- Draw 2.\n- A Unit can't attack until your next turn.\n- A friendly Legend may use GO SOLO for -2 €$ this turn, to a minimum of 1 €$.",
+   "set": "MS01-WNC",
+   "number": 134,
+   "verified": true
+  },
+  {
+   "id": "octant",
+   "name": "Octant",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Red",
+   "ram": 4,
+   "cost": 7,
+   "power": 8,
+   "sell_tag": false,
+   "tags": [
+    "DRONE",
+    "MILITECH",
+    "ZETATECH"
+   ],
+   "keywords": [],
+   "text": "Play this Unit for -1 €$ for each friendly Gig with 8+ value, to a minimum of 1 €$.",
+   "set": "MS01-WNC",
+   "number": 15,
+   "verified": true
+  },
+  {
+   "id": "offduty-malfini",
+   "name": "Offduty Malfini",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": 4,
+   "power": 5,
+   "sell_tag": false,
+   "tags": [
+    "GANGER",
+    "VOODOO BOYS"
+   ],
+   "keywords": [],
+   "text": "PLAY: Spend this Unit and a rival Unit.",
+   "set": "MS01-WNC",
+   "number": 51,
+   "verified": true
+  },
+  {
+   "id": "over-the-edge",
+   "name": "Over the Edge",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Red",
+   "ram": 2,
+   "cost": 3,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "MERC"
+   ],
+   "keywords": [],
+   "text": "Defeat a Unit with power equal to or less than the value of a friendly d20.",
+   "set": "MS01-WNC",
+   "number": 34,
+   "verified": true
+  },
+  {
+   "id": "overwatch-panam-s-gift",
+   "name": "Overwatch",
+   "subtitle": "Panam's Gift",
+   "type": "Gear",
+   "color": "Green",
+   "ram": 4,
+   "cost": 4,
+   "power": 4,
+   "sell_tag": true,
+   "tags": [
+    "WEAPON"
+   ],
+   "keywords": [
+    "QUICK"
+   ],
+   "text": "(Equip to a friendly Unit or face-up Legend.)\nQUICK 1 €$, ⊡: Discard 1. Defeat a spent rival Unit with cost equal to or less than the discarded card's cost.",
+   "set": "MS01-WNC",
+   "number": 93,
+   "verified": true
+  },
+  {
+   "id": "pacifica-netrunner",
+   "name": "Pacifica Netrunner",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Green",
+   "ram": 2,
+   "cost": 4,
+   "power": 1,
+   "sell_tag": false,
+   "tags": [
+    "NETRUNNER"
+   ],
+   "keywords": [],
+   "text": "PLAY: If your ★ (Street Cred) is an even number, a rival Unit can't ready until your next turn.",
+   "set": "MS01-WNC",
+   "number": 84,
+   "verified": true
+  },
+  {
+   "id": "padre-man-of-the-cross",
+   "name": "Padre",
+   "subtitle": "Man of the Cross",
+   "type": "Legend",
+   "color": "Green",
+   "ram": 2,
+   "cost": null,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [
+    "FIXER",
+    "GANGER",
+    "VALENTINO"
+   ],
+   "keywords": [],
+   "text": "CALL: Choose one effect.\n- Spend a rival Unit.\n- Draw 1.\n⊡: Set a player's Gig to the same value as another player's Gig.",
+   "set": "MS01-WNC",
+   "number": 74,
+   "verified": true
+  },
+  {
+   "id": "panam-palmer-nomad-cavalry",
+   "name": "Panam Palmer",
+   "subtitle": "Nomad Cavalry",
+   "type": "Legend",
+   "color": "Green",
+   "ram": 2,
+   "cost": null,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [
+    "ALDECALDO",
+    "MERC",
+    "NOMAD"
+   ],
+   "keywords": [],
+   "text": "2 €$, ⊡: Move a Gear from this Legend to an unequipped friendly Unit. If you do, ready that Unit.\nAt the end of your turn, if 5 or more friendly Units and/or Legends are equipped, ready them.",
+   "set": "MS01-WNC",
+   "number": 75,
+   "verified": true
+  },
+  {
+   "id": "panam-palmer-strength-through-family",
+   "name": "Panam Palmer",
+   "subtitle": "Strength Through Family",
+   "type": "Unit",
+   "color": "Green",
+   "ram": 4,
+   "cost": 6,
+   "power": 6,
+   "sell_tag": false,
+   "tags": [
+    "ALDECALDO",
+    "MERC",
+    "NOMAD"
+   ],
+   "keywords": [],
+   "text": "During your turn, you may Call a Legend for free.\nATTACK: Discard 1. If you do, draw 1 for each friendly face-up Legend.",
+   "set": "MS01-WNC",
+   "number": 85,
+   "verified": true
+  },
+  {
+   "id": "peace-offering",
+   "name": "Peace Offering",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Green",
+   "ram": 1,
+   "cost": 1,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "BRAINDANCE"
+   ],
+   "keywords": [],
+   "text": "You may set a Gig's value to the value of another Gig. Then, if you control a value-pair, draw 1.",
+   "set": "MS01-WNC",
+   "number": 101,
+   "verified": true
+  },
+  {
+   "id": "pepe-najarro-working-doubles",
+   "name": "Pepe Najarro",
+   "subtitle": "Working Doubles",
+   "type": "Unit",
+   "color": "Green",
+   "ram": 2,
+   "cost": 4,
+   "power": 6,
+   "sell_tag": false,
+   "tags": [
+    "VALENTINO"
+   ],
+   "keywords": [],
+   "text": "ATTACK: If you control a value-pair of Gigs, ready up to 2 MERC Legends in your Legends area.",
+   "set": "MS01-WNC",
+   "number": 86,
+   "verified": true
+  },
+  {
+   "id": "placide-voodoo-sentinel",
+   "name": "Placide",
+   "subtitle": "Voodoo Sentinel",
+   "type": "Unit",
+   "color": "Blue",
+   "ram": 2,
+   "cost": 8,
+   "power": 10,
+   "sell_tag": false,
+   "tags": [
+    "GANGER",
+    "NETRUNNER",
+    "VOODOO BOYS"
+   ],
+   "keywords": [],
+   "text": "PLAY / ATTACK: You may discard 1 Program. If you do, bottom-deck a rival Unit.",
+   "set": "MS01-WNC",
+   "number": 127,
+   "verified": true
+  },
+  {
+   "id": "psycho-squad",
+   "name": "Psycho Squad",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Blue",
+   "ram": 1,
+   "cost": 4,
+   "power": 6,
+   "sell_tag": false,
+   "tags": [
+    "NCPD"
+   ],
+   "keywords": [],
+   "text": "",
+   "set": "MS01-WNC",
+   "number": 124,
+   "verified": true,
+   "flavor": "Their protocol stops at \"shoot first.\""
+  },
+  {
+   "id": "pyramid-song",
+   "name": "Pyramid Song",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Blue",
+   "ram": 3,
+   "cost": 3,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "BRAINDANCE"
+   ],
+   "keywords": [],
+   "text": "Choose one effect. If a friendly d4 is a min Gig, choose both instead.\n- Give a rival Unit -4 power this turn.\n- Bottom-deck a rival Unit with power 0.",
+   "set": "MS01-WNC",
+   "number": 135,
+   "verified": true
+  },
+  {
+   "id": "rebecca-having-a-moment",
+   "name": "Rebecca",
+   "subtitle": "Having a Moment",
+   "type": "Legend",
+   "color": "Red",
+   "ram": 2,
+   "cost": null,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [],
+   "keywords": [],
+   "text": "",
+   "set": "PR001",
+   "number": 5,
+   "verified": false,
+   "notes": "Promo-style full-art card; no stats or text were visible in the screenshot. Everything here is a placeholder."
+  },
+  {
+   "id": "reboot-optics",
+   "name": "Reboot Optics",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Blue",
+   "ram": 2,
+   "cost": 2,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "QUICKHACK"
+   ],
+   "keywords": [
+    "QUICK"
+   ],
+   "text": "QUICK: The next time a rival Unit fights this turn, it doesn't defeat the opposing friendly Unit.",
+   "set": "MS01-WNC",
+   "number": 136,
+   "verified": true
+  },
+  {
+   "id": "riding-nomad",
+   "name": "Riding Nomad",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Green",
+   "ram": 4,
+   "cost": 5,
+   "power": 4,
+   "sell_tag": false,
+   "tags": [
+    "NOMAD"
+   ],
+   "keywords": [
+    "ADRENALINE"
+   ],
+   "text": "ADRENALINE (This Unit can attack the turn it's played.)",
+   "set": "MS01-WNC",
+   "number": 87,
+   "verified": true
+  },
+  {
+   "id": "riot-shield",
+   "name": "Riot Shield",
+   "subtitle": null,
+   "type": "Gear",
+   "color": "Green",
+   "ram": 2,
+   "cost": 2,
+   "power": 1,
+   "sell_tag": true,
+   "tags": [
+    "WEAPON"
+   ],
+   "keywords": [
+    "BLOCKER"
+   ],
+   "text": "(Equip to a friendly Unit or face-up Legend.)\nBLOCKER\nRivals must pay +2 €$ to use GO SOLO.",
+   "set": "MS01-WNC",
+   "number": 94,
+   "verified": true
+  },
+  {
+   "id": "rita-wheeler-no-stupid-questions",
+   "name": "Rita Wheeler",
+   "subtitle": "No Stupid Questions",
+   "type": "Unit",
+   "color": "Blue",
+   "ram": 2,
+   "cost": 4,
+   "power": 4,
+   "sell_tag": false,
+   "tags": [
+    "GANGER",
+    "MOX"
+   ],
+   "keywords": [
+    "BLOCKER"
+   ],
+   "text": "BLOCKER\nThe first time this Unit is spent each turn, draw 1, then discard 1.",
+   "set": "MS01-WNC",
+   "number": 125,
+   "verified": true
+  },
+  {
+   "id": "river-ward-detective-on-the-hunt",
+   "name": "River Ward",
+   "subtitle": "Detective on the Hunt",
+   "type": "Legend",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": null,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [
+    "NCPD"
+   ],
+   "keywords": [
+    "QUICK"
+   ],
+   "text": "QUICK ⊡: Play a Gear with cost 2 or less from your hand for free.\nWhen a friendly equipped Unit is defeated, search the top 2 cards of your deck and trash 1.",
+   "set": "MS01-WNC",
+   "number": 39,
+   "verified": true
+  },
+  {
+   "id": "rockn-rockerboy",
+   "name": "Rockn' Rockerboy",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Yellow",
+   "ram": 1,
+   "cost": 5,
+   "power": 8,
+   "sell_tag": false,
+   "tags": [
+    "ROCKER"
+   ],
+   "keywords": [],
+   "text": "",
+   "set": "MS01-WNC",
+   "number": 59,
+   "verified": true,
+   "flavor": "Scream your throat raw for something. Anything."
+  },
+  {
+   "id": "rogue-amendiares-preem-solo",
+   "name": "Rogue Amendiares",
+   "subtitle": "Preem Solo",
+   "type": "Legend",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": 7,
+   "power": 7,
+   "sell_tag": true,
+   "tags": [
+    "MERC"
+   ],
+   "keywords": [
+    "GO SOLO"
+   ],
+   "text": "GO SOLO\nWhen a friendly Legend steals a Gig, if its value is even, draw 1. If its value is odd, a Rival discards 1.",
+   "set": "MS01-WNC",
+   "number": 40,
+   "verified": true
+  },
+  {
+   "id": "rogue-amendiares-queen-of-the-afterlife",
+   "name": "Rogue Amendiares",
+   "subtitle": "Queen of the Afterlife",
+   "type": "Unit",
+   "color": "Blue",
+   "ram": 2,
+   "cost": 5,
+   "power": 4,
+   "sell_tag": false,
+   "tags": [
+    "FIXER",
+    "MERC"
+   ],
+   "keywords": [
+    "QUICK"
+   ],
+   "text": "The first time another friendly Unit steals a Gig with value less than its power each turn, ready 2 Eddies.\nQUICK 2 €$, ⊡: A rival Unit loses power equal to this Unit's power this turn.",
+   "set": "MS01-WNC",
+   "number": 126,
+   "verified": true
+  },
+  {
+   "id": "royce-don-t-call-me-simon",
+   "name": "Royce",
+   "subtitle": "Don't Call Me Simon",
+   "type": "Unit",
+   "color": "Red",
+   "ram": 2,
+   "cost": 5,
+   "power": 4,
+   "sell_tag": false,
+   "tags": [
+    "GANGER",
+    "MAELSTROM"
+   ],
+   "keywords": [],
+   "text": "PLAY: Defeat a rival Unit with power 2 or less. If you have more ★ (Street Cred) than a Rival, defeat a rival Unit with power 3 or less instead.",
+   "set": "MS01-WNC",
+   "number": 16,
+   "verified": true
+  },
+  {
+   "id": "royce-psycho-on-the-edge",
+   "name": "Royce",
+   "subtitle": "Psycho on the Edge",
+   "type": "Legend",
+   "color": "Red",
+   "ram": 2,
+   "cost": 6,
+   "power": "6+",
+   "sell_tag": true,
+   "tags": [
+    "GANGER",
+    "MAELSTROM"
+   ],
+   "keywords": [
+    "GO SOLO"
+   ],
+   "text": "GO SOLO\nDuring your turn, this Legend has +2 power for each of its equipped Gear.",
+   "set": "MS01-WNC",
+   "number": 4,
+   "verified": true
+  },
+  {
+   "id": "ruthless-lowlife",
+   "name": "Ruthless Lowlife",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Red",
+   "ram": 1,
+   "cost": 2,
+   "power": 4,
+   "sell_tag": false,
+   "tags": [
+    "GANGER",
+    "MAELSTROM"
+   ],
+   "keywords": [],
+   "text": "This Unit can only attack rival Units. (It can't attack Gig areas.)",
+   "set": "MS01-WNC",
+   "number": 17,
+   "verified": true
+  },
+  {
+   "id": "saburo-arasaka-stubborn-patriarch",
+   "name": "Saburo Arasaka",
+   "subtitle": "Stubborn Patriarch",
+   "type": "Legend",
+   "color": "Green",
+   "ram": 2,
+   "cost": null,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [
+    "ARASAKA",
+    "CORPO"
+   ],
+   "keywords": [],
+   "text": "Friendly ARASAKA Units have +1 power while attacking. (Units steal an extra Gig for every 10 power.)",
+   "set": "S002-EBP",
+   "number": 13,
+   "verified": true
+  },
+  {
+   "id": "safety-override",
+   "name": "Safety Override",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Yellow",
+   "ram": 3,
+   "cost": 2,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "QUICKHACK"
+   ],
+   "keywords": [
+    "QUICK"
+   ],
+   "text": "QUICK: The next time a friendly Unit loses a fight this turn, defeat the opposing rival Unit.",
+   "set": "MS01-WNC",
+   "number": 69,
+   "verified": true
+  },
+  {
+   "id": "sandayu-oda-hanako-s-guardian",
+   "name": "Sandayu Oda",
+   "subtitle": "Hanako's Guardian",
+   "type": "Unit",
+   "color": "Green",
+   "ram": 2,
+   "cost": 7,
+   "power": 8,
+   "sell_tag": false,
+   "tags": [
+    "ARASAKA",
+    "CORPO"
+   ],
+   "keywords": [],
+   "text": "PLAY: Spend a rival Unit for each friendly value-pair of Gigs.\nThis Unit can attack rival Units the turn it's played.",
+   "set": "MS01-WNC",
+   "number": 80,
+   "verified": true,
+   "notes": "Collector number uncertain."
+  },
+  {
+   "id": "sandevistan",
+   "name": "Sandevistan",
+   "subtitle": null,
+   "type": "Gear",
+   "color": "Green",
+   "ram": 3,
+   "cost": 3,
+   "power": 2,
+   "sell_tag": true,
+   "tags": [
+    "CYBERWARE"
+   ],
+   "keywords": [],
+   "text": "(Equip to a friendly Unit or face-up Legend.)\nAt the end of your turn, ready this Unit or Legend.",
+   "set": "MS01-WNC",
+   "number": 95,
+   "verified": true
+  },
+  {
+   "id": "sasha-yakovleva-won-t-let-you-down",
+   "name": "Sasha Yakovleva",
+   "subtitle": "Won't Let You Down",
+   "type": "Legend",
+   "color": "Blue",
+   "ram": 2,
+   "cost": 5,
+   "power": "0+",
+   "sell_tag": true,
+   "tags": [
+    "MAINE'S CREW",
+    "MERC",
+    "NETRUNNER"
+   ],
+   "keywords": [
+    "GO SOLO"
+   ],
+   "text": "GO SOLO\nATTACK: Reveal the top card of your deck and add it to your hand. This Unit gains power equal to that card's cost this turn.\nDEFEATED: A Rival discards 1.",
+   "set": "MS01-WNC",
+   "number": 109,
+   "verified": true
+  },
+  {
+   "id": "satori-sword-of-saburo",
+   "name": "Satori",
+   "subtitle": "Sword of Saburo",
+   "type": "Gear",
+   "color": "Red",
+   "ram": 1,
+   "cost": 2,
+   "power": 2,
+   "sell_tag": true,
+   "tags": [
+    "ARASAKA",
+    "WEAPON"
+   ],
+   "keywords": [],
+   "text": "(Equip to a friendly Unit or face-up Legend.)\nWhen this Unit wins a fight against a rival Unit, draw 1.",
+   "set": "MS01-WNC",
+   "number": 26,
+   "verified": true
+  },
+  {
+   "id": "saul-bright-stormrider",
+   "name": "Saul Bright",
+   "subtitle": "Stormrider",
+   "type": "Unit",
+   "color": "Green",
+   "ram": 2,
+   "cost": 8,
+   "power": 14,
+   "sell_tag": false,
+   "tags": [
+    "ALDECALDO",
+    "NOMAD"
+   ],
+   "keywords": [],
+   "text": "Other friendly Units have +2 power while attacking.\nAt the end of your turn, ready up to 3 friendly Units.",
+   "set": "MS01-WNC",
+   "number": 89,
+   "verified": true
+  },
+  {
+   "id": "screw-lovelorn-fool",
+   "name": "Screw",
+   "subtitle": "Lovelorn Fool",
+   "type": "Unit",
+   "color": "Red",
+   "ram": 2,
+   "cost": 5,
+   "power": 7,
+   "sell_tag": false,
+   "tags": [
+    "GANGER",
+    "MAELSTROM"
+   ],
+   "keywords": [],
+   "text": "DEFEATED: Add another Unit from your trash to your hand.",
+   "set": "MS01-WNC",
+   "number": 18,
+   "verified": true
+  },
+  {
+   "id": "secondhand-bombus",
+   "name": "Secondhand Bombus",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": 2,
+   "power": 0,
+   "sell_tag": false,
+   "tags": [
+    "DRONE",
+    "ZETATECH"
+   ],
+   "keywords": [
+    "BLOCKER"
+   ],
+   "text": "BLOCKER (You may spend this Unit to redirect a rival Unit's attack to it instead.)\n(Units with power 0 don't steal Gigs.)",
+   "set": "MS01-WNC",
+   "number": 53,
+   "verified": true
+  },
+  {
+   "id": "shattered-memories",
+   "name": "Shattered Memories",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Red",
+   "ram": 2,
+   "cost": 4,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "BRAINDANCE"
+   ],
+   "keywords": [],
+   "text": "Each player discards their hand and may draw 5.\nIf the total number of discarded cards equals the value of a friendly Gig, draw 2.",
+   "set": "MS01-WNC",
+   "number": 35,
+   "verified": true
+  },
+  {
+   "id": "sketchy-ripper",
+   "name": "Sketchy Ripper",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": 2,
+   "power": 0,
+   "sell_tag": false,
+   "tags": [
+    "GANGER",
+    "RIPPERDOC",
+    "SCAVENGER"
+   ],
+   "keywords": [],
+   "text": "ATTACK: Search the top 3 cards of your deck. Reveal a Gear and add it to your hand. Bottom-deck the rest. (Units with power 0 don't steal Gigs.)",
+   "set": "MS01-WNC",
+   "number": 54,
+   "verified": true
+  },
+  {
+   "id": "swordwise-huscle",
+   "name": "Swordwise Huscle",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Red",
+   "ram": 2,
+   "cost": 3,
+   "power": 3,
+   "sell_tag": false,
+   "tags": [
+    "MERC"
+   ],
+   "keywords": [],
+   "text": "ATTACK: If this Unit has power 5+, draw 1.",
+   "set": "MS01-WNC",
+   "number": 19,
+   "verified": true
+  },
+  {
+   "id": "synapse-burnout",
+   "name": "Synapse Burnout",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Green",
+   "ram": 1,
+   "cost": 1,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "QUICKHACK"
+   ],
+   "keywords": [
+    "QUICK"
+   ],
+   "text": "QUICK: A friendly Unit has +1 power for each friendly face-up Legend while fighting rival Units this turn.",
+   "set": "MS01-WNC",
+   "number": 102,
+   "verified": true
+  },
+  {
+   "id": "take-control",
+   "name": "Take Control",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Green",
+   "ram": 2,
+   "cost": 2,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "QUICKHACK"
+   ],
+   "keywords": [
+    "QUICK"
+   ],
+   "text": "QUICK: A rival Unit steals 1 fewer Gig this turn. If that Unit is an AI, DRONE, or VEHICLE, draw 1.",
+   "set": "MS01-WNC",
+   "number": 103,
+   "verified": true
+  },
+  {
+   "id": "t-bug-amateur-philosopher",
+   "name": "T-Bug",
+   "subtitle": "Amateur Philosopher",
+   "type": "Unit",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": 4,
+   "power": 4,
+   "sell_tag": false,
+   "tags": [
+    "MERC",
+    "NETRUNNER"
+   ],
+   "keywords": [],
+   "text": "DEFEATED: Look at all friendly face-down Legends. Then, you may Call a Legend for free. (You can only Call a Legend once per turn.)",
+   "set": "MS01-WNC",
+   "number": 55,
+   "verified": true
+  },
+  {
+   "id": "tetratronic-rippler",
+   "name": "Tetratronic Rippler",
+   "subtitle": null,
+   "type": "Gear",
+   "color": "Blue",
+   "ram": 2,
+   "cost": 1,
+   "power": 1,
+   "sell_tag": true,
+   "tags": [
+    "CYBERWARE"
+   ],
+   "keywords": [],
+   "text": "(Equip to a friendly Unit or face-up Legend.)\nWhen this Unit or Legend is spent, search the top card of your deck. You may trash it. (Otherwise, keep it on the top of your deck.)",
+   "set": "MS01-WNC",
+   "number": 130,
+   "verified": true
+  },
+  {
+   "id": "the-heist",
+   "name": "The Heist",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": 2,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "MERC"
+   ],
+   "keywords": [],
+   "text": "Trash 4. Add a Gear from among them to your hand. If that Gear's cost equals the value of a friendly Gig, you may play it for free instead.",
+   "set": "MS01-WNC",
+   "number": 70,
+   "verified": true
+  },
+  {
+   "id": "the-relic-experimental-biochip",
+   "name": "The Relic",
+   "subtitle": "Experimental Biochip",
+   "type": "Gear",
+   "color": "Yellow",
+   "ram": 4,
+   "cost": 5,
+   "power": 3,
+   "sell_tag": true,
+   "tags": [
+    "ARASAKA",
+    "CYBERWARE"
+   ],
+   "keywords": [],
+   "text": "(Equip to a friendly Unit or face-up Legend.)\nDEFEATED: Play another Unit with cost 9 or less from your trash for free. Then, bottom-deck this Unit.",
+   "set": "MS01-WNC",
+   "number": 63,
+   "verified": true
+  },
+  {
+   "id": "three-mouths-one-desire",
+   "name": "Three Mouths, One Desire",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Blue",
+   "ram": 3,
+   "cost": 2,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "BRAINDANCE",
+    "DOLL"
+   ],
+   "keywords": [],
+   "text": "Search the top 3 cards of your deck. Add 1 to your hand. You may add 1 more for each friendly min Gig. Bottom-deck the rest.",
+   "set": "MS01-WNC",
+   "number": 137,
+   "verified": true
+  },
+  {
+   "id": "towerfall",
+   "name": "Towerfall",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Blue",
+   "ram": 4,
+   "cost": 6,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "BRAINDANCE"
+   ],
+   "keywords": [],
+   "text": "Choose one effect. If you have less ★ (Street Cred) than a Rival, choose both instead.\n- Give all rival Units -5 power this turn.\n- Bottom-deck all rival Units with power 0.",
+   "set": "MS01-WNC",
+   "number": 138,
+   "verified": true
+  },
+  {
+   "id": "trauma-team-operatives",
+   "name": "Trauma Team Operatives",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": 6,
+   "power": 7,
+   "sell_tag": false,
+   "tags": [
+    "MEDTECH",
+    "TRAUMA TEAM"
+   ],
+   "keywords": [],
+   "text": "Play this Unit for -1 €$ for each Unit in your trash, to a minimum of 1 €$.",
+   "set": "MS01-WNC",
+   "number": 56,
+   "verified": true
+  },
+  {
+   "id": "trust-no-one",
+   "name": "Trust No One",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Blue",
+   "ram": 1,
+   "cost": 1,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "BRAINDANCE"
+   ],
+   "keywords": [],
+   "text": "Decrease a Gig by up to 3. Then, if you control a min Gig, draw 1.",
+   "set": "MS01-WNC",
+   "number": 139,
+   "verified": true
+  },
+  {
+   "id": "tyger-s-whisper",
+   "name": "Tyger's Whisper",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Green",
+   "ram": 1,
+   "cost": 2,
+   "power": 0,
+   "sell_tag": false,
+   "tags": [
+    "FIXER",
+    "TYGER CLAWS"
+   ],
+   "keywords": [],
+   "text": "PLAY: You may Call a Legend for free. (You can only Call a Legend once per turn.)\n(Units with power 0 don't steal Gigs.)",
+   "set": "MS01-WNC",
+   "number": 88,
+   "verified": true
+  },
+  {
+   "id": "unlikely-bond",
+   "name": "Unlikely Bond",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Blue",
+   "ram": 2,
+   "cost": 4,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "MAELSTROM",
+    "MOX"
+   ],
+   "keywords": [],
+   "text": "Bottom-deck a ready friendly Unit. If you do, bottom-deck a spent rival Unit.",
+   "set": "MS01-WNC",
+   "number": 140,
+   "verified": true
+  },
+  {
+   "id": "v-corporate-exile",
+   "name": "V",
+   "subtitle": "Corporate Exile",
+   "type": "Legend",
+   "color": "Blue",
+   "ram": 2,
+   "cost": 5,
+   "power": 8,
+   "sell_tag": true,
+   "tags": [
+    "CORPO",
+    "MERC"
+   ],
+   "keywords": [
+    "GO SOLO"
+   ],
+   "text": "GO SOLO (Pay this Legend's cost to play it as a ready Unit. It can attack this turn. When it leaves the field, remove it from the game.)",
+   "set": "S001-HEI",
+   "number": 12,
+   "verified": true
+  },
+  {
+   "id": "v-roamer-of-the-badlands",
+   "name": "V",
+   "subtitle": "Roamer of the Badlands",
+   "type": "Unit",
+   "color": "Red",
+   "ram": 2,
+   "cost": 5,
+   "power": 6,
+   "sell_tag": false,
+   "tags": [
+    "MERC",
+    "NOMAD"
+   ],
+   "keywords": [],
+   "text": "When this Unit steals a Gig, increase it by up to 5.\nAt the end of your turn, if you control 2 or more Gigs with 8+ value, draw 1.",
+   "set": "MS01-WNC",
+   "number": 20,
+   "verified": true
+  },
+  {
+   "id": "v-streetkid",
+   "name": "V",
+   "subtitle": "Streetkid",
+   "type": "Legend",
+   "color": "Red",
+   "ram": 2,
+   "cost": 5,
+   "power": 6,
+   "sell_tag": true,
+   "tags": [
+    "MERC"
+   ],
+   "keywords": [
+    "GO SOLO"
+   ],
+   "text": "CALL: Trash 3. Then, add 1 BRAINDANCE Program from your trash to your hand.\nGO SOLO",
+   "set": "MS01-WNC",
+   "number": 5,
+   "verified": true
+  },
+  {
+   "id": "valentino-guerrera",
+   "name": "Valentino Guerrera",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Red",
+   "ram": 2,
+   "cost": 3,
+   "power": 4,
+   "sell_tag": false,
+   "tags": [
+    "GANGER",
+    "VALENTINO"
+   ],
+   "keywords": [],
+   "text": "If you have more ★ (Street Cred) than a Rival, this Unit can attack ready Units with BLOCKER.",
+   "set": "MS01-WNC",
+   "number": 21,
+   "verified": true
+  },
+  {
+   "id": "valentino-street-racer",
+   "name": "Valentino Street Racer",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Green",
+   "ram": 2,
+   "cost": 3,
+   "power": 3,
+   "sell_tag": false,
+   "tags": [
+    "VALENTINO",
+    "VEHICLE"
+   ],
+   "keywords": [],
+   "text": "PLAY: Give another friendly Unit with cost 5 or less ADRENALINE this turn. (A Unit with Adrenaline can attack the turn it's played.)",
+   "set": "MS01-WNC",
+   "number": 91,
+   "verified": true
+  },
+  {
+   "id": "viktor-vektor-drop-your-illusions",
+   "name": "Viktor Vektor",
+   "subtitle": "Drop Your Illusions",
+   "type": "Unit",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": 5,
+   "power": 5,
+   "sell_tag": false,
+   "tags": [
+    "RIPPERDOC"
+   ],
+   "keywords": [],
+   "text": "Play your first CYBERWARE Gear each turn for -3 €$, to a minimum of 1 €$.",
+   "set": "MS01-WNC",
+   "number": 57,
+   "verified": true
+  },
+  {
+   "id": "viktor-vektor-sit-down-and-relax",
+   "name": "Viktor Vektor",
+   "subtitle": "Sit Down and Relax",
+   "type": "Legend",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": null,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [
+    "RIPPERDOC"
+   ],
+   "keywords": [],
+   "text": "CALL: Search the top 5 cards of your deck. Reveal up to 2 Gears with cost 2 or less and add them to your hand. Bottom-deck the rest in a random order.",
+   "set": "S001-HEI",
+   "number": 1,
+   "verified": true,
+   "notes": "Set/number uncertain."
+  },
+  {
+   "id": "viktor-vektor-you-might-feel-a-little-pinch",
+   "name": "Viktor Vektor",
+   "subtitle": "You Might Feel a Little Pinch",
+   "type": "Unit",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": 3,
+   "power": 3,
+   "sell_tag": false,
+   "tags": [
+    "RIPPERDOC"
+   ],
+   "keywords": [],
+   "text": "PLAY: Play a CYBERWARE Gear with cost 2 or less from your trash for free. Equip it only to another friendly Unit.",
+   "set": "MS01-WNC",
+   "number": 58,
+   "verified": true
+  },
+  {
+   "id": "wakako-okada-peace-and-harmony",
+   "name": "Wakako Okada",
+   "subtitle": "Peace and Harmony",
+   "type": "Legend",
+   "color": "Blue",
+   "ram": 2,
+   "cost": null,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [
+    "FIXER",
+    "TYGER CLAWS"
+   ],
+   "keywords": [],
+   "text": "CALL: Choose one effect.\n- Give a rival Unit -2 power this turn.\n- Draw 1.\n⊡: Decrease a Gig by up to 2.",
+   "set": "MS01-WNC",
+   "number": 110,
+   "verified": true
+  },
+  {
+   "id": "we-gotta-live-together",
+   "name": "We Gotta Live Together",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Green",
+   "ram": 2,
+   "cost": 5,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "ALDECALDO",
+    "NOMAD"
+   ],
+   "keywords": [],
+   "text": "If a Rival controls at least 2 more Gigs than you, play this Program for 3 €$.\nPlay up to 2 Units with cost 3 or less from your trash for free.",
+   "set": "MS01-WNC",
+   "number": 104,
+   "verified": true
+  },
+  {
+   "id": "westbrook-netrunner",
+   "name": "Westbrook Netrunner",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Blue",
+   "ram": 2,
+   "cost": 4,
+   "power": 5,
+   "sell_tag": false,
+   "tags": [
+    "NETRUNNER"
+   ],
+   "keywords": [],
+   "text": "PLAY: Until your next turn, rival Legends can't steal friendly Gigs with value less than their power.",
+   "set": "MS01-WNC",
+   "number": 123,
+   "verified": true
+  },
+  {
+   "id": "wild-in-the-streets",
+   "name": "Wild in the Streets",
+   "subtitle": null,
+   "type": "Program",
+   "color": "Green",
+   "ram": 4,
+   "cost": 5,
+   "power": null,
+   "sell_tag": true,
+   "tags": [
+    "GANGER"
+   ],
+   "keywords": [],
+   "text": "Defeat a spent Unit.",
+   "set": "MS01-WNC",
+   "number": 105,
+   "verified": true
+  },
+  {
+   "id": "wraith-marauders",
+   "name": "Wraith Marauders",
+   "subtitle": null,
+   "type": "Unit",
+   "color": "Green",
+   "ram": 2,
+   "cost": 5,
+   "power": 4,
+   "sell_tag": false,
+   "tags": [
+    "GANGER",
+    "NOMAD",
+    "RAFFEN SHIV"
+   ],
+   "keywords": [],
+   "text": "When this Unit steals a Gig, ready another friendly Unit with power equal to the Gig's value.",
+   "set": "MS01-WNC",
+   "number": 92,
+   "verified": true
+  },
+  {
+   "id": "yorinobu-arasaka-embracing-destruction",
+   "name": "Yorinobu Arasaka",
+   "subtitle": "Embracing Destruction",
+   "type": "Legend",
+   "color": "Red",
+   "ram": 2,
+   "cost": null,
+   "power": 0,
+   "sell_tag": true,
+   "tags": [
+    "ARASAKA",
+    "CORPO"
+   ],
+   "keywords": [],
+   "text": "The first time a friendly ARASAKA Unit attacks each turn, draw 1. Then, if you have less than 20 ★ (Street Cred), discard 1.",
+   "set": "S002-EBP",
+   "number": 1,
+   "verified": true
+  },
+  {
+   "id": "yorinobu-arasaka-steel-dragon",
+   "name": "Yorinobu Arasaka",
+   "subtitle": "Steel Dragon",
+   "type": "Unit",
+   "color": "Red",
+   "ram": 3,
+   "cost": 7,
+   "power": 9,
+   "sell_tag": false,
+   "tags": [
+    "ARASAKA",
+    "CORPO"
+   ],
+   "keywords": [],
+   "text": "PLAY: You may play a Unit with cost 4 or less from your hand or trash for free. It can attack rival Units this turn.\nThe first time an ARASAKA Unit is defeated each turn, draw 1.",
+   "set": "MS01-WNC",
+   "number": 22,
+   "verified": true
+  },
+  {
+   "id": "zetatech-berserk",
+   "name": "Zetatech Berserk",
+   "subtitle": null,
+   "type": "Gear",
+   "color": "Green",
+   "ram": 2,
+   "cost": 6,
+   "power": 3,
+   "sell_tag": true,
+   "tags": [
+    "CYBERWARE",
+    "ZETATECH"
+   ],
+   "keywords": [],
+   "text": "Play this Gear for -1 €$ for each friendly face-up Legend, to a minimum of 1 €$.",
+   "set": "MS01-WNC",
+   "number": 96,
+   "verified": true
+  },
+  {
+   "id": "zetatech-faceplate",
+   "name": "Zetatech Faceplate",
+   "subtitle": null,
+   "type": "Gear",
+   "color": "Yellow",
+   "ram": 2,
+   "cost": 2,
+   "power": 2,
+   "sell_tag": true,
+   "tags": [
+    "CYBERWARE",
+    "ZETATECH"
+   ],
+   "keywords": [],
+   "text": "(Equip to a friendly Unit or face-up Legend.)\nWhen this Unit or Legend is spent, adjust a Gig by up to 1. Then, if you control 3 or more Gigs with different values, draw 1.",
+   "set": "MS01-WNC",
+   "number": 64,
+   "verified": true
+  }
+ ]
+}
