@@ -76,10 +76,17 @@ def test_deck_builder_endpoints(base, tmp_path):
     assert built["ok"] and built["legends"] == sample["legends"] and 40 <= built["size"] <= 50
     rnd = post(base, "/api/build", {"mode": "random", "seed": 4})
     assert rnd["ok"] and len(rnd["legends"]) == 3
-    names = [s["name"] for s in get(base, "/api/strategies")]
-    assert {"aggro", "control", "economy", "gig", "synergy", "balanced", "legacy", "random"} <= set(names)
-    aggro = post(base, "/api/build", {"mode": "aggro", "legends": sample["legends"], "seed": 5})
-    assert aggro["ok"] and aggro["legends"] == sample["legends"]
+    arche = get(base, "/api/archetypes")
+    ids = [b["id"] for b in arche["builders"]]
+    assert ids[0] == "explorer" and {"legacy", "random"} <= set(ids) and arche["needed"] == 8
+    assert isinstance(arche["archetypes"], list) and arche["decks"] >= len(arche["archetypes"])
+    for a in arche["archetypes"]:
+        assert {"id", "name", "description", "win_rate", "games", "decks", "members"} <= set(a) and a["id"] in ids
+    explorer = post(base, "/api/build", {"mode": "explorer", "legends": sample["legends"], "seed": 5})
+    assert explorer["ok"] and explorer["legends"] == sample["legends"]
+    if arche["archetypes"]:
+        learned = post(base, "/api/build", {"mode": arche["archetypes"][0]["id"], "seed": 6})
+        assert learned["ok"] and len(learned["legends"]) == 3
 
     # Saving writes a loadable file; a second save without overwrite is refused.
     orig = web.DECK_DIRS[0]

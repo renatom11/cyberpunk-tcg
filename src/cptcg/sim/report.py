@@ -40,19 +40,21 @@ def card_name(reg, cid: str) -> str:
 
 
 def deck_kind(deck) -> str | None:
-    """The kind of deck a builder labelled it with: a learned archetype when present, else the
-    builder personality that made it."""
+    """The kind of deck a builder labelled it with: the learned archetype it was built toward
+    (``"exploring"`` for an Explorer), or the builder label of an older file."""
     meta = getattr(deck, "meta", None) or {}
     return meta.get("archetype") or meta.get("strategy") or None
 
 
 def deck_profile_json(deck, reg) -> dict | None:
-    """Shape numbers of a deck list for the JSON: ``deck_profile`` plus a cost curve
-    (cards costing 1 … 7+), type counts, sell-tag count and size. None if a card is unknown."""
-    from cptcg.deck.strategies import deck_profile
+    """Shape numbers of a deck list for the JSON: the archetype fingerprint (``deck_profile``'s
+    numbers plus type and cost-band shares, extra-steal and draw counts, Legend colour flags)
+    plus a cost curve (cards costing 1 … 7+), type counts, sell-tag count and size. None if a
+    card is unknown."""
+    from cptcg.deck.archetypes import fingerprint
     try:
         defs = [reg.get(c) for c in deck.main]
-        prof = deck_profile(deck, reg)
+        prof = fingerprint(reg, deck)
     except KeyError:
         return None
     curve = [0] * 7
@@ -67,17 +69,10 @@ def deck_profile_json(deck, reg) -> dict | None:
 
 
 def profile_sentence(prof: dict | None) -> str:
-    """One line a reader can picture: ``average cost 2.4 · 65% Units · 42% sellable · …``."""
-    if not prof:
-        return ""
-    parts = [f"average cost {prof['mean_cost']:.1f}", f"{100 * prof['unit_share']:.0f}% Units",
-             f"{100 * prof['sell_share']:.0f}% sellable"]
-    for key, word in (("blockers", "blocker"), ("removal", "removal effect"), ("gig_cards", "Gig-manipulation card"),
-                      ("quick", "Quick card"), ("haste", "haste effect"), ("economy", "economy effect")):
-        v = int(prof.get(key, 0) or 0)
-        if v:
-            parts.append(f"{v} {word}{'s' if v != 1 else ''}")
-    return " · ".join(parts)
+    """One line a reader can picture — ``archetypes.describe_fingerprint``: the curve, the share
+    of Units and of sellable cards, and the counts of the effects the list carries."""
+    from cptcg.deck.archetypes import describe_fingerprint
+    return describe_fingerprint(prof)
 
 
 def _pct(k: int, n: int) -> str:
@@ -456,10 +451,14 @@ GLOSSARY = [
     "- **Won when drawn / when not drawn** — of the games in which the deck drew a card at least once, the share it won; "
     "and the same for the games where the card stayed in the deck. **Difference** is the first minus the second, in "
     "percentage points. It is correlational, so a large number is a lead to test, not a proof.",
-    "- **Archetype** — the kind of deck, as labelled by the builder that made it; in a league the label says which "
-    "building idea produced the deck, so its decks can be judged together in the Archetypes table.",
-    "- **Shape** — a few numbers that describe the list itself: average cost, the share of Units, the share of cards "
-    "with a sell tag, and how many blockers, removal effects and Gig-manipulation cards it runs.",
+    "- **Archetype** — a kind of deck learned from play, not written down in advance: the lab groups every deck that "
+    "has played by its shape numbers (average cost, share of Units, removal, Gig cards, economy, …) and names each "
+    "group after the two features that set it apart, such as \"Low-curve swarm\". A builder labelled \"exploring\" "
+    "was not aiming at any group: it invented a shape at random, which is how new archetypes get found. The "
+    "Archetypes table pools the decks of each group so a group can be judged as a whole.",
+    "- **Shape** — a few numbers that describe the list itself: the curve (average cost), the share of Units, the "
+    "share of cards with a sell tag, and how many blockers, removal effects, Gig-manipulation cards, haste, economy, "
+    "extra-steal and draw effects it runs. These are the numbers archetypes are learned from.",
     "- **Changes this generation** — in a league each builder tries single-card swaps, playing the same games with the "
     "old and the new card; a swap is accepted only when the new card wins clearly more of the games that came out "
     "differently.",

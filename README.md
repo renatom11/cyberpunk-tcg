@@ -56,22 +56,25 @@ python -m cptcg cards --unimplemented            # cards still needing a script
 python -m cptcg tourney data/decks/sample_*.json -n 300 -j 4 --out out/league1
 python -m cptcg report out/league1/tournament.json     # re-render the plain-English Markdown report of any saved run
 
-# AI deck-building: a builder personality constructs a RAM-legal deck, then improves it by measured play
-python -m cptcg strategies                                      # aggro, control, economy, gig, synergy, balanced, legacy
-python -m cptcg build --strategy aggro --steps 30 --out out/built.json          # random Legends
+# AI deck-building: a builder constructs a RAM-legal deck toward a target shape, then improves it by measured play.
+# Archetypes are learned from play (out/archetypes.json): clusters of decks that have played, named from
+# the features that set them apart; until 8 decks have played every builder explores.
+python -m cptcg archetypes                                      # what has been learned so far, with win rates
+python -m cptcg build --archetype explorer --steps 30 --out out/built.json      # invent a shape, random Legends
 python -m cptcg build --legends v-streetkid,dexter-deshawn-off-the-grid,rogue-amendiares-preem-solo --steps 30
-python -m cptcg build --strategy control --knowledge out/knowledge.json         # build with learned card values
+python -m cptcg build --archetype low-curve-swarm --knowledge out/knowledge.json   # build toward a learned archetype
 
-# Build a ton of different decks at once: personalities pick their Legends with a novelty penalty,
+# Build a ton of different decks at once: builders pick their Legends with a novelty penalty,
 # near-duplicates are rejected, then (optionally) every deck is screened against a panel and only
 # the best are kept. 26 usable Legends with the unique-name rule give 2,528 legal triples.
 python -m cptcg generate --count 100 --seed 1 --out data/decks/generated/batch1
 python -m cptcg generate --count 200 --screen 10 --keep 20 --knowledge out/knowledge.json -j 4
-python -m cptcg generate --count 12 --strategies gig,aggro --legends v-streetkid,jackie-welles-mamas-favorite,padre-man-of-the-cross
+python -m cptcg generate --count 12 --archetypes explorer --legends v-streetkid,jackie-welles-mamas-favorite,padre-man-of-the-cross
 
 # AI builders evolving against each other, with a tournament report every generation.
-# Each builder has a personality; every generation feeds the knowledge store (per-card values
-# learned from play) and the hall of fame (past champions join the field). See docs/deckbuilding.md.
+# Builders explore or target learned archetypes; every generation feeds the archetype store, the
+# knowledge store (per-card values learned from play) and the hall of fame (past champions join the
+# field). See docs/deckbuilding.md.
 python -m cptcg league --builders 6 --generations 3 --steps 5 --out out/league \
     --knowledge out/knowledge.json --hof out/hall_of_fame.json
 
@@ -86,8 +89,9 @@ legal action on the right. Click a glowing card to act on it. UNDO and EXPORT (a
 free because games are deterministic. It holds no game logic — it renders the engine's view and
 posts back an option index — so anything the engine can do, it can show. The BUILD page is a
 deck builder in the same style: a filterable library, Legend slots with the RAM budget they unlock,
-a cost curve, live legality, text export, save to `data/decks/`, and one-click AI builds by any of
-the builder personalities (using learned card values when `out/knowledge.json` exists).
+a cost curve, live legality, text export, save to `data/decks/`, and one-click AI builds — an
+Explorer that invents a deck shape, or a build toward any archetype learned from play (using
+learned card values when `out/knowledge.json` exists).
 
 Agents: `random`, `heuristic` (greedy one-ply lookahead). The heuristic beats random ~95% of
 the time. Speed is roughly 4 ms/game for random bots and ~175 ms/game (5–6 games/s) for

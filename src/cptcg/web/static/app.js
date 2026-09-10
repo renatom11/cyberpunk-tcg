@@ -361,7 +361,7 @@ async function pollJobs() {
   const running = jobs.some(j => j.status === "running");
   if (running && !JOBTIMER) JOBTIMER = setInterval(async () => {
     const js = await api("/api/jobs"); renderJobs(js);
-    if (!js.some(j => j.status === "running")) { clearInterval(JOBTIMER); JOBTIMER = null; refreshReports(); refreshDecks(); ESTIMATES.forEach(f => f()); }
+    if (!js.some(j => j.status === "running")) { clearInterval(JOBTIMER); JOBTIMER = null; refreshReports(); refreshDecks(); refreshArchetypes().catch(() => {}); ESTIMATES.forEach(f => f()); }
   }, 1500);
 }
 async function refreshReports() {
@@ -382,8 +382,21 @@ async function refreshDecks() {
     decks.forEach(d => { if (!have.has(d.path)) { const o = el("option", "", sel.id === "bLoad" ? `${d.name} (${d.size})` : `${d.name} (${d.size}) — ${d.path}`); o.value = d.path; sel.append(o); } });
   }
 }
-function strategyChecklist(root, strategies) {
-  strategies.filter(s => s.name !== "random").forEach(s => { const l = el("label"); const c = el("input"); c.type = "checkbox"; c.value = s.name; c.checked = s.name !== "legacy"; l.title = s.description; l.append(c, s.name, el("small", "", s.description.split(". ")[0])); root.append(l); });
+// The builders a league or a batch can use: the Explorer (invents a deck shape) and every
+// archetype learned from play so far, each with its pooled win rate so the reader can judge it.
+function archetypeChecklist(root, arche) {
+  const was = new Set([...root.querySelectorAll("input:checked")].map(c => c.value)); const had = root.children.length > 0;
+  root.innerHTML = "";
+  const add = (id, name, small, title) => { const l = el("label"); const c = el("input"); c.type = "checkbox"; c.value = id; c.checked = had ? was.has(id) : true; l.title = title; l.append(c, name, el("small", "", small)); root.append(l); };
+  add("explorer", "Explorer", "invents a deck shape at random — how new archetypes get found", arche.builders.find(b => b.id === "explorer")?.description || "");
+  arche.archetypes.forEach(a => add(a.id, a.name, `won ${Math.round(100 * a.win_rate)}% of ${a.games.toLocaleString()} games · ${a.decks} decks`, a.description));
+  if (!arche.archetypes.length) root.append(el("div", "hint", `No archetypes learned yet: ${arche.decks} of the ${arche.needed} decks needed have played here. Every builder explores until then; each finished tournament or league adds its decks, and the groups appear on their own.`));
+}
+let ARCHETYPES = null;
+async function refreshArchetypes() {
+  ARCHETYPES = await api("/api/archetypes");
+  for (const id of ["#lArchetypes", "#gArchetypes"]) archetypeChecklist($(id), ARCHETYPES);
+  const ssel = $("#bArchetype"); if (ssel) { const cur = ssel.value; ssel.innerHTML = ""; ARCHETYPES.builders.forEach(b => { const o = el("option", "", b.name); o.value = b.id; o.title = b.description; ssel.append(o); }); if ([...ssel.options].some(o => o.value === cur)) ssel.value = cur; ssel.dispatchEvent(new Event("change")); }
 }
 // Job sizes, so nobody starts an hours-long run by accident. The games come from POST
 // /api/estimate — the same budget formulas the running job reports against — as a range: the low
@@ -395,8 +408,8 @@ function picked(sel) { return [...document.querySelectorAll(`${sel} input:checke
 // The body a START button posts to /api/jobs; the estimate sends the same one to /api/estimate.
 function jobBody(kind) {
   if (kind === "tourney") return { kind, name: $("#tName").value, decks: picked("#tDecks"), games: +$("#tGames").value, agent: $("#tAgent").value, seed: +$("#tSeed").value };
-  if (kind === "league") return { kind, name: $("#lName").value, strategies: picked("#lStrategies"), builders: +$("#lBuilders").value, generations: +$("#lGens").value, steps: +$("#lSteps").value, games: +$("#lGames").value, seed: +$("#lSeed").value, knowledge: $("#lKnowledge").checked, hof: $("#lHof").checked };
-  return { kind: "generate", name: $("#gName").value, strategies: picked("#gStrategies"), count: +$("#gCount").value, seed: +$("#gSeed").value, screen: +$("#gScreen").value, keep: +$("#gKeep").value };
+  if (kind === "league") return { kind, name: $("#lName").value, archetypes: picked("#lArchetypes"), builders: +$("#lBuilders").value, generations: +$("#lGens").value, steps: +$("#lSteps").value, games: +$("#lGames").value, seed: +$("#lSeed").value, knowledge: $("#lKnowledge").checked, hof: $("#lHof").checked };
+  return { kind: "generate", name: $("#gName").value, archetypes: picked("#gArchetypes"), count: +$("#gCount").value, seed: +$("#gSeed").value, screen: +$("#gScreen").value, keep: +$("#gKeep").value };
 }
 function fmtDuration(secs) { return secs < 90 ? `${Math.round(secs)} s` : secs < 5400 ? `${Math.round(secs / 60)} min` : `${(secs / 3600).toFixed(1)} h`; }
 // A range collapses to one value when the ends are within 25% of each other.
@@ -437,21 +450,20 @@ function wireEstimate(kind, form, inputs) {
   return upd;
 }
 
-async function initLab(decks, strategies) {
+async function initLab(decks, arche) {
   if (window.CPTCG_BRIDGE) {                    // browser build: one thread — start small
     $("#tGames").value = 40; $("#lBuilders").value = 3; $("#lGens").value = 1; $("#lSteps").value = 1; $("#lGames").value = 20; $("#gCount").value = 12;
   }
   fillDeckChecklist(decks);
-  const gl = $("#gStrategies"); strategyChecklist(gl, strategies);
+  archetypeChecklist($("#gArchetypes"), arche);
   $("#gRun").onclick = async () => {
     const body = jobBody("generate");
-    if (!body.strategies.length) { alert("pick at least one builder personality"); return; }
+    if (!body.archetypes.length) { alert("tick the Explorer or at least one archetype"); return; }
     try { await api("/api/jobs", body); }
     catch (e) { alert(e.message); return; }
     pollJobs();
   };
-  const tl = $("#tDecks");
-  const sl = $("#lStrategies"); strategyChecklist(sl, strategies);
+  archetypeChecklist($("#lArchetypes"), arche);
   $("#tRun").onclick = async () => {
     const body = jobBody("tourney");
     if (body.decks.length < 2) { alert("pick at least two decks"); return; }
@@ -465,7 +477,7 @@ async function initLab(decks, strategies) {
   $("#tDecks").addEventListener("change", updT);
   $("#lRun").onclick = async () => {
     const body = jobBody("league");
-    if (!body.strategies.length) { alert("pick at least one builder personality"); return; }
+    if (!body.archetypes.length) { alert("tick the Explorer or at least one archetype"); return; }
     try { await api("/api/jobs", body); }
     catch (e) { alert(e.message); return; }
     pollJobs();
@@ -627,11 +639,12 @@ async function initBuilder(decks) {
     for (const s of [$("#deckMe"), $("#deckAi")]) if (![...s.options].some(o => o.value === r.path)) { const o = el("option", "", `${r.name} (${r.size}) — ${r.path}`); o.value = r.path; s.append(o); }
     alert(`saved ${r.path}`);
   };
-  const strategies = await api("/api/strategies");
-  const ssel = $("#bStrategy");
-  strategies.forEach(st => { const o = el("option", "", st.name); o.value = st.name; o.title = st.description; ssel.append(o); });
-  const showDesc = () => { const st = strategies.find(x => x.name === ssel.value); $("#bStrategyDesc").textContent = st ? st.description : ""; };
-  ssel.onchange = showDesc; showDesc();
+  // AI build: the Explorer, every archetype learned from play (built toward its centre), the old
+  // unopinionated builder and a random deck. The list is refreshed when a lab job finishes.
+  const ssel = $("#bArchetype");
+  const showDesc = () => { const b = (ARCHETYPES?.builders || []).find(x => x.id === ssel.value); $("#bArchetypeDesc").textContent = b ? b.description : ""; };
+  ssel.onchange = showDesc;
+  await refreshArchetypes();
   $("#bBuild").onclick = async () => {
     const keep = $("#bKeepLegends").checked && B.legends.length === 3;
     try { bLoadDeck(await api("/api/build", { mode: ssel.value, legends: keep ? B.legends : null, name: $("#bName").value })); }
@@ -671,7 +684,7 @@ async function init() {
   $("#cardSet").onchange = () => renderCardGrid($("#cardSearch").value);
   renderCardGrid("");
   await initBuilder(decks);
-  await initLab(decks.filter(d => d.ok), await api("/api/strategies"));
+  await initLab(decks.filter(d => d.ok), ARCHETYPES || await api("/api/archetypes"));
   document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
     document.querySelectorAll("nav button").forEach(x => x.classList.toggle("active", x === b));
     document.querySelectorAll("main.mode").forEach(m => m.classList.toggle("hidden", m.id !== b.dataset.mode));

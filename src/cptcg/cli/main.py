@@ -122,6 +122,13 @@ def cmd_tourney(args) -> None:
     report = render_report(t, title, reg)
     (out / "report.md").write_text(report, encoding="utf-8")
     print(report)
+    if args.archetypes:
+        from cptcg.deck.archetypes import ArchetypeStore
+        store = ArchetypeStore.load(args.archetypes, reg)
+        store.update_from_tournament(t, source=title)
+        store.refit()
+        store.save()
+        print(f"archetypes: {store.summary()}", file=sys.stderr)
     print(f"({time.perf_counter() - t0:.0f}s; written to {out}/)")
 
 
@@ -146,15 +153,18 @@ def cmd_build(args) -> None:
     reg = load_default()
     rng = Pcg32(args.seed, seq=9)
     legends = args.legends.split(",") if args.legends else None
-    if args.strategy == "legacy":
+    if args.archetype == "legacy":
         deck = heuristic_deck(reg, legends, rng, name=args.name)
     else:
-        from cptcg.deck.strategies import get_strategy
+        from cptcg.deck.archetypes import ArchetypeStore
+        from cptcg.deck.strategies import get_builder
         knowledge = None
         if args.knowledge:
             from cptcg.deck.knowledge import Knowledge
             knowledge = Knowledge.load(args.knowledge, reg)
-        deck = get_strategy(args.strategy).build(reg, legends, rng, knowledge=knowledge, name=args.name)
+        store = ArchetypeStore.load(args.archetypes, reg) if args.archetypes else None
+        deck = get_builder(args.archetype, store).build(reg, legends, rng, knowledge=knowledge, name=args.name)
+    print(f"builder: {deck.meta.get('archetype', args.archetype)}")
     print(f"start: {deck.name}  legends {list(deck.legends)}")
     for cid, n in sorted(deck.counts().items()):
         print(f"  {n}x {cid}")
@@ -182,17 +192,21 @@ def cmd_league(args) -> None:
     from cptcg.deck.builder import league
     reg = load_default()
     t0 = time.perf_counter()
-    strategies = args.strategies.split(",") if args.strategies else None
+    archetypes = "legacy" if args.archetypes == "legacy" else (args.archetypes.split(",") if args.archetypes else None)
     for gen, t, decks in league(reg, args.builders, args.generations, args.steps, seed=args.seed,
                                 agent=args.agent, workers=args.jobs, games_per_pair=args.games,
                                 out_dir=args.out, progress=lambda m: print("  " + m, file=sys.stderr),
-                                strategies=strategies, knowledge_path=args.knowledge,
-                                hall_of_fame_path=args.hof, hof_opponents=args.hof_opponents):
+                                archetypes=archetypes, knowledge_path=args.knowledge,
+                                hall_of_fame_path=args.hof, hof_opponents=args.hof_opponents,
+                                archetypes_path=args.archetype_store or None):
         order = t.standings()
         bt = t.bt()
         print(f"generation {gen} ({time.perf_counter() - t0:.0f}s): " +
-              ", ".join(f"{decks[i].name} {bt[i]:.2f}" for i in order))
+              ", ".join(f"{decks[i].name} ({decks[i].meta.get('archetype', '?')}) {bt[i]:.2f}" for i in order))
     print(f"reports in {args.out}/genN/report.md")
+    if args.archetype_store:
+        from cptcg.deck.archetypes import ArchetypeStore
+        print(f"archetypes ({args.archetype_store}): {ArchetypeStore.load(args.archetype_store, reg).summary()}")
 
 
 def cmd_generate(args) -> None:
@@ -203,12 +217,14 @@ def cmd_generate(args) -> None:
     if args.knowledge:
         from cptcg.deck.knowledge import Knowledge
         knowledge = Knowledge.load(args.knowledge, reg)
-    strategies = args.strategies.split(",") if args.strategies else None
+    from cptcg.deck.archetypes import ArchetypeStore
+    archetypes = args.archetypes.split(",") if args.archetypes else None
     legends = args.legends.split(",") if args.legends else None
+    store = ArchetypeStore.load(args.archetype_store, reg) if args.archetype_store else None
     t0 = time.perf_counter()
-    batch = generate_decks(reg, args.count, strategies, seed=args.seed, knowledge=knowledge, legends=legends,
+    batch = generate_decks(reg, args.count, archetypes, seed=args.seed, knowledge=knowledge, legends=legends,
                            max_similarity=args.max_similarity, prefix=args.prefix,
-                           progress=lambda m: print("  " + m, file=sys.stderr))
+                           progress=lambda m: print("  " + m, file=sys.stderr), store=store)
     decks = batch.decks
     print(f"{len(decks)} decks, {len(batch.triples)} Legend triples, {len(batch.legends)} Legends used, "
           f"{batch.rejected_similar} near-duplicates rejected ({time.perf_counter() - t0:.0f}s)")
@@ -222,16 +238,25 @@ def cmd_generate(args) -> None:
         decks = [r.deck for r in ranked[:args.keep]] if args.keep else [r.deck for r in ranked]
         Path(args.out).mkdir(parents=True, exist_ok=True)
         with open(Path(args.out) / "screen.json", "w", encoding="utf-8") as f:
-            _json.dump([{"name": r.deck.name, "wins": r.wins, "games": r.games, "strategy": r.deck.meta.get("strategy")}
+            _json.dump([{"name": r.deck.name, "wins": r.wins, "games": r.games, "archetype": r.deck.meta.get("archetype")}
                         for r in ranked], f, indent=1)
     paths = save_batch(decks, args.out)
     print(f"saved {len(paths)} decks to {args.out}/")
 
 
-def cmd_strategies(args) -> None:
-    from cptcg.deck.strategies import all_strategies, blurb
-    for st in all_strategies():
-        print(f"{st.name:9s} {blurb(st.describe())}")
+def cmd_archetypes(args) -> None:
+    """List the archetypes learned from play so far, with their record."""
+    from cptcg.deck.archetypes import MIN_DECKS, ArchetypeStore
+    from cptcg.deck.strategies import Explorer, blurb
+    reg = load_default()
+    store = ArchetypeStore.load(args.store, reg)
+    if not store.archetypes:
+        print(f"{store.summary()}. Archetypes are learned from tournaments and leagues; the store needs "
+              f"{MIN_DECKS} decks that have played (run `cptcg league` or `cptcg tourney --archetypes {args.store}`).")
+    for a in store.ranked():
+        print(f"{a.name} [{a.id}]  won {100 * a.win_rate:.0f}% of {a.games} games, strength {a.bt:.2f}, {len(a.members)} decks")
+        print(f"    {a.description}")
+    print(f"{'explorer':9s} {blurb(Explorer().describe())}")
     print(f"{'legacy':9s} The original unopinionated builder: curve, type mix and sell-tag floor only.")
     if args.knowledge:
         from cptcg.deck.knowledge import Knowledge
@@ -284,6 +309,8 @@ def main(argv=None) -> None:
     p.add_argument("--batch", type=int, default=40)
     p.add_argument("--allow-unverified", action="store_true")
     p.add_argument("--allow-unscripted", action="store_true")
+    p.add_argument("--archetypes", default="out/archetypes.json",
+                   help="archetype store to teach with this run's decks ('' to skip)")
     p.set_defaults(fn=cmd_tourney)
 
     p = sub.add_parser("report", help="re-render the Markdown report of a saved tournament.json")
@@ -304,8 +331,9 @@ def main(argv=None) -> None:
     p.add_argument("--batches", type=int, default=3)
     p.add_argument("--delta", type=float, default=0.1)
     p.add_argument("--out", default="out/built.json")
-    p.add_argument("--strategy", default="balanced",
-                   help="builder personality: aggro, control, economy, gig, synergy, balanced, or legacy")
+    p.add_argument("--archetype", default="explorer",
+                   help="what to build toward: 'explorer' (invent a shape), an archetype id from the store, or 'legacy'")
+    p.add_argument("--archetypes", default="out/archetypes.json", help="archetype store the ids come from")
     p.add_argument("--knowledge", help="learned card values (out/knowledge.json from a league) to build with")
     p.set_defaults(fn=cmd_build)
 
@@ -318,7 +346,10 @@ def main(argv=None) -> None:
     p.add_argument("--agent", default="heuristic")
     p.add_argument("-j", "--jobs", type=int, default=None)
     p.add_argument("--out", default="out/league")
-    p.add_argument("--strategies", help="comma-separated personalities to cycle (default: all)")
+    p.add_argument("--archetypes", help="comma-separated archetype ids (or 'explorer') to cycle; default: automatic "
+                   "from the store, one Explorer per four builders; 'legacy' = the old unopinionated builder")
+    p.add_argument("--archetype-store", default="out/archetypes.json",
+                   help="archetype store to read and teach ('' for an in-memory one)")
     p.add_argument("--knowledge", help="path of the learned card-value store to read and update")
     p.add_argument("--hof", help="path of the hall of fame; champions of past leagues join the field")
     p.add_argument("--hof-opponents", type=int, default=2)
@@ -326,7 +357,9 @@ def main(argv=None) -> None:
 
     p = sub.add_parser("generate", help="build many different decks, optionally screen them and keep the best")
     p.add_argument("--count", type=int, default=20)
-    p.add_argument("--strategies", help="comma-separated personalities to cycle (default: all six)")
+    p.add_argument("--archetypes", help="comma-separated archetype ids (or 'explorer') to cycle "
+                   "(default: every learned archetype plus an Explorer)")
+    p.add_argument("--archetype-store", default="out/archetypes.json", help="archetype store the ids come from")
     p.add_argument("--legends", help="pin every deck to these three Legend ids")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--knowledge", help="learned card values to build with")
@@ -340,9 +373,10 @@ def main(argv=None) -> None:
     p.add_argument("--out", default="data/decks/generated")
     p.set_defaults(fn=cmd_generate)
 
-    p = sub.add_parser("strategies", help="list the deck-builder personalities")
+    p = sub.add_parser("archetypes", help="list the archetypes learned from play, with their win rates")
+    p.add_argument("--store", default="out/archetypes.json", help="archetype store to read")
     p.add_argument("--knowledge", help="also summarise a learned card-value store")
-    p.set_defaults(fn=cmd_strategies)
+    p.set_defaults(fn=cmd_archetypes)
 
     p = sub.add_parser("serve", help="web client: play vs AI, watch replays, browse the lab")
     p.add_argument("--host", default="127.0.0.1")

@@ -1,20 +1,26 @@
-"""Opinionated deck-building personalities.
+"""Deck builders that learn what a deck is from play.
 
-``builder.heuristic_deck`` is one hand-weighted opinion about what a good deck looks like. A
-*strategy* is a different opinion with a name: it ranks the legal pool by its own beliefs
-about how games are won, picks Legends that suit it, and — when a ``Knowledge`` store is
-supplied — blends in what measured play has shown about each card. All personalities share
-the same greedy filler (curve, type quotas, sell-tag floor), so the decks differ because the
-*scoring* differs, not because of a different construction algorithm.
+``builder.heuristic_deck`` is one hand-weighted opinion about what a good deck looks like. The
+builders here have no opinion of their own about how the game is won: they build toward a
+*target fingerprint* — the shape numbers of ``deck/archetypes.py`` (average cost, type shares,
+sell share, counts of blockers / removal / Gig cards / economy effects, ...) — and blend in what
+measured play has shown about each card when a ``Knowledge`` store is supplied.
+
+- ``Explorer`` draws its target at random inside the range the legal pool allows. It is what a
+  league runs while no archetypes have been learned yet, and one builder in four keeps
+  exploring afterwards so new kinds of deck can still appear.
+- ``Learned`` targets the centre of an archetype the store found among decks that have
+  actually played, and chooses Legends among that archetype's members, weighted by how they
+  did.
 
 Why feature extraction rather than card lists: the pool is 146 cards today and will grow. Each
 card's rules text is reduced once to a small ``Features`` vector (does it remove Units? move
-Gigs? ready Eddies?) and every personality is a set of weights over those features, so a new
-set gets a first-cut evaluation for free and a personality is a dozen readable numbers.
+Gigs? ready Eddies?), so the fingerprint of a deck — and a new set's cards — come for free.
 """
 
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass, field
 from functools import lru_cache
@@ -22,8 +28,9 @@ from functools import lru_cache
 from cptcg.cards.registry import CardDef, Registry
 from cptcg.core.enums import CardType, Keyword
 from cptcg.core.rng import Pcg32
-from cptcg.deck.builder import BuildPrefs, card_score, heuristic_deck, legal_pool, random_legends
+from cptcg.deck.builder import legal_pool, random_legends
 from cptcg.deck.decklist import Decklist
+from cptcg.deck.validate import validate
 
 UNIT, PROGRAM, GEAR = CardType.UNIT, CardType.PROGRAM, CardType.GEAR
 
@@ -83,7 +90,7 @@ class Features:
 
     @property
     def gig(self) -> int:
-        """Anything Gig-shaped: the GigManipulation personality's whole world view."""
+        """Anything Gig-shaped: moves a die, pays off a die value, or steals extra."""
         return self.gig_move + self.gig_payoff + self.gig_steal
 
 
@@ -123,7 +130,7 @@ def context_key(reg: Registry, legends) -> str:
 # ------------------------------------------------------------------ build context
 @dataclass
 class BuildCtx:
-    """Everything a strategy may look at while scoring one card for one deck."""
+    """Everything a builder may look at while scoring one card for one deck."""
     reg: Registry
     legends: list[CardDef]
     pool: list[CardDef]
@@ -138,32 +145,23 @@ def _cost(d: CardDef) -> int:
     return d.cost or 1
 
 
-def _ppc(d: CardDef) -> float:
-    """Power per Eddie — the crude unit of tempo."""
-    return (d.power or 0) / _cost(d)
-
-
-# ------------------------------------------------------------------ the interface
+# ------------------------------------------------------------------ the shared machinery
 class BuilderStrategy:
-    """A named opinion about deck construction. Subclasses set ``prefs`` (the filler's shape
-    targets) and override ``score_card`` and ``legend_fit``; everything else is shared."""
+    """What every builder shares: the build context (legal pool, Legend tags, theme weights,
+    learned values), the blend of learned card value and tag theme into a per-card score, and
+    the greedy fill toward a target fingerprint. Subclasses decide the target and the Legends."""
 
     name: str = "base"
-    prefs: BuildPrefs = BuildPrefs()
-    knowledge_w: float = 6.0     # IWD is ±0.1-0.3 once shrunk; static scores are ~0-6
+    knowledge_w: float = 6.0     # shrunk IWD is ±0.1-0.3; closeness gains are ~0-2
+    theme_w: float = 0.25        # a card sharing a tag its Legends care about, per weighted tag
+    closeness_w: float = 4.0     # squared distance to the target in SD-like units, scaled by deck size so far
     noise: float = 0.35
+    generated: str = "builder"
 
     def describe(self) -> str:
         return (self.__doc__ or "").strip()
 
-    def score_card(self, d: CardDef, ctx: BuildCtx) -> float:  # pragma: no cover - abstract
-        raise NotImplementedError
-
-    def legend_fit(self, legends: list[CardDef], reg: Registry) -> float:
-        """How much this personality likes a Legend triple, before looking at the pool."""
-        return 0.0
-
-    # -------------------------------------------------------------- shared machinery
+    # -------------------------------------------------------------- context
     def make_ctx(self, reg: Registry, legends: list[str], knowledge=None) -> BuildCtx:
         ldefs = [reg.get(l) for l in legends]
         pool = legal_pool(reg, legends)
@@ -176,54 +174,104 @@ class BuilderStrategy:
         ctx.theme = theme_tags(ctx)
         return ctx
 
-    def scorer(self, ctx: BuildCtx, rng: Pcg32):
-        """The full per-card score: belief + learned value + a little noise so two builds of
-        the same personality on the same Legends are not identical."""
+    def static_score(self, d: CardDef, ctx: BuildCtx) -> float:
+        """The part of a card's score that does not depend on what is already in the deck:
+        learned value (when the store knows the card) plus tag theme."""
+        s = self.theme_w * (sum(ctx.theme.get(t, 0.0) for t in d.tags) + sum(ctx.theme.get(t, 0.0) for t in features(d).tag_refs))
         kn = ctx.knowledge
+        if kn is not None:
+            v = kn.value(d.id, ctx.context)
+            if v is not None:
+                s += self.knowledge_w * v
+        return s
 
-        def score(d: CardDef) -> float:
-            s = self.score_card(d, ctx)
-            if kn is not None:
-                v = kn.value(d.id, ctx.context)
-                if v is not None:
-                    s += self.knowledge_w * v
-            return s + self.noise * (rng.below(1000) / 1000 - 0.5)
-        return score
+    # -------------------------------------------------------------- the fill
+    def fill_toward(self, ctx: BuildCtx, target: dict[str, float], scale: dict[str, float], rng: Pcg32,
+                    size: int = 40) -> dict[str, int]:
+        """Greedy: add the card (at most three copies) that leaves the projected fingerprint
+        closest to ``target`` — squared distance, each feature in units of ``scale`` — plus its
+        static score and a little noise so two builds differ. Returns card counts."""
+        from cptcg.deck.archetypes import FILL_FEATURES, _IDX_POWER, _IDX_UNIT, _KIND, _VEC, _VEC_OF, card_vector
+        pool = ctx.pool
+        vecs = [card_vector(d, ctx.ltags) for d in pool]
+        static = [self.static_score(d, ctx) for d in pool]
+        keys = list(FILL_FEATURES)
+        tgt = [target.get(k, 0.0) for k in keys]
+        sc = [max(scale.get(k, 1.0), 1e-6) for k in keys]
+        kind = [_KIND[k] for k in keys]
+        col = [_VEC_OF[k] for k in keys]
+        totals = [0.0] * len(_VEC)
+        counts: dict[str, int] = {}
+        n = 0
+        while n < size:
+            best, best_s = -1, -1e18
+            m = n + 1
+            for j, d in enumerate(pool):
+                if counts.get(d.id, 0) >= 3:
+                    continue
+                v = vecs[j]
+                units = totals[_IDX_UNIT] + v[_IDX_UNIT]
+                dist = 0.0
+                for i, k in enumerate(kind):
+                    if k == "mean":
+                        val = (totals[col[i]] + v[col[i]]) / m
+                    elif k == "count":
+                        val = (totals[col[i]] + v[col[i]]) * size / m
+                    else:
+                        val = (totals[_IDX_POWER] + v[_IDX_POWER]) / units if units else tgt[i]
+                    dist += ((val - tgt[i]) / sc[i]) ** 2
+                # One card moves a deck of m cards by ~1/m, so the squared distance is scaled by m
+                # to keep the closeness term the same size from the first pick to the last.
+                s = -self.closeness_w * m * dist + static[j] + self.noise * (rng.below(1000) / 1000 - 0.5)
+                if s > best_s:
+                    best, best_s = j, s
+            if best < 0:
+                break
+            d = pool[best]
+            counts[d.id] = counts.get(d.id, 0) + 1
+            for i, x in enumerate(vecs[best]):
+                totals[i] += x
+            n += 1
+        return counts
+
+    def target_for(self, ctx: BuildCtx, rng: Pcg32) -> tuple[dict[str, float], dict[str, float]]:  # pragma: no cover
+        raise NotImplementedError
+
+    def meta(self, ctx: BuildCtx) -> dict:
+        return {"generated": self.generated, "archetype": "exploring", "context": ctx.context}
 
     def build(self, reg: Registry, legends: list[str] | None, rng: Pcg32, knowledge=None,
-              name: str | None = None) -> Decklist:
-        legends = legends or self.choose_legends(reg, rng)
+              name: str | None = None, used=None) -> Decklist:
+        """A legal deck. ``legends`` pins the triple (a hand-picked one from the BUILD page);
+        otherwise ``choose_legends`` picks, with ``used`` (an object with ``triples`` and
+        ``legends`` use counts, e.g. ``generate.Batch``) as a novelty penalty."""
+        legends = legends or self.choose_legends(reg, rng, used)
         ctx = self.make_ctx(reg, legends, knowledge)
-        return heuristic_deck(reg, legends, rng, self.prefs, name=name or self.name,
-                              score_fn=self.scorer(ctx, rng), generated="strategy",
-                              strategy=self.name, context=ctx.context)
+        target, scale = self.target_for(ctx, rng)
+        counts = self.fill_toward(ctx, target, scale, rng)
+        deck = Decklist.from_counts(name or self.name, legends, counts, **self.meta(ctx))
+        v = validate(deck, reg)
+        if not v.ok:
+            raise RuntimeError(f"builder produced an illegal deck: {v}")
+        return deck
 
-    def pool_quality(self, reg: Registry, legends: list[str], top: int = 24) -> float:
-        """Mean static score of the best ``top`` legal cards: a Legend triple is only as good
-        as the deck it lets this personality build."""
-        ctx = self.make_ctx(reg, legends)
-        scores = sorted((self.score_card(d, ctx) for d in ctx.pool), reverse=True)
-        if not scores:
-            return -10.0
-        scores = scores[:top]
-        return sum(scores) / len(scores)
-
-    def choose_legends(self, reg: Registry, rng: Pcg32, samples: int = 40) -> list[str]:
-        """Sample Legend triples and keep the one with the best ``legend_fit`` + pool quality.
-        Sampling (not enumeration) keeps this fast and keeps the league varied."""
-        best, best_fit = None, -1e9
+    def choose_legends(self, reg: Registry, rng: Pcg32, used=None, samples: int = 6) -> list[str]:
+        """A random Legend triple with a deep pool, avoiding the triples and Legends ``used``
+        already counts (so a batch spreads over the Legend space)."""
+        best, best_pen = None, 1e9
         for _ in range(samples):
             ids = random_legends(reg, rng)
-            fit = (legend_fit(self, [reg.get(i) for i in ids], reg) + self.pool_quality(reg, ids)
-                   + 0.4 * rng.below(1000) / 1000)
-            if fit > best_fit:
-                best, best_fit = ids, fit
+            pen = _novelty_penalty(ids, used) + rng.below(1000) / 1000
+            if pen < best_pen:
+                best, best_pen = ids, pen
         return list(best)
 
 
-def legend_fit(strategy: BuilderStrategy, legends: list[CardDef], reg: Registry | None = None) -> float:
-    """Module-level spelling of ``strategy.legend_fit`` (the personality's Legend preference)."""
-    return strategy.legend_fit(legends, reg)
+def _novelty_penalty(ids: list[str], used) -> float:
+    if used is None:
+        return 0.0
+    key = "|".join(sorted(ids))
+    return 2.0 * used.triples.get(key, 0) + 0.35 * sum(used.legends.get(i, 0) for i in ids)
 
 
 def theme_tags(ctx: BuildCtx) -> dict[str, float]:
@@ -248,199 +296,153 @@ def theme_tags(ctx: BuildCtx) -> dict[str, float]:
     return theme
 
 
-# ------------------------------------------------------------------ personalities
-class Aggro(BuilderStrategy):
-    """Race. The game is decided by Gig steals and a Unit steals two at power 10, so the deck
-    wants cheap power on the field early, ways to attack the turn a Unit lands, and nothing
-    that sits around. Blockers and card draw are someone else's problem."""
+# ------------------------------------------------------------------ the builders
+class Explorer(BuilderStrategy):
+    """Explores: draws a random target shape — each feature sampled inside the range the legal
+    pool allows — and builds toward it, so a batch of Explorers spreads over the space of
+    possible decks. This is what a league runs before any archetype has been learned, and one
+    builder in four keeps exploring afterwards so new kinds of deck can still appear."""
 
-    name = "aggro"
-    prefs = BuildPrefs(unit_share=0.65, program_share=0.15, gear_share=0.20, sell_min=0.35,
-                       curve=(0.16, 0.30, 0.26, 0.14, 0.08, 0.04, 0.02))
+    name = "explorer"
+    generated = "explorer"
+    margin = 0.1     # stay away from the unreachable corners of the range
+    focus = 5        # features this build really pushes on; the rest are held loosely
+    loose = 0.15     # weight of a non-focus feature in the distance
 
-    def score_card(self, d: CardDef, ctx: BuildCtx) -> float:
-        f = features(d)
-        cost = _cost(d)
-        s = 0.3 * f.draw + 0.2 * len(d.tags & ctx.ltags) + 1.0 * f.haste + 0.6 * f.ready + 0.5 * f.unblockable
-        if d.type is UNIT:
-            s += 1.6 * _ppc(d) - 0.45 * max(0, cost - 3)     # a 6-drop lands on turn 6 at best
-            if (d.power or 0) >= 10:
-                s += 1.0                                      # steals two Gigs per swing
-            if cost <= 3:
-                s += 0.5
-            if not d.power:
-                s -= 1.5
-            if f.cant_attack:
-                s -= 1.5
-        elif d.type is GEAR:
-            s += 1.0 * _ppc(d) + 0.2 + (0.4 if (d.power or 0) >= 2 and cost <= 2 else 0)
+    def target_for(self, ctx: BuildCtx, rng: Pcg32) -> tuple[dict[str, float], dict[str, float]]:
+        """Every feature uniform inside the pool's range, except that the features which cannot
+        disagree are drawn together: one "cost tilt" sets average cost, the cheap share and the
+        expensive share, and the three type shares are one random composition that sums to 1.
+        Seventeen independent targets mostly contradict each other and a least-squares fill
+        would settle in the middle of everything, so each build picks ``focus`` features to
+        push on at full weight and holds the others loosely."""
+        from cptcg.deck.archetypes import FILL_FEATURES, pool_ranges
+        lo, hi = pool_ranges(ctx.pool, ctx.ltags)
+        m = self.margin
+        u = {k: m + (1 - 2 * m) * rng.below(1000) / 1000 for k in lo}
+        tilt = u["mean_cost"]
+        u["top_share"], u["cheap_share"] = tilt, 1.0 - tilt
+        mix = [rng.below(1000) + 1 for _ in range(3)]
+        tot = sum(mix)
+        groups = {"mean_cost": "cost", "cheap_share": "cost", "top_share": "cost",
+                  "unit_share": "types", "program_share": "types", "gear_share": "types"}
+        names = sorted({groups.get(k, k) for k in FILL_FEATURES})
+        chosen: set[str] = set()
+        while len(chosen) < min(self.focus, len(names)):
+            chosen.add(names[rng.below(len(names))])
+        target, scale = {}, {}
+        for k in lo:
+            span = hi[k] - lo[k]
+            target[k] = lo[k] + u[k] * span
+            weight = 1.0 if groups.get(k, k) in chosen else self.loose
+            scale[k] = max(span, 1e-6) / weight
+        for k, w in zip(("unit_share", "program_share", "gear_share"), mix):
+            target[k] = min(hi[k], max(lo[k], w / tot))
+        return target, scale
+
+
+class Learned(BuilderStrategy):
+    """Builds toward an archetype the store learned from play: the card score is its learned
+    value plus how much it moves the deck toward the archetype's centre, and the Legends come
+    from the archetype's own members, weighted by how those decks did."""
+
+    generated = "learned"
+    mutate_rate = 0.2    # one Legend of a member triple swapped for a fresh one, so nearby triples get tried
+
+    def __init__(self, archetype, store) -> None:
+        self.archetype = archetype
+        self.store = store
+        self.name = archetype.id
+
+    def describe(self) -> str:
+        return self.archetype.description
+
+    def target_for(self, ctx: BuildCtx, rng: Pcg32) -> tuple[dict[str, float], dict[str, float]]:
+        from cptcg.deck.archetypes import FILL_FEATURES
+        return {k: self.archetype.centroid.get(k, 0.0) for k in FILL_FEATURES}, self.store.scale()
+
+    def meta(self, ctx: BuildCtx) -> dict:
+        return {"generated": self.generated, "archetype": self.archetype.name, "archetype_id": self.archetype.id,
+                "context": ctx.context}
+
+    def choose_legends(self, reg: Registry, rng: Pcg32, used=None, samples: int = 6) -> list[str]:
+        """A member triple, drawn with probability proportional to its win rate (Laplace-smoothed)
+        and divided by how often the batch has used it; sometimes with one Legend swapped."""
+        records: dict[str, dict] = {}
+        for d in self.store.members(self.archetype):
+            key = "|".join(sorted(d.legends))
+            r = records.setdefault(key, {"legends": list(d.legends), "wins": 0, "games": 0})
+            r["wins"] += d.wins
+            r["games"] += d.games
+        if not records:
+            return super().choose_legends(reg, rng, used, samples)
+        keys = sorted(records)
+        weights = []
+        for k in keys:
+            r = records[k]
+            w = (r["wins"] + 1) / (r["games"] + 2)
+            weights.append(w / (1.0 + _novelty_penalty(r["legends"], used)))
+        total = sum(weights)
+        pick = rng.below(1_000_000) / 1_000_000 * total
+        acc, chosen = 0.0, keys[-1]
+        for k, w in zip(keys, weights):
+            acc += w
+            if acc >= pick:
+                chosen = k
+                break
+        legends = list(records[chosen]["legends"])
+        if rng.below(1000) < self.mutate_rate * 1000:
+            legends = _swap_one_legend(reg, legends, rng) or legends
+        return legends
+
+
+def _swap_one_legend(reg: Registry, legends: list[str], rng: Pcg32) -> list[str] | None:
+    """One Legend replaced by another (unique names kept) when the pool stays deep enough."""
+    from cptcg.deck.builder import usable
+    legs = [d for d in usable(reg) if d.type is CardType.LEGEND]
+    slot = rng.below(3)
+    others = {reg.get(l).name for i, l in enumerate(legends) if i != slot}
+    cands = [d for d in legs if d.name not in others and d.id != legends[slot]]
+    for _ in range(10):
+        new = list(legends)
+        new[slot] = rng.choice(cands).id
+        if len(legal_pool(reg, new)) >= 20:
+            return new
+    return None
+
+
+# ------------------------------------------------------------------ choosing builders
+EXPLORER_EVERY = 4       # in an automatic league one builder in four explores
+
+
+def get_builder(spec, store=None) -> BuilderStrategy:
+    """``"explorer"`` (or an ``Explorer``/``Learned`` object) or the id / name of an archetype
+    in ``store``."""
+    if isinstance(spec, BuilderStrategy):
+        return spec
+    key = str(spec).strip().lower()
+    if key in ("explorer", "exploring", ""):
+        return Explorer()
+    arch = store.get(key) if store is not None else None
+    if arch is None:
+        known = ", ".join(a.id for a in store.archetypes) if store is not None and store.archetypes else "none learned yet"
+        raise KeyError(f"unknown archetype {spec!r}; choose 'explorer' or one of: {known}")
+    return Learned(arch, store)
+
+
+def builders_for(store, n: int, every: int = EXPLORER_EVERY) -> list[BuilderStrategy]:
+    """The automatic line-up of a league: archetypes by win rate, cycled, with every
+    ``every``-th builder an Explorer; all Explorers while the store has no clusters."""
+    ranked = store.ranked() if store is not None else []
+    out: list[BuilderStrategy] = []
+    j = 0
+    for i in range(n):
+        if not ranked or (every and (i + 1) % every == 0):
+            out.append(Explorer())
         else:
-            s += 0.3 + 0.8 * f.pump + 0.4 * f.gig_steal + 0.3 * f.removal - 0.4 * max(0, cost - 3)
-        return s
-
-    def legend_fit(self, legends: list[CardDef], reg: Registry) -> float:
-        fit = 0.0
-        for l in legends:
-            f = features(l)
-            if Keyword.GO_SOLO in l.keywords and l.cost is not None:
-                fit += (2.0 if l.cost <= 6 else 1.0) + _ppc(l)
-            fit += 0.7 * (f.pump + f.haste - (1 if Keyword.GO_SOLO in l.keywords else 0))
-        return fit
-
-
-class Control(BuilderStrategy):
-    """Deny. Ready Units can't be attacked and only BLOCKER/QUICK interrupt a steal, so the deck
-    wants blockers, removal and reactions to keep its Gigs, then wins in Overtime by holding
-    the majority when the 14th turn ends — or with a late bomb once the board is clear."""
-
-    name = "control"
-    prefs = BuildPrefs(unit_share=0.45, program_share=0.35, gear_share=0.20, sell_min=0.50,
-                       curve=(0.06, 0.18, 0.24, 0.20, 0.14, 0.10, 0.08))
-
-    def score_card(self, d: CardDef, ctx: BuildCtx) -> float:
-        f = features(d)
-        cost = _cost(d)
-        blocker = Keyword.BLOCKER in d.keywords
-        quick = Keyword.QUICK in d.keywords
-        s = 0.4 * f.draw + 0.2 * len(d.tags & ctx.ltags) + 1.2 * f.removal + 0.8 * f.debuff + 0.8 * f.protect
-        if d.type is UNIT:
-            s += 0.8 * _ppc(d) + (1.5 if blocker else 0) + (1.0 if quick else 0)
-            s += 0.15 * min(cost, 7)                          # big bodies win Overtime fights
-            if (d.power or 0) >= 8 and cost >= 6:
-                s += 0.5                                      # the finisher
-            if not d.power and not blocker and not f.removal:
-                s -= 0.8
-            if f.cant_attack and not blocker:
-                s -= 0.5
-        elif d.type is PROGRAM:
-            s += 0.6 + (0.8 if quick else 0)
-        else:
-            s += 0.5 * _ppc(d) + (1.2 if blocker else 0) + (0.8 if quick else 0)
-        return s
-
-    def legend_fit(self, legends: list[CardDef], reg: Registry) -> float:
-        fit = 0.0
-        for l in legends:
-            f = features(l)
-            fit += 1.5 * ((Keyword.QUICK in l.keywords) + (Keyword.BLOCKER in l.keywords))
-            fit += 1.0 * (f.removal + f.debuff) + 0.7 * f.protect + 0.5 * f.draw
-        return fit
-
-
-class Economy(BuilderStrategy):
-    """Eddies win. Selling one card a turn is the only engine, so every card should be
-    sellable (Programs and Gear all are; almost no Unit is), and the few Units should be bombs
-    the extra Eddies pay for. Anything that readies an Eddie, calls a Legend for free or plays
-    for a discount is a second income."""
-
-    name = "economy"
-    prefs = BuildPrefs(unit_share=0.35, program_share=0.40, gear_share=0.25, sell_min=0.60,
-                       curve=(0.14, 0.20, 0.16, 0.12, 0.12, 0.14, 0.12))
-
-    def score_card(self, d: CardDef, ctx: BuildCtx) -> float:
-        f = features(d)
-        cost = _cost(d)
-        s = (1.5 if d.sell_tag else 0) + 1.2 * f.eddies + 1.0 * f.call + 0.9 * f.discount + 0.7 * f.draw
-        s += 0.2 * len(d.tags & ctx.ltags)
-        if d.type is UNIT:
-            s += 0.7 * _ppc(d)
-            if cost >= 6 and (d.power or 0) >= 8:
-                s += 1.2 + (0.3 if cost >= 7 else 0)          # what the money is for
-            if cost <= 2:
-                s -= 0.3
-            if not d.power and not (f.eddies or f.draw or f.call):
-                s -= 0.8
-        elif d.type is PROGRAM:
-            s += 0.4
-        else:
-            s += 0.3 + 0.4 * _ppc(d)
-        return s
-
-    def legend_fit(self, legends: list[CardDef], reg: Registry) -> float:
-        fit = 0.0
-        for l in legends:
-            f = features(l)
-            if "call:" in rules_text(l):
-                fit += 1.5                                    # a cheap, useful CALL
-            fit += 1.5 * f.eddies + 1.0 * f.discount + 0.8 * f.call + 0.5 * f.draw
-        return fit
-
-
-class GigManipulation(BuilderStrategy):
-    """The dice are the game. Street Cred, value-pairs, min/max Gigs and 8+ values all key off
-    die faces you can adjust, swap or set, and several cards steal an extra Gig or draw when the
-    faces line up. The deck stacks movers and payoffs and lets the Units be average."""
-
-    name = "gig"
-    prefs = BuildPrefs(unit_share=0.50, program_share=0.30, gear_share=0.20, sell_min=0.45)
-
-    def score_card(self, d: CardDef, ctx: BuildCtx) -> float:
-        f = features(d)
-        s = 1.5 * f.gig_move + 1.2 * f.gig_payoff + 1.3 * f.gig_steal + 0.5 * f.cred + 0.4 * f.draw
-        s += 0.2 * len(d.tags & ctx.ltags)
-        if d.type is UNIT:
-            s += 0.8 * _ppc(d) + (0.8 if (d.power or 0) >= 10 else 0)
-            if not d.power and not f.gig:
-                s -= 0.8
-            if f.cant_attack:
-                s -= 0.8
-        elif d.type is PROGRAM:
-            s += 0.4
-        else:
-            s += 0.3 + 0.4 * _ppc(d)
-        return s
-
-    def legend_fit(self, legends: list[CardDef], reg: Registry) -> float:
-        return sum(2.0 * features(l).gig_move + 1.5 * features(l).gig_payoff + 1.5 * features(l).gig_steal
-                   + 0.5 * features(l).cred for l in legends)
-
-
-class Synergy(BuilderStrategy):
-    """Tribes. Legends and cards name tags — ARASAKA Units attack harder under Saburo, BRAINDANCE
-    Programs pump under Judy, CYBERWARE Gear is cheap under Viktor — so the deck maximises tag
-    overlap with its Legends and between its own cards, and picks Legends that share tags."""
-
-    name = "synergy"
-    prefs = BuildPrefs(unit_share=0.55, program_share=0.25, gear_share=0.20, sell_min=0.40)
-
-    def score_card(self, d: CardDef, ctx: BuildCtx) -> float:
-        f = features(d)
-        theme = ctx.theme
-        s = 1.2 * sum(theme.get(t, 0.0) for t in d.tags) + 1.5 * sum(theme.get(t, 0.0) for t in f.tag_refs)
-        s += 0.3 * f.draw
-        if d.type is UNIT:
-            s += 0.8 * _ppc(d) - (0.6 if not d.power else 0) - (0.6 if f.cant_attack else 0)
-        elif d.type is PROGRAM:
-            s += 0.5
-        else:
-            s += 0.3 + 0.4 * _ppc(d)
-        return s
-
-    def legend_fit(self, legends: list[CardDef], reg: Registry) -> float:
-        fit = 0.0
-        for i in range(3):
-            for j in range(i + 1, 3):
-                a, b = legends[i], legends[j]
-                fit += 1.5 * len(a.tags & b.tags) + (0.8 if a.color is b.color else 0)
-                fit += 1.0 * (len(features(a).tag_refs & b.tags) + len(features(b).tag_refs & a.tags))
-        return fit
-
-
-class Balanced(BuilderStrategy):
-    """The original hand-weighted heuristic, kept as the control group: a bit of everything,
-    no thesis. If a personality can't beat this, its thesis is wrong."""
-
-    name = "balanced"
-    prefs = BuildPrefs()
-
-    def score_card(self, d: CardDef, ctx: BuildCtx) -> float:
-        prefs = BuildPrefs(noise=0.0)
-        return card_score(d, ctx.legends, prefs, Pcg32(0))
-
-
-PERSONALITIES: dict[str, type[BuilderStrategy]] = {
-    cls.name: cls for cls in (Aggro, Control, Economy, GigManipulation, Synergy, Balanced)
-}
+            out.append(Learned(ranked[j % len(ranked)], store))
+            j += 1
+    return out
 
 
 def blurb(text: str, sentences: int = 2) -> str:
@@ -451,22 +453,10 @@ def blurb(text: str, sentences: int = 2) -> str:
     return out if out.endswith(".") or len(parts) <= sentences else out + "."
 
 
-def all_strategies() -> list[BuilderStrategy]:
-    return [cls() for cls in PERSONALITIES.values()]
-
-
-def get_strategy(spec: str | BuilderStrategy) -> BuilderStrategy:
-    if isinstance(spec, BuilderStrategy):
-        return spec
-    try:
-        return PERSONALITIES[spec.lower()]()
-    except KeyError:
-        raise KeyError(f"unknown strategy {spec!r}; choose from {', '.join(PERSONALITIES)}") from None
-
-
 # ------------------------------------------------------------------ describing a deck
 def deck_profile(deck: Decklist, reg: Registry) -> dict[str, float]:
-    """Shape numbers a report or a test can compare across personalities."""
+    """Shape numbers a report or a test can compare across decks (a subset of
+    ``archetypes.fingerprint``, computed the same way)."""
     defs = [reg.get(c) for c in deck.main]
     n = max(1, len(defs))
     units = [d for d in defs if d.type is UNIT]

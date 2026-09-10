@@ -165,17 +165,19 @@ def deck_slug(name: str) -> str:
 
 
 def build_deck(body: dict) -> Decklist:
+    """The BUILD page's AI build. ``mode``: ``explorer`` (invent a shape), an archetype id or
+    name from the store (build toward it), ``heuristic``/``legacy`` or ``random``."""
     legends = [str(x) for x in body.get("legends") or []] or None
     seed = int(body.get("seed", int(time.time()) % 1_000_000))
     rng = Pcg32(seed, seq=9)
-    mode = body.get("mode") or "balanced"
+    mode = body.get("mode") or "explorer"
     name = body.get("name") or f"{mode} {seed}"
     if mode == "random":
         return random_deck(reg(), rng, legends, name=name)
     if mode in ("heuristic", "legacy"):
         return heuristic_deck(reg(), legends, rng, name=name)
-    from cptcg.deck.strategies import get_strategy
-    return get_strategy(mode).build(reg(), legends, rng, knowledge=knowledge(), name=name)
+    from cptcg.deck.strategies import get_builder
+    return get_builder(mode, archetype_store()).build(reg(), legends, rng, knowledge=knowledge(), name=name)
 
 
 def knowledge():
@@ -185,12 +187,41 @@ def knowledge():
     return Knowledge.load(path, reg()) if path.exists() else None
 
 
-def list_strategies() -> list[dict]:
-    from cptcg.deck.strategies import all_strategies, blurb
-    out = [{"name": st.name, "description": blurb(st.describe())} for st in all_strategies()]
-    out.append({"name": "legacy", "description": "The original unopinionated builder: curve, type mix and sell-tag floor only."})
-    out.append({"name": "random", "description": "A uniformly random legal deck: the control group."})
-    return out
+def archetype_store():
+    """The archetypes learned from every tournament and league run here (``out/archetypes.json``;
+    an empty store before the first one)."""
+    from cptcg.deck.archetypes import DEFAULT_PATH, ArchetypeStore
+    return ArchetypeStore.load(ROOT / DEFAULT_PATH, reg())
+
+
+def learn_archetypes(t, source: str = "", generation: int = 0) -> None:
+    """Record a finished tournament's decks in the archetype store and re-cluster."""
+    store = archetype_store()
+    store.update_from_tournament(t, source=source, generation=generation)
+    store.refit()
+    store.save()
+
+
+EXPLORER_DESCRIPTION = ("Invents a deck shape at random (within what the Legends allow) and builds toward it. "
+                        "This is how new archetypes get found; every builder explores until enough decks have played.")
+
+
+def list_archetypes() -> dict:
+    """GET /api/archetypes: the learned archetypes (by win rate) with their record and member
+    decks, how many decks the store holds, and the builder options the BUILD page offers."""
+    from cptcg.deck.archetypes import MIN_DECKS
+    store = archetype_store()
+    archetypes = []
+    for a in store.ranked():
+        row = a.to_json()
+        row["members"] = [d.name for d in store.members(a)]
+        archetypes.append(row)
+    builders = [{"id": "explorer", "name": "Explorer", "description": EXPLORER_DESCRIPTION}]
+    builders += [{"id": a["id"], "name": a["name"], "description": a["description"]} for a in archetypes]
+    builders.append({"id": "legacy", "name": "legacy", "description": "The original unopinionated builder: curve, type mix and sell-tag floor only."})
+    builders.append({"id": "random", "name": "random", "description": "A uniformly random legal deck: the control group."})
+    return {"decks": len(store.decks), "needed": MIN_DECKS, "tournaments": store.tournaments,
+            "archetypes": archetypes, "builders": builders}
 
 
 def list_replays() -> list[str]:
@@ -345,6 +376,7 @@ def _run_tourney(job: Job) -> None:
     t.save(out / "tournament.json", reg())
     (out / "report.md").write_text(render_report(t, title, reg()), encoding="utf-8")
     job.reports.append(rel(out / "tournament.json"))
+    learn_archetypes(t, source=title)
     order = t.standings()
     tracker.finish(f"finished: {t.info['total_games']} games")
     job.set_progress("standings: " + ", ".join(decks[i].name for i in order), **tracker.to_json())
@@ -404,14 +436,15 @@ def estimate(body: dict) -> dict:
 
 
 def _run_league(job: Job) -> None:
+    from cptcg.deck.archetypes import DEFAULT_PATH as ARCHETYPES_PATH
     from cptcg.deck.builder import league
     from cptcg.deck.knowledge import DEFAULT_PATH as KNOWLEDGE_PATH
     from cptcg.deck.hall_of_fame import DEFAULT_PATH as HOF_PATH
     body = job.params
     out = _job_dir(job)
-    strategies = body.get("strategies") or None
-    if strategies == ["legacy"]:
-        strategies = "legacy"
+    archetypes = body.get("archetypes") or None
+    if archetypes == ["legacy"]:
+        archetypes = "legacy"
     seed = int(body.get("seed", 0))
     n_builders, gens = int(body.get("builders", 6)), int(body.get("generations", 3))
     steps, cap = int(body.get("steps", 5)), int(body.get("games", 60))
@@ -442,9 +475,10 @@ def _run_league(job: Job) -> None:
 
     for gen, t, decks in league(reg(), n_builders, gens, steps, seed=seed, agent=body.get("agent") or "heuristic",
                                 workers=body.get("jobs") or DEFAULT_WORKERS, games_per_pair=cap, out_dir=out,
-                                progress=job.log, strategies=strategies, on_event=on_event,
+                                progress=job.log, archetypes=archetypes, on_event=on_event,
                                 knowledge_path=ROOT / KNOWLEDGE_PATH if body.get("knowledge", True) else None,
-                                hall_of_fame_path=ROOT / HOF_PATH if body.get("hof", True) else None):
+                                hall_of_fame_path=ROOT / HOF_PATH if body.get("hof", True) else None,
+                                archetypes_path=ROOT / ARCHETYPES_PATH):
         job.reports.append(rel(out / f"gen{gen}" / "tournament.json"))
         order = t.standings()
         bt = t.bt()
@@ -471,7 +505,7 @@ def _run_generate(job: Job) -> None:
     from cptcg.deck.generate import generate_decks, save_batch, screen_decks
     body = job.params
     count = max(1, min(500, int(body.get("count", 20))))
-    strategies = body.get("strategies") or None
+    archetypes = body.get("archetypes") or None
     legends = body.get("legends") or None
     seed = int(body.get("seed", 0))
     screen = int(body.get("screen", 0))
@@ -488,9 +522,10 @@ def _run_generate(job: Job) -> None:
         tracker.phase = f"building deck {min(count, built + 1)} of {count}" if built < count else f"built {count} decks"
         job.set_progress(msg, **tracker.to_json())
 
-    batch = generate_decks(reg(), count, strategies, seed=seed, knowledge=knowledge(), legends=legends,
+    batch = generate_decks(reg(), count, archetypes, seed=seed, knowledge=knowledge(), legends=legends,
                            max_similarity=float(body.get("max_similarity", 0.7)),
-                           prefix=deck_slug(body.get("name") or "gen") + "-", progress=on_built)
+                           prefix=deck_slug(body.get("name") or "gen") + "-", progress=on_built,
+                           store=archetype_store())
     decks = batch.decks
     job.log(f"{len(decks)} decks on {len(batch.triples)} Legend triples; {batch.rejected_similar} near-duplicates rejected")
     out = DECK_DIRS[0] / "generated" / f"{deck_slug(body.get('name') or 'batch')}-{job.id}"
@@ -611,8 +646,8 @@ def dispatch(method: str, path: str, query: dict, body: dict) -> tuple[int, obje
             return 200, {"__file__": str(IMAGES / p[len("/images/"):])}
         if p == "/api/decks":
             return 200, list_decks()
-        if p == "/api/strategies":
-            return 200, list_strategies()
+        if p == "/api/archetypes":
+            return 200, list_archetypes()
         if p == "/api/deck":
             path_ = abs_deck_path(q.get("path", ""))
             if path_ is None:

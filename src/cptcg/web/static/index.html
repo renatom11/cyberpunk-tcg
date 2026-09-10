@@ -31,7 +31,7 @@
       <tr><td>PLAY</td><td>A game between you and the AI.</td><td>Pick decks, play a full game with click-to-act and a button for every legal move, undo, concede, export the replay.</td></tr>
       <tr><td>WATCH</td><td>Replay any recorded game.</td><td>Step through a game decision by decision with both hands visible; auto-play; see every legal option and the one taken.</td></tr>
       <tr><td>LAB</td><td>AI-vs-AI measurement.</td><td>Run tournaments between decks, run leagues where AI builders evolve decks, generate and screen batches of decks, open the reports.</td></tr>
-      <tr><td>BUILD</td><td>Deck construction.</td><td>Build a deck by hand with live legality and RAM, or let a builder personality build one; save, load, export.</td></tr>
+      <tr><td>BUILD</td><td>Deck construction.</td><td>Build a deck by hand with live legality and RAM, or let the AI build one toward a learned archetype; save, load, export.</td></tr>
       <tr><td>CARDS</td><td>The card pool.</td><td>Search and read every card at full size; find the starter-set cards.</td></tr>
     </table>
 
@@ -66,16 +66,13 @@
       <li><b>Confidence</b> — 100 games gives roughly ±10%; 400 gives ±5%; 1,000 gives ±3%. The tournament stops a pairing early once the winner is clear.</li>
     </ul>
 
-    <h3>The builder personalities</h3>
+    <h3>Archetypes: kinds of deck learned from play</h3>
+    <p>Nobody here wrote down what an "aggro" or a "control" deck is. Instead, every deck that finishes a tournament or league is recorded with its <b>shape numbers</b> — average cost, the share of Units, of Programs and of Gear, the share of sellable cards, and how many blockers, removal effects, Gig-manipulation cards, haste, economy, extra-steal and draw effects it runs — and the lab groups the recorded decks by those numbers (a standard clustering, re-run after every job). Each group is an <b>archetype</b>: it gets a name generated from the two numbers that set it apart from the other groups (for example <i>Low-curve swarm</i> or <i>Removal wall</i>), a one-line description, and the pooled win rate of its decks, so you can see for yourself whether the group is real and whether it wins.</p>
     <ul>
-      <li><b>aggro</b> — cheap power early and ways to attack the turn a Unit lands; wants to steal Gigs before the Rival stabilises.</li>
-      <li><b>control</b> — blockers, removal and reactions to keep its Gigs, wins late or in Overtime.</li>
-      <li><b>economy</b> — as many sellable cards as possible so it always has Eddies, with a few big bombs.</li>
-      <li><b>gig</b> — everything that adjusts, sets, swaps or rerolls dice, and the payoffs for value-pairs and 8+ Gigs.</li>
-      <li><b>synergy</b> — tribes: Legends and cards that name the same tags (ARASAKA, BRAINDANCE, GANGER…).</li>
-      <li><b>balanced</b> — the original all-round heuristic, kept as the control group.</li>
+      <li><b>Explorer</b> — a builder that invents a deck shape at random inside what its Legends allow and builds toward it. Until 8 decks have played here every builder explores; afterwards one league builder in four keeps exploring, so new archetypes can still appear. Its decks are labelled <i>exploring</i> in reports.</li>
+      <li><b>Learned builders</b> — one per archetype: the deck is built toward the centre of that group, with the card choices leaning on <b>learned card values</b> (after each tournament the knowledge store remembers how much each card raised or lowered win rates), and its Legends are drawn from the group's own decks, favouring the ones that won.</li>
+      <li>In a league the replaced builder is rebuilt toward the surviving archetype with the lowest win rate, so ideas keep being re-tested instead of everyone copying the winner. The archetype table in each report says how each group did in that run.</li>
     </ul>
-    <p>Every personality scores the whole legal pool for its Legends, fills the deck along a cost curve, and adds a little noise so two builds differ. In a league they also add <b>learned values</b>: after each tournament the store remembers how much each card raised or lowered win rates, and later builds lean on that.</p>
 
     <h3>Decks and files</h3>
     <ul>
@@ -166,7 +163,7 @@
         <p><b>The lab is where AIs play each other in bulk so you can measure decks instead of guessing.</b> Three kinds of job run in the background on this machine; you can keep using the other tabs while they run, and the Jobs panel shows progress. Results are files under <code>out/lab/</code> and stay available after a restart.</p>
         <ul>
           <li><b>Run a tournament</b> — tick the decks, set games per pair, START. Every pair plays that many games with the first player alternating, stopping early when one side is clearly ahead. The report ranks decks three ways (see the Guide: <i>Reading a report</i>).</li>
-          <li><b>Run a league</b> — the AI invents decks. Each builder has a personality (aggro, control, economy, gig, synergy, balanced); every generation they improve their deck by trial swaps against each other, play a round robin, and the worst is replaced by a fresh build. Learned card values and past champions carry over to the next league.</li>
+          <li><b>Run a league</b> — the AI invents decks. Each builder either explores (invents a deck shape) or builds toward an archetype learned from earlier runs; every generation they improve their deck by trial swaps against each other, play a round robin, and the worst is replaced by a fresh build. Learned card values, past champions and the archetypes themselves carry over to the next league.</li>
           <li><b>Generate decks</b> — build many different legal decks at once (novelty rules keep them varied), optionally screen them against a panel and keep only the best. They appear in every deck list, so you can play them, edit them in BUILD or enter them in a tournament.</li>
         </ul>
         <p><b>Reports</b> on the right: open any finished tournament (including each generation of a league). The table lists rating, win rate against the field and Nash weight; the head-to-head matrix shows who beats whom, bold when the result is statistically significant; the full Markdown report adds the cards that most raised or lowered each deck's win rate when drawn.</p>
@@ -186,8 +183,8 @@
       </div>
       <div class="setup">
         <h2>Run a league</h2>
-        <p class="hint">AI builders with different philosophies invent decks, improve them against each other, then play a round robin. Each generation replaces the worst deck, feeds the knowledge store (learned card values) and the hall of fame.</p>
-        <div id="lStrategies" class="checklist"></div>
+        <p class="hint">Tick which builders take part: the Explorer invents deck shapes, and each archetype below is a kind of deck learned from the decks that have played here, shown with how often it has won. Builders improve their decks against each other, then play a round robin; each generation replaces the worst deck, and every finished generation teaches the archetypes, the knowledge store (learned card values) and the hall of fame.</p>
+        <div id="lArchetypes" class="checklist"></div>
         <div class="row">
           <label>Name <input id="lName" placeholder="my league" size="12"></label>
           <label>Builders <input id="lBuilders" type="number" value="6" min="2" max="12" style="width:52px"></label>
@@ -204,8 +201,8 @@
       </div>
       <div class="setup">
         <h2>Generate decks</h2>
-        <p class="hint">Build many different decks at once. Each comes from a personality that picks the Legends it likes best, with a novelty penalty so the batch spreads across the Legend space and a similarity floor so no two are near-copies. Optionally screen them against a panel and keep only the best.</p>
-        <div id="gStrategies" class="checklist"></div>
+        <p class="hint">Build many different decks at once, cycling through the ticked builders: the Explorer invents a shape for each deck, a learned archetype builds toward its centre on Legends its own decks used. A novelty penalty spreads the batch across the Legend space and a similarity floor keeps near-copies out. Optionally screen them against a panel and keep only the best.</p>
+        <div id="gArchetypes" class="checklist"></div>
         <div class="row">
           <label>Name <input id="gName" placeholder="batch" size="10"></label>
           <label>Count <input id="gCount" type="number" value="24" min="1" max="500" style="width:60px"></label>
@@ -234,11 +231,11 @@
 <main id="build" class="mode hidden">
     <details class="how wide" id="how-build" open>
       <summary>What BUILD does, and how to use it</summary>
-      <p><b>Build a deck by hand, or let a personality build one, and save it for PLAY and LAB.</b> A legal deck is exactly <b>3 Legends with different names</b> plus <b>40–50 other cards, at most 3 copies each</b>. Your Legends decide what you may play: each Legend gives <b>2 RAM</b> of its colour, and a card is legal only if its RAM is at most your total in that colour (so a Blue card with RAM 4 needs two Blue Legends).</p>
+      <p><b>Build a deck by hand, or let the AI build one, and save it for PLAY and LAB.</b> A legal deck is exactly <b>3 Legends with different names</b> plus <b>40–50 other cards, at most 3 copies each</b>. Your Legends decide what you may play: each Legend gives <b>2 RAM</b> of its colour, and a card is legal only if its RAM is at most your total in that colour (so a Blue card with RAM 4 needs two Blue Legends).</p>
       <ol>
         <li><b>Choose Legends first</b>: click Legend cards in the library (they sit at the end; filter type = Legend). The RAM badges update and the library greys out cards you can't run. Click a Legend in the slots to remove it.</li>
         <li><b>Add cards</b> by clicking them (up to 3 copies, right-click removes one), or use the + / − controls in the list on the right. The cost curve, the size counter and the legality check update live; errors are spelled out.</li>
-        <li><b>AI build</b>: pick a personality and press BUILD. With <i>keep my Legends</i> ticked it builds around your three; otherwise it picks its own. It uses learned card values from past leagues when there are any.</li>
+        <li><b>AI build</b>: pick a builder and press BUILD. <i>Explorer</i> invents a deck shape; each archetype in the list is a kind of deck learned from the decks that have played in the LAB, and the build heads for the centre of that group (see the Guide). With <i>keep my Legends</i> ticked it builds around your three; otherwise it picks its own. It uses learned card values from past leagues when there are any.</li>
         <li><b>SAVE</b> writes <code>data/decks/&lt;name&gt;.json</code> and the deck appears in PLAY and LAB at once. <b>EXPORT</b> shows a plain-text list to copy. <b>load…</b> opens any existing deck to edit; saving under a new name makes a copy.</li>
       </ol>
       <p>The library filters: search matches name, subtitle, rules text, tags and keywords; <i>legal for these Legends</i> hides what your Legends can't run; the set filter isolates the cards that come only in the two starter decks, <i>The Heist</i> and <i>Embracing Power</i>. To tune a starter, load it from <i>load…</i>, edit, and SAVE under a new name.</p>
@@ -266,10 +263,10 @@
       </div>
       <div class="row">
         <span class="dim">AI build:</span>
-        <select id="bStrategy" title="builder personality"></select>
+        <select id="bArchetype" title="what the AI builds toward"></select>
         <button id="bBuild" class="primary">BUILD</button>
         <label class="dim"><input id="bKeepLegends" type="checkbox" checked> keep my Legends</label>
-        <span id="bStrategyDesc" class="dim small"></span>
+        <span id="bArchetypeDesc" class="dim small"></span>
       </div>
       <div class="legend-area">
         <span class="lbl">LEGENDS</span>

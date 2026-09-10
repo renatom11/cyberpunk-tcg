@@ -1,56 +1,100 @@
-# AI deck-building: personalities that learn
+# AI deck-building: archetypes learned from play
 
 `python -m cptcg build` and `league` used to construct decks from one hand-weighted score plus
-blind card-swap search. The builder now has **personalities** — named theses about how the game
-is won — and a **knowledge store** that feeds what measured play has shown back into the next
-build. This page explains what each personality believes, how the learning loop works, and how
-to read a league report to see which philosophy is actually winning.
+blind card-swap search, and for a while from six hand-written "personalities" (aggro, control,
+economy, …) whose weights I designed from the rulebook. Those are gone: the user does not want
+invented archetypes. **An archetype is now a cluster of decks that have actually played**, and
+the builders build toward what the data found rather than toward a thesis somebody wrote down.
+A **knowledge store** still feeds what measured play has shown about each card back into the
+next build. This page explains the fingerprint an archetype is made of, how the clusters and
+their names are produced, how the two builders use them, and how to read a league report to see
+which archetype is actually winning.
 
-Code: `src/cptcg/deck/strategies.py`, `knowledge.py`, `hall_of_fame.py`; the league wiring is in
+Code: `src/cptcg/deck/archetypes.py` (fingerprint, store, clustering, naming),
+`strategies.py` (the builders), `knowledge.py`, `hall_of_fame.py`; the league wiring is in
 `builder.league(...)`.
 
-## The shared machinery
+## The fingerprint
 
-Every personality builds through the same greedy filler (`builder.heuristic_deck`): rank the
-RAM-legal pool by a score, fill type quotas along a cost curve, then top up sell-tag density.
-The decks differ because the *score* differs, not the algorithm — so a difference in results is
-a difference in thesis, not in construction luck.
+Every deck is reduced to the same numbers (`archetypes.fingerprint(reg, deck)`):
+
+| Feature | What it is |
+|---|---|
+| `mean_cost`, `cheap_share`, `top_share` | average cost; share of cards costing 2 or less; share costing 5 or more |
+| `unit_share`, `program_share`, `gear_share` | the type mix (they sum to 1) |
+| `sell_share` | share of cards with a sell tag — selling is the only income |
+| `mean_unit_power` | average power of the Units |
+| `blockers`, `quick` | cards with BLOCKER / QUICK |
+| `removal`, `gig_cards`, `haste`, `economy`, `steal`, `draw` | counts of effects read off the rules text (see below) |
+| `tag_overlap` | average number of a card's tags shared with its Legends |
+| `colour_red` … `colour_yellow` | 0/1: which colours the Legends bring (weighted half when clustering) |
 
 Rather than hand-listing cards, each card's rules text is reduced once to a small `Features`
 vector by regular expressions on the text with reminder parentheticals stripped: does it remove a
-rival Unit (`defeat / bottom-deck / spend … rival`), debuff one, protect Gigs, **move a Gig**
-(`adjust / increase / decrease / swap / set … Gig`), **pay off a Gig configuration** (`value-pair`,
-`min Gig`, `8+ value`, `even/odd value`, "cost equal to a friendly Gig"), steal extra Gigs, draw,
-**ready Eddies**, call a Legend for free, play at a discount, attack the turn it lands, pump, or
-ready Units. A personality is then a dozen weights over those features plus the shape targets
-(`BuildPrefs`: unit/program/gear shares, curve, sell floor). A new card set gets a first-cut
-evaluation for free.
+rival Unit (`defeat / bottom-deck / spend … rival`), **move a Gig** (`adjust / increase / decrease
+/ swap / set … Gig`), **pay off a Gig configuration** (`value-pair`, `min Gig`, `8+ value`,
+`even/odd value`), steal extra Gigs, draw, **ready Eddies**, call a Legend for free, play at a
+discount, attack the turn it lands. A new card set gets a fingerprint for free.
+`describe_fingerprint(fp)` turns the numbers into the sentence the reports print ("cheap curve
+(average cost 2.4), 65% Units, 42% sellable, 9 removal effects, 6 Gig-manipulation cards").
+`strategies.deck_profile(deck, reg)` is the older subset of the same numbers, kept for tests.
 
-## The personalities
+## The archetype store
 
-| Name | Thesis | What it stacks | Legends it wants |
-|---|---|---|---|
-| **aggro** | Race. A Unit steals two Gigs at power 10 and ready Units can't be attacked, so cheap power that swings early and often wins before the defender sets up. | Power-per-Eddie with a penalty per Eddie above 3; ADRENALINE and "can attack the turn it's played" (Valentino Street Racer, Nadia, Modded Kusanagi); Units that ready again (Saul Bright, Johnny); unblockable attackers (Valentino Guerrera). 65% Units, curve peaking at 2–3. | GO SOLO Legends costing ≤ 6 (V: Streetkid, Goro: Hands Unclean, Royce), pump texts (Saburo). |
-| **control** | Deny. Only BLOCKER and QUICK interrupt a steal, so keep the Gigs, remove what attacks, and win the Overtime majority — or with one late finisher. | BLOCKERs (Meredith Stout, Rita Wheeler, Augmented Negotiators, Corpo Security), removal Programs and PLAY-removal Units (Sandayu Oda, Minotaur, Royce: Don't Call Me Simon, Wild in the Streets, Don't Fear the Reaper), QUICK reactions (Take Control, Safety Override), steal prevention (Chrome Fang, Alt: Mother of Daemons). 45% Units, heavier curve, sell floor 50%. | QUICK/BLOCKER Legends (Dum Dum, Goro: Vengeful Bodyguard) and removal CALLs (Padre spends a Unit, Wakako gives −2). |
-| **economy** | Eddies win. Selling one card a turn is the only income and only *one* Unit in the pool is sellable, so the deck is mostly Programs and Gear, the Units are bombs the extra money pays for, and anything that readies an Eddie or plays for free is a second income. | Sell tags (60% floor), Eddie readying (Dying Night, Delamain Cab, Rogue: Queen of the Afterlife), free Legend calls (Arasaka Emergency Radioport, Tygers Whisper, Chrome Reverie), discounts (Zetatech Berserk, Maxtac Heavy, Octant, We Gotta Live Together), draw. Bimodal curve: cheap sellables and 6–8 cost bombs. | Legends with a cheap useful CALL (Dexter, Muamar, Padre, Wakako, Dum Dum, Viktor), Evelyn Parker (readies an Eddie on steals), Alt (Program discount). |
-| **gig** | The dice are the game. Street Cred, value-pairs, min/max Gigs and 8+ faces are all things you can *set*, and several cards steal an extra Gig or draw when the faces line up. | Movers (Industrial Assembly, Peace Offering, Trust No One, Afterparty at Lizzie's, Zetatech Faceplate, Dexter: One Last Chance, Maxtac AV) and payoffs (V: Roamer of the Badlands — mover, payoff and extra steal in one card; Jackie: Ride or Die; Gorilla Arms; Kerry: Last Rockerboy; Bootleg Black Sapphire Show), Street Cred conditions. | Hanako (swap Gigs, draw per value-pair), Dexter/Muamar/Wakako/Padre (adjust, set), Kerry (reroll), Jackie: Pour One Out. |
-| **synergy** | Tribes. Cards and Legends name tags — ARASAKA Units hit harder under Saburo, BRAINDANCE Programs pump under Judy, CYBERWARE Gear is cheap under Viktor — so maximise tag overlap with the Legends and between cards. | Cards carrying the Legends' tags, and cards whose text *names* a theme tag (payoffs); theme weight discounted when the legal pool is too shallow to build around. | Triples that share tags or colours, and Legends whose text names another Legend's tag (Yorinobu + Saburo + Goro). |
-| **balanced** | The original heuristic: a bit of everything, no thesis. | Power-per-cost, blockers, sell tags, Legend tag overlap. | Anything. |
+`ArchetypeStore` (`out/archetypes.json`) records every deck that finishes a tournament or a
+league generation — its Legends, card counts, fingerprint, games, wins and Bradley–Terry
+strength (a deck seen again pools its record). After every update it **refits**:
 
-Measured over 20 random Legend triples (`tests/unit/test_strategies.py`), the decks differ the
-way the theses say: Aggro's mean cost is ~3.3 vs Control's ~3.9; Economy has the highest sell
-share (~0.67 vs 0.37–0.55); Gig decks carry ~27 cards whose text touches Gigs vs 10–15 for the
-others; Control holds ~9 BLOCKERs and ~14 removal effects; Synergy has the highest tag overlap.
+1. Fingerprints are standardised (mean 0, one standard deviation = 1 per feature; colours × 0.5).
+2. k-means (seeded k-means++ start, at most 50 iterations) is run for k = 2 … 6 and the k with
+   the best simplified-silhouette score is kept — the clustering that separates the groups most
+   cleanly. Decks are sorted by signature first, so insertion order never changes the result.
+3. Each cluster becomes an archetype with a centre (in the fingerprint's own units, so it reads
+   like a deck), its members, their pooled win rate and mean strength, a description, and a
+   **name generated from the two features whose standardised centre is furthest from the
+   overall mean**: the first gives an adjective, the second a noun, from a fixed table
+   (`removal` high → "Removal", `blockers` high → "wall": *Removal wall*; `cheap_share` high +
+   `unit_share` high → *Low-curve swarm*; `economy` high → "Eddies", `draw` high → "value"). Ties
+   break in feature order; a clash takes the next noun. Names are therefore stable as long as a
+   cluster keeps the features that set it apart.
 
-Use them directly:
+The store needs **8 distinct decks** before it clusters. Below that it has no archetypes,
+`assign(fp)` returns `None`, and every builder explores (reports label such decks *exploring*).
 
 ```python
-from cptcg.deck.strategies import get_strategy, all_strategies, deck_profile
-s = get_strategy("gig")
-legends = s.choose_legends(reg, rng)            # samples triples, keeps the best legend_fit + pool
-deck = s.build(reg, legends, rng)               # deck.meta["strategy"] == "gig"
-deck_profile(deck, reg)                         # mean cost, sell share, gig cards, blockers, ...
+from cptcg.deck.archetypes import ArchetypeStore, fingerprint, describe_fingerprint
+store = ArchetypeStore.load("out/archetypes.json", reg)
+store.update_from_tournament(t, source="my run"); store.refit(); store.save()
+for a in store.ranked():                       # by pooled win rate
+    print(a.name, a.id, a.win_rate, a.games, a.description)
+store.assign(fingerprint(reg, deck))           # nearest archetype id for any deck, or None
 ```
+
+## The builders
+
+Both builders (`strategies.py`) share one greedy fill: pick, forty times, the card (three
+copies at most) that leaves the deck's projected fingerprint closest to a **target** — squared
+distance, each feature in its own scale, scaled by the number of cards placed so far so the
+closeness term stays the same size from the first pick to the last — plus the card's learned
+value from the knowledge store, a small tag-theme term, and noise so two builds differ.
+
+- **Explorer** draws its target at random inside the range the legal pool allows
+  (`pool_ranges`: the lowest and highest each feature can reach with 40 cards from that pool).
+  Features that cannot disagree are drawn together — one cost tilt sets average cost and the
+  cheap and expensive shares, and the type shares are one random composition — and each build
+  pushes hard on five randomly chosen features while holding the rest loosely, because seventeen
+  independent targets contradict each other and a least-squares fill would settle in the middle
+  of everything. Its Legends are a random triple with a deep pool. Decks carry
+  `meta["archetype"] == "exploring"`.
+- **Learned(archetype, store)** targets the archetype's centre in the store's standardised
+  scale, and draws its Legends from the archetype's member decks with probability proportional to
+  their smoothed win rate, divided by how often a batch already used them; one time in five a
+  Legend is swapped for a fresh one so nearby triples get tried. Decks carry
+  `meta["archetype"]` (the name) and `meta["archetype_id"]`.
+
+Measured in `tests/unit/test_archetypes.py`: twelve Explorer decks on one Legend triple spread
+over most features of the pool's range; Learned decks land about one standard deviation from
+their centre where Explorer decks land five or more.
 
 ## How learning feeds in
 
@@ -70,9 +114,9 @@ proportions, and `k = 30`. A card seen in 10 games says almost nothing; after a 
 speaks with most of its voice. `synergy(a, b)` is the same idea on co-draws: how much better games
 go when both cards were drawn than their individual records predict.
 
-Each personality's score becomes `belief + knowledge_w · value(card, context) + noise`
-(`knowledge_w = 6`, since shrunk IWD is ±0.1–0.3 and beliefs are ~0–5). The thesis still decides
-the deck's shape; the evidence decides which cards fill it. Because the store persists
+Each builder's card score becomes `closeness + knowledge_w · value(card, context) + theme + noise`
+(`knowledge_w = 6`, since shrunk IWD is ±0.1–0.3 and the closeness term is ~0–2). The target
+decides the deck's shape; the evidence decides which cards fill it. Because the store persists
 (`out/knowledge.json` by default), every league run makes the next generation's builders smarter.
 
 IWD is correlational — draw order confounds it, and a card in a winning deck looks good — which
@@ -83,21 +127,22 @@ paired card-swap SPRT.
 
 A league only measures its decks against each other, so a population can drift into a local
 fashion. `HallOfFame` (`deck/hall_of_fame.py`) keeps the best decks found so far — by
-Bradley–Terry strength, with field win rate alongside — together with the personality that built
-them. Future leagues add the top champions to the field the builders climb against, so a new
-thesis has to beat what has actually won before, not only this generation's neighbours. Duplicate
-decks (same Legends, same counts) keep their best record.
+Bradley–Terry strength, with field win rate alongside — together with the archetype that built
+them (`HallOfFame.by_archetype()` counts champions per archetype). Future leagues add the top
+champions to the field the builders climb against, so a new build has to beat what has actually
+won before, not only this generation's neighbours. Duplicate decks (same Legends, same counts)
+keep their best record.
 
 ## Generating a population
 
 `cptcg generate` (and the LAB page's *Generate decks* form) builds many different decks in one
 go, each one on purpose:
 
-1. The personalities take turns. Each picks its Legend triple by its own `legend_fit` plus the
-   quality of the pool that triple unlocks, sampling 30 candidates — with a **novelty penalty**
-   for triples and individual Legends the batch has already used, so deck 80 explores a corner of
-   the Legend space that deck 3 did not.
-2. The deck is filled by that personality's card scores plus the learned values in the knowledge
+1. The builders take turns: every archetype in the store (by win rate) and one Explorer, or the
+   builders named with `--archetypes`. Each picks its Legend triple as described above, with a
+   **novelty penalty** for triples and individual Legends the batch has already used, so deck 80
+   explores a corner of the Legend space that deck 3 did not.
+2. The deck is filled toward that builder's target plus the learned values in the knowledge
    store, with the usual build noise.
 3. A candidate whose main deck is more than 70% similar (Jaccard over card copies) to an accepted
    deck is thrown away and rebuilt, up to six times; only if the pool under those Legends is too
@@ -119,59 +164,56 @@ only way to reach RAM 5–6 cards.
 ```python
 from cptcg.deck.builder import league
 for gen, t, decks in league(reg, n_builders=6, generations=4, steps=8,
-                            strategies=None,                    # cycle every personality
+                            archetypes=None,                    # automatic (see below)
+                            archetypes_path="out/archetypes.json",
                             knowledge_path="out/knowledge.json",
                             hall_of_fame_path="out/hall_of_fame.json",
                             out_dir="out/league"):
     ...
 ```
 
-`strategies` accepts a list of names (`["aggro", "control"]`) or `BuilderStrategy` objects,
-cycled across builders; `"legacy"` restores the original unopinionated builder. The CLI flags for
-these arguments are the main tree's job; the API is the contract.
+`archetypes=None` is automatic: the store's archetypes by win rate, cycled, with one builder in
+four an Explorer — and every builder an Explorer while the store has no clusters (a **cold
+start** works: the first league explores, the store refits after each generation, and as soon as
+eight distinct decks have played the next replacement builds toward a learned archetype). A list
+of archetype ids or names (`"explorer"` allowed) is cycled instead; `"legacy"` restores the
+original unopinionated builder. Each generation the replaced builder is rebuilt toward the
+surviving archetype that wins least often (or as an Explorer when fewer than a quarter of the
+survivors explore), so the league keeps re-testing ideas instead of converging on the current
+winner. The CLI: `cptcg league --archetypes a,b --archetype-store out/archetypes.json`;
+`cptcg archetypes` lists what has been learned.
 
 ## Reading a league report
 
 Each generation writes `tournament.json` (everything the report needs: the run's settings, every
 deck's list, meta and shape numbers, each builder's hill-climb history, the summary sentences) and
 `report.md`, the plain-English Markdown rendered from it; `python -m cptcg report <file>` renders
-it again, and a cumulative `league.json` holds the standings of every generation. When decks
-carry a kind label (`meta["strategy"]`, or `meta["archetype"]` once archetypes are learned from play):
+it again, and a cumulative `league.json` holds the standings of every generation. Decks carry
+their kind in `meta["archetype"]` — the learned archetype's name, or *exploring*:
 
 - **Standings** gain an *Archetype* column, so the strength, win rate and "bring it?" share of
-  each deck are labelled with the thesis that built it.
+  each deck are labelled with the group it was built toward.
 - **Archetypes in this run** groups decks by kind: mean strength, pooled win rate, and the best
-  deck. This is the table to watch across generations. A thesis that keeps a mean strength above 1
-  while its decks are replaced and re-improved is winning *as a philosophy*; one that produced a
-  single lucky deck shows a high "Best deck" but a mean near or below 1.
-- **Nash support** says what a rational field would bring. If one philosophy's decks carry all
+  deck. This is the table to watch across generations. An archetype that keeps a mean strength
+  above 1 while its decks are replaced and re-improved is winning *as a kind of deck*; one that
+  produced a single lucky deck shows a high "Best deck" but a mean near or below 1. The store's
+  own pooled win rate (`cptcg archetypes`, or the LAB league form) is the cross-run view.
+- **Nash support** says what a rational field would bring. If one archetype's decks carry all
   the Nash weight, the others are strictly dominated in this pool; if support is split, the
-  personalities form a rock-paper-scissors triangle worth reading off the head-to-head matrix
-  (Aggro beating Economy, Control beating Aggro, is the classic shape).
+  archetypes counter each other — read the triangle off the head-to-head matrix.
 - **Cards that helped and hurt** is per-deck IWD (win rate when drawn minus when not drawn) —
   the same numbers the knowledge store accumulates, before shrinkage. `Knowledge.top(n, context)`
   gives the shrunk, cross-league view.
 
-The hall of fame entries record the strategy too (`HallOfFame.by_strategy()`), so the long-run
-question — which philosophy keeps producing champions? — has a one-line answer.
+The hall of fame entries record the archetype too (`HallOfFame.by_archetype()`), so the
+long-run question — which kind of deck keeps producing champions? — has a one-line answer.
 
-### A first data point
+### What to expect from a cold start
 
-One deck per personality, each on the Legends it chose for itself, round robin with the
-`heuristic` agent (seed 42, 40 games per pair, ~200 games per deck, no hill-climb):
-
-| # | Strategy | BT | vs field | Nash |
-|---|---|---|---|---|
-| 1 | aggro | 1.68 | 68% | 100% |
-| 2 | control | 1.25 | 60% | 0% |
-| 3 | synergy | 1.10 | 56% | 0% |
-| 4 | balanced | 0.92 | 52% | 0% |
-| 5 | gig | 0.86 | 50% | 0% |
-| 6 | economy | 0.20 | 14% | 0% |
-
-Read with the cautions above: a single deck per thesis, unimproved, against one agent. But it
-already says something about the pool. Racing works — Aggro carries the whole Nash support —
-and the "sell everything" thesis fails as built: a deck that is 65% Programs and Gear has too
-few bodies to steal with, and an Eddie a turn buys nothing if there is nothing to spend it on.
-Whether Economy's *cards* are wrong or only its *shape* is, the knowledge store will show:
-its Eddie engines will accumulate IWD in every context they appear in.
+The first league on a fresh checkout has no archetypes: every builder explores, and the reports
+label every deck *exploring*. Once eight distinct decks have played, the store clusters them and
+names the groups; from then on new builders target the groups and the names accumulate a record.
+Early names are provisional — two clusters of four decks each say little — and the description
+next to each name (how many decks, how many games, the pooled win rate) is there so nobody
+mistakes a young group for an established one. No archetype is claimed to be good until its
+own games say so.

@@ -143,7 +143,7 @@ def test_league_events_drive_a_tracker_to_zero(reg, tmp_path):
         assert t.remaining_min <= t.remaining_max
 
     runs = list(league(reg, n_builders=n_b, generations=gens, steps=steps, seed=2, agent="random", workers=1,
-                       games_per_pair=cap, strategies="legacy", seeds_per_batch=2, max_batches=1, on_event=on_event))
+                       games_per_pair=cap, archetypes="legacy", seeds_per_batch=2, max_batches=1, on_event=on_event))
     assert len(runs) == gens
     assert kinds[0] == "climb_start" and kinds[-1] == "gen_done"
     assert kinds.count("climb_start") == kinds.count("climb_done") == n_b * gens

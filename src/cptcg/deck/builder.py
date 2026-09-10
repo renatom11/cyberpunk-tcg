@@ -125,8 +125,8 @@ def heuristic_deck(reg: Registry, legends: list[str] | None, rng: Pcg32, prefs: 
                    name: str = "built", score_fn=None, generated: str = "heuristic", **meta) -> Decklist:
     """Greedy filler: rank the legal pool by a score, then fill type quotas along the curve and
     top up the sell-tag density. ``score_fn(d) -> float`` replaces the default ``card_score`` so
-    a strategy (deck/strategies.py) can bring its own opinion while reusing the filler; extra
-    ``meta`` is recorded on the Decklist (e.g. ``strategy="aggro"``)."""
+    a caller can bring its own opinion while reusing the filler; extra ``meta`` is recorded on
+    the Decklist."""
     prefs = prefs or BuildPrefs()
     legends = legends or random_legends(reg, rng)
     ldefs = [reg.get(l) for l in legends]
@@ -376,9 +376,10 @@ def hill_climb(reg: Registry, deck: Decklist, field_decks: list[Decklist], steps
 # ------------------------------------------------------------------ league
 def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int = 5, seed: int = 0,
            agent: str = "heuristic", workers: int | None = None, games_per_pair: int = 60,
-           out_dir: str | Path | None = None, progress=None, strategies=None,
+           out_dir: str | Path | None = None, progress=None, archetypes=None,
            knowledge_path: str | Path | None = None, hall_of_fame_path: str | Path | None = None,
-           hof_opponents: int = 2, seeds_per_batch: int = 20, max_batches: int = 3, on_event=None):
+           hof_opponents: int = 2, seeds_per_batch: int = 20, max_batches: int = 3, on_event=None,
+           archetypes_path: str | Path | None = None):
     """N builders invent decks, improve them against the current population, then play a round
     robin; the worst is replaced by a fresh build each generation. Yields (generation, Tournament,
     decks) so callers can report as it runs.
@@ -394,13 +395,22 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
     of each deck in ``info["climb"]``), ``genK/report.md``, one deck file per builder, and a
     cumulative ``league.json`` series (standings per generation) for charts.
 
-    Each builder carries a personality from deck/strategies.py (``strategies``: a list of names
-    or BuilderStrategy objects, cycled; None = all personalities in turn; ``"legacy"`` = the
-    original unopinionated ``heuristic_deck``) and records it in ``deck.meta["strategy"]``.
+    Builders come from deck/strategies.py and every deck records what built it in
+    ``deck.meta["archetype"]``: the name of a learned archetype, or ``"exploring"`` for an
+    Explorer. ``archetypes=None`` is automatic: the archetypes of the store at
+    ``archetypes_path`` (``out/archetypes.json``; an in-memory store when None) by win rate,
+    one Explorer in every four builders, and all Explorers while the store has no clusters yet.
+    A list of archetype ids/names (``"explorer"`` allowed) is cycled instead; ``"legacy"``
+    restores the original unopinionated ``heuristic_deck``. After every generation the store
+    records the decks that played and re-clusters, and the replaced builder is rebuilt with the
+    archetype that wins least often among the survivors (or as an Explorer when the Explorer
+    quota is short), so the league keeps testing ideas instead of converging on one.
     With ``knowledge_path`` every generation's tournament feeds the Knowledge store, which the
     builders read when they construct. With ``hall_of_fame_path`` past champions join the field
     the builders climb against (``hof_opponents`` of them) and each generation's best are
     offered to the hall."""
+    from cptcg.deck.archetypes import ArchetypeStore
+    from cptcg.deck.strategies import Explorer, Learned, builders_for, get_builder
     from cptcg.sim.report import render_report
     from cptcg.sim.tournament import run_tournament
     rng = Pcg32(seed, seq=5)
@@ -413,19 +423,37 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
     if hall_of_fame_path is not None:
         from cptcg.deck.hall_of_fame import HallOfFame, deck_signature
         hof = HallOfFame.load(hall_of_fame_path)
+    store = ArchetypeStore.load(archetypes_path, reg) if archetypes_path is not None else ArchetypeStore(reg=reg)
 
-    if strategies == "legacy":
-        cycle = None
-    else:
-        from cptcg.deck.strategies import all_strategies, get_strategy
-        cycle = all_strategies() if strategies is None else [get_strategy(s) for s in strategies]
+    legacy = archetypes == "legacy"
+    cycle = None if legacy or archetypes is None else [get_builder(a, store) for a in archetypes]
+    line_up = builders_for(store, n_builders) if cycle is None and not legacy else None
 
-    def fresh(i: int) -> Decklist:
+    def replacement(survivors: list[Decklist]):
+        """The builder for the slot a league frees: keep the Explorer quota, else re-test the
+        surviving archetype that wins least often; a new store archetype when nobody has one."""
+        if not store.archetypes:
+            return Explorer()
+        explorers = sum(1 for d in survivors if d.meta.get("archetype_id") is None)
+        if explorers < n_builders // 4:
+            return Explorer()
+        carried = [store.get(d.meta["archetype_id"]) for d in survivors if d.meta.get("archetype_id")]
+        carried = [a for a in carried if a is not None]
+        if carried:
+            return Learned(min(carried, key=lambda a: (a.win_rate, a.games, a.id)), store)
+        return Learned(store.ranked()[0], store)
+
+    def fresh(i: int, survivors: list[Decklist] | None = None) -> Decklist:
         name = f"builder{i + 1}"
-        if cycle is None:
+        if legacy:
             return heuristic_deck(reg, None, rng, name=name)
-        strat = cycle[i % len(cycle)]
-        return strat.build(reg, None, rng, knowledge=knowledge, name=name)
+        if cycle is not None:
+            b = cycle[i % len(cycle)]
+        elif survivors is None:
+            b = line_up[i]
+        else:
+            b = replacement(survivors)
+        return b.build(reg, None, rng, knowledge=knowledge, name=name)
 
     decks = [fresh(i) for i in range(n_builders)]
     fresh_idx = set(range(n_builders))                       # builders rebuilt for this generation
@@ -439,7 +467,7 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
         for i, d in enumerate(decks):
             field_decks = [o for j, o in enumerate(decks) if j != i] + extra
             if progress:
-                progress(f"gen {gen}: improving {d.name}" + (f" [{d.meta['strategy']}]" if "strategy" in d.meta else ""))
+                progress(f"gen {gen}: improving {d.name}" + (f" [{d.meta['archetype']}]" if "archetype" in d.meta else ""))
             step_cb = None
             if on_event:
                 on_event("climb_start", gen=gen, generations=generations, builder=d.name, index=i,
@@ -484,6 +512,11 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
             hof.update_from_tournament(t, generation=gen, source=f"league seed {seed}")
             if hof.path:
                 hof.save()
+        if not legacy:
+            store.update_from_tournament(t, source=f"league seed {seed}", generation=gen)
+            store.refit()
+            if store.path:
+                store.save()
         if out:
             (out / f"gen{gen}").mkdir(parents=True, exist_ok=True)
             t.paths = []
@@ -495,9 +528,10 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
             (out / f"gen{gen}" / "report.md").write_text(render_report(t, f"League generation {gen}", reg), encoding="utf-8")
             with open(out / "league.json", "w", encoding="utf-8") as f:
                 json.dump({"generations": series}, f, indent=1)
-        yield gen, t, decks
-        decks[worst] = fresh(worst)
-        fresh_idx = {worst}
+        yield gen, t, list(decks)
+        if gen < generations:
+            decks[worst] = fresh(worst, [d for i, d in enumerate(decks) if i != worst])
+            fresh_idx = {worst}
 
 
 def parse_proposal(desc: str) -> dict:

@@ -1,14 +1,15 @@
 """Bulk deck generation: many *different* decks, each built on purpose.
 
-Every deck comes from a builder personality (deck/strategies.py) that picks the Legend triple it
-likes best and fills the deck by its own card scores plus the learned values in the knowledge
-store. Three things keep a big batch varied rather than 200 copies of one favourite:
+Every deck comes from a builder (deck/strategies.py): an Explorer that invents a deck shape,
+or a Learned builder that targets an archetype the store learned from play, both blending in
+the learned card values of the knowledge store. Three things keep a big batch varied rather
+than 200 copies of one favourite:
 
 - a **novelty penalty** on Legend triples and on individual Legends already used in the batch,
   so the population spreads across the Legend space instead of piling onto one triple;
 - a **distance floor**: a candidate whose main deck overlaps an accepted deck too much
   (Jaccard similarity over card copies above ``max_similarity``) is rejected and rebuilt;
-- the personality's own build noise, so two decks on the same Legends still differ.
+- the builder's own build noise, so two decks on the same Legends still differ.
 
 An optional **screen** then plays every deck against a panel (the sample decks, or the hall of
 fame) and ranks them by win rate, so "generate 200, keep the best 20" is one command.
@@ -21,9 +22,8 @@ from pathlib import Path
 
 from cptcg.cards.registry import Registry
 from cptcg.core.rng import Pcg32
-from cptcg.deck.builder import random_legends
 from cptcg.deck.decklist import Decklist
-from cptcg.deck.strategies import BuilderStrategy, all_strategies, get_strategy, legend_fit
+from cptcg.deck.strategies import BuilderStrategy, Explorer, get_builder
 from cptcg.deck.validate import validate
 
 
@@ -50,43 +50,39 @@ class Batch:
             self.legends[l] = self.legends.get(l, 0) + 1
 
 
-def pick_legends(strategy: BuilderStrategy, reg: Registry, rng: Pcg32, batch: Batch,
-                 samples: int = 30, novelty: float = 1.0) -> list[str]:
-    """The strategy's usual Legend choice (fit + pool quality) with a penalty for triples and
-    Legends this batch has already used, so later decks explore rather than repeat."""
-    best, best_score = None, -1e9
-    for _ in range(samples):
-        ids = random_legends(reg, rng)
-        key = "|".join(sorted(ids))
-        score = (legend_fit(strategy, [reg.get(i) for i in ids], reg) + strategy.pool_quality(reg, ids)
-                 + 0.4 * rng.below(1000) / 1000
-                 - novelty * (2.0 * batch.triples.get(key, 0) + 0.35 * sum(batch.legends.get(i, 0) for i in ids)))
-        if score > best_score:
-            best, best_score = ids, score
-    return list(best)
-
-
 def short_name(reg: Registry, legends: list[str]) -> str:
     return "-".join(reg.get(l).name.split()[0].lower().strip(":,'") for l in legends)
 
 
-def generate_decks(reg: Registry, count: int, strategies=None, seed: int = 0, knowledge=None,
+def builder_cycle(store, archetypes=None) -> list[BuilderStrategy]:
+    """The builders a batch cycles through: the ids/names asked for (``"explorer"`` allowed),
+    or every archetype of the store by win rate plus one Explorer — only Explorers while the
+    store has no clusters."""
+    if archetypes:
+        return [get_builder(a, store) for a in archetypes]
+    from cptcg.deck.strategies import Learned
+    ranked = store.ranked() if store is not None else []
+    return [Learned(a, store) for a in ranked] + [Explorer()]
+
+
+def generate_decks(reg: Registry, count: int, archetypes=None, seed: int = 0, knowledge=None,
                    legends: list[str] | None = None, max_similarity: float = 0.7, attempts: int = 6,
-                   prefix: str = "gen", novelty: float = 1.0, progress=None) -> Batch:
-    """``count`` distinct, legal decks. ``strategies``: names/objects to cycle (None = all six).
-    ``legends`` pins every deck to one triple (then only the distance floor keeps them apart)."""
-    cycle = [get_strategy(s) for s in strategies] if strategies else all_strategies()
+                   prefix: str = "gen", novelty: float = 1.0, progress=None, store=None) -> Batch:
+    """``count`` distinct, legal decks. ``archetypes``: builder specs to cycle (None = every
+    archetype in ``store`` plus an Explorer; Explorers only without a store). ``legends`` pins
+    every deck to one triple (then only the distance floor keeps them apart)."""
+    cycle = builder_cycle(store, archetypes)
     rng = Pcg32(seed, seq=33)
     batch = Batch()
     k = 0
     while len(batch.decks) < count:
-        strat = cycle[k % len(cycle)]
+        b = cycle[k % len(cycle)]
         k += 1
         deck = None
         for attempt in range(attempts):
-            legs = list(legends) if legends else pick_legends(strat, reg, rng, batch, novelty=novelty)
-            name = f"{prefix}{len(batch.decks) + 1:03d}-{strat.name}-{short_name(reg, legs)}"
-            cand = strat.build(reg, legs, rng, knowledge=knowledge, name=name)
+            legs = list(legends) if legends else b.choose_legends(reg, rng, batch if novelty else None)
+            name = f"{prefix}{len(batch.decks) + 1:03d}-{b.name}-{short_name(reg, legs)}"
+            cand = b.build(reg, legs, rng, knowledge=knowledge, name=name)
             if not validate(cand, reg).ok:
                 continue
             if any(similarity(cand, d) > max_similarity for d in batch.decks):
@@ -99,7 +95,7 @@ def generate_decks(reg: Registry, count: int, strategies=None, seed: int = 0, kn
         deck = Decklist(deck.name, deck.legends, deck.main, dict(deck.meta, seed=seed, batch_index=len(batch.decks)))
         batch.note(deck)
         if progress:
-            progress(f"{deck.name}  [{strat.name}]")
+            progress(f"{deck.name}  [{deck.meta.get('archetype', b.name)}]")
     return batch
 
 

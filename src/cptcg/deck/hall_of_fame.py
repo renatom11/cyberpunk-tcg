@@ -3,7 +3,7 @@
 A league only ever measures its decks against each other, so a population can drift into a
 local fashion — every deck tuned to beat this generation's field and nothing else. Keeping
 past champions around and adding them to the field the builders climb against anchors each
-league to what has actually won before, and records which personality produced it.
+league to what has actually won before, and records which archetype produced it.
 
 Ranking is by Bradley–Terry strength, which ``sim.stats.bradley_terry`` normalises to mean 1
 within a tournament; the field win rate is stored alongside as a second opinion, since BT
@@ -21,6 +21,11 @@ from cptcg.deck.decklist import Decklist
 DEFAULT_PATH = Path("out") / "hall_of_fame.json"
 
 
+def deck_kind(deck: Decklist) -> str:
+    """What built a deck: its learned archetype, an older builder label, or ``?``."""
+    return deck.meta.get("archetype") or deck.meta.get("strategy") or "?"
+
+
 def deck_signature(deck: Decklist) -> str:
     """Same Legends and same card counts = same deck, whatever it was called."""
     counts = ",".join(f"{cid}x{n}" for cid, n in sorted(deck.counts().items()))
@@ -30,7 +35,7 @@ def deck_signature(deck: Decklist) -> str:
 @dataclass
 class Champion:
     deck: Decklist
-    strategy: str
+    archetype: str
     bt: float
     field_rate: float = 0.5
     games: int = 0
@@ -43,14 +48,15 @@ class Champion:
 
     def to_json(self) -> dict:
         return {"name": self.deck.name, "legends": list(self.deck.legends), "main": self.deck.counts(),
-                "meta": dict(self.deck.meta), "strategy": self.strategy, "bt": self.bt,
+                "meta": dict(self.deck.meta), "archetype": self.archetype, "bt": self.bt,
                 "field_rate": self.field_rate, "games": self.games, "generation": self.generation,
                 "source": self.source}
 
     @classmethod
     def from_json(cls, raw: dict) -> "Champion":
         deck = Decklist.from_counts(raw["name"], raw["legends"], raw["main"], **raw.get("meta", {}))
-        return cls(deck, raw.get("strategy", deck.meta.get("strategy", "?")), float(raw["bt"]),
+        kind = raw.get("archetype") or raw.get("strategy") or deck_kind(deck)
+        return cls(deck, kind, float(raw["bt"]),
                    float(raw.get("field_rate", 0.5)), int(raw.get("games", 0)),
                    int(raw.get("generation", 0)), raw.get("source", ""))
 
@@ -87,10 +93,10 @@ class HallOfFame:
         del self.entries[self.capacity:]
 
     def add(self, deck: Decklist, bt: float, field_rate: float = 0.5, games: int = 0,
-            generation: int = 0, source: str = "", strategy: str | None = None) -> bool:
+            generation: int = 0, source: str = "", archetype: str | None = None) -> bool:
         """Induct a deck if it ranks inside ``capacity``. A deck already present keeps its best
         record. Returns whether the deck is in the hall afterwards."""
-        strategy = strategy or deck.meta.get("strategy", "?")
+        archetype = archetype or deck_kind(deck)
         sig = deck_signature(deck)
         for e in self.entries:
             if e.signature == sig:
@@ -98,7 +104,7 @@ class HallOfFame:
                     e.bt, e.field_rate, e.games, e.generation, e.source = bt, field_rate, games, generation, source
                 self._trim()
                 return any(x.signature == sig for x in self.entries)
-        self.entries.append(Champion(deck, strategy, bt, field_rate, games, generation, source))
+        self.entries.append(Champion(deck, archetype, bt, field_rate, games, generation, source))
         self._trim()
         return any(e.signature == sig for e in self.entries)
 
@@ -114,21 +120,29 @@ class HallOfFame:
         return inducted
 
     def opponents(self, n: int = 2, exclude: set[str] | None = None) -> list[Decklist]:
-        """The strongest champions as field opponents, renamed ``hof1-<strategy>`` so a report
+        """The strongest champions as field opponents, renamed ``hof1-<archetype>`` so a report
         shows where they came from. ``exclude`` skips decks already in the field by signature."""
         exclude = exclude or set()
         out = []
         for e in self.entries:
             if e.signature in exclude:
                 continue
-            out.append(Decklist(f"hof{len(out) + 1}-{e.strategy}", e.deck.legends, e.deck.main,
-                                {**e.deck.meta, "strategy": e.strategy, "hall_of_fame": True}))
+            out.append(Decklist(f"hof{len(out) + 1}-{_slug(e.archetype)}", e.deck.legends, e.deck.main,
+                                {**e.deck.meta, "archetype": e.archetype, "hall_of_fame": True}))
             if len(out) >= n:
                 break
         return out
 
-    def by_strategy(self) -> dict[str, int]:
+    def by_archetype(self) -> dict[str, int]:
+        """How many champions each archetype has produced."""
         out: dict[str, int] = {}
         for e in self.entries:
-            out[e.strategy] = out.get(e.strategy, 0) + 1
+            out[e.archetype] = out.get(e.archetype, 0) + 1
         return out
+
+
+def _slug(text: str) -> str:
+    s = "".join(ch if ch.isalnum() else "-" for ch in text.strip().lower()).strip("-")
+    while "--" in s:
+        s = s.replace("--", "-")
+    return s or "deck"
