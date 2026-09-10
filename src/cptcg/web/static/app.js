@@ -26,6 +26,10 @@ function cardNode(c, opts = {}) {
   if (def.image) {
     const img = el("img"); img.src = `/images/${c.id}.jpg`; img.alt = c.name;
     d.onmouseenter = (e) => showPreview(img.src, c); d.onmouseleave = hidePreview;
+    let press = null;
+    d.addEventListener("touchstart", () => { press = setTimeout(() => { press = null; showPreview(img.src, c, true); }, 420); }, { passive: true });
+    const cancel = () => { if (press) { clearTimeout(press); press = null; } };
+    d.addEventListener("touchend", cancel); d.addEventListener("touchmove", cancel, { passive: true }); d.addEventListener("touchcancel", cancel);
     img.onerror = () => { img.remove(); d.append(...textFace(c)); };
     d.append(img);
   } else {
@@ -87,14 +91,20 @@ function renderBoard(root, v, { interactive, onAct } = {}) {
   const oppHand = el("div", "panel hand opp"); oppHand.append(el("span", "lbl", `${P[opp].name.toUpperCase()} · HAND ${P[opp].hand_count}`));
   if (P[opp].hand) P[opp].hand.forEach(c => oppHand.append(cardNode(c, { small: true })));
   else for (let i = 0; i < P[opp].hand_count; i++) oppHand.append(cardNode({}, { back: true, small: true }));
-  left.append(oppHand, diceTray(P[opp], false), gigPanel(P[opp]));
+  oppHand.classList.add("p-opp-hand");
+  const oppTray = diceTray(P[opp], false); oppTray.classList.add("p-opp-fixer");
+  const oppGig = gigPanel(P[opp]); oppGig.classList.add("p-opp-gig");
+  left.append(oppHand, oppTray, oppGig);
 
   const phase = el("div", "panel phase");
   const title = v.over ? "GAME OVER" : (pend ? pend.phase.toUpperCase() : "…");
   const who = v.over ? `${P[v.winner].name} wins (${v.end_reason})` : (pend ? (pend.player === me ? "YOUR DECISION" : `${P[pend.player].name} is deciding`) : "");
   phase.append(el("div", "title", title), el("div", "sub", `Turn ${v.turn}${v.overtime ? " · OVERTIME" : ""} · ${who}`));
-  left.append(phase, gigPanel(P[me]), diceTray(P[me], myTurn && pend.kind === "GIG_DIE", pend, onAct));
-  const myHand = el("div", "panel hand mine"); myHand.append(el("span", "lbl", `${P[me].name.toUpperCase()} · HAND`));
+  phase.classList.add("p-banner");
+  const myGig = gigPanel(P[me]); myGig.classList.add("p-my-gig");
+  const myTray = diceTray(P[me], myTurn && pend.kind === "GIG_DIE", pend, onAct); myTray.classList.add("p-my-fixer");
+  left.append(phase, myGig, myTray);
+  const myHand = el("div", "panel hand mine p-my-hand"); myHand.append(el("span", "lbl", `${P[me].name.toUpperCase()} · HAND`));
   if (P[me].hand) P[me].hand.forEach(c => { const n = cardNode(c); decorate(n, c.inst); myHand.append(n); });
   else for (let i = 0; i < P[me].hand_count; i++) myHand.append(cardNode({}, { back: true }));
   left.append(myHand);
@@ -123,11 +133,13 @@ function renderBoard(root, v, { interactive, onAct } = {}) {
     p.field.forEach(u => { const n = cardNode(u); decorate(n, u.inst); row.append(n); });
     return row;
   };
-  center.append(legRow(P[opp], false), fieldRow(P[opp]), fieldRow(P[me]), legRow(P[me], true));
+  const oppLeg = legRow(P[opp], false), oppField = fieldRow(P[opp]), myField = fieldRow(P[me]), myLeg = legRow(P[me], true);
+  oppLeg.classList.add("p-opp-legends"); oppField.classList.add("p-opp-field"); myField.classList.add("p-my-field"); myLeg.classList.add("p-my-legends");
+  center.append(oppLeg, oppField, myField, myLeg);
 
   // ----- right column
   const right = el("div", "col");
-  const controls = el("div", "panel controls");
+  const controls = el("div", "panel controls p-controls");
   if (interactive) {
     const undo = el("button", "", "UNDO"); undo.onclick = () => act("undo");
     const concede = el("button", "", "CONCEDE"); concede.onclick = () => { if (confirm("Concede?")) act("concede"); };
@@ -136,10 +148,12 @@ function renderBoard(root, v, { interactive, onAct } = {}) {
     controls.append(undo, concede, leave, dl);
   }
   right.append(controls);
-  const logp = el("div", "panel logwrap"); logp.append(el("span", "lbl", "LOG"));
+  const logp = el("div", "panel logwrap p-log"); logp.append(el("span", "lbl", "LOG"));
+  const logBtn = el("button", "logbtn", "LOG"); logBtn.onclick = () => logp.classList.toggle("open"); controls.append(logBtn);
+  logp.onclick = (e) => { if (e.target === logp) logp.classList.remove("open"); };
   (v.log || LOG).forEach(line => { const p = el("p", line.startsWith("—") ? "turn" : line.startsWith("GAME OVER") ? "end" : "", line); logp.append(p); });
   right.append(logp);
-  const prompt = el("div", "panel prompt"); prompt.append(el("span", "lbl", "PROMPT"));
+  const prompt = el("div", "panel prompt p-prompt"); prompt.append(el("span", "lbl", "PROMPT"));
   if (v.over) {
     prompt.append(el("div", "q", `${P[v.winner].name.toUpperCase()} WINS`), el("div", "desc", v.end_reason));
   } else if (pend) {
@@ -351,10 +365,11 @@ function renderCardGrid(q) {
 // ---------------------------------------------------------------- card preview
 // The board draws cards small; hovering any card shows its face at full resolution, like the sim.
 let PREVIEW = null;
-function showPreview(src, c) {
-  if (!PREVIEW) { PREVIEW = el("div", "preview"); PREVIEW.append(el("img")); document.body.append(PREVIEW); }
+function showPreview(src, c, touch) {
+  if (!PREVIEW) { PREVIEW = el("div", "preview"); PREVIEW.append(el("img")); document.body.append(PREVIEW); PREVIEW.onclick = hidePreview; }
   const img = PREVIEW.querySelector("img"); img.src = src; img.alt = c.name;
-  PREVIEW.classList.add("show");
+  PREVIEW.classList.add("show"); PREVIEW.classList.toggle("touch", !!touch);
+  if (touch) return;
   document.onmousemove = (e) => {
     const w = PREVIEW.offsetWidth, h = PREVIEW.offsetHeight;
     const left = e.clientX + 24 + w > window.innerWidth ? e.clientX - 24 - w : e.clientX + 24;
@@ -362,7 +377,7 @@ function showPreview(src, c) {
     PREVIEW.style.left = left + "px"; PREVIEW.style.top = top + "px";
   };
 }
-function hidePreview() { if (PREVIEW) PREVIEW.classList.remove("show"); document.onmousemove = null; }
+function hidePreview() { if (PREVIEW) PREVIEW.classList.remove("show", "touch"); document.onmousemove = null; }
 
 // ---------------------------------------------------------------- deck builder
 // The page holds the deck being edited; legality, RAM limits and the saved file all come from
