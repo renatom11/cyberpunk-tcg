@@ -83,6 +83,14 @@
       <li>Everything here has a command-line twin (<code>cptcg sim</code>, <code>tourney</code>, <code>league</code>, <code>generate</code>, <code>build</code>, <code>serve</code>); see the README for the exact flags.</li>
     </ul>
 
+    <h3>Running it yourself</h3>
+    <p>The client is a small web server that runs the rules engine on your own computer; nothing is hosted online. A published snapshot of this page can only show recorded games — to actually play, run it:</p>
+    <ol>
+      <li>Install Python 3.11 or newer, then in a terminal: <code>git clone https://github.com/renatom11/cyberpunk-tcg</code>, <code>cd cyberpunk-tcg</code>, <code>pip install -e .</code></li>
+      <li>Start it with <code>python -m cptcg serve</code> and open <code>http://127.0.0.1:8000/</code> in a browser. Every tab is live: games are played against the engine, decks save to disk, and lab jobs run on your cores.</li>
+      <li><b>On a phone</b>: start it with <code>python -m cptcg serve --host 0.0.0.0</code> and open <code>http://&lt;your computer's IP&gt;:8000/</code> on the phone while both are on the same Wi-Fi. The board uses the stacked phone layout automatically.</li>
+    </ol>
+
     <h3>Tips</h3>
     <ul>
       <li>Hover a card to read it; on a phone tap a card that has nothing to do, or long-press any card.</li>
