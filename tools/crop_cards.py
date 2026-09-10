@@ -21,7 +21,7 @@ import json
 import re
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -114,11 +114,14 @@ def crop_all(paths: list[Path], out: Path, scale: float, back: Path | None) -> d
             face = im.crop((int(fx0 * scale), int(fy0 * scale), int(fx1 * scale), int(fy1 * scale)))
             if scale != 1:
                 face = face.resize((FACE_W, FACE_H), Image.LANCZOS)
+            # Browser screenshots (often WebP) soften the card's fine text; a light unsharp mask
+            # brings the edges back without inventing detail.
+            face = face.filter(ImageFilter.UnsharpMask(radius=1.2, percent=90, threshold=2))
             dest = out / f"{card['id']}.jpg"
-            face.save(dest, quality=90, optimize=True)
+            face.save(dest, quality=93, optimize=True, subsampling=0)
             found[card["id"]] = (dest, score)
     if back is not None:
-        Image.open(back).convert("RGB").resize((FACE_W, FACE_H), Image.LANCZOS).save(out / "_back.jpg", quality=90, optimize=True)
+        Image.open(back).convert("RGB").resize((FACE_W, FACE_H), Image.LANCZOS).save(out / "_back.jpg", quality=93, optimize=True, subsampling=0)
     missing = [c["id"] for c in cards if c["id"] not in found]
     return {"found": {k: (str(v[0]), v[1]) for k, v in found.items()}, "missing": missing, "unmatched": unmatched}
 

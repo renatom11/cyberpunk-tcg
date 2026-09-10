@@ -25,6 +25,7 @@ function cardNode(c, opts = {}) {
   const def = CARDS[c.id] || {};
   if (def.image) {
     const img = el("img"); img.src = `/images/${c.id}.jpg`; img.alt = c.name;
+    d.onmouseenter = (e) => showPreview(img.src, c); d.onmouseleave = hidePreview;
     img.onerror = () => { img.remove(); d.append(...textFace(c)); };
     d.append(img);
   } else {
@@ -346,6 +347,22 @@ function renderCardGrid(q) {
   Object.values(CARDS).filter(c => !s || `${c.name} ${c.subtitle || ""} ${c.text} ${c.tags.join(" ")} ${c.type} ${c.color}`.toLowerCase().includes(s))
     .slice(0, 200).forEach(c => grid.append(cardNode(c)));
 }
+
+// ---------------------------------------------------------------- card preview
+// The board draws cards small; hovering any card shows its face at full resolution, like the sim.
+let PREVIEW = null;
+function showPreview(src, c) {
+  if (!PREVIEW) { PREVIEW = el("div", "preview"); PREVIEW.append(el("img")); document.body.append(PREVIEW); }
+  const img = PREVIEW.querySelector("img"); img.src = src; img.alt = c.name;
+  PREVIEW.classList.add("show");
+  document.onmousemove = (e) => {
+    const w = PREVIEW.offsetWidth, h = PREVIEW.offsetHeight;
+    const left = e.clientX + 24 + w > window.innerWidth ? e.clientX - 24 - w : e.clientX + 24;
+    const top = Math.max(8, Math.min(window.innerHeight - h - 8, e.clientY - h / 2));
+    PREVIEW.style.left = left + "px"; PREVIEW.style.top = top + "px";
+  };
+}
+function hidePreview() { if (PREVIEW) PREVIEW.classList.remove("show"); document.onmousemove = null; }
 
 // ---------------------------------------------------------------- deck builder
 // The page holds the deck being edited; legality, RAM limits and the saved file all come from
