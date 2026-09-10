@@ -48,9 +48,9 @@ def build(out: Path, pyodide_url: str = PYODIDE) -> dict:
         (out / rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(p, out / rel)
         manifest["decks"].append(str(rel))
-    demo = ROOT / "out/replays"
+    demo = ROOT / "data/replays"
     if demo.exists():
-        for p in sorted(demo.glob("demo_*.json")):
+        for p in sorted(demo.glob("*.json")):
             rel = p.relative_to(ROOT)
             (out / rel).parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(p, out / rel)

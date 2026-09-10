@@ -193,8 +193,12 @@ def list_strategies() -> list[dict]:
 
 
 def list_replays() -> list[str]:
-    out_dir = ROOT / "out"
-    return sorted(str(p.relative_to(ROOT)) for p in out_dir.rglob("*.json") if "replays" in p.parts) if out_dir.exists() else []
+    """Replay files: demo replays shipped in data/replays plus anything under out/**/replays."""
+    out = []
+    for base in (ROOT / "data" / "replays", ROOT / "out"):
+        if base.exists():
+            out += [str(p.relative_to(ROOT)) for p in base.rglob("*.json") if "replays" in p.parts]
+    return sorted(out)
 
 
 def list_reports() -> list[str]:
