@@ -3,6 +3,10 @@
     python tools/bench.py record      # write tests/golden/games.json from fixed seeds (do this once)
     python tools/bench.py check       # replay the same seeds; exit 1 if ANY game differs
     python tools/bench.py time [-n N] # ms/game, heuristic vs heuristic and random vs random
+    python tools/bench.py fuzz [-n N] [--seed S] [--agent heuristic|random]
+                                      # play N games between RANDOM RAM-legal decks (whole card pool,
+                                      # invariants on) and print one digest line; run it on two
+                                      # branches and compare — the digests must be equal
 
 "Identical" means: same winner, end reason, turn count, action indices and cards drawn for every
 seeded game. Any optimisation of the engine or the heuristic must keep `check` green.
@@ -80,12 +84,63 @@ def cmd_time(a) -> None:
         print(f"{agent:9s} {games:4d} games  {dt:6.2f}s  {dt / games * 1000:6.1f} ms/game  {games / dt:5.2f} games/s")
 
 
+def cmd_fuzz(a) -> None:
+    """Broad differential test: random decks from the whole pool, so card scripts the golden
+    matchups never draw are exercised too. Prints a digest of every game's outcome and action
+    list; identical engine behaviour ⇔ identical digest."""
+    import hashlib
+    from cptcg.agents.base import make_agent
+    from cptcg.cards.registry import load_default
+    from cptcg.core import invariants
+    from cptcg.core.engine import apply, legal_actions, new_game
+    from cptcg.core.rng import Pcg32
+    from cptcg.deck.builder import heuristic_deck, random_deck
+
+    reg = load_default()
+    h = hashlib.sha256()
+    t = time.perf_counter()
+    actions = 0
+    seen: set = set()
+    for k in range(a.n):
+        seed = a.seed * 100_003 + k
+        rng = Pcg32(seed, seq=3)
+        decks = (heuristic_deck(reg, None, rng, name="a") if k % 2 else random_deck(reg, rng, name="a"),
+                 heuristic_deck(reg, None, rng, name="b") if k % 3 else random_deck(reg, rng, name="b"))
+        for d in decks:
+            seen.update(d.main)
+            seen.update(d.legends)
+        agents = [make_agent(a.agent, seed * 2 + i) for i in range(2)]
+        s = new_game(reg, decks, seed, record=True)
+        for p, ag in enumerate(agents):
+            ag.new_game(seed, p)
+        n = 0
+        while not s.over:
+            legal_actions(s)
+            apply(s, agents[s.pending.player].act(s, s.pending))
+            if a.invariants:
+                invariants.check(s)
+            n += 1
+            if n > 20_000:
+                raise RuntimeError(f"fuzz game {k} (seed {seed}) runaway")
+        actions += n
+        h.update(f"{k}:{s.winner}:{s.end_reason}:{s.turn}:{s.actions}:{sorted(s.drawn)}\n".encode())
+    dt = time.perf_counter() - t
+    print(f"fuzz {a.agent} n={a.n} seed={a.seed} cards={len(seen)}/{len(reg)} actions={actions} "
+          f"time={dt:.1f}s digest={h.hexdigest()[:24]}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("record").set_defaults(fn=cmd_record)
     sub.add_parser("check").set_defaults(fn=cmd_check)
     p = sub.add_parser("time"); p.add_argument("-n", type=int, default=16); p.set_defaults(fn=cmd_time)
+    p = sub.add_parser("fuzz")
+    p.add_argument("-n", type=int, default=60)
+    p.add_argument("--seed", type=int, default=1)
+    p.add_argument("--agent", default="heuristic", choices=("heuristic", "random"))
+    p.add_argument("--no-invariants", dest="invariants", action="store_false")
+    p.set_defaults(fn=cmd_fuzz)
     a = ap.parse_args()
     a.fn(a)
 
