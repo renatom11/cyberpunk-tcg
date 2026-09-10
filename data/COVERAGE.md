@@ -7,8 +7,8 @@ Pool: **151 cards** (Welcome to Night City + starter sets).
 | Transcribed and verified against the card face | 146 |
 | Needing a card-face screenshot | 5 |
 | Vanilla (no rules text — need no script) | 10 |
-| Scripted | 0 |
-| Rules text not yet scripted | 137 |
+| Scripted | 30 |
+| Rules text not yet scripted | 107 |
 
 ## Needs a card-face screenshot
 
@@ -24,52 +24,39 @@ These have placeholder or partial data. Decks containing them are refused unless
 
 Transcribed, but the effect is not implemented. Decks containing them are refused unless `--allow-unscripted` is passed (the card would play as vanilla).
 
-Gear: 14, Legend: 23, Program: 34, Unit: 66
+Gear: 14, Legend: 23, Program: 4, Unit: 66
 
 - `6th-street-recruits`
-- `afterparty-at-lizzie-s`
-- `all-is-lost`
+- `afterparty-at-lizzies`
 - `alt-cunningham-mother-of-daemons`
 - `alt-cunningham-soulkiller-architect`
-- `appetite-for-destruction`
 - `arasaka-emergency-radioport`
 - `augmented-negotiators`
-- `bonnie-and-clyde`
-- `bootleg-black-sapphire-show`
-- `caliber-totentanz-s-top-dog`
-- `carnage-at-the-colosseum`
+- `caliber-totentanzs-top-dog`
 - `chrome-fang`
-- `chrome-reverie`
 - `corpo-security`
-- `corporate-surveillance`
-- `cyberpsychosis`
 - `deadman-transmitter`
 - `delamain-cab`
 - `delamain-rideshare-ai`
-- `detonate`
 - `dexter-deshawn-off-the-grid`
 - `dexter-deshawn-one-last-chance`
-- `don-t-fear-the-reaper`
 - `dum-dum-maelstrom-triggerman`
-- `dying-night-v-s-pistol`
+- `dying-night-vs-pistol`
 - `el-sombreron-la-venganza-lenta`
 - `evelyn-parker-beautiful-enigma`
 - `evelyn-parker-scheming-siren`
 - `field-operator`
-- `floor-it`
-- `fool-on-the-hill`
 - `gilded-maton`
 - `gorilla-arms`
 - `goro-takemura-losing-his-way`
 - `goro-takemura-vengeful-bodyguard`
-- `gunpoint-diplomacy`
 - `hacked-corpo`
 - `hanako-arasaka-daughter-of-the-emperor`
 - `hanako-arasaka-in-a-gilded-cage`
 - `heywood-ripperdoc`
 - `industrial-assembly`
 - `jacked-in-voodoo-boy`
-- `jackie-welles-mama-s-favorite`
+- `jackie-welles-mamas-favorite`
 - `jackie-welles-pour-one-out-for-me`
 - `jackie-welles-ride-or-die-choom`
 - `japantown-jonin`
@@ -81,8 +68,6 @@ Gear: 14, Legend: 23, Program: 34, Unit: 66
 - `kerry-eurodyne-the-last-rockerboy`
 - `kiroshi-optics`
 - `la-llorona-ghost-of-the-past`
-- `les-elemens`
-- `live-with-the-aftermath`
 - `lizzy-wizzy-delicate-weapon`
 - `maelstrom-goons`
 - `maelstrom-zealots`
@@ -91,7 +76,6 @@ Gear: 14, Legend: 23, Program: 34, Unit: 66
 - `maxtac-heavy`
 - `maxtac-squadron`
 - `maxtac-suppression-team`
-- `memory-relapse`
 - `meredith-stout-stone-cold-corpo`
 - `minotaur`
 - `misty-olszewski-mender-of-broken-spirits`
@@ -102,11 +86,9 @@ Gear: 14, Legend: 23, Program: 34, Unit: 66
 - `muamar-reyes-el-capitan`
 - `nadia-fighting-through-grief`
 - `netwatch-netdriver`
-- `nocturne-op55n1`
 - `octant`
 - `offduty-malfini`
-- `over-the-edge`
-- `overwatch-panam-s-gift`
+- `overwatch-panams-gift`
 - `pacifica-netrunner`
 - `padre-man-of-the-cross`
 - `panam-palmer-nomad-cavalry`
@@ -114,39 +96,29 @@ Gear: 14, Legend: 23, Program: 34, Unit: 66
 - `peace-offering`
 - `pepe-najarro-working-doubles`
 - `placide-voodoo-sentinel`
-- `pyramid-song`
-- `reboot-optics`
 - `riot-shield`
 - `rita-wheeler-no-stupid-questions`
 - `river-ward-detective-on-the-hunt`
 - `rogue-amendiares-preem-solo`
 - `rogue-amendiares-queen-of-the-afterlife`
-- `royce-don-t-call-me-simon`
+- `royce-dont-call-me-simon`
 - `royce-psycho-on-the-edge`
 - `ruthless-lowlife`
 - `saburo-arasaka-stubborn-patriarch`
-- `safety-override`
-- `sandayu-oda-hanako-s-guardian`
+- `sandayu-oda-hanakos-guardian`
 - `sandevistan`
-- `sasha-yakovleva-won-t-let-you-down`
+- `sasha-yakovleva-wont-let-you-down`
 - `satori-sword-of-saburo`
 - `saul-bright-stormrider`
 - `screw-lovelorn-fool`
-- `shattered-memories`
 - `sketchy-ripper`
 - `swordwise-huscle`
-- `synapse-burnout`
 - `t-bug-amateur-philosopher`
-- `take-control`
 - `tetratronic-rippler`
-- `the-heist`
 - `the-relic-experimental-biochip`
-- `three-mouths-one-desire`
-- `towerfall`
 - `trauma-team-operatives`
 - `trust-no-one`
-- `tyger-s-whisper`
-- `unlikely-bond`
+- `tygers-whisper`
 - `v-roamer-of-the-badlands`
 - `v-streetkid`
 - `valentino-guerrera`
@@ -155,9 +127,7 @@ Gear: 14, Legend: 23, Program: 34, Unit: 66
 - `viktor-vektor-sit-down-and-relax`
 - `viktor-vektor-you-might-feel-a-little-pinch`
 - `wakako-okada-peace-and-harmony`
-- `we-gotta-live-together`
 - `westbrook-netrunner`
-- `wild-in-the-streets`
 - `wraith-marauders`
 - `yorinobu-arasaka-embracing-destruction`
 - `yorinobu-arasaka-steel-dragon`

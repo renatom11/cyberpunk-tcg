@@ -1,20 +1,22 @@
 """The step machine.
 
 The engine never blocks inside a Python call: work is queued as ``Step`` objects on
-``state.stack`` and a step that needs a player decision sets ``state.pending`` and returns. That
-keeps the whole game a pure state machine, clonable at every decision point — which is exactly
-what a search agent needs. Steps are immutable, so cloning a state shares them.
+``state.stack`` and a step that needs a player decision sets ``state.pending`` and returns —
+and only as its final act. That keeps the whole game a pure state machine, clonable at every
+decision point. Steps are immutable, so cloning a state shares them.
 """
 
 from __future__ import annotations
 
 from itertools import combinations
 
-from cptcg.core.actions import Choice, ChoiceKind, Mulligan, Pass, Pick, TakeGigDie, Target
-from cptcg.core.enums import (F_NO_READY_NEXT, NZONE, TARGET_GIG, TARGET_UNIT, EndReason,
-                              Zone)
+from cptcg.core.actions import Choice, ChoiceKind, Mulligan, Pick, TakeGigDie, Target
+from cptcg.core.enums import (F_NO_READY_NEXT, NO_INST, NZONE, TARGET_GIG, TARGET_UNIT, CardType,
+                              EndReason, Zone)
 from cptcg.core.legal import attack_targets, gig_die_options, main_menu, reaction_menu
-from cptcg.core.ops import (defeat, draw, end_game, gain_gig, power, steal_count, steal_gig)
+from cptcg.core.ops import (ATTACKING, FIGHTING, VS_LEGEND, VS_UNIT, _ctx, active_cards, ask,
+                            defeat, dispatch, draw, end_game, gain_gig, power, steal_count,
+                            steal_gig)
 from cptcg.core.state import GameState
 
 
@@ -23,6 +25,20 @@ class Step:
 
     def run(self, s: GameState) -> None:  # pragma: no cover - interface
         raise NotImplementedError
+
+
+class AskStep(Step):
+    """Present a choice. The only way effects ask questions."""
+    __slots__ = ("choice",)
+
+    def __init__(self, choice: Choice) -> None:
+        self.choice = choice
+
+    def run(self, s: GameState) -> None:
+        if len(self.choice.options) == 1 and self.choice.cont is not None:
+            self.choice.cont(s, self.choice.options[0])      # no real decision: resolve inline
+            return
+        s.pending = self.choice
 
 
 # ----------------------------------------------------------------- setup
@@ -51,6 +67,7 @@ def push_turn(s: GameState) -> None:
     """Queue one full turn for ``s.active``: start-phase steps, the main phase, then end of turn."""
     s.stack.append(EndTurnStep())
     s.stack.append(MainPhaseStep())
+    s.stack.append(StartTurnEventsStep())
     s.stack.append(GainGigStep())
     s.stack.append(DrawStep())
     s.stack.append(ReadyStep())
@@ -101,6 +118,13 @@ class GainGigStep(Step):
                            tuple(TakeGigDie(d) for d in opts), prompt="Take a Gig")
 
 
+class StartTurnEventsStep(Step):
+    __slots__ = ()
+
+    def run(self, s: GameState) -> None:
+        dispatch(s, ("start_turn", s.active))
+
+
 class MainPhaseStep(Step):
     __slots__ = ()
 
@@ -109,6 +133,17 @@ class MainPhaseStep(Step):
 
 
 class EndTurnStep(Step):
+    """End-of-turn triggers first (they may ask questions), then the cleanup step below them."""
+    __slots__ = ()
+
+    def run(self, s: GameState) -> None:
+        s.stack.append(EndTurnCleanupStep())
+        for inst in [i for k, i, _v, _e in s.mods if k == "defeat_at_end"]:
+            defeat(s, inst)
+        dispatch(s, ("end_turn", s.active))
+
+
+class EndTurnCleanupStep(Step):
     __slots__ = ()
 
     def run(self, s: GameState) -> None:
@@ -116,6 +151,9 @@ class EndTurnStep(Step):
         for i in range(len(s.i_lag)):
             s.i_lag[i] = 0
         s.temp_power.clear()
+        s.mods = [m for m in s.mods if m[3] > s.turn]
+        s.used.clear()
+        s.played.clear()
         s.once[0] = s.once[1] = 0
         s.turns_taken[p] += 1
         if min(s.turns_taken) >= s.cfg.overtime_after_turn and not s.overtime:
@@ -159,7 +197,7 @@ class ReactionWindowStep(Step):
 
     def run(self, s: GameState) -> None:
         atk = s.atk
-        if atk.fizzled:
+        if atk.fizzled or s.over:
             return
         opts = reaction_menu(s)
         if len(opts) == 1:                                 # only Pass: no real decision
@@ -168,48 +206,128 @@ class ReactionWindowStep(Step):
                            prompt="React?")
 
 
+def stealable(s: GameState, thief_unit: int, victim: int) -> list[int]:
+    """Indices of the victim's dice this attacker may steal, after protection effects."""
+    out = []
+    thief_is_legend = s.card(thief_unit).type is CardType.LEGEND
+    pw = power(s, thief_unit, ATTACKING)
+    for i, (_sides, value) in enumerate(s.gig[victim]):
+        if s.has_mod("protect_gt_power", victim) and value > pw:
+            continue
+        if thief_is_legend and s.has_mod("protect_legends_lt_power", victim) and value < pw:
+            continue
+        out.append(i)
+    return out
+
+
+def push_steals(s: GameState, thief_unit: int, indices) -> None:
+    """Queue stealing the given dice (indices of the victim's Gig area), one step per die."""
+    thief = s.i_owner[thief_unit]
+    for i in sorted(indices):                            # LIFO: highest index steals first
+        s.stack.append(StealOneStep(thief_unit, thief, i))
+
+
+class StealOneStep(Step):
+    __slots__ = ("unit", "thief", "index")
+
+    def __init__(self, unit: int, thief: int, index: int) -> None:
+        self.unit, self.thief, self.index = unit, thief, index
+
+    def run(self, s: GameState) -> None:
+        victim = 1 - self.thief
+        if self.index >= len(s.gig[victim]) or s.over:
+            return
+        for i in active_cards(s, first=victim):
+            sc = s.card(i).script
+            if sc is not None and sc.would_steal is not None and \
+                    sc.would_steal(_ctx(s, i), self.unit, victim, self.index):
+                return
+        do_steal(s, self.unit, self.thief, self.index)
+
+
+def do_steal(s: GameState, unit: int, thief: int, index: int) -> None:
+    sides, value = steal_gig(s, thief, index)
+    s.used.add(("stole", unit))
+    dispatch(s, ("steal", unit, thief, sides, value))
+
+
 class ResolveAttackStep(Step):
     __slots__ = ()
 
     def run(self, s: GameState) -> None:
         atk = s.atk
-        if atk.fizzled or s.i_zone[atk.attacker] is not Zone.FIELD:
+        if atk.fizzled or s.over or s.i_zone[atk.attacker] is not Zone.FIELD:
             return
         a = atk.attacker
         if atk.target_kind == TARGET_UNIT:
             t = atk.target
             if s.i_zone[t] is not Zone.FIELD:
                 return                                     # target left play; no fight, no steal
-            pa, pt = power(s, a), power(s, t)
-            s.emit("fight", a, t, pa, pt)
-            if pa > pt:
-                defeat(s, t)
-            elif pt > pa:
-                defeat(s, a)
-            else:
-                defeat(s, t)
-                defeat(s, a)
+            fight(s, a, t)
         elif atk.target_kind == TARGET_GIG and atk.gig_steal_allowed:
             thief = atk.attacker_ctrl
             victim = 1 - thief
-            n = steal_count(power(s, a))
-            k = len(s.gig[victim])
-            if n <= 0 or k == 0:
+            n = steal_count(power(s, a, ATTACKING))
+            for v in s.mod_values("steal_fewer", a):
+                n -= v
+            cands = stealable(s, a, victim)
+            if n <= 0 or not cands:
                 return
-            if n >= k:
-                for _ in range(k):
-                    steal_gig(s, thief, 0)
+            if n >= len(cands):
+                push_steals(s, a, cands)
                 return
-            if n == 1:
-                opts = tuple(Pick((i,)) for i in range(k))
-            else:
-                opts = tuple(Pick(c) for c in combinations(range(k), n))
+            opts = tuple(Pick(c) for c in (combinations(cands, n) if n > 1 else [(i,) for i in cands]))
 
-            def cont(st: GameState, act: Pick, thief=thief) -> None:
-                for i in sorted(act.picks, reverse=True):
-                    steal_gig(st, thief, i)
+            def cont(st: GameState, act: Pick, unit=a) -> None:
+                push_steals(st, unit, act.picks)
 
-            s.pending = Choice(ChoiceKind.PICK, thief, opts, cont, prompt="Steal which Gig(s)?")
+            ask(s, Choice(ChoiceKind.PICK, thief, opts, cont, prompt="Steal which Gig(s)?"))
+
+
+def fight(s: GameState, a: int, t: int) -> None:
+    """Resolve a fight between attacker ``a`` and defender ``t`` (both on the field)."""
+    ta = VS_LEGEND if s.card(t).type is CardType.LEGEND else VS_UNIT
+    tt = VS_LEGEND if s.card(a).type is CardType.LEGEND else VS_UNIT
+    pa = power(s, a, ATTACKING | FIGHTING | ta)
+    pt = power(s, t, FIGHTING | tt)
+    a_wins, t_wins = pa > pt, pt > pa
+    for x, y, flag in ((a, t, "a"), (t, a, "t")):
+        sc = s.card(x).script
+        tag = sc.extra.get("wins_vs_tag") if sc is not None else None
+        if tag and tag in s.card(y).tags:
+            a_wins, t_wins = (True, False) if flag == "a" else (False, True)
+    s.emit("fight", a, t, pa, pt)
+    oa, ot = s.i_owner[a], s.i_owner[t]
+    defeat_t = a_wins or not t_wins
+    defeat_a = t_wins or not a_wins
+    if s.has_mod("no_defeat_in_fight", t):
+        defeat_t = False
+    if s.has_mod("no_defeat_in_fight", a):
+        defeat_a = False
+    # Reboot Optics: the next time a rival Unit fights this turn, it doesn't defeat our Unit.
+    if defeat_t and s.has_mod("next_fight_no_defeat", ot):
+        defeat_t = False
+        s.mods = [m for m in s.mods if not (m[0] == "next_fight_no_defeat" and m[1] == ot)]
+    if defeat_a and s.has_mod("next_fight_no_defeat", oa):
+        defeat_a = False
+        s.mods = [m for m in s.mods if not (m[0] == "next_fight_no_defeat" and m[1] == oa)]
+    if a_wins:
+        dispatch(s, ("fight_won", a, t, pa - pt))
+        dispatch(s, ("fight_lost", t, a))
+    elif t_wins:
+        dispatch(s, ("fight_won", t, a, pt - pa))
+        dispatch(s, ("fight_lost", a, t))
+    # Safety Override: the next time a friendly Unit loses a fight, defeat the opposing Unit.
+    if a_wins and s.has_mod("next_loss_defeats_winner", ot):
+        s.mods = [m for m in s.mods if not (m[0] == "next_loss_defeats_winner" and m[1] == ot)]
+        defeat_a = True
+    if t_wins and s.has_mod("next_loss_defeats_winner", oa):
+        s.mods = [m for m in s.mods if not (m[0] == "next_loss_defeats_winner" and m[1] == oa)]
+        defeat_t = True
+    if defeat_t:
+        defeat(s, t)
+    if defeat_a:
+        defeat(s, a)
 
 
 class EndAttackStep(Step):
@@ -231,23 +349,23 @@ class HookStep(Step):
     def run(self, s: GameState) -> None:
         if s.over:
             return
-        from cptcg.core.effects import EffectCtx
-        self.hook(EffectCtx(s, self.inst))
+        self.hook(_ctx(s, self.inst))
 
 
-class TrashStep(Step):
-    __slots__ = ("inst",)
+class FnStep(Step):
+    """Run an arbitrary fn(state) later — used to sequence effects after a choice resolves."""
+    __slots__ = ("fn",)
 
-    def __init__(self, inst: int) -> None:
-        self.inst = inst
+    def __init__(self, fn) -> None:
+        self.fn = fn
 
     def run(self, s: GameState) -> None:
-        from cptcg.core.ops import move
-        if s.i_zone[self.inst] is Zone.HAND:
-            move(s, self.inst, Zone.TRASH)
+        if not s.over:
+            self.fn(s)
 
 
-__all__ = ["Step", "MulliganStep", "StartGameStep", "push_turn", "WinCheckStep", "ReadyStep",
-           "DrawStep", "GainGigStep", "MainPhaseStep", "EndTurnStep", "DeclareTargetStep",
-           "ReactionWindowStep", "ResolveAttackStep", "EndAttackStep", "HookStep", "TrashStep",
-           "set_target", "Pass"]
+__all__ = ["Step", "AskStep", "MulliganStep", "StartGameStep", "push_turn", "WinCheckStep",
+           "ReadyStep", "DrawStep", "GainGigStep", "StartTurnEventsStep", "MainPhaseStep",
+           "EndTurnStep", "EndTurnCleanupStep", "DeclareTargetStep", "ReactionWindowStep",
+           "ResolveAttackStep", "EndAttackStep", "HookStep", "FnStep", "set_target", "fight",
+           "push_steals", "stealable", "do_steal", "StealOneStep"]

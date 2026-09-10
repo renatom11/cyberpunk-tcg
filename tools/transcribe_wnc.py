@@ -22,6 +22,7 @@ WNC, HEI, EBP = "MS01-WNC", "S001-HEI", "S002-EBP"
 
 def slug(s):
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()
+    s = re.sub(r"['\u2019\"]", "", s)          # rockn-rockerboy, not rockn-rockerboy-... / dont-fear
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
 
 

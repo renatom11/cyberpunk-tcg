@@ -72,7 +72,7 @@ def validate(deck: Decklist, reg: Registry, cfg: RulesConfig = DEFAULT_CONFIG,
             v.errors.append(f"{cid}: {d.color.name.title()} RAM {d.ram} exceeds limit {limit}")
 
     # Data quality gates: a sim on an unverified or unscripted card silently lies.
-    for d in legends + sorted({reg.get(c) for c in deck.main}, key=lambda d: d.id):
+    for d in legends + [reg.get(c) for c in sorted(set(deck.main))]:
         if not d.verified:
             (v.warnings if allow_unverified else v.errors).append(
                 f"{d.id}: transcription not verified against the card image")

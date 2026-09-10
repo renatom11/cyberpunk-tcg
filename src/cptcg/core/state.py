@@ -64,8 +64,12 @@ class GameState:
         "z",
         # dice
         "fixer", "gig",
-        # ephemeral modifiers, cleared at end of turn: list of (inst, delta, tag)
+        # temporary power mods: (inst, delta, cond) — cleared at end of turn
         "temp_power",
+        # temporary effects with expiry: (kind, subject, value, expires_turn)
+        "mods",
+        # per-turn bookkeeping: keys used for "the first time ... each turn"; cards played this turn
+        "used", "played",
         # recording (None in rollouts)
         "log", "actions",
     )
@@ -100,6 +104,9 @@ class GameState:
         self.fixer: list[list[int]] = [[], []]
         self.gig: list[list[tuple[int, int]]] = [[], []]
         self.temp_power: list[tuple[int, int, int]] = []
+        self.mods: list[tuple] = []
+        self.used: set = set()
+        self.played: list[int] = []
         self.log: list | None = None
         self.actions: list[int] | None = None
 
@@ -135,6 +142,9 @@ class GameState:
         s.fixer = [self.fixer[0][:], self.fixer[1][:]]
         s.gig = [self.gig[0][:], self.gig[1][:]]
         s.temp_power = self.temp_power[:]
+        s.mods = self.mods[:]
+        s.used = set(self.used)
+        s.played = self.played[:]
         s.log = None
         s.actions = None
         return s
@@ -177,6 +187,28 @@ class GameState:
     # ------------------------------------------------------------------- dice
     def street_cred(self, player: int) -> int:
         return sum(v for _, v in self.gig[player])
+
+    # ------------------------------------------------------------------- mods
+    def add_mod(self, kind: str, subject: int, value=None, *, turns: int = 0) -> None:
+        """Add a temporary effect. turns=0: this turn; 1: until the end of next turn (i.e.
+        'until your next turn' when added on your own turn)."""
+        self.mods.append((kind, subject, value, self.turn + turns))
+
+    def has_mod(self, kind: str, subject: int) -> bool:
+        for k, sub, _v, _e in self.mods:
+            if k == kind and sub == subject:
+                return True
+        return False
+
+    def mod_values(self, kind: str, subject: int) -> list:
+        return [v for k, sub, v, _e in self.mods if k == kind and sub == subject]
+
+    def use_once(self, key: tuple) -> bool:
+        """True the first time ``key`` is used this turn, False afterwards."""
+        if key in self.used:
+            return False
+        self.used.add(key)
+        return True
 
     # -------------------------------------------------------------- recording
     def emit(self, *event) -> None:

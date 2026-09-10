@@ -3,17 +3,16 @@
 from __future__ import annotations
 
 from cptcg.cards.registry import Registry
-from cptcg.core.actions import (Action, Attack, Block, CallLegend, Choice, ChoiceKind,
-                                ChooseOrder, EndTurn, GoSolo, Mulligan, Pass, Pick, Play, Sell,
-                                TakeGigDie, Target)
+from cptcg.core.actions import (Action, Activate, Attack, Block, CallLegend, Choice, ChoiceKind,
+                                ChooseOrder, EndTurn, GoSolo, Pass, Play, Sell)
 from cptcg.core.config import DEFAULT_CONFIG, RulesConfig
-from cptcg.core.enums import (DICE, F_GO_SOLO, F_NO_READY_NEXT, NO_INST, NZONE, TARGET_UNIT,
-                              CardType, EndReason, Keyword, Trigger, Zone)
-from cptcg.core.ops import (call_legend, draw, end_game, gain_gig, move, pay, push_trigger,
-                            shuffle_deck, spend)
+from cptcg.core.enums import (DICE, F_GO_SOLO, F_NO_READY_NEXT, NO_INST, TARGET_UNIT, CardType,
+                              EndReason, Keyword, Trigger, Zone)
+from cptcg.core.ops import (_ctx, call_legend, consume_cost_mods, dispatch, draw, end_game,
+                            gain_gig, move, pay, play_cost, push_trigger, shuffle_deck, spend)
 from cptcg.core.state import ONCE_SOLD, AttackContext, GameState
-from cptcg.core.steps import (DeclareTargetStep, EndAttackStep, MainPhaseStep, MulliganStep,
-                              ReactionWindowStep, ResolveAttackStep, StartGameStep, TrashStep,
+from cptcg.core.steps import (DeclareTargetStep, EndAttackStep, HookStep, MainPhaseStep,
+                              MulliganStep, ReactionWindowStep, ResolveAttackStep, StartGameStep,
                               set_target)
 from cptcg.deck.decklist import Decklist
 
@@ -36,7 +35,6 @@ def new_game(reg: Registry, decks: tuple[Decklist, Decklist], seed: int,
         for idx in legs:
             s.new_instance(idx, p, Zone.LEGENDS)
         s.fixer[p] = list(DICE)
-    # Determine play order: both roll a d20, reroll ties, higher decides.
     while True:
         r0, r1 = s.rng.die(20), s.rng.die(20)
         if r0 != r1:
@@ -55,8 +53,7 @@ def new_game(reg: Registry, decks: tuple[Decklist, Decklist], seed: int,
 def _set_order(s: GameState, first: int) -> None:
     s.first_player = first
     s.emit("first", first)
-    # First-player handicap: 2 leftmost Legends start spent and don't ready on turn 1.
-    for i in s.legends(first)[:2]:
+    for i in s.legends(first)[:2]:                   # first-player handicap
         s.i_spent[i] = 1
         s.i_flags[i] |= F_NO_READY_NEXT
     for p in (0, 1):
@@ -121,8 +118,7 @@ def apply(s: GameState, index: int) -> None:
     elif kind is ChoiceKind.MULLIGAN:
         if not action.keep:
             p = ch.player
-            hand = s.zone(p, Zone.HAND)
-            for i in list(hand):
+            for i in list(s.zone(p, Zone.HAND)):
                 move(s, i, Zone.DECK)
             shuffle_deck(s, p)
             draw(s, p, s.cfg.opening_hand)
@@ -135,7 +131,7 @@ def apply(s: GameState, index: int) -> None:
 # ---------------------------------------------------------- main actions
 def _main_action(s: GameState, p: int, a: Action) -> None:
     if isinstance(a, Play):
-        _play(s, p, a.inst, a.host)
+        play_card(s, p, a.inst, a.host, cost=play_cost(s, p, a.inst))
     elif isinstance(a, Attack):
         _attack(s, p, a.inst)
     elif isinstance(a, Sell):
@@ -146,22 +142,21 @@ def _main_action(s: GameState, p: int, a: Action) -> None:
         pay(s, p, 1, exclude=a.inst)
         call_legend(s, p, a.inst)
     elif isinstance(a, GoSolo):
-        d = s.card(a.inst)
-        pay(s, p, d.cost, exclude=a.inst)
-        move(s, a.inst, Zone.FIELD)
-        s.i_spent[a.inst] = 0
-        s.i_lag[a.inst] = 0
-        s.i_faceup[a.inst] = 1
-        s.i_flags[a.inst] |= F_GO_SOLO
-        s.emit("go_solo", p, a.inst)
+        go_solo(s, p, a.inst, cost=play_cost(s, p, a.inst, go_solo=True))
+    elif isinstance(a, Activate):
+        activate(s, p, a.inst, a.ability)
     else:
         raise RuntimeError(f"unhandled main action {a!r}")
 
 
-def _play(s: GameState, p: int, inst: int, host: int) -> None:
+def play_card(s: GameState, p: int, inst: int, host: int = NO_INST, cost: int = 0) -> None:
+    """Play ``inst`` from wherever it is (hand, or trash via an effect), paying ``cost``."""
     d = s.card(inst)
-    pay(s, p, d.cost)
+    if cost:
+        pay(s, p, cost)
+    consume_cost_mods(s, p, inst, False)
     s.emit("play", p, inst)
+    s.played.append(inst)
     if d.type is CardType.UNIT:
         move(s, inst, Zone.FIELD)
         s.i_lag[inst] = 0 if Keyword.ADRENALINE in d.keywords else 1
@@ -177,7 +172,30 @@ def _play(s: GameState, p: int, inst: int, host: int) -> None:
         move(s, inst, Zone(s.i_zone[host]), host=host)
         push_trigger(s, Trigger.PLAY, inst)
     else:
-        raise RuntimeError(f"cannot play a {d.type.name} from hand")
+        raise RuntimeError(f"cannot play a {d.type.name}")
+    dispatch(s, ("played", inst, p))
+
+
+def go_solo(s: GameState, p: int, inst: int, cost: int) -> None:
+    pay(s, p, cost, exclude=inst)
+    consume_cost_mods(s, p, inst, True)
+    move(s, inst, Zone.FIELD)
+    s.i_spent[inst] = 0
+    s.i_lag[inst] = 0
+    s.i_faceup[inst] = 1
+    s.i_flags[inst] |= F_GO_SOLO
+    s.emit("go_solo", p, inst)
+    dispatch(s, ("played", inst, p))
+
+
+def activate(s: GameState, p: int, inst: int, k: int) -> None:
+    ab = s.card(inst).script.abilities[k]
+    excl = inst if (ab.self_spend and s.card(inst).type is CardType.LEGEND) else NO_INST
+    pay(s, p, ab.cost, exclude=excl)
+    if ab.self_spend:
+        spend(s, inst)
+    s.emit("activate", p, inst, k)
+    s.stack.append(HookStep(ab.effect, inst))
 
 
 def _attack(s: GameState, p: int, unit: int) -> None:
@@ -190,6 +208,7 @@ def _attack(s: GameState, p: int, unit: int) -> None:
     s.stack.append(ReactionWindowStep())
     s.stack.append(DeclareTargetStep())
     push_trigger(s, Trigger.ATTACK, unit)
+    dispatch(s, ("attack", unit, p))
 
 
 def _reaction(s: GameState, d: int, a: Action) -> None:
@@ -201,8 +220,13 @@ def _reaction(s: GameState, d: int, a: Action) -> None:
         atk.gig_steal_allowed = False
         atk.redirects += 1
         s.emit("block", d, a.inst)
+        dispatch(s, ("blocked", a.inst, atk.attacker))
     elif isinstance(a, CallLegend):
         pay(s, d, 1, exclude=a.inst)
         call_legend(s, d, a.inst)
+    elif isinstance(a, Play):
+        play_card(s, d, a.inst, cost=play_cost(s, d, a.inst))
+    elif isinstance(a, Activate):
+        activate(s, d, a.inst, a.ability)
     else:
         raise RuntimeError(f"unhandled reaction {a!r}")

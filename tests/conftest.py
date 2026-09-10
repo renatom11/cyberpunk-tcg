@@ -90,8 +90,9 @@ def board(reg, p0: Side, p1: Side, active=0, turn=3, cfg=DEFAULT_CONFIG, seed=1,
             _place(s, reg, p, spec, Zone.LEGENDS)
         for spec in side.trash:
             _place(s, reg, p, spec, Zone.TRASH)
+        eddie = reg.get("T-P1") if "T-P1" in reg.by_id else reg.get("floor-it")
         for k in range(side.eddies):
-            e = s.new_instance(reg.get("T-P1").idx, p, Zone.EDDIES)
+            e = s.new_instance(eddie.idx, p, Zone.EDDIES)
             s.i_spent[e] = 1 if k < side.spent_eddies else 0
         s.gig[p] = list(side.gig)
         s.fixer[p] = list(side.fixer)
@@ -118,3 +119,13 @@ def do(s, action):
     from cptcg.core.engine import apply
     apply(s, s.pending.index_of(action))
     return s
+
+
+@pytest.fixture(scope="session")
+def pool():
+    from cptcg.cards.registry import load_default
+    return load_default()
+
+
+def gig_area(s, p):
+    return s.gig[p]

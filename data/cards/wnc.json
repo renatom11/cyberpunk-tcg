@@ -81,7 +81,7 @@
    "notes": "Name partially visible ('Adrenaline Con...'); summary row: Gear, cost 2, power +3, RAM 4. Text unread."
   },
   {
-   "id": "afterparty-at-lizzie-s",
+   "id": "afterparty-at-lizzies",
    "name": "Afterparty at Lizzie's",
    "subtitle": null,
    "type": "Program",
@@ -280,7 +280,7 @@
    "verified": true
   },
   {
-   "id": "caliber-totentanz-s-top-dog",
+   "id": "caliber-totentanzs-top-dog",
    "name": "Caliber",
    "subtitle": "Totentanz's Top Dog",
    "type": "Unit",
@@ -538,7 +538,7 @@
    "verified": true
   },
   {
-   "id": "don-t-fear-the-reaper",
+   "id": "dont-fear-the-reaper",
    "name": "(Don't Fear) The Reaper",
    "subtitle": null,
    "type": "Program",
@@ -579,7 +579,7 @@
    "verified": true
   },
   {
-   "id": "dying-night-v-s-pistol",
+   "id": "dying-night-vs-pistol",
    "name": "Dying Night",
    "subtitle": "V's Pistol",
    "type": "Gear",
@@ -986,7 +986,7 @@
    "verified": true
   },
   {
-   "id": "jackie-welles-mama-s-favorite",
+   "id": "jackie-welles-mamas-favorite",
    "name": "Jackie Welles",
    "subtitle": "Mama's Favorite",
    "type": "Legend",
@@ -1772,7 +1772,7 @@
    "verified": true
   },
   {
-   "id": "overwatch-panam-s-gift",
+   "id": "overwatch-panams-gift",
    "name": "Overwatch",
    "subtitle": "Panam's Gift",
    "type": "Gear",
@@ -2160,7 +2160,7 @@
    "verified": true
   },
   {
-   "id": "royce-don-t-call-me-simon",
+   "id": "royce-dont-call-me-simon",
    "name": "Royce",
    "subtitle": "Don't Call Me Simon",
    "type": "Unit",
@@ -2263,7 +2263,7 @@
    "verified": true
   },
   {
-   "id": "sandayu-oda-hanako-s-guardian",
+   "id": "sandayu-oda-hanakos-guardian",
    "name": "Sandayu Oda",
    "subtitle": "Hanako's Guardian",
    "type": "Unit",
@@ -2303,7 +2303,7 @@
    "verified": true
   },
   {
-   "id": "sasha-yakovleva-won-t-let-you-down",
+   "id": "sasha-yakovleva-wont-let-you-down",
    "name": "Sasha Yakovleva",
    "subtitle": "Won't Let You Down",
    "type": "Legend",
@@ -2665,7 +2665,7 @@
    "verified": true
   },
   {
-   "id": "tyger-s-whisper",
+   "id": "tygers-whisper",
    "name": "Tyger's Whisper",
    "subtitle": null,
    "type": "Unit",

@@ -36,3 +36,8 @@ game. **Uncertain**: a real coin-flip; revisit when official clarification lands
 | 024 | An attacker is spent after attacking — can the Rival attack it later? | **Yes.** Attacking carries a real cost. | — | Settled |
 | 025 | Cost payment order when Eddies and Legends are both available. | Auto-paid: ready Eddies → face-down Legends → face-up Legends (face-up last, since they may host Gear or have abilities). Exposing payment as a player decision multiplies the search branching factor for almost no strategic content. | `explicit_payment` = false | Approximation |
 | 026 | Is the field size-limited? | **No limit.** The online sim draws a fixed row of field slots, but the guide states no cap. | `field_limit` = null | Uncertain |
+| 027 | Can a spent Legend use GO SOLO? | **No** — it must be ready. Otherwise spend it for 1 €$, then GO SOLO it and it arrives ready: a free Eddie every turn. | `go_solo_requires_ready` = true | Uncertain |
+| 028 | Does the d20 winner choose, or simply go first? | **They choose** (the online sim offers "Go first / Go second"). | `first_player_choice` = true | Settled |
+| 029 | Can power go below 0? | **No** — effective power floors at 0. Cards like Towerfall ("-5 power, then bottom-deck rival Units with power 0") only make sense this way. | — | Settled |
+| 030 | What does ⊡ spend on a Gear ability? | **The Gear itself** — the glossary says the symbol means "spend this card". The host keeps its own ready state. | — | Uncertain |
+| 031 | Are face-down Legends' texts active? | **No** — only face-up Legends contribute static effects, event triggers and abilities. Their identity is unknown, so their text can't apply. | — | Settled |

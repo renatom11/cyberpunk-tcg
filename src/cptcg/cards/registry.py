@@ -70,15 +70,38 @@ class CardDef:
 
 
 @dataclass(frozen=True, slots=True)
-class CardScript:
-    """Behaviour hooks for one card. Every field is optional; see docs/effects-authoring.md."""
+class Ability:
+    """An activated ability. ``effect(ctx)`` runs after the costs are paid."""
 
-    on_play: Callable | None = None
-    on_call: Callable | None = None
-    on_attack: Callable | None = None
-    on_defeated: Callable | None = None
-    abilities: tuple = ()          # activated abilities (Phase 3)
-    statics: tuple = ()            # continuous modifiers (Phase 3)
+    effect: Callable
+    cost: int = 0                 # €$ to pay
+    self_spend: bool = False      # the ⊡ symbol: spend this card
+    quick: bool = False           # may also be used as a reaction when a rival Unit attacks
+    legal: Callable | None = None # extra precondition, legal(ctx) -> bool
+    label: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class CardScript:
+    """Behaviour hooks for one card. Every field is optional; see docs/effects-authoring.md.
+
+    Hooks receive an EffectCtx for the card they belong to. They must never block: anything
+    that needs a decision goes through ctx.ask()/ctx.choose(), which queue a step.
+    """
+
+    on_play: Callable | None = None       # PLAY trigger (Units, Programs, Gear)
+    on_call: Callable | None = None       # CALL trigger (Legends)
+    on_attack: Callable | None = None     # ATTACK trigger, before the target is declared
+    on_defeated: Callable | None = None   # DEFEATED trigger
+    on_event: Callable | None = None      # on_event(ctx, ev) for any card in play; ev is a tuple
+    power_mod: Callable | None = None     # power_mod(ctx, unit, situation) -> delta, for any unit
+    cost_mod: Callable | None = None      # cost_mod(ctx, player, inst, go_solo) -> delta
+    self_cost: Callable | None = None     # self_cost(ctx, player, base) -> cost to play this card
+    attack_perm: Callable | None = None   # attack_perm(ctx) -> (units_ok, gigs_ok) or None
+    would_defeat: Callable | None = None  # would_defeat(ctx, inst) -> True if replaced
+    would_steal: Callable | None = None   # would_steal(ctx, thief, victim, index) -> True if handled
+    unblockable: Callable | None = None   # unblockable(ctx) -> bool, for this attacking Unit
+    abilities: tuple = ()
     extra: dict = field(default_factory=dict)
 
 
