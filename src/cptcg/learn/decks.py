@@ -51,8 +51,10 @@ DEFAULT_MIX: dict[str, float] = {
 
 SOURCES = tuple(DEFAULT_MIX)
 
-#: Main-deck sizes to draw from, weighted toward the 40-card minimum because that is what almost
-#: every real list plays; the long tail teaches the model that a deck can be thicker.
+#: Main-deck sizes the ``random`` and ``heuristic`` sources draw from, weighted toward the 40-card
+#: minimum because that is what almost every real list plays; the long tail teaches the model that
+#: a deck can be thicker. ``explorer`` builds at the fill's own 40-card default and ``sample``
+#: takes each list as written.
 SIZES = (40, 40, 40, 40, 42, 45, 50)
 
 # The two ends of the curve a jittered heuristic build interpolates between, by cost 1..7+.
@@ -68,8 +70,7 @@ def _load_dir(folder: Path | None, pattern: str) -> tuple[Decklist, ...]:
     key = folder / pattern
     hit = _SAMPLE_CACHE.get(key)
     if hit is None:
-        hit = tuple(Decklist.load(p) for p in sorted(folder.glob(pattern))
-                    if p.stem not in HOLDOUT)
+        hit = tuple(Decklist.load(p) for p in sorted(folder.glob(pattern)) if p.stem not in HOLDOUT)
         _SAMPLE_CACHE[key] = hit
     return hit
 
@@ -83,10 +84,16 @@ def training_decks(folder: Path | None = None) -> tuple[Decklist, ...]:
 def holdout_decks(folder: Path | None = None) -> tuple[Decklist, ...]:
     """The two retail starters, in ``HOLDOUT`` order. Evaluation only."""
     folder = DECK_DIR if folder is None else Path(folder)
-    return tuple(Decklist.load(folder / f"{n}.json") for n in HOLDOUT)
+    key = folder / "|holdout"
+    hit = _SAMPLE_CACHE.get(key)
+    if hit is None:
+        hit = tuple(Decklist.load(folder / f"{n}.json") for n in HOLDOUT)
+        _SAMPLE_CACHE[key] = hit
+    return hit
 
 
-def holdout_pairs(reg: Registry, folder: Path | None = None) -> tuple[tuple[Decklist, Decklist], ...]:
+def holdout_pairs(reg: Registry,
+                  folder: Path | None = None) -> tuple[tuple[Decklist, Decklist], ...]:
     """The held-out matchup in both seat orders, so an evaluation over it is already mirrored.
 
     ``reg`` is accepted (and the decks are looked up in it) so a caller gets a clear KeyError
@@ -161,10 +168,7 @@ def random_prefs(rng: Pcg32, size: int) -> BuildPrefs:
                       noise=0.2 + rng.below(50) / 100.0)
 
 
-def sample_deck(reg: Registry, rng: Pcg32, *, mix: dict[str, float] | None = None,
-                builder: BuilderStrategy | None = None, name: str | None = None) -> Decklist:
-    """One deck from the mix. ``builder`` replaces the ``explorer`` source (pass a
-    ``strategies.Learned`` to sample archetype-shaped decks once a store exists)."""
+def _draw(reg: Registry, rng: Pcg32, mix, builder, name: str | None) -> Decklist:
     src = pick_source(rng, mix)
     size = SIZES[rng.below(len(SIZES))]
     if src == "sample":
@@ -178,6 +182,24 @@ def sample_deck(reg: Registry, rng: Pcg32, *, mix: dict[str, float] | None = Non
         return heuristic_deck(reg, None, rng, random_prefs(rng, size), name=name or "built")
     b = builder or Explorer()
     return b.build(reg, None, rng, name=name or b.name)
+
+
+def sample_deck(reg: Registry, rng: Pcg32, *, mix: dict[str, float] | None = None,
+                builder: BuilderStrategy | None = None, name: str | None = None) -> Decklist:
+    """One deck from the mix.
+
+    ``builder`` replaces the ``explorer`` source: pass a ``strategies.Learned`` to sample
+    archetype-shaped decks once an ``ArchetypeStore`` exists.
+
+    A generated deck is checked against the held-out starters and redrawn if it happens to match
+    one. Rebuilding a starter card for card is vanishingly unlikely, but "never returns a starter"
+    is the property the generalisation gap rests on, so it is enforced rather than assumed.
+    """
+    for _ in range(4):
+        d = _draw(reg, rng, mix, builder, name)
+        if not is_holdout(d):
+            return d
+    raise RuntimeError("the deck sampler kept drawing a held-out starter")
 
 
 def sample_pair(reg: Registry, rng: Pcg32, *, mix: dict[str, float] | None = None,

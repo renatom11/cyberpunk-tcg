@@ -124,7 +124,7 @@ def test_samples_cover_a_wide_spread_of_the_card_pool(pool):
         triples.add(tuple(sorted(d.legends)))
     assert len(cards) / len(main_pool) > 0.75, f"{len(cards)}/{len(main_pool)} of the pool"
     assert len(legends) / len(legend_pool) > 0.7, f"{len(legends)}/{len(legend_pool)} Legends"
-    assert len(triples) > 0.6 * len(decks), f"{len(triples)} distinct Legend triples in {len(decks)}"
+    assert len(triples) > 0.6 * len(decks), f"{len(triples)} triples in {len(decks)} decks"
 
 
 def test_samples_cover_a_wide_spread_of_deck_shape(pool):

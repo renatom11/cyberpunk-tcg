@@ -59,7 +59,7 @@ from cptcg.core.state import GameState
 
 _DECK, _HAND, _FIELD, _EDDIES, _TRASH, _LEGENDS, _REMOVED = (
     Zone.DECK, Zone.HAND, Zone.FIELD, Zone.EDDIES, Zone.TRASH, Zone.LEGENDS, Zone.REMOVED)
-_UNIT, _PROGRAM, _GEAR, _LEGEND = CardType.UNIT, CardType.PROGRAM, CardType.GEAR, CardType.LEGEND
+_UNIT, _GEAR, _LEGEND = CardType.UNIT, CardType.GEAR, CardType.LEGEND
 _BLOCKER = Keyword.BLOCKER
 _NCOLOR = len(Color)
 

@@ -161,7 +161,8 @@ def test_features_read_my_legend_colours(reg):
     assert f["ram_red"] == pytest.approx(4 / 6)      # two Red Legends, 2 RAM each
     assert f["ram_green"] == pytest.approx(2 / 6)
     assert f["ram_blue"] == 0.0 and f["ram_yellow"] == 0.0
-    assert (f["legend_red"], f["legend_green"], f["legend_blue"], f["legend_yellow"]) == (1.0, 1.0, 0.0, 0.0)
+    colours = (f["legend_red"], f["legend_green"], f["legend_blue"], f["legend_yellow"])
+    assert colours == (1.0, 1.0, 0.0, 0.0)
     g = named(s, 1)
     assert g["ram_blue"] == pytest.approx(4 / 6) and g["ram_yellow"] == pytest.approx(2 / 6)
 
@@ -191,16 +192,19 @@ def test_named_features_line_up(reg):
     assert f["gig_mean_me"] == pytest.approx(5.5 / 20)
     assert f["gig_even_me"] == 0.5 and f["gig_even_rival"] == 0.0
     # fixer
-    assert f["fixer_left_me"] == pytest.approx(3 / 6) and f["fixer_best_me"] == pytest.approx(8 / 20)
+    assert f["fixer_left_me"] == pytest.approx(3 / 6)
+    assert f["fixer_best_me"] == pytest.approx(8 / 20)
     assert f["fixer_best_rival"] == 1.0
     # economy: 2 ready Eddies plus three ready face-down Legends
     assert f["eddies_me"] == pytest.approx(2 / 12) and f["ready_eddies_me"] == pytest.approx(5 / 12)
     assert f["eddies_rival"] == 0.0 and f["ready_eddies_rival"] == pytest.approx(3 / 12)
     # board
     assert f["units_me"] == pytest.approx(1 / 8) and f["units_rival"] == pytest.approx(1 / 8)
-    assert f["power_ready_me"] == pytest.approx(5 / 60) and f["power_ready_rival"] == pytest.approx(7 / 60)
+    assert f["power_ready_me"] == pytest.approx(5 / 60)
+    assert f["power_ready_rival"] == pytest.approx(7 / 60)
     assert f["power_spent_me"] == 0.0
-    assert f["power_best_me"] == pytest.approx(5 / 15) and f["power_best_rival"] == pytest.approx(7 / 15)
+    assert f["power_best_me"] == pytest.approx(5 / 15)
+    assert f["power_best_rival"] == pytest.approx(7 / 15)
     assert f["blockers_me"] == 0.0 and f["gear_me"] == 0.0 and f["lagged_me"] == 0.0
     assert f["threat"] == pytest.approx(1 / 7)          # one ready 7-power Unit steals one Gig
     assert f["threat_net"] == pytest.approx(1 / 7)
@@ -226,7 +230,8 @@ def test_named_features_line_up(reg):
     assert f["undrawn_cost1"] == 1.0 and f["undrawn_mean_cost"] == pytest.approx(1 / 7)
     assert f["undrawn_unit_share"] == 1.0 and f["undrawn_sell_share"] == 1.0
     # the hand against it
-    assert f["hand_mean_cost"] == pytest.approx(2 / 7) and f["hand_min_cost"] == pytest.approx(2 / 7)
+    assert f["hand_mean_cost"] == pytest.approx(2 / 7)
+    assert f["hand_min_cost"] == pytest.approx(2 / 7)
     assert f["hand_cheap"] == pytest.approx(2 / 6) and f["hand_sellable"] == pytest.approx(2 / 6)
     assert f["hand_playable"] == pytest.approx(2 / 6) and f["hand_playable_share"] == 1.0
     assert f["hand_units"] == pytest.approx(1 / 6) and f["hand_programs"] == pytest.approx(1 / 6)
