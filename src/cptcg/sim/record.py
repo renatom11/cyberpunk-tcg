@@ -14,7 +14,7 @@ from typing import Iterator
 
 from cptcg.cards.registry import Registry
 from cptcg.core.config import DEFAULT_CONFIG, RulesConfig
-from cptcg.core.engine import apply, new_game
+from cptcg.core.engine import apply, legal_actions, new_game
 from cptcg.core.state import GameState
 from cptcg.deck.decklist import Decklist
 
@@ -66,6 +66,7 @@ class Replay:
             raise ValueError(f"replay was recorded under ruleset {self.rules}, current is {cfg.digest()}")
         s = new_game(reg, self.decklists(), self.seed, cfg, record=True)
         for idx in self.actions:
+            legal_actions(s)
             yield s, idx
             apply(s, idx)
         yield s, None

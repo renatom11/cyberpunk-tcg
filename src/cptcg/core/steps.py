@@ -129,7 +129,7 @@ class MainPhaseStep(Step):
     __slots__ = ()
 
     def run(self, s: GameState) -> None:
-        s.pending = Choice(ChoiceKind.MAIN, s.active, tuple(main_menu(s)), prompt="Main phase")
+        s.pending = Choice(ChoiceKind.MAIN, s.active, (), prompt="Main phase", lazy=True)
 
 
 class EndTurnStep(Step):

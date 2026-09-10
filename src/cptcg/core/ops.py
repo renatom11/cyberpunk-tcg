@@ -22,23 +22,52 @@ VS_LEGEND = 8
 
 
 # ------------------------------------------------------------- scripts in play
+def _rebuild_active(s: GameState) -> tuple:
+    """(per-player active instances, power_mod hooks, cost_mod hooks, event hooks), cached on
+    the state and invalidated by any zone or face-up change."""
+    per = ([], [])
+    pm, cm, ev = [], [], []
+    defs = s.reg.defs
+    for p in (0, 1):
+        base = p * NZONE
+        lst = per[p]
+        lst += s.z[base + Zone.FIELD]
+        for i in s.z[base + Zone.LEGENDS]:
+            if s.i_faceup[i] or (s.i_host[i] != NO_INST and s.i_faceup[s.i_host[i]]):
+                lst.append(i)
+        for i in lst:
+            sc = defs[s.i_card[i]].script
+            if sc is None:
+                continue
+            if sc.power_mod is not None:
+                pm.append((i, sc.power_mod))
+            if sc.cost_mod is not None:
+                cm.append((i, sc.cost_mod))
+            if sc.on_event is not None:
+                ev.append((i, sc.on_event))
+    cache = (tuple(per[0]), tuple(per[1]), tuple(pm), tuple(cm), tuple(ev))
+    s._active = cache
+    return cache
+
+
+def _active(s: GameState) -> tuple:
+    return s._active if s._active is not None else _rebuild_active(s)
+
+
 def active_cards(s: GameState, first: int | None = None) -> list[int]:
     """Instances whose text is active: Units and Gear in play, and *face-up* Legends.
     Ordered active player first (or ``first``), then the rival."""
     p0 = s.active if first is None else first
-    out = []
-    for p in (p0, 1 - p0):
-        base = p * NZONE
-        out += s.z[base + Zone.FIELD]
-        for i in s.z[base + Zone.LEGENDS]:
-            if s.i_faceup[i] or (s.i_host[i] != NO_INST and s.i_faceup[s.i_host[i]]):
-                out.append(i)
-    return out
+    a = _active(s)
+    return list(a[p0]) + list(a[1 - p0])
 
 
 def _ctx(s: GameState, inst: int):
-    from cptcg.core.effects import EffectCtx
-    return EffectCtx(s, inst)
+    c = s._ctxs.get(inst)
+    if c is None:
+        from cptcg.core.effects import EffectCtx
+        c = s._ctxs[inst] = EffectCtx(s, inst)
+    return c
 
 
 def dispatch(s: GameState, ev: tuple) -> None:
@@ -48,15 +77,15 @@ def dispatch(s: GameState, ev: tuple) -> None:
     a step, and the stack is LIFO, hooks are called in reverse so the first card's question
     surfaces first.
     """
-    hooks = []
-    for inst in active_cards(s):
-        sc = s.card(inst).script
-        if sc is not None and sc.on_event is not None:
-            hooks.append((inst, sc.on_event))
-    for inst, h in reversed(hooks):
-        if s.over:
-            return
-        h(_ctx(s, inst), ev)
+    hooks = _active(s)[4]
+    if hooks:
+        # order: active player's cards first; the index is player 0 then 1
+        if s.active == 1:
+            hooks = tuple(h for h in hooks if s.i_owner[h[0]] == 1) + tuple(h for h in hooks if s.i_owner[h[0]] == 0)
+        for inst, h in reversed(hooks):
+            if s.over:
+                return
+            h(_ctx(s, inst), ev)
     # Temporary listeners registered by effects ("the next time ... this turn"): (s, ev) callables.
     for kind, _subject, fn, _exp in list(s.mods):
         if kind == "listener" and not s.over:
@@ -82,6 +111,7 @@ def move(s: GameState, inst: int, zone: Zone, *, bottom: bool = False, host: int
         dst.append(inst)
     s.i_zone[inst] = zone
     s.i_host[inst] = host
+    s._active = None
     if zone is not Zone.FIELD and zone is not Zone.LEGENDS:
         s.i_spent[inst] = 0
         s.i_lag[inst] = 0
@@ -194,10 +224,8 @@ def play_cost(s: GameState, player: int, inst: int, go_solo: bool = False) -> in
     if sc is not None and sc.self_cost is not None and not go_solo:
         base = sc.self_cost(_ctx(s, inst), player, base)
     delta = 0
-    for i in active_cards(s, first=player):
-        osc = s.card(i).script
-        if osc is not None and osc.cost_mod is not None:
-            delta += osc.cost_mod(_ctx(s, i), player, inst, go_solo)
+    for i, hook in _active(s)[3]:
+        delta += hook(_ctx(s, i), player, inst, go_solo)
     if go_solo:
         for v in s.mod_values("cost_go_solo", player):
             delta += v
@@ -241,10 +269,8 @@ def power(s: GameState, inst: int, sit: int = 0) -> int:
     for target, delta, cond in s.temp_power:
         if target == inst and (cond == 0 or sit & cond == cond):
             p += delta
-    for i in active_cards(s, first=owner):
-        sc = s.card(i).script
-        if sc is not None and sc.power_mod is not None:
-            p += sc.power_mod(_ctx(s, i), inst, sit)
+    for i, hook in _active(s)[2]:
+        p += hook(_ctx(s, i), inst, sit)
     return max(0, p)                                   # ruling 029: power never drops below 0
 
 
@@ -354,6 +380,7 @@ def push_trigger(s: GameState, kind: Trigger, inst: int) -> None:
 # ------------------------------------------------------------------- legend
 def call_legend(s: GameState, player: int, inst: int) -> None:
     s.i_faceup[inst] = 1
+    s._active = None
     s.i_known[inst] = 0b11
     s.once[player] |= ONCE_CALLED
     s.emit("call", player, inst)

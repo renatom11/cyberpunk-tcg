@@ -66,7 +66,16 @@ def _set_order(s: GameState, first: int) -> None:
 
 # -------------------------------------------------------------------- loop
 def legal_actions(s: GameState) -> tuple[Action, ...]:
-    return s.pending.options if s.pending is not None else ()
+    """Options of the pending choice. Main-phase menus are computed on first request, so a
+    preview that stops at a menu it never inspects doesn't pay for building it."""
+    ch = s.pending
+    if ch is None:
+        return ()
+    if ch.lazy:
+        from cptcg.core.legal import main_menu
+        ch = Choice(ch.kind, ch.player, tuple(main_menu(s)), ch.cont, ch.prompt)
+        s.pending = ch
+    return ch.options
 
 
 def advance(s: GameState) -> None:
@@ -92,9 +101,10 @@ def _overtime_check(s: GameState) -> bool:
 
 def apply(s: GameState, index: int) -> None:
     """Apply the ``index``-th legal action of the pending choice, then advance."""
-    ch = s.pending
-    if ch is None:
+    if s.pending is None:
         raise RuntimeError("no pending choice")
+    legal_actions(s)
+    ch = s.pending
     action = ch.options[index]
     s.pending = None
     if s.actions is not None:
@@ -183,6 +193,7 @@ def go_solo(s: GameState, p: int, inst: int, cost: int) -> None:
     s.i_spent[inst] = 0
     s.i_lag[inst] = 0
     s.i_faceup[inst] = 1
+    s._active = None
     s.i_flags[inst] |= F_GO_SOLO
     s.emit("go_solo", p, inst)
     dispatch(s, ("played", inst, p))

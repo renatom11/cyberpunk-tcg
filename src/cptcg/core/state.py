@@ -72,6 +72,10 @@ class GameState:
         "used", "played",
         # recording (None in rollouts)
         "log", "actions",
+        # cache of active_cards() and its hook indexes; None = dirty
+        "_active",
+        # EffectCtx cache: one per instance per state (ctxs bind the state, so never shared)
+        "_ctxs",
     )
 
     def __init__(self, cfg: RulesConfig, reg: "Registry", seed: int) -> None:
@@ -109,6 +113,11 @@ class GameState:
         self.played: list[int] = []
         self.log: list | None = None
         self.actions: list[int] | None = None
+        self._active = None
+        self._ctxs: dict = {}
+
+    def invalidate(self) -> None:
+        self._active = None
 
     # ------------------------------------------------------------------ clone
     def clone(self) -> "GameState":
@@ -147,6 +156,8 @@ class GameState:
         s.played = self.played[:]
         s.log = None
         s.actions = None
+        s._active = self._active                       # immutable tuple-of-tuples, shareable
+        s._ctxs = {}
         return s
 
     # -------------------------------------------------------------- instances

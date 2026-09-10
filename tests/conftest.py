@@ -96,6 +96,7 @@ def board(reg, p0: Side, p1: Side, active=0, turn=3, cfg=DEFAULT_CONFIG, seed=1,
             s.i_spent[e] = 1 if k < side.spent_eddies else 0
         s.gig[p] = list(side.gig)
         s.fixer[p] = list(side.fixer)
+    s.invalidate()
     s.stack.append(EndTurnStep())
     s.pending = Choice(ChoiceKind.MAIN, active, tuple(main_menu(s)))
     return s
@@ -116,9 +117,16 @@ def find(s, cid, zone=None, player=None):
 
 def do(s, action):
     """Apply ``action`` (must be legal) and return the state."""
-    from cptcg.core.engine import apply
+    from cptcg.core.engine import apply, legal_actions
+    legal_actions(s)
     apply(s, s.pending.index_of(action))
+    legal_actions(s)                                    # materialise the next menu for assertions
     return s
+
+
+def options(s):
+    from cptcg.core.engine import legal_actions
+    return legal_actions(s)
 
 
 @pytest.fixture(scope="session")
@@ -136,10 +144,12 @@ def during_main(s, fn):
     queues, and return to the main menu."""
     from cptcg.core.engine import advance
     from cptcg.core.steps import MainPhaseStep
+    from cptcg.core.engine import legal_actions
     s.pending = None
     s.stack.append(MainPhaseStep())
     fn(s)
     advance(s)
+    legal_actions(s)
     return s
 
 

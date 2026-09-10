@@ -109,6 +109,7 @@ class Choice:
     options: tuple[Action, ...]
     cont: Callable | None = None   # PICK only: cont(state, action) resolves the choice
     prompt: str = ""
+    lazy: bool = False             # options not computed yet (see engine.legal_actions)
 
     def index_of(self, action: Action) -> int:
         return self.options.index(action)

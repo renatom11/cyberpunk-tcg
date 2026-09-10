@@ -30,9 +30,25 @@ the rules leave open and what this engine does about them.
 - Games are fully deterministic given `(ruleset hash, decklists, seed, action indices)`, so any
   result is exactly reproducible and any replay is a few hundred bytes.
 
-## Development
+## Usage
 
 ```bash
 pip install -e '.[dev]'
-pytest
+pytest                                   # ~330 tests: rules, properties, one scenario per card
+
+# play 1000 mirrored games between two decks and report win rates with 95% intervals
+python -m cptcg sim --deck-a data/decks/sample_arasaka.json \
+                    --deck-b data/decks/sample_mercs.json -n 1000 --seed 42 -j 4
+
+python -m cptcg sim ... --replays out/replays    # one ~1 KB replay per game
+python -m cptcg replay out/replays/g000042_0.json --step   # watch a game back
+python -m cptcg validate data/decks/*.json       # deck legality + RAM
+python -m cptcg cards --unimplemented            # cards still needing a script
 ```
+
+Agents: `random`, `heuristic` (greedy one-ply lookahead). The heuristic beats random ~95% of
+the time. Speed is roughly 5 ms/game for random bots and ~220 ms/game for heuristic-vs-heuristic
+on one core; `-j` spreads games across cores and results are identical regardless of `-j`.
+
+The card pool is in `data/cards/wnc.json` (see `data/COVERAGE.md` for what is verified and
+scripted); the sample decks are generated, RAM-legal lists, not the retail starters.
