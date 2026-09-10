@@ -19,8 +19,9 @@ the rules leave open and what this engine does about them.
 | `src/cptcg/cards/` | Card definitions — static data in JSON, behaviour scripted by card ID |
 | `src/cptcg/agents/` | Random, heuristic and (later) search-based players |
 | `src/cptcg/sim/` | Match running, tournaments, statistics, replays |
+| `src/cptcg/learn/` | The training loop: state features, deck sampling, experience capture |
 | `data/` | Card data, card images, decklists |
-| `docs/` | Rules transcription, rulings, authoring guide |
+| `docs/` | Rules transcription, rulings, authoring guide, [the training loop](docs/learning.md) |
 
 ## Design notes
 

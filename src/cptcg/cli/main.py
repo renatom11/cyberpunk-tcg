@@ -9,6 +9,7 @@ from pathlib import Path
 
 from cptcg.cards.registry import load_default
 from cptcg.cli.render import describe, render
+from cptcg.core.config import DEFAULT_CONFIG
 from cptcg.deck.decklist import Decklist
 from cptcg.deck.validate import validate
 from cptcg.sim.record import Replay
@@ -86,6 +87,20 @@ def cmd_replay(args) -> None:
             input()
     if not args.step:
         print(render(rep.final_state(reg)))
+
+
+def cmd_dump(args) -> None:
+    from cptcg.learn.dump import load_game, render_game
+    from cptcg.learn.experience import format_size_stats, size_stats
+    if args.stats:
+        print(format_size_stats(size_stats(args.file)))
+        return
+    reg = load_default()
+    rules = None if args.any_rules else DEFAULT_CONFIG.digest()
+    try:
+        print(render_game(load_game(args.file, args.game, rules=rules), reg))
+    except ValueError as e:      # a ruleset mismatch, on read or on replay
+        sys.exit(str(e))
 
 
 def cmd_cards(args) -> None:
@@ -404,6 +419,14 @@ def main(argv=None) -> None:
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--port", type=int, default=8000)
     p.set_defaults(fn=cmd_serve)
+
+    p = sub.add_parser("dump", help="read one stored game from an experience file, decision by decision")
+    p.add_argument("file", help="a .jsonl or .jsonl.gz written by learn.experience.write_games")
+    p.add_argument("--game", type=int, default=0, help="which record in the file (default: the first)")
+    p.add_argument("--stats", action="store_true", help="print the size budget instead of a game")
+    p.add_argument("--any-rules", action="store_true",
+                   help="read even if the record was played under a different ruleset")
+    p.set_defaults(fn=cmd_dump)
 
     p = sub.add_parser("cards", help="list the card pool")
     p.add_argument("--unimplemented", action="store_true")
