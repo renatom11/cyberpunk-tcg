@@ -146,8 +146,10 @@ def view_state(s: GameState, perspective: int | None, names: tuple[str, str], lo
             "hand_count": len(hand),
             "field": [_in_play(s, i) for i in s.units(p)],
             "legends": legends,
+            # Sold cards were revealed when sold, so their identities are public (ruling 002).
             "eddies": {"ready": available(s, p), "cards": len(s.z[base + Zone.EDDIES]),
-                       "total": len(s.z[base + Zone.EDDIES]) + len(s.legends(p))},
+                       "total": len(s.z[base + Zone.EDDIES]) + len(s.legends(p)),
+                       "list": [dict(card_json(s, i), spent=bool(s.i_spent[i])) for i in s.z[base + Zone.EDDIES]]},
             "deck": len(s.z[base + Zone.DECK]),
             "trash": [card_json(s, i) for i in s.z[base + Zone.TRASH]],
             "removed": [card_json(s, i) for i in s.z[base + Zone.REMOVED]],

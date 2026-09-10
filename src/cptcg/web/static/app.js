@@ -131,15 +131,29 @@ function renderBoard(root, v, { interactive, onAct } = {}) {
       row.append(n);
     });
     const counts = el("div", "counts");
-    counts.append(badge("EDDIES", `${p.eddies.ready}/${p.eddies.total}`), badge("DECK", p.deck), badge("TRASH", p.trash.length));
+    counts.append(badge("DECK", p.deck), badge("TRASH", p.trash.length));
     row.append(counts);
     return row;
   };
   const fieldRow = (p) => {
+    const wrap = el("div", "fieldwrap");
     const row = el("div", "panel field"); row.append(el("span", "lbl", `${p.name.toUpperCase()} · FIELD`));
     if (!p.field.length) for (let i = 0; i < 4; i++) row.append(el("div", "slot"));
     p.field.forEach(u => { const n = cardNode(u); decorate(n, u.inst); row.append(n); });
-    return row;
+    // Eddies area: sold cards sit here face-down (their identity is public — they were revealed when sold)
+    const ed = el("div", "panel eddies"); ed.append(el("span", "lbl", "EDDIES AREA"));
+    const list = el("div", "list");
+    if (!p.eddies.list.length) list.append(el("span", "waiting", "No Eddies yet."));
+    p.eddies.list.forEach(c => {
+      const n = cardNode({}, { back: true, small: true });
+      if (c.spent) n.classList.add("spent");
+      n.title = `${c.name}${c.subtitle ? " — " + c.subtitle : ""}${c.spent ? " (spent)" : " (ready)"}`;
+      if (c.image) { n.onmouseenter = () => showPreview(`images/${c.id}.jpg`, c); n.onmouseleave = hidePreview; if (TOUCH) n.onclick = () => showPreview(`images/${c.id}.jpg`, c, true); }
+      list.append(n);
+    });
+    ed.append(list, badge("EDDIES", `${p.eddies.ready}/${p.eddies.total}`));
+    wrap.append(row, ed);
+    return wrap;
   };
   const oppLeg = legRow(P[opp], false), oppField = fieldRow(P[opp]), myField = fieldRow(P[me]), myLeg = legRow(P[me], true);
   oppLeg.classList.add("p-opp-legends"); oppField.classList.add("p-opp-field"); myField.classList.add("p-my-field"); myLeg.classList.add("p-my-legends");

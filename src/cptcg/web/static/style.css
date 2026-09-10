@@ -45,7 +45,14 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .phase .title { color: var(--green); font-weight: 800; letter-spacing: .12em; border: 1px solid var(--green); border-radius: 8px; padding: 6px; }
 .phase .sub { color: var(--dim); font-size: 12px; margin-top: 6px; }
 .center { display: grid; grid-template-rows: auto 1fr 1fr auto; gap: 6px; }
+.fieldwrap { display: flex; gap: 6px; min-height: 0; }
+.fieldwrap .field { flex: 1; }
 .field { display: flex; gap: 6px; flex-wrap: wrap; min-height: calc(var(--card-h) + 16px); align-content: flex-start; }
+.eddies { width: 220px; flex: 0 0 auto; display: flex; flex-direction: column; }
+.eddies .list { display: flex; flex-wrap: wrap; gap: 4px; align-content: flex-start; flex: 1; min-height: 60px; }
+.eddies .list .card { width: 44px; height: 62px; cursor: default; }
+.eddies .list .card.spent { transform: rotate(7deg); filter: brightness(.45); margin: 0 4px; }
+.eddies .badge { align-self: flex-end; }
 .legends { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .counts { display: flex; gap: 10px; margin-left: auto; align-items: center; }
 .counts .badge { min-width: 60px; }
@@ -201,6 +208,12 @@ table.rep th { color: var(--cyan); }
   .p-opp-hand { grid-area: ohand; } .p-opp-fixer { grid-area: ofix; } .p-opp-gig { grid-area: ogig; }
   .p-opp-legends { grid-area: oleg; } .p-opp-field { grid-area: ofield; } .p-banner { grid-area: banner; }
   .p-my-legends { grid-area: mleg; } .p-my-field { grid-area: mfield; } .p-my-fixer { grid-area: mfix; }
+  .fieldwrap { flex-direction: column; gap: 3px; min-height: 0; }
+  .fieldwrap .field { flex: 1 1 auto; }
+  .eddies { width: auto; flex: 0 0 auto; padding-bottom: 2px; }
+  .eddies .list { min-height: 0; gap: 2px; flex-wrap: nowrap; overflow-x: auto; }
+  .eddies .list .card { width: 24px; height: 34px; } .eddies .list .card.spent { margin: 0 2px; }
+  .eddies .badge { position: absolute; right: 4px; top: 1px; }
   .p-my-gig { grid-area: mgig; } .p-my-hand { grid-area: mhand; } .p-prompt { grid-area: prompt; }
   .logbtn { display: inline-block; }
   .p-log { display: none; position: fixed; inset: 36px 0 0 0; z-index: 40; background: #050810f2; padding: 12px; overflow-y: auto; font-size: 13px; }
