@@ -131,7 +131,7 @@ def cmd_delayed(args) -> None:
         rules=None if (args.verify or args.mine or args.requalify) else DEFAULT_CONFIG.digest())
     if args.mine:
         found = delayed.mine(reg, games=args.mine, seed=args.seed, max_nodes=args.max_nodes,
-                             limit=args.limit,
+                             limit=args.limit, max_turns=args.max_turns,
                              progress=lambda e, info: print(
                                  f"  {'FOUND ' + e['id'] if e else info}", file=sys.stderr))
         have = {p["id"] for p in suite["positions"]}
@@ -145,8 +145,9 @@ def cmd_delayed(args) -> None:
     if args.requalify:
         suite, dropped = delayed.requalify_suite(
             reg, suite, progress=lambda e, v: print(
-                f"  {e['id']}: line {v['line']} in {v['nodes']} nodes "
-                f"(exhausted={v['exhausted']}), heuristic wins {v['heuristic_wins']} -> "
+                f"  {e['id']}: horizon {v['max_turns']}, line {v['line']} in {v['nodes']} "
+                f"nodes (exhausted={v['exhausted']}), heuristic wins {v['heuristic_wins']}, "
+                f"floor {v['floor_wins']}/{v['floor_trials']} -> "
                 f"{'ok' if v['ok'] else 'NO LONGER QUALIFIES'}"))
         delayed.save_suite(suite, args.suite)
         print(f"re-derived {len(suite['positions'])} positions into {args.suite}"
@@ -156,8 +157,11 @@ def cmd_delayed(args) -> None:
         rows = delayed.verify_suite(reg, suite)
         bad = [r for r in rows if not r["ok"]]
         for r in rows:
-            print(f"  {r['id']}: line wins {r['stored_line_wins']}, heuristic wins "
-                  f"{r['heuristic_wins']} -> {'ok' if r['ok'] else 'FAILED'}")
+            print(f"  {r['id']}: horizon {r['max_turns']}, line wins {r['stored_line_wins']}"
+                  f"{'' if r['reward_is_late'] else ' (BUT THE WIN IS ALREADY ON THE BOARD)'}, "
+                  f"heuristic wins {r['heuristic_wins']}, floor {r['floor_wins']}/"
+                  f"{r['floor_trials']}{'' if r['floor_matches_stored'] else ' (MOVED)'} -> "
+                  f"{'ok' if r['ok'] else 'FAILED'}")
         print(f"{len(rows) - len(bad)} of {len(rows)} positions still verify")
         sys.exit(1 if bad else 0)
     out = delayed.score_agent(reg, suite, args.agent,
@@ -232,7 +236,14 @@ def add_arguments(ap: argparse.ArgumentParser) -> argparse.ArgumentParser:
     p.add_argument("--mine", type=int, default=0, metavar="GAMES",
                    help="scan this many self-play games for new positions and add them")
     p.add_argument("--limit", type=int, default=None, help="stop mining after this many positions")
-    p.add_argument("--max-nodes", type=int, default=4_000, help="solver node cap while mining")
+    p.add_argument("--max-nodes", type=int, default=None,
+                   help="solver node cap while mining (default: by horizon, "
+                        + ", ".join(f"{v} at {k}" for k, v in sorted(delayed.MINE_NODES.items()))
+                        + " — at a wider horizon every leaf costs a playout)")
+    p.add_argument("--max-turns", type=int, default=delayed.DEFAULT_MAX_TURNS,
+                   help="horizon for mined positions, in the searched player's own turns: 1 (the "
+                        "default) is a win inside the turn, 2 is a win the turn after the move "
+                        "that earned it")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--out", default=str(arena.OUT_DIR))
     p.add_argument("--docs", default=str(arena.DOCS_PATH))

@@ -297,18 +297,68 @@ built and tested; the number it exists to print arrives with the search agent.
 ### The delayed-reward suite
 
 This is the falsifiability instrument for the whole loop. `data/arena/delayed.json` holds positions
-where the winning move has low immediate impact, each of which qualifies only if **both** halves
-hold:
+where the winning move has low immediate impact, each of which qualifies only if **all three** hold:
 
 1. an exhaustive search over the acting player's own decisions for that turn finds a line that
-   wins the game, and
-2. the frozen heuristic does **not** find it, on every trial seed.
+   wins the game inside the position's **horizon**, and
+2. the frozen heuristic does **not** find it, on any of the seeds the suite scores agents on, and
+3. uniform **random** play does not stumble into it on more than a quarter of those seeds.
+
+#### The horizon: what "wins" means, and how far ahead
 
 Reaching seven Gigs does not end the game where it happens — `WinCheckStep` runs at the *start* of
 a turn — so "wins" is not "seven Gigs on the board". After the searched turn ends the game is
-played on with the frozen heuristic in both seats through the rival's entire reply, and the line
-counts only if the game then really ends with the searched player as the winner. A line that
-reaches seven and has them stolen back does not count.
+played on with the frozen heuristic in both seats, and the line counts only if the game then really
+ends with the searched player as the winner. A line that reaches seven and has them stolen back
+does not count.
+
+Each position carries a `max_turns`, counted in the searched player's own turns, and
+`arena delayed` prints it as a column:
+
+| horizon | what the position tests | what wins it |
+|---|---|---|
+| 1 | within-turn sequencing | the searched turn banks the win by itself; the check fires at the start of the next turn |
+| 2 | a **delayed** reward | the searched turn cannot win; it has to leave a board the *greedy* continuation converts a turn later |
+
+A horizon-2 position is the plan's claim in its smallest honest form: the move that wins is worth
+nothing on this turn's board, the rival answers in between, and the payoff arrives on the turn
+after the one that earned it. A one-ply agent scoring the board at the end of its turn cannot see
+it. The first version of this suite had no such position — every entry was won inside the searched
+turn — so it measured within-turn sequencing and nothing else, whatever the headline said.
+
+**What it still does not measure.** It is not a search over multi-turn *plans*. Only the searched
+turn's decisions are chosen, by the solver and by the scored agent alike; every later turn, on both
+sides, is the frozen policy. A horizon-2 row asks "is there a move here whose payoff lands next
+turn, and do you make it", not "can you plan two of your own turns".
+
+That is not a preference, it is what fits. Searching two of my own turns is a product, not a sum,
+and the measurement is not close: on fourteen of fifteen sampled mid-game turns, one turn's own
+tree passed 30,000 clones without exhausting, at roughly 12,000 leaves. Crossing that with a
+second turn's tree is on the order of 3.6 × 10⁸ clones — about five hours per position at the
+~20,000 clones a second this engine manages — against the ~6 s scoring an agent on the whole suite
+costs today, and the ~9 s `--verify` costs. Widening the *goal* was affordable; widening the
+*search* was not, and the difference is stated here rather than blurred.
+
+#### The floor, and why the heuristic's zero is not one
+
+The frozen heuristic scores **zero** on this suite — but that zero is a *selection criterion*, not
+a measurement: a position is only in the file because the heuristic missed it on exactly the seeds
+it is scored on. Read alone it says nothing about how hard the suite is. Uniform random play, on
+the first version of this suite, solved 1 of 6 positions and won 9 of 24 trials, because several
+positions were winnable by many lines rather than by one.
+
+So every position now stores what random play scores on it, measured on the same sixteen seeds
+agents are scored on, and the report prints it as a **floor** column beside the agent's own. Three
+things keep the number readable:
+
+* a position qualifies only if random wins at most a quarter of those seeds (`MAX_FLOOR`), which
+  is checked at qualification and re-derived by the tests;
+* agents are scored on sixteen seeds, and a position counts as solved only when the agent wins
+  **all** of them — a floor-level agent reaches that by luck with probability 0.25¹⁶;
+* the seeds a position is hand-picked on (1–4) are disjoint from the ones it is scored on
+  (101–116), so no agent is ever graded on the seeds that selected the position.
+
+#### The solver, and where positions come from
 
 The solver (`learn/delayed.turn_search`) is exhaustive up to two limits it states rather than
 hides: a node cap, after which it reports `exhausted=False` and has proved nothing, and the same
@@ -317,16 +367,20 @@ they name are one option). It stops at the first win, because existence is all t
 
 Positions arrive two ways. Hand-built ones are board specs in the same shape as
 `tests/conftest.board`, and a test builds one both ways and compares information keys so the two
-cannot drift. Mined ones come from `arena delayed --mine N`, which scans self-play games for turns
-where the solver finds a win the heuristic misses and stores them as a replay prefix, which
-reproduces the position exactly. Every position is stored **with its verification** — the winning
-line, the nodes it cost, the heuristic's failure — and `tests/learn/test_delayed_reward.py`
-re-derives all of it, so a stored claim that stops being true is a test failure and not a silent
-lie.
+cannot drift. They are built like real mid-game boards — three Legends and a real remaining deck
+per side — because a value head reads list size, undrawn fraction and Legend RAM, and a
+three-card deck would have it extrapolating for reasons that have nothing to do with planning.
+Mined ones come from `arena delayed --mine N [--max-turns 2]`, which scans self-play games for
+turns where the solver finds a win the heuristic misses and stores them as a replay prefix, which
+reproduces the position exactly. Mining runs its three tests cheapest-first — the heuristic must
+miss, random must not win it often, and only then is the tree searched — which matters at a
+horizon of two, where a hopeless candidate costs a minute of solver and the other two tests cost a
+second.
 
-The suite is calibrated so that **the frozen heuristic scores zero on it**. That is the baseline:
-any future generation that solves a position has done something the greedy agent cannot, and if the
-number never rises, the loop is not doing what this plan claims.
+Every position is stored **with its verification** — the winning line, the nodes it cost, the
+heuristic's failure, the random floor — and `tests/learn/test_delayed_reward.py` re-derives all of
+it, so a stored claim that stops being true is a test failure and not a silent lie.
+`arena delayed --verify` does the same from the command line.
 
 The honest caveat: the rival's reply is one competent defence and one sample of their Gig die, not
 a proof against every defence. A position is a witness that a win was available, not a
@@ -442,17 +496,23 @@ The same agent against the same baseline on three deck populations. Both seats d
 Gap to the held-out starters: -4.7 points (z = -2.56). Gap to fresh random decks: -3.3 points (z = -1.73). A gap that grows generation over generation means memorised matchups.
 
 
-### Delayed-reward suite: heuristic — 2026-09-10 20:00 UTC
+### Delayed-reward suite: heuristic — 2026-09-10 21:11 UTC
 
-**Solved 0 of 6** (0 of 24 trials won). Every position has a verified winning line that the frozen heuristic does not find; a position counts as solved only when the agent wins it on every trial seed.
+**Solved 0 of 8** (0 of 128 trials won), against a floor of 12 of 128 trials for uniform random play. Every position has a verified winning line that the frozen heuristic does not find on any of these seeds; a position counts as solved only when the agent wins it on every one of them. The suite holds 5 at a horizon of one turn (won inside the searched turn), 3 at a horizon of two turns (the payoff lands after the rival's answer).
 
-| position | source | trials won | solved |
-|---|---|---:|---|
-| `gear-before-the-raid` | hand-built | 0/4 | no |
-| `sell-to-afford-the-raid` | hand-built | 0/4 | no |
-| `two-pieces-of-gear` | hand-built | 0/4 | no |
-| `mined-23767-79` | mined from heuristic self-play | 0/4 | no |
-| `mined-23773-81` | mined from heuristic self-play | 0/4 | no |
-| `mined-23782-53` | mined from heuristic self-play | 0/4 | no |
+| position | source | horizon | trials won | floor | solved |
+|---|---|---:|---:|---:|---|
+| `gear-before-the-raid` | hand-built | 1 | 0/16 | 3/16 | no |
+| `sell-to-afford-the-raid` | hand-built | 1 | 0/16 | 3/16 | no |
+| `two-pieces-of-gear` | hand-built | 1 | 0/16 | 0/16 | no |
+| `mined-23767-79` | mined from heuristic self-play | 1 | 0/16 | 3/16 | no |
+| `mined-23773-81` | mined from heuristic self-play | 1 | 0/16 | 0/16 | no |
+| `mined-166300-77` | mined from heuristic self-play | 2 | 0/16 | 3/16 | no |
+| `mined-166302-115` | mined from heuristic self-play | 2 | 0/16 | 0/16 | no |
+| `mined-166305-59` | mined from heuristic self-play | 2 | 0/16 | 0/16 | no |
+
+**Horizon** is how far past the searched turn the win may land, counted in the searched player's own turns. At 1 the line wins inside the turn; at 2 the searched turn cannot win by itself and has to leave a board the frozen policy converts on the following turn — a reward that arrives after the move that earned it. Only the searched turn is chosen by the agent either way: the suite measures which line you take *this* turn, not whether you can plan two of them.
+
+**Floor** is uniform random play over the same turn, on the same seeds, stored when the position was qualified. Read the agent's column against it, not against the frozen heuristic's zero: the heuristic scores zero here by construction, because missing these positions on these seeds is how they were selected.
 
 The win is confirmed by playing the turn out and the rival's whole reply with the frozen heuristic in both seats, so a line that reaches seven Gigs and has them stolen back does not count. That reply is one competent defence and one sample of the rival's Gig die, not a proof against every defence.
