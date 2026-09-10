@@ -24,9 +24,9 @@ def gear_hosts(s: GameState, player: int) -> list[int]:
 def attack_permission(s: GameState, unit: int) -> tuple[bool, bool]:
     """(may attack Units, may attack the Gig area) for a Unit. Does not check ready/spent:
     the attacker is already spent by the time its target is declared."""
-    if s.has_mod("cant_attack", unit):
+    if s.mods and s.has_mod("cant_attack", unit):
         return False, False
-    d = s.card(unit)
+    d = s.reg.defs[s.i_card[unit]]
     if d.script is not None and d.script.extra.get("cant_attack"):
         return False, False
     units_ok = gigs_ok = True

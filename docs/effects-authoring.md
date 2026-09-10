@@ -34,7 +34,7 @@ points at the right clone.
 | Field | When |
 |---|---|
 | `on_play`, `on_call`, `on_attack`, `on_defeated` | The four printed timing triggers. Gear's `on_attack` / `on_defeated` fire when its *host* attacks / is defeated. |
-| `on_event(ctx, ev)` | Any event while the card is active (Units and Gear in play, face-up Legends). `ev` is a tuple; see below. |
+| `on_event(ctx, ev)` | Any event while the card is active (Units and Gear in play, face-up Legends). `ev` is a tuple; see below. Declare the kinds the hook reacts to with `events=frozenset({"steal", ...})` so the engine skips it for every other event; `None` (the default) means all. The hook must still test `ev[0]` itself. |
 | `power_mod(ctx, unit, sit)` | Continuous power delta for any unit. `sit` is a bit set of `ATTACKING`, `FIGHTING`, `VS_UNIT`, `VS_LEGEND`. |
 | `cost_mod(ctx, player, inst, go_solo)` | Delta to the cost of anyone playing `inst`. |
 | `self_cost(ctx, player, base)` | The cost to play *this* card ("play this for -1 €$ per ..."). |

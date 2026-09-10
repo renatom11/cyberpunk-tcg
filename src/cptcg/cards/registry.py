@@ -87,6 +87,10 @@ class CardScript:
 
     Hooks receive an EffectCtx for the card they belong to. They must never block: anything
     that needs a decision goes through ctx.ask()/ctx.choose(), which queue a step.
+
+    ``events`` names the event kinds ``on_event`` reacts to, so the engine can skip the hook
+    for every other event; ``None`` (the default) delivers all of them. The hook still has to
+    test ``ev[0]`` itself — the filter is an optimisation, never the rule.
     """
 
     on_play: Callable | None = None       # PLAY trigger (Units, Programs, Gear)

@@ -32,7 +32,7 @@ def _rebuild_active(s: GameState) -> tuple:
 
       0, 1  per-player active instances (Units and Gear in play, face-up Legends), zone order
       2     ((inst, power_mod), ...)          3  ((inst, cost_mod), ...)
-      4     ((inst, on_event), ...)           5  {host: (gear, ...)}
+      4     ((inst, on_event, events), ...)   5  {host: (gear, ...)}
       6     slot 4 in both delivery orders, indexed by the active player (that player's cards first)
       7     per-player ((inst, would_steal), ...)    8  per-player ((inst, would_defeat), ...)
       9     per-player ((inst, script), ...) for scripts with abilities
@@ -79,7 +79,7 @@ def _rebuild_active(s: GameState) -> tuple:
             if hk[1] is not None:
                 cm.append((i, hk[1]))
             if hk[2] is not None:
-                ev_p.append((i, hk[2]))
+                ev_p.append((i, hk[2], hk[3]))       # (inst, on_event, event kinds or None)
             if hk[4] is not None:
                 ws_p.append((i, hk[4]))
             if hk[5] is not None:
@@ -134,10 +134,15 @@ def dispatch(s: GameState, ev: tuple) -> None:
         act = _rebuild_active(s)
     hooks = act[6][s.active]                         # active player's cards first
     if hooks:
-        for inst, h in reversed(hooks):
+        kind = ev[0]
+        for inst, h, kinds in reversed(hooks):
+            # The game-over test stays ahead of the kind filter: a skipped hook is one that
+            # would have returned without doing anything, so the early return happens at
+            # exactly the same hook as it would without the filter.
             if s.over:
                 return
-            h(_ctx(s, inst), ev)
+            if kinds is None or kind in kinds:
+                h(_ctx(s, inst), ev)
     # Temporary listeners registered by effects ("the next time ... this turn"): (s, ev) callables.
     # Most dispatches find no mods at all; when there are some, walk a copy (listeners may append).
     if s.mods:

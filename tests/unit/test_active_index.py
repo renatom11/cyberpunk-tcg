@@ -105,11 +105,20 @@ def _brute_slots(s):
     return tuple(ws), tuple(wd), tuple(ab), tuple(sup)
 
 
+def _pairs(hooks):
+    """Event-hook entries are (inst, on_event, events) now; the reference had (inst, on_event)."""
+    return tuple((i, h) for i, h, _kinds in hooks)
+
+
 def _check_state(s):
     a = _rebuild_active(s.clone())
     b = _ref_rebuild(s.clone())
     assert len(a) == 11
-    assert a[:7] == b
+    assert a[:4] == b[:4] and a[5] == b[5]
+    assert _pairs(a[4]) == b[4]
+    assert (_pairs(a[6][0]), _pairs(a[6][1])) == b[6]
+    for i, _h, kinds in a[4]:
+        assert kinds == s.card(i).script.events
     assert a[7:] == _brute_slots(s)
     for p in (0, 1):
         for q in (False, True):
