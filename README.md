@@ -86,3 +86,14 @@ on one core; `-j` spreads games across cores and results are identical regardles
 
 The card pool is in `data/cards/wnc.json` (see `data/COVERAGE.md` for what is verified and
 scripted); the sample decks are generated, RAM-legal lists, not the retail starters.
+
+Card faces live in `data/images/<id>.jpg` (plus `_back.jpg`) and were cut from screenshots of
+the official card database with `tools/crop_cards.py`, which OCRs each page's captions, crops the
+face above every caption and matches it to a card id by name and subtitle:
+
+```
+pip install pillow rapidocr-onnxruntime
+python tools/crop_cards.py shots/*.png --back back.png --out data/images
+```
+
+The art is © CD PROJEKT S.A. / WeirdCo and is included for personal use of this tool only.

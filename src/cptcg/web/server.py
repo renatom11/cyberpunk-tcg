@@ -420,7 +420,7 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._json(dict(deck_json(Decklist.load(path)), path=rel(path)))
             if p == "/api/cards":
                 r = reg()
-                return self._json([dict(card_json_static(d), image=(IMAGES / f"{d.id}.png").exists()) for d in r.defs])
+                return self._json([dict(card_json_static(d), image=(IMAGES / f"{d.id}.jpg").exists()) for d in r.defs])
             if p.startswith("/api/games/"):
                 gid = p.split("/")[3]
                 with LOCK:

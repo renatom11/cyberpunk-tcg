@@ -9,17 +9,22 @@ const api = async (path, body) => {
 };
 
 let CARDS = {};            // id -> card def (+ image flag)
+let HAS_BACK = true;       // data/images/_back.jpg exists (cleared on first failed load)
 let GAME = null;           // {id, view, log[]}
 let LOG = [];
 
 // ---------------------------------------------------------------- cards
 function cardNode(c, opts = {}) {
   const d = el("div", "card " + (c.color || ""));
-  if (opts.back) { d.className = "card back" + (opts.small ? " sm" : ""); return d; }
+  if (opts.back) {
+    d.className = "card back" + (opts.small ? " sm" : "");
+    if (HAS_BACK) { const img = el("img"); img.src = "/images/_back.jpg"; img.alt = "card back"; img.onerror = () => { HAS_BACK = false; img.remove(); }; d.append(img); }
+    return d;
+  }
   if (opts.small) d.classList.add("sm");
   const def = CARDS[c.id] || {};
   if (def.image) {
-    const img = el("img"); img.src = `/images/${c.id}.png`; img.alt = c.name;
+    const img = el("img"); img.src = `/images/${c.id}.jpg`; img.alt = c.name;
     img.onerror = () => { img.remove(); d.append(...textFace(c)); };
     d.append(img);
   } else {

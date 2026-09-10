@@ -77,6 +77,8 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .card .sell { position: absolute; left: 4px; bottom: 4px; color: var(--yellow); font-size: 9px; font-weight: 800; }
 .card.Red { border-color: #c73a49; } .card.Green { border-color: #4fb35a; } .card.Blue { border-color: #4f86d6; } .card.Yellow { border-color: #d9c419; }
 .card.back { background: repeating-linear-gradient(135deg, #ffe600 0 12px, #111 12px 24px); border-color: #665f00; }
+.card.back img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.card.back:has(img)::after { content: none; }
 .card.back::after { content: "CYBERPUNK"; position: absolute; inset: 0; display: grid; place-items: center; color: #000; font-weight: 900; letter-spacing: .1em; font-size: 9px; transform: rotate(-90deg); }
 .card.spent { transform: rotate(7deg); filter: brightness(.7); margin: 0 6px; }
 .card.spent::after { content: "SPENT"; position: absolute; top: 46%; left: -4px; right: -4px; text-align: center; background: #000c; color: var(--dim); font-weight: 900; font-size: 9px; letter-spacing: .2em; padding: 2px 0; z-index: 3; }
