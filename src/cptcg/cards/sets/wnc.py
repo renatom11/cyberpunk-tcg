@@ -1308,6 +1308,12 @@ def _():
         me = c.inst
 
         def save(c2):
+            # The option was offered when 1 €$ was available; by the time the pick is applied
+            # (a search preview may run other choices first) the last Eddie can be spent, and
+            # a replacement you cannot pay for does not happen: the Unit is defeated as normal.
+            if available(c2.s, c2.player, exclude=me) < 1:
+                defeat(c2.s, inst, allow_replace=False)
+                return
             pay(c2.s, c2.player, 1, exclude=me)
             c2.s.i_flags[me] |= __import__("cptcg.core.enums", fromlist=["F_GO_SOLO"]).F_GO_SOLO
             defeat(c2.s, me, allow_replace=False)

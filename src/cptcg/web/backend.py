@@ -142,17 +142,26 @@ def list_decks() -> list[dict]:
     return out
 
 
+# Deck meta the BUILD page carries through a load → edit → save round trip, so a deck built
+# toward an archetype (or opened from a league report) keeps its label when saved again.
+META_KEYS = ("generated", "archetype", "archetype_id", "context", "steps", "seed", "batch_index")
+
+
 def deck_json(deck: Decklist) -> dict:
     """A decklist plus its validation, the shape the deck-builder page edits."""
     v = validate(deck, reg())
     return {"name": deck.name, "legends": list(deck.legends), "main": deck.counts(),
-            "note": deck.meta.get("note", ""), "ok": v.ok, "errors": v.errors, "warnings": v.warnings,
+            "note": deck.meta.get("note", ""), "meta": {k: deck.meta[k] for k in META_KEYS if k in deck.meta},
+            "ok": v.ok, "errors": v.errors, "warnings": v.warnings,
             "ram": {c.name.title(): n for c, n in v.ram_limits.items()}, "size": len(deck.main)}
 
 
 def deck_from_body(body: dict) -> Decklist:
     counts = {str(k): int(n) for k, n in (body.get("main") or {}).items() if int(n) > 0}
-    meta = {"note": body["note"]} if body.get("note") else {}
+    raw = body.get("meta") or {}
+    meta = {k: raw[k] for k in META_KEYS if isinstance(raw, dict) and raw.get(k) is not None}
+    if body.get("note"):
+        meta["note"] = body["note"]
     return Decklist.from_counts(str(body.get("name") or "untitled"), [str(x) for x in body.get("legends") or []],
                                 counts, **meta)
 
@@ -194,12 +203,28 @@ def archetype_store():
     return ArchetypeStore.load(ROOT / DEFAULT_PATH, reg())
 
 
-def learn_archetypes(t, source: str = "", generation: int = 0) -> None:
-    """Record a finished tournament's decks in the archetype store and re-cluster."""
+def learn_archetypes(t, source: str = "", generation: int = 0):
+    """Record a finished tournament's decks in the archetype store, re-cluster, save; returns
+    the store so the report can label each deck with its nearest archetype."""
     store = archetype_store()
     store.update_from_tournament(t, source=source, generation=generation)
     store.refit()
     store.save()
+    return store
+
+
+def check_archetypes(specs) -> None:
+    """Raise ValueError (a 400 for the client) when a league or generate body names an
+    archetype the store does not know — before a job card is created for it."""
+    if not specs or specs == "legacy" or specs == ["legacy"]:
+        return
+    from cptcg.deck.strategies import get_builder
+    store = archetype_store()
+    for spec in specs:
+        try:
+            get_builder(spec, store)
+        except KeyError as e:
+            raise ValueError(str(e).strip('"')) from None
 
 
 EXPLORER_DESCRIPTION = ("Invents a deck shape at random (within what the Legends allow) and builds toward it. "
@@ -220,8 +245,9 @@ def list_archetypes() -> dict:
     builders += [{"id": a["id"], "name": a["name"], "description": a["description"]} for a in archetypes]
     builders.append({"id": "legacy", "name": "legacy", "description": "The original unopinionated builder: curve, type mix and sell-tag floor only."})
     builders.append({"id": "random", "name": "random", "description": "A uniformly random legal deck: the control group."})
-    return {"decks": len(store.decks), "needed": MIN_DECKS, "tournaments": store.tournaments,
-            "archetypes": archetypes, "builders": builders}
+    return {"decks": len(store.decks), "distinct": store.lineage_count(), "needed": MIN_DECKS,
+            "tournaments": store.tournaments, "separation": round(store.separation, 3),
+            "noise_reference": round(store.noise_reference, 3), "archetypes": archetypes, "builders": builders}
 
 
 def list_replays() -> list[str]:
@@ -244,34 +270,31 @@ def report_json(path_: Path) -> dict:
     the loaded tournament, and each deck's meta (archetype, generation, ...) comes from the
     sibling ``<name>.json`` a league writes next to it. The league series (``league.json`` in
     the run's directory) is attached as ``league_series`` when there is one."""
+    from cptcg.sim.report import glossary_json, how_played, label_nearest, profile_sentence, render_report
     from cptcg.sim.tournament import Tournament
     data = json.loads(path_.read_text(encoding="utf-8"))
-    if int(data.get("version", 1)) < Tournament.JSON_VERSION or "summary" not in data:
-        t = Tournament.from_json(data)
-        decks, paths = [], []
-        for d in t.decks:
-            sibling = path_.with_name(f"{d.name}.json")
-            if sibling.is_file():
-                try:
-                    saved = Decklist.load(sibling)
-                    d = Decklist(d.name, d.legends, d.main, {**saved.meta, **d.meta})
-                    paths.append(rel(sibling))
-                except (OSError, ValueError, KeyError):
-                    paths.append(None)
-            else:
-                paths.append(None)
-            decks.append(d)
-        t.decks, t.paths = decks, paths
+    old = int(data.get("version", 1)) < Tournament.JSON_VERSION or "summary" not in data
+    if old or "expected" not in data or "nearest" not in (data.get("decks") or [{}])[0]:
+        # Old files (version 1, or version 2 saved before the field-expected win rates and the
+        # nearest-archetype labels existed) are rebuilt from the loaded run: Tournament.load
+        # merges the sibling <name>.json deck files the same way the CLI does.
+        t = Tournament.load(path_, rel_to=ROOT)
+        if "nearest" not in t.info:
+            try:
+                label_nearest(t, archetype_store())
+            except (OSError, ValueError, KeyError):
+                pass
         data = t.to_json(reg())
-        from cptcg.sim.report import render_report
-        data["markdown"] = render_report(t, reg=reg())     # the old report.md printed raw card ids
+        md = path_.with_name("report.md")
+        data["markdown"] = render_report(t, reg=reg()) if old or not md.exists() else md.read_text(encoding="utf-8")
     else:
         md = path_.with_name("report.md")
         data["markdown"] = md.read_text(encoding="utf-8") if md.exists() else ""
     data["file"] = rel(path_)
-    from cptcg.sim.report import glossary_json, profile_sentence
     for d in data.get("decks", []):          # files saved before the shape sentence was stored
         d.setdefault("shape", profile_sentence(d["profile"]) if d.get("profile") else None)
+        d.setdefault("nearest", None)
+    data.setdefault("how_played", "")
     data["glossary"] = glossary_json()
     for parent in (path_.parent, path_.parent.parent):
         series = parent / "league.json"
@@ -380,10 +403,11 @@ def _run_tourney(job: Job) -> None:
     title = body.get("name") or f"Tournament: {len(decks)} decks"
     t.info["title"] = title
     t.paths = [rel(x) for x in paths]
+    from cptcg.sim.report import label_nearest
+    label_nearest(t, learn_archetypes(t, source=title))     # decks not built toward an archetype get their nearest one
     t.save(out / "tournament.json", reg())
     (out / "report.md").write_text(render_report(t, title, reg()), encoding="utf-8")
     job.reports.append(rel(out / "tournament.json"))
-    learn_archetypes(t, source=title)
     order = t.standings()
     tracker.finish(f"finished: {t.info['total_games']} games")
     job.set_progress("standings: " + ", ".join(decks[i].name for i in order), **tracker.to_json())
@@ -488,8 +512,9 @@ def _run_league(job: Job) -> None:
                                 archetypes_path=ROOT / ARCHETYPES_PATH):
         job.reports.append(rel(out / f"gen{gen}" / "tournament.json"))
         order = t.standings()
-        bt = t.bt()
-        job.log(f"generation {gen}: " + ", ".join(f"{decks[i].name} {bt[i]:.2f}" for i in order))
+        expected = t.expected_rates()
+        job.log(f"generation {gen}: " + ", ".join(f"{decks[i].name} {100 * expected[i]:.0f}%" for i in order)
+                + " expected win rate vs this field")
     tracker.finish(f"finished: {gens} generations")
     job.set_progress(**tracker.to_json())
 
@@ -565,6 +590,8 @@ def start_job(body: dict) -> Job:
     kind = body.get("kind")
     if kind not in ("tourney", "league", "generate"):
         raise ValueError("kind must be tourney, league or generate")
+    if kind in ("league", "generate"):
+        check_archetypes(body.get("archetypes"))
     job = Job(kind, body)
 
     def run():

@@ -392,8 +392,12 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
     round-robin cell, and ``gen_done`` (gen, generations, standings, replaced).
 
     With ``out_dir`` every generation writes ``genK/tournament.json`` (with the hill-climb history
-    of each deck in ``info["climb"]``), ``genK/report.md``, one deck file per builder, and a
-    cumulative ``league.json`` series (standings per generation) for charts.
+    of each deck in ``info["climb"]`` and the builders rebuilt this generation in
+    ``info["fresh"]``), ``genK/report.md``, one deck file per builder, and a cumulative
+    ``league.json`` series (standings per generation, each row with its strength and the win
+    rate that strength predicts against that generation's field) for charts. Fresh decks are
+    built with the current line-up as a novelty context and rebuilt when their list is more
+    than 70% the same as a deck already in the league.
 
     Builders come from deck/strategies.py and every deck records what built it in
     ``deck.meta["archetype"]``: the name of a learned archetype, or ``"exploring"`` for an
@@ -410,11 +414,13 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
     the builders climb against (``hof_opponents`` of them) and each generation's best are
     offered to the hall."""
     from cptcg.deck.archetypes import ArchetypeStore
-    from cptcg.deck.strategies import Explorer, Learned, builders_for, get_builder
-    from cptcg.sim.report import render_report
+    from cptcg.deck.generate import Batch, similarity
+    from cptcg.deck.strategies import Explorer, Learned, builders_for, explorer_quota, get_builder
+    from cptcg.sim.report import label_nearest, render_report
     from cptcg.sim.tournament import run_tournament
     rng = Pcg32(seed, seq=5)
     out = Path(out_dir) if out_dir else None
+    max_similarity = 0.7      # a fresh deck this close to one already in the league is rebuilt
 
     knowledge = hof = None
     if knowledge_path is not None:
@@ -431,19 +437,33 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
 
     def replacement(survivors: list[Decklist]):
         """The builder for the slot a league frees: keep the Explorer quota, else re-test the
-        surviving archetype that wins least often; a new store archetype when nobody has one."""
+        surviving archetype that wins least often. A survivor whose archetype id has since
+        been renamed is resolved through the store; one that no longer matches anything is
+        labelled by its nearest current group; when nothing resolves, an Explorer."""
         if not store.archetypes:
             return Explorer()
         explorers = sum(1 for d in survivors if d.meta.get("archetype_id") is None)
-        if explorers < n_builders // 4:
+        if explorers < explorer_quota(n_builders):
             return Explorer()
-        carried = [store.get(d.meta["archetype_id"]) for d in survivors if d.meta.get("archetype_id")]
-        carried = [a for a in carried if a is not None]
+        carried = []
+        for d in survivors:
+            if not d.meta.get("archetype_id"):
+                continue
+            a = store.get(d.meta["archetype_id"])
+            if a is None:
+                nearest = store.label(d)
+                a = store.get(nearest) if nearest else None
+            if a is not None:
+                carried.append(a)
         if carried:
-            return Learned(min(carried, key=lambda a: (a.win_rate, a.games, a.id)), store)
-        return Learned(store.ranked()[0], store)
+            return Learned(min(carried, key=lambda a: (a.smoothed_rate, a.games, a.id)), store)
+        if not any(d.meta.get("archetype_id") for d in survivors):
+            return Learned(store.ranked()[0], store)     # cold start: nobody targets a group yet, try the best one
+        return Explorer()
 
-    def fresh(i: int, survivors: list[Decklist] | None = None) -> Decklist:
+    def fresh(i: int, survivors: list[Decklist] | None = None, others: list[Decklist] = ()) -> Decklist:
+        """A new deck for slot ``i``; ``others`` are the decks already in the league, which the
+        new one must not copy (novelty penalty on Legends, similarity floor on the list)."""
         name = f"builder{i + 1}"
         if legacy:
             return heuristic_deck(reg, None, rng, name=name)
@@ -453,9 +473,19 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
             b = line_up[i]
         else:
             b = replacement(survivors)
-        return b.build(reg, None, rng, knowledge=knowledge, name=name)
+        used = Batch()
+        for d in others:
+            used.note(d)
+        deck = None
+        for _attempt in range(6):
+            deck = b.build(reg, None, rng, knowledge=knowledge, name=name, used=used)
+            if not any(similarity(deck, d) > max_similarity for d in others):
+                break
+        return deck
 
-    decks = [fresh(i) for i in range(n_builders)]
+    decks: list[Decklist] = []
+    for i in range(n_builders):
+        decks.append(fresh(i, others=decks))
     fresh_idx = set(range(n_builders))                       # builders rebuilt for this generation
     series: list[dict] = []
     for gen in range(1, generations + 1):
@@ -498,11 +528,14 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
             on_event("gen_done", gen=gen, generations=generations, standings=[decks[i].name for i in t.standings()],
                      replaced=decks[worst].name if gen < generations else None)
         t.info.update(title=f"League generation {gen}", generation=gen, generations=generations, steps=steps,
-                      league_seed=seed, replaced=decks[worst].name if gen < generations else None, climb=climb)
+                      league_seed=seed, replaced=decks[worst].name if gen < generations else None, climb=climb,
+                      fresh=[decks[i].name for i in sorted(fresh_idx)])
         bt = t.bt()
+        expected = t.expected_rates()
         series.append({"gen": gen, "standings": [
             {"name": d.name, "archetype": d.meta.get("archetype") or d.meta.get("strategy"), "bt": bt[i],
-             "wins": k, "games": g, "fresh": i in fresh_idx, "replaced": i == worst and gen < generations}
+             "expected": expected[i], "wins": k, "games": g, "fresh": i in fresh_idx,
+             "replaced": i == worst and gen < generations}
             for i, (d, (k, g)) in enumerate(zip(decks, t.field_rates()))]})
         if knowledge is not None:
             knowledge.update_from_tournament(t)
@@ -517,6 +550,7 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
             store.refit()
             if store.path:
                 store.save()
+            label_nearest(t, store)          # Explorer decks (and stale labels) get their nearest current group
         if out:
             (out / f"gen{gen}").mkdir(parents=True, exist_ok=True)
             t.paths = []
@@ -530,7 +564,8 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
                 json.dump({"generations": series}, f, indent=1)
         yield gen, t, list(decks)
         if gen < generations:
-            decks[worst] = fresh(worst, [d for i, d in enumerate(decks) if i != worst])
+            survivors = [d for i, d in enumerate(decks) if i != worst]
+            decks[worst] = fresh(worst, survivors, others=survivors)
             fresh_idx = {worst}
 
 

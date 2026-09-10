@@ -29,10 +29,10 @@ def _cell(i, j, wins, n):
 
 def synthetic(reg, n_cards=10):
     """Three decks with hand-set results: deck 0 crushes deck 1, edges deck 2 on few games,
-    decks 1 and 2 split evenly. Deck 0 carries a personality label."""
+    deck 1 edges deck 2. Deck 0 carries a personality label."""
     a, b, c = _decks(3)
     a = Decklist(a.name, a.legends, a.main, {"strategy": "aggro"})
-    cells = {(0, 1): _cell(0, 1, 34, 40), (0, 2): _cell(0, 2, 14, 20), (1, 2): _cell(1, 2, 20, 40)}
+    cells = {(0, 1): _cell(0, 1, 34, 40), (0, 2): _cell(0, 2, 14, 20), (1, 2): _cell(1, 2, 24, 40)}
     stats = {}
     for k, cid in enumerate(sorted(set(a.main))[:n_cards]):
         stats[cid] = CardStat(drawn_games=30, drawn_wins=25 - k, other_games=30, other_wins=15)
@@ -131,14 +131,19 @@ def test_version_1_file_loads_and_renders(reg):
     path = ROOT / "out/league_demo/gen1/tournament.json"
     raw = json.loads(path.read_text())
     assert "version" not in raw and "summary" not in raw
-    t = Tournament.load(path)
+    t = Tournament.load(path, siblings=False)
     assert t.n() == 4 and t.info == {} and all(p is None for p in t.paths)
+    # By default the sibling builderK.json files complete each deck's meta and path.
+    t = Tournament.load(path, rel_to=ROOT)
+    assert t.paths == [f"out/league_demo/gen1/builder{i}.json" for i in (1, 2, 3, 4)]
+    assert all(d.meta.get("generated") == "heuristic" for d in t.decks)
     assert all(c.n == 40 for c in t.cells.values()) and t.cells[(0, 1)].turns == round(40 * raw["cells"][0]["avg_turns"])
     rep = render_report(t, reg=reg)
     assert rep.startswith("# Tournament") and "Standings" in rep and "Head-to-head" in rep
     assert "Dexter DeShawn — Off the Grid" in rep and "| dexter-deshawn" not in rep
     data = t.to_json(reg)
-    assert data["version"] == 2 and data["summary"][0].startswith("builder1 is the strongest deck")
+    assert data["version"] == 2 and data["summary"][0].startswith("builder1 is rated highest in this run")
+    assert "the order of the top two is not established" in data["summary"][1]
     assert all(d["shape"] == profile_sentence(d["profile"]) for d in data["decks"])
 
 
@@ -162,3 +167,131 @@ def test_glossary_entries_back_both_the_markdown_and_the_page():
     assert GLOSSARY[0] == "## How to read this report" and len(GLOSSARY) == 2 + len(GLOSSARY_ENTRIES)
     for (term, text), line, entry in zip(GLOSSARY_ENTRIES, GLOSSARY[2:], glossary_json()):
         assert line == f"- **{term}** — {text}" and entry == {"term": term, "text": text.replace("**", "")}
+
+
+def _cyclic(reg, games=200, rate=0.9):
+    """Three decks in a perfect circle: A beats B, B beats C, C beats A."""
+    a, b, c = _decks(3)
+    w = int(games * rate)
+    cells = {(0, 1): _cell(0, 1, w, games), (1, 2): _cell(1, 2, w, games), (0, 2): _cell(0, 2, games - w, games)}
+    return Tournament([a, b, c], "random", 1, cells, [{}, {}, {}])
+
+
+def test_rock_paper_scissors_is_asserted_only_beyond_two_standard_errors(reg):
+    # A 40-game cell 14 points off the model's prediction is under two standard errors: hedged.
+    t = Tournament.load(ROOT / "out/league_demo/gen2/tournament.json", siblings=False)
+    text = "\n".join(summarize(t, reg))
+    assert "more often than their strengths predict, but on 40 games that could still be noise" in text
+    assert "rock–paper–scissors" not in text
+    # A genuine circle on 200 games per cell is far beyond two standard errors: asserted.
+    text = "\n".join(summarize(_cyclic(reg), reg))
+    assert "a rock–paper–scissors pattern, so the best deck depends on what it faces" in text
+    assert "bring" in text and "% of the time" in text          # and the blind pick is a mix
+
+
+def test_top_deck_wording_reconciles_rating_and_blind_pick(reg):
+    t = Tournament.load(ROOT / "out/league_demo/gen2/tournament.json", siblings=False)
+    lines = summarize(t, reg)
+    assert lines[0].startswith("builder1 is rated highest in this run") and "strongest" not in lines[0]
+    assert lines[1].startswith("It is rated above builder4 despite losing to it (45% of 40 games)")
+    bring = next(x for x in lines if x.startswith("If you had to pick"))
+    assert "bring builder4 every time — builder1 is rated higher, but builder4 is the only deck that held at least even" in bring
+    assert "(55% of 40 games, not established)" in bring
+    # Established lead: the synthetic run's top deck beat the next-rated deck solidly.
+    assert summarize(synthetic(reg), reg)[0].startswith("Sample Corpos (aggro) is the strongest deck in this run")
+
+
+def test_how_played_is_computed_from_the_cells(reg):
+    from cptcg.sim.report import how_played
+    t = synthetic(reg)
+    assert how_played(t) == ""                                    # no cap recorded: nothing to claim
+    t.info.update(games_per_pair=40, batch=40, sprt={"delta": 0.08})
+    assert how_played(t) == ("Every matchup played its full 40 games in one batch, so the early-stop test never had a "
+                             "chance to shorten one.")
+    t.info.update(games_per_pair=60, sprt=None)
+    assert how_played(t) == "Every matchup played the full 60 games."
+    t.info.update(sprt={"delta": 0.08})
+    t.cells[(0, 1)].n = 60
+    t.cells[(0, 2)].verdict, t.cells[(1, 2)].verdict = "high", "h0"
+    s = how_played(t)
+    assert s.startswith("Matchups were played in batches of 40 games and checked between batches: 2 of 3 stopped before the cap of 60 (at 20–40 games), ")
+    assert "1 because one deck was clearly ahead and 1 because the two were clearly within 8 points of even; the other 1 ran to the cap." in s
+    for c in t.cells.values():
+        c.n, c.verdict = 60, "continue"
+    assert how_played(t).endswith("none stopped before the cap of 60, so every matchup ran to the cap.")
+    assert t.to_json(reg)["how_played"] == how_played(t)
+    # the Markdown prints the same sentence
+    assert how_played(t) in render_report(t, reg=reg)
+
+
+def test_card_table_needs_both_sides_and_marks_thin_ones(reg):
+    from cptcg.sim.report import card_rows
+    t = synthetic(reg, 4)
+    cid = sorted(set(t.decks[0].main))[0]
+    t.card_stats[0][cid] = CardStat(drawn_games=106, drawn_wins=40, other_games=14, other_wins=1)   # +31 on 14 games
+    t.card_stats[0]["never-left"] = CardStat(drawn_games=120, drawn_wins=60, other_games=0, other_wins=0)
+    t.card_stats[0]["rarely-left"] = CardStat(drawn_games=115, drawn_wins=60, other_games=5, other_wins=0)
+    rows = card_rows(t.card_stats[0])
+    assert [c for c, _ in rows][0] == cid and "never-left" not in dict(rows) and "rarely-left" not in dict(rows)
+    rep = render_report(t, reg=reg)
+    assert "| Games drawn / not drawn |" in rep and f"| {card_name(reg, cid)} | 38% | 7% | +31 (thin) | 106 / 14 |" in rep
+    assert "left in the deck in at least 10 are listed" in rep and "marked thin rests on fewer than 20 games" in rep
+
+
+def test_strength_is_the_expected_win_rate_against_the_field(reg):
+    t = synthetic(reg)
+    bt = t.bt()
+    exp = t.expected_rates(bt)
+    assert abs(sum(exp) / len(exp) - 0.5) < 1e-9                 # the field averages exactly 50%
+    assert exp[0] > exp[1] > exp[2]
+    rep = render_report(t, reg=reg)
+    assert f"{100 * exp[0]:.0f}% expected vs this field (rating {bt[0]:.2f})" in rep
+    assert t.to_json(reg)["expected"] == exp
+    assert "finished 2026-09-10 14:17 UTC" in render_report(
+        Tournament(t.decks, "random", 1, t.cells, t.card_stats, {"finished_at": "2026-09-10T14:17:26+00:00"}), reg=reg)
+
+
+def test_league_lines_fresh_replaced_and_one_archetype(reg):
+    t = synthetic(reg)
+    for d in t.decks[1:]:
+        d.meta["strategy"] = "aggro"
+    t.info.update(generation=2, generations=3, steps=2, league_seed=0, fresh=[t.decks[1].name], replaced=t.decks[2].name,
+                  climb=[[{"step": 1, "proposal": {"out": "floor-it", "in": "detonate", "kind": "card"}, "games": 360,
+                           "discordant": 16, "challenger_wins": 13, "verdict": "continue", "accepted": True}], [], []])
+    rep = render_report(t, reg=reg)
+    assert f"- Built fresh this generation, replacing last generation's {t.decks[1].name}." in rep
+    assert "- This builder is replaced by a fresh deck next generation." in rep
+    assert "the card-swap tests played another 360 challenger games" in rep and "360 games each side" in rep
+    # one kind only: no pooled table, one honest line instead
+    assert "## Archetypes in this run" not in rep and "All 3 decks are labelled aggro, so there is no second archetype" in rep
+    t.decks[0].meta["strategy"] = "control"
+    assert "## Archetypes in this run" in render_report(t, reg=reg)
+
+
+def test_nearest_archetype_labels_hand_built_decks(reg):
+    from cptcg.core.rng import Pcg32
+    from cptcg.deck.archetypes import ArchetypeStore
+    from cptcg.deck.strategies import Explorer
+    from cptcg.sim.report import deck_label, label_nearest
+    rng = Pcg32(31)
+    st = ArchetypeStore(reg=reg)
+    for i in range(12):
+        st.add(Explorer().build(reg, None, rng, name=f"s{i}"), None, games=20, wins=6 + i, bt=1.0)
+    assert st.refit()
+    t = synthetic(reg)
+    t.decks[1] = Decklist(t.decks[1].name, t.decks[1].legends, t.decks[1].main, {"archetype": "exploring", "generated": "explorer"})
+    t.decks[2] = Decklist(t.decks[2].name, t.decks[2].legends, t.decks[2].main,
+                          {"archetype": "Gone group", "archetype_id": "gone-group", "generated": "learned"})
+    near = label_nearest(t, st)
+    names = {a.name for a in st.archetypes}
+    assert near == t.info["nearest"] and all(x in names for x in near)
+    assert deck_label(t, 0) == f"aggro, nearest: {near[0]}"            # an old personality label, plus the nearest group
+    assert deck_label(t, 1) == f"exploring, nearest: {near[1]}"
+    assert deck_label(t, 2) == f"Gone group, now nearest: {near[2]}"
+    data = t.to_json(reg)
+    assert [d["nearest"] for d in data["decks"]] == near
+    plain = Decklist("plain", t.decks[0].legends, t.decks[0].main)
+    t.decks[0] = plain
+    label_nearest(t, st)
+    assert deck_label(t, 0).startswith("nearest: ") and f"| nearest: {t.info['nearest'][0]} |" in render_report(t, reg=reg)
+    assert label_nearest(t, ArchetypeStore(reg=reg)) == [None, None, None]   # an empty store labels nothing

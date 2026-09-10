@@ -121,14 +121,19 @@ def cmd_tourney(args) -> None:
     t.save(out / "tournament.json", reg)
     report = render_report(t, title, reg)
     (out / "report.md").write_text(report, encoding="utf-8")
-    print(report)
     if args.archetypes:
         from cptcg.deck.archetypes import ArchetypeStore
+        from cptcg.sim.report import label_nearest
         store = ArchetypeStore.load(args.archetypes, reg)
         store.update_from_tournament(t, source=title)
         store.refit()
         store.save()
+        label_nearest(t, store)                      # hand-built decks get their nearest archetype
+        t.save(out / "tournament.json", reg)
+        report = render_report(t, title, reg)
+        (out / "report.md").write_text(report, encoding="utf-8")
         print(f"archetypes: {store.summary()}", file=sys.stderr)
+    print(report)
     print(f"({time.perf_counter() - t0:.0f}s; written to {out}/)")
 
 
@@ -163,7 +168,11 @@ def cmd_build(args) -> None:
             from cptcg.deck.knowledge import Knowledge
             knowledge = Knowledge.load(args.knowledge, reg)
         store = ArchetypeStore.load(args.archetypes, reg) if args.archetypes else None
-        deck = get_builder(args.archetype, store).build(reg, legends, rng, knowledge=knowledge, name=args.name)
+        try:
+            builder = get_builder(args.archetype, store)
+        except KeyError as e:
+            sys.exit(str(e).strip('"'))
+        deck = builder.build(reg, legends, rng, knowledge=knowledge, name=args.name)
     print(f"builder: {deck.meta.get('archetype', args.archetype)}")
     print(f"start: {deck.name}  legends {list(deck.legends)}")
     for cid, n in sorted(deck.counts().items()):
@@ -190,19 +199,28 @@ def cmd_build(args) -> None:
 
 def cmd_league(args) -> None:
     from cptcg.deck.builder import league
+    from cptcg.sim.report import deck_kind
     reg = load_default()
     t0 = time.perf_counter()
     archetypes = "legacy" if args.archetypes == "legacy" else (args.archetypes.split(",") if args.archetypes else None)
-    for gen, t, decks in league(reg, args.builders, args.generations, args.steps, seed=args.seed,
-                                agent=args.agent, workers=args.jobs, games_per_pair=args.games,
-                                out_dir=args.out, progress=lambda m: print("  " + m, file=sys.stderr),
-                                archetypes=archetypes, knowledge_path=args.knowledge,
-                                hall_of_fame_path=args.hof, hof_opponents=args.hof_opponents,
-                                archetypes_path=args.archetype_store or None):
+    runs = league(reg, args.builders, args.generations, args.steps, seed=args.seed,
+                  agent=args.agent, workers=args.jobs, games_per_pair=args.games,
+                  out_dir=args.out, progress=lambda m: print("  " + m, file=sys.stderr),
+                  archetypes=archetypes, knowledge_path=args.knowledge,
+                  hall_of_fame_path=args.hof, hof_opponents=args.hof_opponents,
+                  archetypes_path=args.archetype_store or None)
+    while True:
+        try:
+            gen, t, decks = next(runs)
+        except StopIteration:
+            break
+        except KeyError as e:                        # an archetype id the store does not know
+            sys.exit(str(e).strip('"'))
         order = t.standings()
-        bt = t.bt()
+        expected = t.expected_rates()
         print(f"generation {gen} ({time.perf_counter() - t0:.0f}s): " +
-              ", ".join(f"{decks[i].name} ({decks[i].meta.get('archetype', '?')}) {bt[i]:.2f}" for i in order))
+              ", ".join(f"{decks[i].name} ({deck_kind(decks[i]) or 'legacy'}) {100 * expected[i]:.0f}%" for i in order)
+              + " expected win rate vs this field")
     print(f"reports in {args.out}/genN/report.md")
     if args.archetype_store:
         from cptcg.deck.archetypes import ArchetypeStore
@@ -222,9 +240,12 @@ def cmd_generate(args) -> None:
     legends = args.legends.split(",") if args.legends else None
     store = ArchetypeStore.load(args.archetype_store, reg) if args.archetype_store else None
     t0 = time.perf_counter()
-    batch = generate_decks(reg, args.count, archetypes, seed=args.seed, knowledge=knowledge, legends=legends,
-                           max_similarity=args.max_similarity, prefix=args.prefix,
-                           progress=lambda m: print("  " + m, file=sys.stderr), store=store)
+    try:
+        batch = generate_decks(reg, args.count, archetypes, seed=args.seed, knowledge=knowledge, legends=legends,
+                               max_similarity=args.max_similarity, prefix=args.prefix,
+                               progress=lambda m: print("  " + m, file=sys.stderr), store=store)
+    except KeyError as e:                            # an archetype id the store does not know
+        sys.exit(str(e).strip('"'))
     decks = batch.decks
     print(f"{len(decks)} decks, {len(batch.triples)} Legend triples, {len(batch.legends)} Legends used, "
           f"{batch.rejected_similar} near-duplicates rejected ({time.perf_counter() - t0:.0f}s)")
@@ -254,7 +275,8 @@ def cmd_archetypes(args) -> None:
         print(f"{store.summary()}. Archetypes are learned from tournaments and leagues; the store needs "
               f"{MIN_DECKS} decks that have played (run `cptcg league` or `cptcg tourney --archetypes {args.store}`).")
     for a in store.ranked():
-        print(f"{a.name} [{a.id}]  won {100 * a.win_rate:.0f}% of {a.games} games, strength {a.bt:.2f}, {len(a.members)} decks")
+        print(f"{a.name} [{a.id}]  won {100 * a.win_rate:.0f}% of {a.games} games, strength {a.bt:.2f}, "
+              f"{len(a.members)} decks, {a.separation_word()}" + (f" (formerly {', '.join(a.aliases)})" if a.aliases else ""))
         print(f"    {a.description}")
     print(f"{'explorer':9s} {blurb(Explorer().describe())}")
     print(f"{'legacy':9s} The original unopinionated builder: curve, type mix and sell-tag floor only.")

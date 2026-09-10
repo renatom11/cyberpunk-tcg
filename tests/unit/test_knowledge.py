@@ -155,7 +155,10 @@ def test_league_learns_archetypes_knowledge_and_hall_of_fame(reg, tmp_path):
     kinds = [d.meta["archetype"] for d in decks]
     assert sum(1 for k in kinds if k != "exploring") == 1          # gen 2's fresh builder targets a learned archetype
     learned = next(d for d in decks if d.meta["archetype"] != "exploring")
-    assert store.get(learned.meta["archetype_id"]).name == learned.meta["archetype"]
+    target = store.get(learned.meta["archetype_id"])        # the group it aimed at, even if renamed since
+    assert target is not None and (target.name == learned.meta["archetype"] or learned.meta["archetype"] in target.aliases)
+    # every deck of the generation carries the nearest current archetype (Explorers included)
+    assert len(t.info["nearest"]) == 8 and all(n is None or store.get(n) is not None for n in t.info["nearest"])
     assert all(validate(d, reg).ok for d in decks)
     kn = Knowledge.load(tmp_path / "k.json", reg)
     assert kn.tournaments == 2 and kn.games == sum(sum(2 * c.n for c in tt.cells.values()) for _, tt, _ in gens)

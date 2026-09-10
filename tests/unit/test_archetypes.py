@@ -5,8 +5,8 @@ import pytest
 
 from cptcg.cards.registry import load_default
 from cptcg.core.rng import Pcg32
-from cptcg.deck.archetypes import (FEATURES, FILL_FEATURES, MIN_DECKS, ArchetypeStore, describe_fingerprint,
-                                   fingerprint, name_from_z, pool_ranges)
+from cptcg.deck.archetypes import (FEATURES, FILL_FEATURES, MIN_DECKS, MIN_MEMBERS, ArchetypeStore, describe_fingerprint,
+                                   fingerprint, name_from_z, name_still_fits, pool_ranges)
 from cptcg.deck.builder import random_legends
 from cptcg.deck.decklist import Decklist
 from cptcg.deck.strategies import Explorer, Learned, builders_for, deck_profile, features, get_builder, rules_text
@@ -63,7 +63,7 @@ def test_fingerprint_ranges_and_profile_agree(reg):
         for k, v in prof.items():
             assert fp[k] == pytest.approx(v), k
         words = describe_fingerprint(fp)
-        assert "average cost" in words and "% Units" in words and "% sellable" in words
+        assert "average cost" in words and "% Units" in words and "% Programs" in words and "sellable" not in words
     with pytest.raises(KeyError):
         fingerprint(reg, Decklist("x", d.legends, ("no-such-card",)))
     assert describe_fingerprint(None) == ""
@@ -160,8 +160,25 @@ def test_names_come_from_the_two_most_distinctive_features():
     z = {k: 0.0 for k in FILL_FEATURES}
     z.update(cheap_share=2.0, unit_share=1.5, removal=-1.0)
     assert name_from_z(z) == "Low-curve swarm"
-    assert name_from_z(z, {"Low-curve swarm"}) == "Low-curve race"          # the next noun when the name is taken
+    assert name_from_z(z, {"Low-curve swarm"}) == "Low-curve tempo"         # the next noun when the name is taken
     assert name_from_z({k: 0.0 for k in FILL_FEATURES}) == "Balanced midrange"
+    # A noun never repeats a word of the adjective ("Low-curve curve", "Gig-value value").
+    z = {k: 0.0 for k in FILL_FEATURES}
+    z.update(cheap_share=2.0, mean_cost=-1.9)
+    assert name_from_z(z) == "Low-curve decks"
+    z = {k: 0.0 for k in FILL_FEATURES}
+    z.update(gig_cards=2.0, draw=1.9, haste=1.0)
+    assert name_from_z(z) == "Gig-value rush"
+    # When the top two are nearly tied, the feature the group is high on gives the adjective.
+    z = {k: 0.0 for k in FILL_FEATURES}
+    z.update(economy=-1.05, blockers=1.0)
+    assert name_from_z(z) == "Blocker beatdown"
+    # A kept name must still describe the group.
+    z = {k: 0.0 for k in FILL_FEATURES}
+    z.update(removal=2.5, blockers=1.8, economy=0.2)
+    assert name_still_fits("Removal wall", z) and name_still_fits("Blocker control", z)
+    assert not name_still_fits("Eddies wall", z) and not name_still_fits("Removal engine", z)   # economy is not distinctive
+    assert name_still_fits("Balanced midrange", {k: 0.0 for k in FILL_FEATURES}) and not name_still_fits("Balanced midrange", z)
 
 
 def test_explorer_decks_are_legal_and_spread_over_the_fingerprint_space(reg):
@@ -204,3 +221,83 @@ def test_learned_decks_land_nearer_their_centroid_than_explorer_decks(reg, store
     line = builders_for(store, 8)
     assert [b.name == "explorer" for b in line] == [False, False, False, True, False, False, False, True]
     assert all(b.name == "explorer" for b in builders_for(ArchetypeStore(reg=reg), 5))
+
+
+def test_an_outlier_never_becomes_its_own_archetype(tmp_path):
+    st = ArchetypeStore(path=tmp_path / "a.json")
+    for c, j, fp in _planted(4):
+        st.add(_fake_deck(c, j), fp, games=20, wins=10, bt=1.0)
+    far = {k: 0.0 for k in FEATURES}
+    far.update(mean_cost=7.5, unit_share=0.05, program_share=0.9, removal=60, gig_cards=0, economy=45, draw=30, blockers=0)
+    st.add(Decklist.from_counts("odd", ["Lx", "Ly", "Lz"], {"weird": 3, "filler": 37}), far, games=8, wins=4, bt=0.9)
+    assert st.refit() and len(st.archetypes) == 3
+    assert all(len(a.members) >= MIN_MEMBERS for a in st.archetypes)
+    assert all(a.separation > 0 and a.separation_word() and a.lineages == len(a.members) for a in st.archetypes)
+    assert 0 < st.separation <= 1 and st.to_json()["separation"] == round(st.separation, 3)
+
+
+def test_one_lineage_counts_as_one_deck(reg, explorers):
+    st = ArchetypeStore(reg=reg)
+    for d in explorers[:6]:
+        st.add(d, None, games=10, wins=5)
+    base = explorers[6]
+    pool = [c for c in reg.defs if c.id not in base.main and c.type.name != "LEGEND"][:5]
+    variants = [base]
+    for k, card in enumerate(pool):                           # one-card variants of the same list
+        main = list(base.main)
+        main[k] = card.id
+        variants.append(Decklist(f"v{k}", base.legends, tuple(main), dict(base.meta)))
+    for d in variants:
+        st.add(d, None, games=10, wins=5)
+    assert len(st.decks) == 12 and st.lineage_count() == 7
+    assert not st.refit() and "7 distinct" in st.summary() and "1 more distinct deck" in st.summary()
+    st.add(explorers[7], None, games=10, wins=5)
+    assert st.lineage_count() == 8 and st.refit()
+
+
+def test_no_structure_means_one_group():
+    """Decks that do not split into kinds get one archetype, 'Balanced midrange', not two invented ones."""
+    rng = Pcg32(9, seq=4)
+    st = ArchetypeStore()
+    for j in range(12):
+        fp = {k: 0.0 for k in FEATURES}
+        for k in FILL_FEATURES:
+            fp[k] = 1.0 + rng.below(1000) / 1000                # isotropic noise around one centre
+        fp["colour_red"] = 1.0
+        st.add(Decklist.from_counts(f"n{j}", ["La", "Lb", f"L{j}"], {f"card{j}": 3, "filler": 37}), fp, games=10, wins=5)
+    assert st.refit() and len(st.archetypes) == 1
+    a = st.archetypes[0]
+    assert a.name == "Balanced midrange" and st.separation == 0.0 and "only group so far" in a.description
+    assert st.assign(st.decks[0].fingerprint) == a.id and "one group so far" in st.summary()
+
+
+def test_ranking_smooths_tiny_records_and_old_ids_resolve(tmp_path, monkeypatch):
+    from cptcg.deck import archetypes as mod
+    st = ArchetypeStore(path=tmp_path / "a.json")
+    for c, j, fp in _planted(5):
+        st.add(_fake_deck(c, j), fp, games=20, wins=10 + 2 * c, bt=1.0)
+    assert st.refit()
+    small, big = st.archetypes[0], st.archetypes[1]
+    small.games, small.wins, big.games, big.wins = 8, 5, 900, 500      # 62% of 8 must not outrank 56% of 900
+    assert st.ranked()[0] is big and small.smoothed_rate < big.smoothed_rate < big.win_rate
+    # A continuing group whose words no longer fit is renamed; the old name and id still find it.
+    old = {a.id: a.name for a in st.archetypes}
+    monkeypatch.setattr(mod, "name_still_fits", lambda name, z: False)
+    st.refit()
+    st.save()
+    back = ArchetypeStore.load(tmp_path / "a.json")
+    for old_id, old_name in old.items():
+        a = back.get(old_id)
+        assert a is not None and a.id != old_id and old_name in a.aliases and old_id in a.previous_ids
+        assert back.get(old_name) is a and "formerly " + old_name in a.description
+    assert back.renamed and all(back.get(k) is not None for k in back.renamed)
+
+
+def test_small_leagues_keep_one_explorer(store):
+    from cptcg.deck.strategies import explorer_quota
+    assert explorer_quota(2) == explorer_quota(3) == explorer_quota(7) == 1 and explorer_quota(8) == 2
+    for n in (2, 3, 5):
+        line = builders_for(store, n)
+        assert sum(b.name == "explorer" for b in line) == 1 and line[-1].name == "explorer"
+    line = builders_for(store, 8)
+    assert [b.name == "explorer" for b in line] == [False, False, False, True, False, False, False, True]

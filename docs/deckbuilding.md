@@ -22,7 +22,7 @@ Every deck is reduced to the same numbers (`archetypes.fingerprint(reg, deck)`):
 |---|---|
 | `mean_cost`, `cheap_share`, `top_share` | average cost; share of cards costing 2 or less; share costing 5 or more |
 | `unit_share`, `program_share`, `gear_share` | the type mix (they sum to 1) |
-| `sell_share` | share of cards with a sell tag — selling is the only income |
+| `sell_share` | share of cards with a sell tag — recorded, but neither clustered on nor named from: in this card set every non-Unit card sells and one Unit in 73 does, so it is 1 − `unit_share` |
 | `mean_unit_power` | average power of the Units |
 | `blockers`, `quick` | cards with BLOCKER / QUICK |
 | `removal`, `gig_cards`, `haste`, `economy`, `steal`, `draw` | counts of effects read off the rules text (see below) |
@@ -36,7 +36,7 @@ rival Unit (`defeat / bottom-deck / spend … rival`), **move a Gig** (`adjust /
 `even/odd value`), steal extra Gigs, draw, **ready Eddies**, call a Legend for free, play at a
 discount, attack the turn it lands. A new card set gets a fingerprint for free.
 `describe_fingerprint(fp)` turns the numbers into the sentence the reports print ("cheap curve
-(average cost 2.4), 65% Units, 42% sellable, 9 removal effects, 6 Gig-manipulation cards").
+(average cost 2.4), 65% Units, 25% Programs, 10% Gear, 9 removal effects, 6 Gig-manipulation cards").
 `strategies.deck_profile(deck, reg)` is the older subset of the same numbers, kept for tests.
 
 ## The archetype store
@@ -45,18 +45,42 @@ discount, attack the turn it lands. A new card set gets a fingerprint for free.
 league generation — its Legends, card counts, fingerprint, games, wins and Bradley–Terry
 strength (a deck seen again pools its record). After every update it **refits**:
 
-1. Fingerprints are standardised (mean 0, one standard deviation = 1 per feature; colours × 0.5).
-2. k-means (seeded k-means++ start, at most 50 iterations) is run for k = 2 … 6 and the k with
-   the best simplified-silhouette score is kept — the clustering that separates the groups most
-   cleanly. Decks are sorted by signature first, so insertion order never changes the result.
-3. Each cluster becomes an archetype with a centre (in the fingerprint's own units, so it reads
-   like a deck), its members, their pooled win rate and mean strength, a description, and a
-   **name generated from the two features whose standardised centre is furthest from the
+1. One-card variants of the same list (same Legends, card overlap of 90% or more) form a
+   **lineage** that counts as one deck: `MIN_DECKS` (8) counts lineages, and a lineage's decks
+   share one unit of weight in the clustering, so a survivor accepting one swap per generation
+   cannot manufacture a cluster on its own.
+2. Fingerprints are standardised (mean 0, one standard deviation = 1 per feature; colours × 0.5;
+   `sell_share` skipped).
+3. Weighted k-means (seeded k-means++ start, at most 50 iterations) is run for k = 2 … 6 (never
+   more than a quarter of the lineages). A cluster with fewer than `MIN_MEMBERS` (3) decks is
+   merged into its nearest neighbour, so an outlier is never an archetype on its own. Each fit is
+   scored by a simplified silhouette and compared with what the same pipeline scores on shapeless
+   random decks of the same number and dimension (a seeded reference, `_noise_reference`): a split
+   counts only when it beats that reference by `NOISE_MARGIN` (0.05), reaches `SEPARATION_FLOOR`
+   (0.2) and keeps its two nearest centres at least one standardised unit apart. When no split
+   qualifies the store has **one group**, "Balanced midrange", and says so — a dozen decks in
+   twenty dimensions look clustered to k-means even when they are noise, and the reader must not
+   be told otherwise. Decks are sorted by signature first, so insertion order never changes the
+   result.
+4. Each cluster becomes an archetype with a centre (in the fingerprint's own units, so it reads
+   like a deck), its members, their pooled win rate and mean strength, a **separation** score
+   (the mean silhouette of its members, printed as *clearly separated* ≥ 0.5, *loosely grouped*
+   ≥ 0.25, *provisional* below — and any group under five decks is provisional), a description,
+   and a **name generated from the two features whose standardised centre is furthest from the
    overall mean**: the first gives an adjective, the second a noun, from a fixed table
    (`removal` high → "Removal", `blockers` high → "wall": *Removal wall*; `cheap_share` high +
-   `unit_share` high → *Low-curve swarm*; `economy` high → "Eddies", `draw` high → "value"). Ties
-   break in feature order; a clash takes the next noun. Names are therefore stable as long as a
-   cluster keeps the features that set it apart.
+   `unit_share` high → *Low-curve swarm*; `economy` high → "Eddies", `draw` high → "value"). The
+   low side of a feature describes what such a deck does (`economy` low → "Board-first",
+   `removal` low → "Racing") rather than what it lacks. Ties break in feature order; when the
+   top two are nearly tied the feature the group is high on gives the adjective; a noun never
+   repeats a word of the adjective; a clash takes the next noun.
+5. A cluster that shares a majority of members both ways with a cluster of the previous fit
+   **keeps its name** while the name's two words still describe it (both features still among
+   the three most distinctive, on the same side of the mean). When they no longer do, it is
+   renamed and the old name is kept as an alias ("formerly Broke muscle" in its description);
+   the store records `renamed[old id] = new id`, and `store.get(old id or old name)` still finds
+   the group, so deck files, hall-of-fame entries and league line-ups built with the old id
+   keep working. Reports label such a deck "Old name, now nearest: New name".
 
 The store needs **8 distinct decks** before it clusters. Below that it has no archetypes,
 `assign(fp)` returns `None`, and every builder explores (reports label such decks *exploring*).
@@ -172,16 +196,23 @@ for gen, t, decks in league(reg, n_builders=6, generations=4, steps=8,
     ...
 ```
 
-`archetypes=None` is automatic: the store's archetypes by win rate, cycled, with one builder in
-four an Explorer — and every builder an Explorer while the store has no clusters (a **cold
+`archetypes=None` is automatic: the store's archetypes ranked by a smoothed win rate (20 virtual
+games at 50%, so eight games cannot outrank nine hundred), cycled, with `explorer_quota(n)` =
+max(1, n ÷ 4) Explorers — one in four, and never fewer than one, so a 2- or 3-builder league
+still explores — and every builder an Explorer while the store has no clusters (a **cold
 start** works: the first league explores, the store refits after each generation, and as soon as
-eight distinct decks have played the next replacement builds toward a learned archetype). A list
-of archetype ids or names (`"explorer"` allowed) is cycled instead; `"legacy"` restores the
-original unopinionated builder. Each generation the replaced builder is rebuilt toward the
-surviving archetype that wins least often (or as an Explorer when fewer than a quarter of the
-survivors explore), so the league keeps re-testing ideas instead of converging on the current
-winner. The CLI: `cptcg league --archetypes a,b --archetype-store out/archetypes.json`;
-`cptcg archetypes` lists what has been learned.
+eight distinct lineages have played the next replacement builds toward a learned archetype). A
+list of archetype ids or names (`"explorer"` allowed) is cycled instead; an unknown id is
+refused up front (the CLI exits with the list of known ids, the web returns 400 before a job card
+exists); `"legacy"` restores the original unopinionated builder. Each generation the replaced
+builder is rebuilt toward the surviving archetype that wins least often (a survivor whose
+archetype has been renamed is resolved through the store, one whose group vanished is labelled
+by its nearest current group; an Explorer when the quota is short), so the league keeps
+re-testing ideas instead of converging on the current winner. Fresh decks are built with the
+current line-up as a novelty context and rebuilt when their list overlaps an existing deck by
+more than 70%, so two builders on one archetype do not field near-copies. The CLI:
+`cptcg league --archetypes a,b --archetype-store out/archetypes.json`; `cptcg archetypes` lists
+what has been learned, with each group's separation word and former names.
 
 ## Reading a league report
 
@@ -192,7 +223,11 @@ it again, and a cumulative `league.json` holds the standings of every generation
 their kind in `meta["archetype"]` — the learned archetype's name, or *exploring*:
 
 - **Standings** gain an *Archetype* column, so the strength, win rate and "bring it?" share of
-  each deck are labelled with the group it was built toward.
+  each deck are labelled with the group it was built toward. A deck that was not built toward a
+  current group — a hand-built deck in a plain tournament, an Explorer deck, a deck whose group
+  has since been renamed — is labelled with the group its list sits closest to
+  (`report.label_nearest`: "nearest: Removal wall", "exploring, nearest: …", "Old name, now
+  nearest: …"), so every deck can be placed even when the builder had no target.
 - **Archetypes in this run** groups decks by kind: mean strength, pooled win rate, and the best
   deck. This is the table to watch across generations. An archetype that keeps a mean strength
   above 1 while its decks are replaced and re-improved is winning *as a kind of deck*; one that

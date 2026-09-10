@@ -13,12 +13,23 @@ from cptcg.web import server as web
 
 
 @pytest.fixture(scope="module")
-def base():
+def base(tmp_path_factory):
+    """The server, with the archetype, knowledge and hall-of-fame stores pointed at a temporary
+    directory so no test writes into the user's real out/ stores."""
+    from cptcg.deck import archetypes, hall_of_fame, knowledge
+    from cptcg.web import backend
+    stores = tmp_path_factory.mktemp("stores")
+    saved = (archetypes.DEFAULT_PATH, knowledge.DEFAULT_PATH, hall_of_fame.DEFAULT_PATH)
+    archetypes.DEFAULT_PATH = stores / "archetypes.json"
+    knowledge.DEFAULT_PATH = stores / "knowledge.json"
+    hall_of_fame.DEFAULT_PATH = stores / "hall_of_fame.json"
+    assert backend.archetype_store().path == stores / "archetypes.json"
     httpd = ThreadingHTTPServer(("127.0.0.1", 0), web.Handler)
     t = threading.Thread(target=httpd.serve_forever, daemon=True)
     t.start()
     yield f"http://127.0.0.1:{httpd.server_address[1]}"
     httpd.shutdown()
+    archetypes.DEFAULT_PATH, knowledge.DEFAULT_PATH, hall_of_fame.DEFAULT_PATH = saved
 
 
 def get(base, path):
@@ -105,7 +116,12 @@ def test_deck_builder_endpoints(base, tmp_path):
 def _check_save(base, tmp_path, built):
     saved = post(base, "/api/decks", dict(built, name="My Build!"))
     assert saved["path"].endswith("my-build.json") and (tmp_path / "my-build.json").exists()
-    assert get(base, f"/api/deck?path={saved['path']}")["main"] == built["main"]
+    again = get(base, f"/api/deck?path={saved['path']}")
+    assert again["main"] == built["main"]
+    # The builder's label survives the build → save → load round trip.
+    assert built["meta"]["generated"] and again["meta"] == built["meta"] == saved["meta"]
+    if built["meta"].get("archetype_id"):
+        assert again["meta"]["archetype"] == built["meta"]["archetype"]
     req = urllib.request.Request(base + "/api/decks", data=json.dumps(dict(built, name="My Build!")).encode(),
                                  headers={"Content-Type": "application/json"})
     with pytest.raises(urllib.error.HTTPError) as ex:
@@ -139,6 +155,14 @@ def test_lab_jobs(base):
     p = j["progress"]
     assert p["phase"] and p["step"] == p["steps"] == 1 and p["unit"] == "matchups"
     assert p["remaining_min"] == p["remaining_max"] == 0 and p["done"] == 4 == j["games"]
+    # A tournament of hand-built decks teaches the (temporary) archetype store and, once it has
+    # clusters, labels each deck with its nearest archetype; the response always carries the key.
+    assert all("nearest" in d for d in rep["decks"]) and rep["how_played"].startswith("Every matchup")
+    assert "expected" in rep and len(rep["expected"]) == 2
+    # An archetype id the store does not know is refused before a job card exists.
+    with pytest.raises(urllib.error.HTTPError) as ex:
+        post(base, "/api/jobs", {"kind": "league", "archetypes": ["no-such-archetype"], "builders": 2, "generations": 1})
+    assert ex.value.code == 400 and "unknown archetype" in ex.value.read().decode()
     # Bad input fails the job rather than the server.
     bad = post(base, "/api/jobs", {"kind": "tourney", "decks": decks[:1]})
     for _ in range(50):
@@ -198,3 +222,7 @@ def test_site_build_stamps_every_script(tmp_path):
     v = m["build"]
     assert f'src="static/report.js?v={v}"' in html and f'src="static/app.js?v={v}"' in html and f'href="static/style.css?v={v}"' in html
     assert (tmp_path / "site/static/report.js").is_file()
+    # The browser build copies the stores every job teaches back into the page's engine and its
+    # local storage, so archetypes, card values and champions survive a reload.
+    boot = (tmp_path / "site/static/boot.js").read_text(encoding="utf-8")
+    assert all(f'"out/{name}.json"' in boot for name in ("archetypes", "knowledge", "hall_of_fame"))

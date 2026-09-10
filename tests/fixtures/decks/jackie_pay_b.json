@@ -1,0 +1,37 @@
+{
+  "name": "builder3",
+  "legends": [
+    "v-corporate-exile",
+    "judy-alvarez-braindance-maestro",
+    "jackie-welles-mamas-favorite"
+  ],
+  "main": {
+    "jacked-in-voodoo-boy": 1,
+    "peace-offering": 3,
+    "lizzy-wizzy-delicate-weapon": 3,
+    "netwatch-netdriver": 1,
+    "floor-it": 3,
+    "maelstrom-zealots": 1,
+    "three-mouths-one-desire": 1,
+    "field-operator": 1,
+    "dying-night-vs-pistol": 3,
+    "wraith-marauders": 3,
+    "corpo-security": 2,
+    "tetratronic-rippler": 2,
+    "placide-voodoo-sentinel": 1,
+    "chrome-reverie": 1,
+    "evelyn-parker-scheming-siren": 1,
+    "riot-shield": 1,
+    "corporate-surveillance": 2,
+    "delamain-cab": 1,
+    "take-control": 3,
+    "rita-wheeler-no-stupid-questions": 3,
+    "pepe-najarro-working-doubles": 1,
+    "valentino-street-racer": 1,
+    "maman-brigitte-spirit-of-death": 1
+  },
+  "generated": "learned",
+  "archetype": "Eddies chaff",
+  "archetype_id": "eddies-chaff",
+  "context": "BLUE|GREEN"
+}

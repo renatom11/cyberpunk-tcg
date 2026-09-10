@@ -1,0 +1,39 @@
+{
+  "name": "builder1",
+  "legends": [
+    "kerry-eurodyne-axe-attitude-audience",
+    "royce-psycho-on-the-edge",
+    "johnny-silverhand-rocking-renegade"
+  ],
+  "main": {
+    "dexter-deshawn-one-last-chance": 3,
+    "rockn-rockerboy": 1,
+    "industrial-assembly": 1,
+    "minotaur": 2,
+    "animals-wrecker": 2,
+    "gunpoint-diplomacy": 1,
+    "carnage-at-the-colosseum": 1,
+    "maelstrom-goons": 2,
+    "shattered-memories": 3,
+    "jackie-welles-ride-or-die-choom": 3,
+    "ruthless-lowlife": 1,
+    "caliber-totentanzs-top-dog": 3,
+    "zetatech-faceplate": 1,
+    "v-roamer-of-the-badlands": 3,
+    "the-heist": 3,
+    "meredith-stout-stone-cold-corpo": 2,
+    "chrome-fang": 1,
+    "kerry-eurodyne-the-last-rockerboy": 1,
+    "bonnie-and-clyde": 1,
+    "la-llorona-ghost-of-the-past": 1,
+    "t-bug-amateur-philosopher": 1,
+    "satori-sword-of-saburo": 1,
+    "trauma-team-operatives": 1,
+    "octant": 1
+  },
+  "generated": "learned",
+  "archetype": "Broke muscle",
+  "archetype_id": "broke-muscle",
+  "context": "BLUE|RED|YELLOW",
+  "steps": 1
+}

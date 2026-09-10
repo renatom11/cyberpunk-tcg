@@ -143,6 +143,15 @@
               await send(main.w, { type: "write", path: fp, text });
             }
           }
+          // ... and the stores every job teaches — learned archetypes, card values, the hall of
+          // fame — which change on every run, so they always overwrite what the page had. They
+          // come back through `saved` on the next visit, so the next league starts from them.
+          for (const fp of ["out/archetypes.json", "out/knowledge.json", "out/hall_of_fame.json"]) {
+            const r = await send(w, { type: "read", path: fp });
+            if (!r || r.text == null) continue;
+            files[fp] = r.text; persist(fp, r.text);
+            await send(main.w, { type: "write", path: fp, text: r.text });
+          }
         } catch (e) { job.status = "failed"; job.error = String(e.message || e); job.lines.push("failed: " + job.error); }
         job.finished = Date.now();
       })();

@@ -142,6 +142,16 @@ class Tournament:
                 pay[i][j] = (k / g - 0.5) if g else 0.0
         return nash_fictitious_play(pay)
 
+    def expected_rates(self, bt: list[float] | None = None) -> list[float]:
+        """Per deck, the win rate its rating predicts against this field: the mean over the
+        other decks of bt_i / (bt_i + bt_j). The field averages exactly 50%, so this is the
+        model's smoothed view of the plain win rate and reads on the same scale."""
+        bt = bt if bt is not None else self.bt()
+        n = self.n()
+        if n < 2:
+            return [0.5] * n
+        return [sum(bt[i] / (bt[i] + bt[j]) for j in range(n) if j != i) / (n - 1) for i in range(n)]
+
     def standings(self) -> list[int]:
         bt = self.bt()
         return sorted(range(self.n()), key=lambda i: -bt[i])
@@ -152,27 +162,30 @@ class Tournament:
     def to_json(self, reg=None) -> dict:
         """Everything a report needs, computed once. ``reg`` (default: the standard registry)
         resolves card names for the summary sentences and the deck profiles."""
-        from cptcg.sim.report import deck_profile_json, profile_sentence, registry, summarize
+        from cptcg.sim.report import deck_profile_json, how_played, profile_sentence, registry, summarize
         reg = registry(reg)
         n = self.n()
         bt = self.bt()
         nash = self.nash()
         q = self.qvalues()
         profiles = [deck_profile_json(d, reg) for d in self.decks]
+        nearest = self.info.get("nearest") or []
         return {
             "version": self.JSON_VERSION,
             "agent": self.agent, "seed": self.seed, "rules": DEFAULT_CONFIG.digest(),
             "info": dict(self.info),
+            "how_played": how_played(self),
             "decks": [{"name": d.name, "legends": list(d.legends), "main": d.counts(),
                        "meta": dict(d.meta), "profile": profiles[i],
-                       "shape": profile_sentence(profiles[i]) if profiles[i] else None, "path": self.deck_path(i)}
+                       "shape": profile_sentence(profiles[i]) if profiles[i] else None, "path": self.deck_path(i),
+                       "nearest": nearest[i] if i < len(nearest) else None}
                       for i, d in enumerate(self.decks)],
             "cells": [{"i": c.i, "j": c.j, "wins_i": c.wins_i, "n": c.n, "verdict": c.verdict,
                        "wilson": list(wilson(c.wins_i, c.n)), "q": q[(c.i, c.j)],
                        "i_first": [c.i_first_wins, c.i_first_n], "avg_turns": c.turns / max(1, c.n)}
                       for c in self.cells.values()],
             "field": [{"wins": k, "games": g} for k, g in self.field_rates()],
-            "bradley_terry": bt, "residuals": self.residuals(), "nash": nash,
+            "bradley_terry": bt, "expected": self.expected_rates(bt), "residuals": self.residuals(), "nash": nash,
             "standings": self.standings(),
             "summary": summarize(self, reg, bt=bt, nash=nash, q=q),
             "cards": [{cid: {"drawn_games": s.drawn_games, "drawn_wins": s.drawn_wins,
@@ -207,9 +220,35 @@ class Tournament:
         return cls(decks, data.get("agent", "heuristic"), int(data.get("seed", 0)), cells, card_stats, info, paths)
 
     @classmethod
-    def load(cls, path: str | Path) -> "Tournament":
+    def load(cls, path: str | Path, siblings: bool = True, rel_to: str | Path | None = None) -> "Tournament":
+        """A saved run. With ``siblings`` each deck without a recorded path is completed from
+        the ``<name>.json`` a league writes next to the tournament file: its meta (archetype,
+        generation, ...) is merged in — keys stored in the run win — and its path recorded,
+        relative to ``rel_to`` (default: the working directory) when it lies under it. Old
+        (version 1) files gain their archetype labels this way; the CLI and the web read the
+        same thing."""
+        path = Path(path)
         with open(path, encoding="utf-8") as f:
-            return cls.from_json(json.load(f))
+            t = cls.from_json(json.load(f))
+        if siblings:
+            base = Path(rel_to).resolve() if rel_to is not None else Path.cwd().resolve()
+            for i, d in enumerate(t.decks):
+                sibling = path.with_name(f"{d.name}.json")
+                if not sibling.is_file() or sibling.resolve() == path.resolve():
+                    continue
+                try:
+                    saved = Decklist.load(sibling)
+                except (OSError, ValueError, KeyError):
+                    continue
+                if saved.legends != d.legends or saved.counts() != d.counts():
+                    continue                     # a different deck that happens to share the name
+                t.decks[i] = Decklist(d.name, d.legends, d.main, {**saved.meta, **d.meta})
+                if t.paths[i] is None:
+                    try:
+                        t.paths[i] = str(sibling.resolve().relative_to(base))
+                    except ValueError:
+                        t.paths[i] = str(sibling)
+        return t
 
 
 def _update_card_stats(stats: dict[str, CardStat], deck: Decklist, drawn: frozenset, won: bool) -> None:

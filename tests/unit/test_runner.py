@@ -58,3 +58,13 @@ def test_external_executor_gives_identical_results(monkeypatch):
     assert [(r.seed, r.deck_a_seat, r.winner_deck, r.turns, r.replay.actions, r.drawn_a) for r in got.results] == \
            [(r.seed, r.deck_a_seat, r.winner_deck, r.turns, r.replay.actions, r.drawn_a) for r in ref.results]
     assert runner.GAMES_PLAYED - before == 12
+
+
+def test_jackie_mamas_favorite_save_when_the_last_eddie_is_gone():
+    """Jackie Welles (Mama's Favorite) offers 'pay 1 to defeat Jackie instead' while 1 €$ is
+    available; the heuristic agent's lookahead can spend that Eddie before the pick is applied.
+    The replacement must then fall back to the normal defeat instead of raising in pay()."""
+    a = Decklist.load(ROOT / "tests/fixtures/decks/jackie_pay_a.json")
+    b = Decklist.load(ROOT / "tests/fixtures/decks/jackie_pay_b.json")
+    m = run_match(a, b, "heuristic", "heuristic", 1, seed=720003, workers=1)
+    assert m.n == 2 and all(r.winner_deck in ("A", "B") for r in m.results)

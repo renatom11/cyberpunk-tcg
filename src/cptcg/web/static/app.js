@@ -295,7 +295,18 @@ async function openDeckInBuild(d) {
   }
   bLoadDeck(deck);
   $("nav button[data-mode=build]").click();
-  window.scrollTo(0, 0);
+  // On a narrow screen the builder stacks the card library above the deck sheet, so land the
+  // reader on the sheet (name, Legends, list) rather than on the top of the library.
+  const sheet = $(".decksheet");
+  if (sheet && window.innerWidth <= 1100) sheet.scrollIntoView({ block: "start" }); else window.scrollTo(0, 0);
+  toast(`${deck.name} loaded in BUILD (${Object.values(deck.main || {}).reduce((a, n) => a + n, 0)} cards)`);
+}
+// A short message that fades: confirmation the reader can see without a dialog to dismiss.
+function toast(text) {
+  let t = $("#toast");
+  if (!t) { t = el("div", "toast"); t.id = "toast"; document.body.append(t); }
+  t.textContent = text; t.classList.add("show");
+  clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove("show"), 2500);
 }
 
 // ---------------------------------------------------------------- lab jobs
@@ -329,7 +340,7 @@ function renderJobs(jobs) {
         if (p.remaining_max > 0) parts.push(`about ${fmtSpan(p.remaining_min / rate, p.remaining_max / rate)} left${own ? "" : " (rough until the job has run a while)"}`);
         else parts.push("finishing");
         if (j.games > 0) parts.push(`${j.games.toLocaleString()} games so far` + (own ? ` (${rate.toFixed(1)} per second)` : ""));
-      } else if (j.games > 0) parts.push(`${j.games.toLocaleString()} games`);
+      } else if (j.games > 0 && !/\bgames\b/.test(p.phase)) parts.push(`${j.games.toLocaleString()} games`);   // unless the phase already says it
       d.append(el("div", "dim prog-text", parts.join(" · ")));
       const bar = el("div", "prog"); const fill = el("i");
       fill.style.width = `${p.steps ? Math.min(100, Math.round(100 * p.step / p.steps)) : (j.status === "running" ? 0 : 100)}%`;
@@ -348,6 +359,7 @@ function renderJobs(jobs) {
     if (j.reports.length) { const r = el("div", "reps"); j.reports.forEach((f, i) => { const a = el("a", "", j.kind === "league" ? `gen ${i + 1}` : "report"); a.onclick = () => openReport(f); r.append(a); }); d.append(r); }
     const pre = el("pre", "", j.lines.slice(-12).join("\n")); d.append(pre);
     root.append(d);
+    pre.scrollTop = pre.scrollHeight;                    // the newest line, which matches the phase above, stays in view
   });
 }
 async function pollJobs() {
@@ -382,10 +394,19 @@ async function refreshDecks() {
 function archetypeChecklist(root, arche) {
   const was = new Set([...root.querySelectorAll("input:checked")].map(c => c.value)); const had = root.children.length > 0;
   root.innerHTML = "";
-  const add = (id, name, small, title) => { const l = el("label"); const c = el("input"); c.type = "checkbox"; c.value = id; c.checked = had ? was.has(id) : true; l.title = title; l.append(c, name, el("small", "", small)); root.append(l); };
-  add("explorer", "Explorer", "invents a deck shape at random — how new archetypes get found", arche.builders.find(b => b.id === "explorer")?.description || "");
-  arche.archetypes.forEach(a => add(a.id, a.name, `won ${Math.round(100 * a.win_rate)}% of ${a.games.toLocaleString()} games · ${a.decks} decks`, a.description));
-  if (!arche.archetypes.length) root.append(el("div", "hint", `No archetypes learned yet: ${arche.decks} of the ${arche.needed} decks needed have played here. Every builder explores until then; each finished tournament or league adds its decks, and the groups appear on their own.`));
+  // Each row: the name and record on one line, the description wrapped underneath — a phone
+  // never shows a title tooltip, so the description has to be visible text.
+  const add = (id, name, record, desc) => {
+    const l = el("label"); const c = el("input"); c.type = "checkbox"; c.value = id; c.checked = had ? was.has(id) : true;
+    const txt = el("span", "txt"); txt.append(el("b", "", name), record ? el("span", "rec", " · " + record) : "", el("small", "", desc || ""));
+    l.append(c, txt); root.append(l);
+  };
+  add("explorer", "Explorer", "", arche.builders.find(b => b.id === "explorer")?.description || "invents a deck shape at random — how new archetypes get found");
+  const plural = (n, w) => `${n.toLocaleString()} ${w}${n === 1 ? "" : "s"}`;
+  arche.archetypes.forEach(a => add(a.id, a.name,
+    `won ${Math.round(100 * a.win_rate)}% of ${plural(a.games, "game")} · ${plural(a.decks, "deck")}${a.lineages ? " · " + a.separation_word : ""}`, a.description));
+  if (!arche.archetypes.length) root.append(el("div", "hint", `No archetypes learned yet: ${arche.distinct ?? arche.decks} of the ${arche.needed} distinct decks needed have played here (one-card variants of a list count once). Every builder explores until then; each finished tournament or league adds its decks, and the groups appear on their own.`));
+  else if (arche.archetypes.length === 1) root.append(el("div", "hint", "One group so far: the decks that have played do not split into kinds yet. More varied decks (Explorer builds, hand-built lists) will let groups appear."));
 }
 let ARCHETYPES = null;
 async function refreshArchetypes() {
@@ -427,7 +448,8 @@ async function estimate(kind) {
   const where = b ? (b.measured() ? " on this device (speed measured on an earlier job)" : ` on this device (${b.pool >= 2 ? b.pool + " engines" : "1 engine"}, a rough speed until a job has run)`) : " on this machine";
   const why = est.games_max > est.games_min ? " — the low end if every comparison settles at its first batch, the high end if none does; the job card narrows the range as it runs" : "";
   const warn = hi > 1200 ? " — that is long; consider fewer games, steps or builders" : "";
-  return { text: `≈ ${fmtRange(est.games_min, est.games_max)} games · about ${fmtSpan(lo, hi)}${where}${why}${warn}`, warn: !!warn };
+  const games = est.games_max > 0 ? `≈ ${fmtRange(est.games_min, est.games_max)} games` : `no games (${body.count || est.steps} decks to build, nothing to screen)`;
+  return { text: `${games} · about ${fmtSpan(lo, hi)}${where}${why}${warn}`, warn: !!warn };
 }
 const ESTIMATES = [];       // refreshed when a job finishes (the measured speed changes the numbers)
 function wireEstimate(kind, form, inputs) {
@@ -508,7 +530,7 @@ function hidePreview() { if (PREVIEW) PREVIEW.classList.remove("show", "touch");
 // ---------------------------------------------------------------- deck builder
 // The page holds the deck being edited; legality, RAM limits and the saved file all come from
 // the server so the rules live in exactly one place (deck/validate.py).
-let B = { name: "New deck", legends: [], main: {}, note: "", v: null, path: null };
+let B = { name: "New deck", legends: [], main: {}, note: "", meta: {}, v: null, path: null };
 const COLORS = ["Red", "Green", "Blue", "Yellow", "Purple", "Grey"];
 
 function bRam() { const r = {}; COLORS.forEach(c => r[c] = 0); B.legends.forEach(id => { const c = CARDS[id]; if (c) r[c.color] += c.ram; }); return r; }
@@ -605,7 +627,8 @@ function renderDeckSheet() {
 }
 
 function bLoadDeck(d) {
-  B = { name: d.name, legends: d.legends.slice(), main: { ...d.main }, note: d.note || "", v: d, path: d.path || null };
+  // meta (what built the deck, which archetype it aimed at) rides along so saving keeps the label
+  B = { name: d.name, legends: d.legends.slice(), main: { ...d.main }, note: d.note || "", meta: { ...(d.meta || {}) }, v: d, path: d.path || null };
   renderDeckSheet(); renderLibrary();
 }
 
@@ -615,11 +638,11 @@ async function initBuilder(decks) {
   sel.onchange = async () => { if (!sel.value) return; bLoadDeck(await api(`/api/deck?path=${encodeURIComponent(sel.value)}`)); };
   ["#bSearch", "#bType", "#bColor", "#bCost", "#bLegal", "#bSet"].forEach(id => { $(id).oninput = renderLibrary; $(id).onchange = renderLibrary; });
   $("#bName").onchange = (e) => { B.name = e.target.value; renderDeckSheet(); };
-  $("#bClear").onclick = () => { B = { name: "New deck", legends: [], main: {}, note: "", v: null, path: null }; renderDeckSheet(); renderLibrary(); };
+  $("#bClear").onclick = () => { B = { name: "New deck", legends: [], main: {}, note: "", meta: {}, v: null, path: null }; renderDeckSheet(); renderLibrary(); };
   $("#bExport").onclick = () => { const t = $("#bText"); t.classList.toggle("hidden"); if (!t.classList.contains("hidden")) { t.select(); } };
   $("#bSave").onclick = async () => {
     B.name = $("#bName").value || "untitled";
-    const body = { name: B.name, legends: B.legends, main: B.main, note: B.note };
+    const body = { name: B.name, legends: B.legends, main: B.main, note: B.note, meta: B.meta };
     let r;
     try { r = await api("/api/decks", body); }
     catch (e) {

@@ -430,14 +430,23 @@ def get_builder(spec, store=None) -> BuilderStrategy:
     return Learned(arch, store)
 
 
+def explorer_quota(n: int, every: int = EXPLORER_EVERY) -> int:
+    """How many of ``n`` league builders explore once archetypes exist: one in ``every``, and
+    never fewer than one, so a small league keeps finding new kinds of deck."""
+    return max(1, n // every) if every else 0
+
+
 def builders_for(store, n: int, every: int = EXPLORER_EVERY) -> list[BuilderStrategy]:
-    """The automatic line-up of a league: archetypes by win rate, cycled, with every
-    ``every``-th builder an Explorer; all Explorers while the store has no clusters."""
+    """The automatic line-up of a league: archetypes by win rate, cycled, with
+    ``explorer_quota(n)`` Explorers spread from the last slot backwards (every ``every``-th
+    builder, and at least one); all Explorers while the store has no clusters."""
     ranked = store.ranked() if store is not None else []
+    quota = explorer_quota(n, every)
+    slots = {n - 1 - k * every for k in range(quota) if n - 1 - k * every >= 0}
     out: list[BuilderStrategy] = []
     j = 0
     for i in range(n):
-        if not ranked or (every and (i + 1) % every == 0):
+        if not ranked or i in slots:
             out.append(Explorer())
         else:
             out.append(Learned(ranked[j % len(ranked)], store))

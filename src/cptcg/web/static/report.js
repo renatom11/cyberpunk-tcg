@@ -48,7 +48,32 @@ const Report = (() => {
       : q < 0.2 ? "suggestive but not settled" : "not established — it could be noise";
     return word + (n < 30 ? ` (only ${n} games)` : "");
   }
+  const qText = (q) => q < 1 ? ` (adjusted p-value q = ${q < 0.001 ? "< 0.001" : q.toFixed(3)})` : "";
   const kindOf = (deck) => { const m = (deck && deck.meta) || {}; return m.archetype || m.strategy || null; };
+  // What the tables print for a deck's archetype (the same rule as report.deck_label in Python):
+  // the kind it was built toward, plus the nearest current archetype for a deck that was not built
+  // toward one — hand-built ("nearest: X"), exploring, an old personality label — or whose
+  // archetype has since been renamed or merged ("now nearest: X").
+  function labelOf(deck) {
+    const kind = kindOf(deck), near = deck && deck.nearest;
+    if (kind && near) { const m = deck.meta || {}; const stale = !!m.archetype_id && kind !== "exploring"; return `${kind}, ${stale ? "now nearest" : "nearest"}: ${near}`; }
+    return kind || (near ? `nearest: ${near}` : null);
+  }
+  // The win rate a rating predicts against the field: the mean over the other decks of
+  // bt_i / (bt_i + bt_j) — the field averages exactly 50% (Tournament.expected_rates).
+  function fieldExpected(bt) {
+    const n = bt.length;
+    if (n < 2) return bt.map(() => 0.5);
+    return bt.map((b, i) => bt.reduce((a, o, j) => j === i ? a : a + b / (b + o), 0) / (n - 1));
+  }
+  // Title attributes never show on a touch screen, so anything a tooltip says is also shown in a
+  // note line under the table when the cell is tapped (or clicked).
+  function tapNote(section) {
+    const note = h("p", "tapnote"); note.hidden = true;
+    const fn = (cell, text) => { cell.title = text; cell.classList.add("tap"); cell.onclick = () => { note.textContent = text; note.hidden = false; }; };
+    fn.node = note;
+    return fn;
+  }
   const cardOf = (cards, id) => cards[id] || { id, name: id, cost: null, type: "Other", unknown: true };
   const cardName = (c) => c.name + (c.subtitle ? " — " + c.subtitle : "");
   const statText = (c) => { if (c.unknown) return "unknown card"; const p = [`cost ${c.cost ?? "—"}`]; if (c.power != null && c.type !== "Program") p.push(`power ${c.power}`); return p.join(", "); };
@@ -75,8 +100,14 @@ const Report = (() => {
   }
   function kindBadge(kind) {
     if (!kind) return null;
-    const b = h("span", "kind" + (kind === "exploring" ? " exploring" : ""), kind);
-    b.title = kind === "exploring" ? "an Explorer deck: the builder invented a shape at random instead of aiming at a learned archetype" : "the learned archetype this deck was built toward";
+    const b = h("span", "kind", kind);
+    b.title = kind.startsWith("exploring") ? "an Explorer deck: the builder invented a shape at random instead of aiming at a learned archetype" +
+      (kind.includes("nearest") ? "; the learned archetype its list sits closest to is named in brackets" : "")
+      : kind.startsWith("nearest:") ? "this deck was not built toward an archetype; this is the learned archetype its list sits closest to"
+      : kind.includes("now nearest") ? "the archetype this deck was built toward has since been renamed or merged; the current archetype its list sits closest to is named in brackets"
+      : kind.includes("nearest") ? "an older builder label, with the learned archetype the list sits closest to in brackets"
+      : "the learned archetype this deck was built toward";
+    if (kind.startsWith("exploring")) b.classList.add("exploring");
     return b;
   }
   function section(title, lede, id) {
@@ -103,8 +134,9 @@ const Report = (() => {
     };
     const info = t.info || {};
     const total = info.total_games != null ? info.total_games : (t.cells || []).reduce((a, c) => a + c.n, 0);
-    const kinds = decks.map(kindOf);
-    return { decks, n, bt, nash, field, order, rate, info, total, kinds, showKind: kinds.some(Boolean), names: decks.map(d => d.name) };
+    const kinds = decks.map(labelOf);
+    const expected = (t.expected && t.expected.length === n) ? t.expected.map(Number) : fieldExpected(bt);
+    return { decks, n, bt, expected, nash, field, order, rate, info, total, kinds, showKind: kinds.some(Boolean), names: decks.map(d => d.name) };
   }
 
   // ------------------------------------------------------------ 1. header
@@ -122,13 +154,17 @@ const Report = (() => {
     root.append(h("p", "facts", facts.join(" · ")));
     if (m.info.generation) {
       const g = m.info;
+      const swaps = (g.climb || []).reduce((a, hist) => a + (hist || []).reduce((b, x) => b + (x.games || 0), 0), 0);
       root.append(h("p", "lede", `Generation ${g.generation}${g.generations ? ` of ${g.generations}` : ""} of a league` +
         `${g.league_seed != null ? ` (seed ${g.league_seed}${g.steps != null ? `, ${g.steps} improvement steps per builder` : ""})` : ""}: ` +
-        "each builder improved its deck by measured card swaps, then everyone played a round robin."));
+        "each builder improved its deck by measured card swaps, then everyone played a round robin" +
+        (swaps ? ` — the ${num(m.total)} games above are the round robin; the card-swap tests played another ${num(swaps)} challenger games (the champion played the same seeds).` : ".")));
     }
     let how = "Every pair of decks played mirrored games: each random seed is played twice with the seats swapped, so going first evens out.";
-    if (m.info.sprt) how += ` A matchup stopped early as soon as one deck was clearly ahead, or the two were clearly within ${round0(100 * (m.info.sprt.delta || 0))} points of even, so the number of games differs per matchup.`;
-    else if (m.info.games_per_pair) how += ` Every matchup played the full ${num(m.info.games_per_pair)} games.`;
+    // How many games each matchup really played, and why, is computed from the cells in Python
+    // (report.how_played) and printed verbatim; a file without it gets only the cap.
+    if (t.how_played) how += " " + t.how_played;
+    else if (m.info.games_per_pair && !m.info.sprt) how += ` Every matchup played the full ${num(m.info.games_per_pair)} games.`;
     root.append(h("p", "lede", how));
     if (t.file) root.append(h("p", "dim file", t.file));
     return root;
@@ -158,8 +194,9 @@ const Report = (() => {
   function standings(t, m, ctx) {
     const s = section("Standings",
       "Win rate is over every opponent, drawn as a bar with its 95% range of plausible values (the lighter band) and the games it rests on. " +
-      "Strength is a rating fitted to all matchups at once, shown as the win rate it predicts against an average deck in this field. " +
-      "Bring it? is how often a player picking a deck blind for this field should bring this one.");
+      "Strength is a rating fitted to all matchups at once, shown as the win rate that rating predicts against this field (the field averages 50%), with the raw rating in brackets (1.0 is the field's mean rating). " +
+      "Bring it? is how often a player picking a deck blind for this field should bring this one. Tap a bar or a strength to see the numbers behind it.");
+    const note = tapNote(s);
     const table = h("table", "stand");
     const head = h("tr"); ["#", "Deck", "Legends", "Win rate", "Strength", "Bring it?", ""].forEach(x => head.append(h("th", "", x)));
     table.append(h("thead", "", head));
@@ -173,10 +210,12 @@ const Report = (() => {
       const legs = h("div", "legs");
       (d.legends || []).forEach(id => legs.append(cardChip(cardOf(ctx.cards, id), ctx, { img: true, label: cardOf(ctx.cards, id).name })));
       td("legends", "Legends", legs);
-      td("wr", "Win rate", winBar(f.wins, f.games));
-      const exp = m.bt[i] / (m.bt[i] + 1);
-      const st = td("bt", "Strength", pctOf(exp), h("small", "", " vs average"));
-      st.title = `Bradley–Terry rating ${m.bt[i].toFixed(2)} (1.0 = an average deck in this field; 2.0 ≈ 67% expected against an average deck)`;
+      const [lo, hi] = wilson(f.wins, f.games);
+      const wr = td("wr", "Win rate", winBar(f.wins, f.games));
+      note(wr, f.games ? `${d.name} won ${f.wins} of ${f.games} games (${pct(f.wins, f.games)}); the true win rate plausibly lies between ${pctOf(lo)} and ${pctOf(hi)} (95% interval).` : `${d.name} played no games.`);
+      const exp = m.expected[i];
+      const st = td("bt", "Strength", pctOf(exp), h("small", "", " expected vs this field "), h("small", "dim", `(rating ${m.bt[i].toFixed(2)})`));
+      note(st, `${d.name}: Bradley–Terry rating ${m.bt[i].toFixed(2)}, where 1.0 is the mean rating of this field; against these opponents that rating predicts a ${pctOf(exp)} win rate. The plain win rate is ${pct(f.wins, f.games)}: when the two disagree, the win rate is the fact and the rating is the model's view.`);
       td("nash", "Bring it?", pctOf(m.nash[i] || 0));
       const acts = h("div", "acts");
       const dl = h("button", "", "Decklist"); dl.onclick = () => openDeck(ctx.target, i);
@@ -187,6 +226,7 @@ const Report = (() => {
     });
     table.append(body);
     s.append(scrollX(table));
+    s.append(note.node);
     if (m.showKind) s.append(kindsTable(m));
     return s;
   }
@@ -194,18 +234,24 @@ const Report = (() => {
   function kindsTable(m) {
     const groups = {};
     m.decks.forEach((d, i) => { const k = m.kinds[i] || "—"; (groups[k] = groups[k] || []).push(i); });
-    const rows = Object.entries(groups).sort((a, b) => avg(b[1]) - avg(a[1]));
-    function avg(idxs) { return idxs.reduce((a, i) => a + m.bt[i], 0) / idxs.length; }
     const wrap = h("div", "kinds");
-    wrap.append(h("h4", "", "Archetypes in this run"), h("p", "lede", "The same numbers pooled by kind of deck, so a building idea is judged by all the decks it produced, not by its single best one."));
+    const keys = Object.keys(groups);
+    if (keys.length < 2) {
+      // One kind only: a round robin's pooled win rate is always 50%, so a table would say nothing.
+      const only = keys[0];
+      wrap.append(h("p", "lede", `All ${m.n} decks are ${only === "exploring" ? "Explorer builds" : "labelled " + only}, so there is no second archetype to compare them with in this run; a round robin's pooled win rate is always 50%.`));
+      return wrap;
+    }
+    function avg(idxs, arr) { return idxs.reduce((a, i) => a + arr[i], 0) / idxs.length; }
+    const rows = Object.entries(groups).sort((a, b) => avg(b[1], m.expected) - avg(a[1], m.expected));
+    wrap.append(h("h4", "", "Archetypes in this run"), h("p", "lede", "The same numbers pooled by kind of deck, so a building idea is judged by all the decks it produced, not by its single best one. Strength is averaged over the group's decks and shown as an expected win rate against this field."));
     const table = h("table", "rep small");
-    const head = h("tr"); ["Archetype", "Decks", "Average strength", "Win rate (games)", "Best deck"].forEach(x => head.append(h("th", "", x))); table.append(head);
+    const head = h("tr"); ["Archetype", "Decks", "Strength", "Win rate (games)", "Best deck"].forEach(x => head.append(h("th", "", x))); table.append(head);
     rows.forEach(([kind, idxs]) => {
       const k = idxs.reduce((a, i) => a + (m.field[i]?.wins || 0), 0), g = idxs.reduce((a, i) => a + (m.field[i]?.games || 0), 0);
       const best = idxs.reduce((a, i) => m.bt[i] > m.bt[a] ? i : a, idxs[0]);
-      const a = avg(idxs);
       const tr = h("tr", "", h("td", "", kindBadge(kind === "—" ? null : kind) || "—"), h("td", "", `${idxs.length}`),
-        h("td", "", `${pctOf(a / (a + 1))} vs average`, h("small", "dim", ` (${a.toFixed(2)})`)), h("td", "", `${pct(k, g)} (${num(g)})`), h("td", "", m.names[best]));
+        h("td", "", `${pctOf(avg(idxs, m.expected))}`, h("small", "dim", ` (rating ${avg(idxs, m.bt).toFixed(2)})`)), h("td", "", `${pct(k, g)} (${num(g)})`), h("td", "", m.names[best]));
       table.append(tr);
     });
     wrap.append(scrollX(table));
@@ -214,8 +260,9 @@ const Report = (() => {
 
   // ------------------------------------------------------------ 4. head-to-head
   function matrix(t, m, ctx) {
-    const s = section("Head-to-head", "Read across: the row deck's win rate against the column deck, with the games in brackets. Green means the row deck won more than half, red less; the deeper the colour, the further from even.");
+    const s = section("Head-to-head", "Read across: the row deck's win rate against the column deck, with the games in brackets. Green means the row deck won more than half, red less; the deeper the colour, the further from even. Tap a cell to see the exact count and how much to trust it.");
     if (!m.n) return s;
+    const note = tapNote(s);
     const table = h("table", "matrix");
     const head = h("tr", "", h("th"));
     m.order.forEach(j => { const th = h("th", "", h("span", "full", m.names[j]), h("span", "short", shortName(m.names[j]))); th.title = m.names[j]; head.append(th); });
@@ -227,7 +274,7 @@ const Report = (() => {
         if (i === j) { tr.append(h("td", "self", "·")); return; }
         const [w, g, q] = m.rate(i, j);
         const td = h("td");
-        if (!g) { td.append("—"); td.title = `${m.names[i]} and ${m.names[j]} did not play`; tr.append(td); return; }
+        if (!g) { td.append("—"); note(td, `${m.names[i]} and ${m.names[j]} did not play.`); tr.append(td); return; }
         const r = w / g, d = r - 0.5;
         const alpha = Math.min(1, Math.abs(d) / 0.35) * 0.55;
         td.style.background = d > 0 ? `rgba(143,242,106,${alpha})` : d < 0 ? `rgba(255,92,108,${alpha})` : "transparent";
@@ -236,13 +283,14 @@ const Report = (() => {
         if (solid) td.append(h("span", "sig", "✓"));
         td.append(" ", h("small", "", `(${g})`));
         if (solid) td.classList.add("solid");
-        td.title = `${m.names[i]} beat ${m.names[j]} in ${w} of ${g} games (${pct(w, g)}) — ${sigText(q, g)}${q < 1 ? ` (q = ${q < 0.001 ? "< 0.001" : q.toFixed(3)})` : ""}`;
+        note(td, `${m.names[i]} beat ${m.names[j]} in ${w} of ${g} games (${pct(w, g)}) — ${sigText(q, g)}${qText(q)}.`);
         tr.append(td);
       });
       table.append(tr);
     });
     s.append(scrollX(table));
-    s.append(h("p", "legend", "row beats column · ✓ = statistically solid (fewer than one such mark in twenty is expected to be a fluke) · numbers in brackets = games · tap a cell for the exact count"));
+    s.append(h("p", "legend", "row beats column · ✓ = statistically solid (fewer than one such mark in twenty is expected to be a fluke) · numbers in brackets = games · tap a cell to see the exact count and how much to trust it"));
+    s.append(note.node);
     return s;
   }
 
@@ -275,7 +323,7 @@ const Report = (() => {
       const what = p.kind === "legend" ? "Legend" : "card";
       const disc = x.discordant || 0, wins = x.challenger_wins || 0;
       ul.append(h("li", "", p.kind === "legend" ? "Legend " : "", cardChip(out, ctx), " → ", cardChip(inn, ctx),
-        h("span", "dim", ` (the new ${what} won ${pct(wins, disc)} of the ${disc} games that differed, ${num(x.games)} games played)`)));
+        h("span", "dim", ` (the new ${what} won ${pct(wins, disc)} of the ${disc} games that differed, ${num(x.games)} games each side)`)));
     });
     wrap.append(h("p", "", `Accepted ${acc.length} swap${acc.length !== 1 ? "s" : ""}:`), ul);
     if (rej) wrap.append(h("p", "dim", `${rej} other proposal${rej !== 1 ? "s were" : " was"} rejected: the new card did not win clearly more of the games that came out differently.`));
@@ -305,6 +353,7 @@ const Report = (() => {
     const prof = d.profile;
     const curve = prof && prof.curve ? prof.curve : null;
     body.append(h("div", "row curverow", h("span", "lbl", `COST CURVE · ${size} cards${prof && prof.sell_tags != null ? ` · ${prof.sell_tags} with a sell tag` : ""}`), curve ? curveBars(curve) : h("span", "dim", "unknown cards, no curve")));
+    if ((m.info.generation || 0) > 1 && (m.info.fresh || []).includes(d.name)) body.append(h("p", "fresh", `Built fresh this generation, replacing last generation's ${d.name}.`));
     const climb = m.info.climb;
     if (climb && i < climb.length && climb[i] != null) body.append(changes(climb[i], ctx));
     if (m.info.replaced === d.name) body.append(h("p", "replaced", "This builder is replaced by a fresh deck next generation: it finished last."));
@@ -319,12 +368,13 @@ const Report = (() => {
   }
 
   // ------------------------------------------------------------ 6. cards that helped and hurt
+  const MIN_CARD_GAMES = 10, THIN_GAMES = 20;      // the thresholds of report.card_rows / THIN_GAMES
   function cardRows(stats) {
     const rows = [];
     Object.entries(stats || {}).forEach(([id, s]) => {
-      if (!s || s.drawn_games < 10 || !s.other_games) return;
+      if (!s || s.drawn_games < MIN_CARD_GAMES || s.other_games < MIN_CARD_GAMES) return;
       const gih = s.drawn_wins / s.drawn_games, gnd = s.other_wins / s.other_games;
-      rows.push({ id, gih, gnd, iwd: gih - gnd, games: s.drawn_games });
+      rows.push({ id, gih, gnd, iwd: gih - gnd, games: s.drawn_games, other: s.other_games, thin: Math.min(s.drawn_games, s.other_games) < THIN_GAMES });
     });
     rows.sort((a, b) => b.iwd - a.iwd || a.id.localeCompare(b.id));
     if (rows.length <= 8) return rows;
@@ -332,9 +382,10 @@ const Report = (() => {
   }
   function cardsSection(t, m, ctx) {
     const s = section("Cards that helped and hurt",
-      "Per deck: the win rate in games where the card was drawn at least once, the win rate in games where it stayed in the deck, and the difference in percentage points. " +
-      "Only cards drawn in at least 10 games are listed; the five that helped most and the three that hurt most. " +
-      "This is correlation, not proof: the card was drawn in particular games, next to particular cards, against particular opponents. " +
+      "Per deck: the difference in percentage points between the win rate in games where the card was drawn at least once and the win rate in games where it stayed in the deck, with the games behind each side. " +
+      `Only cards drawn in at least ${MIN_CARD_GAMES} games and left in the deck in at least ${MIN_CARD_GAMES} are listed — the five that helped most and the three that hurt most (every card when a deck has eight or fewer); the … row stands for the cards in between. ` +
+      `Three-of cards are drawn in most games, so the not-drawn side is often a handful of games: a difference marked thin rests on fewer than ${THIN_GAMES} games on one side and is noise until the swap test confirms it. ` +
+      "All of it is correlation, not proof: the card was drawn in particular games, next to particular cards, against particular opponents. " +
       "The hill-climb's swap test, which plays the same games with and without a card, is the causal check.");
     let any = false;
     m.order.forEach(i => {
@@ -342,24 +393,32 @@ const Report = (() => {
       if (!rows.length) return;
       any = true;
       const table = h("table", "rep small helped");
-      const head = h("tr"); ["Card", "Won when drawn", "Won when not drawn", "Difference", "Games drawn"].forEach(x => head.append(h("th", "", x))); table.append(head);
+      const head = h("tr");
+      [["Card", ""], ["Diff.", "difference in percentage points: won when drawn minus won when not drawn"], ["Won when drawn", ""], ["Won when not drawn", ""], ["Games drawn / not drawn", ""]]
+        .forEach(([x, tip]) => { const th = h("th", "", x); if (tip) th.title = tip; head.append(th); });
+      table.append(head);
       rows.forEach(r => {
         if (!r) { table.append(h("tr", "gap", h("td", "", "…"), h("td"), h("td"), h("td"), h("td"))); return; }
         const diff = round0(100 * r.iwd);
-        const dtd = h("td", diff > 0 ? "pos" : diff < 0 ? "neg" : "", `${diff > 0 ? "+" : ""}${diff}`);
-        table.append(h("tr", "", h("td", "", cardChip(cardOf(ctx.cards, r.id), ctx)), h("td", "", pctOf(r.gih)), h("td", "", pctOf(r.gnd)), dtd, h("td", "", `${r.games}`)));
+        const dtd = h("td", (diff > 0 ? "pos" : diff < 0 ? "neg" : "") + (r.thin ? " thin" : ""), `${diff > 0 ? "+" : ""}${diff}`, r.thin ? h("small", "", " thin") : null);
+        if (r.thin) dtd.title = `one side rests on only ${Math.min(r.games, r.other)} games: noise until the swap test confirms it`;
+        table.append(h("tr", "", h("td", "", cardChip(cardOf(ctx.cards, r.id), ctx)), dtd, h("td", "", pctOf(r.gih)), h("td", "", pctOf(r.gnd)), h("td", "", `${num(r.games)} / ${num(r.other)}`)));
       });
       s.append(h("h4", "", m.names[i], " ", kindBadge(m.kinds[i])), scrollX(table));
     });
-    if (!any) s.append(h("p", "dim", "No card was drawn in 10 or more games, so there is nothing to show yet."));
+    if (!any) s.append(h("p", "dim", `No card was both drawn and left in the deck in ${MIN_CARD_GAMES} or more games, so there is nothing to show yet.`));
     return s;
   }
 
   // ------------------------------------------------------------ 7. league evolution
   const PALETTE = ["#58e0ff", "#f4e01f", "#8ff26a", "#ff5c6c", "#c98bff", "#ffa94d", "#6aa8ff", "#ff7ad9", "#a3e4d7", "#f0b27a"];
+  const NO_ARCH = "no archetype recorded";
+  // A row's strength as the win rate it predicts against its own generation's field (league.json
+  // stores it as "expected"; older series fall back to rating ÷ (rating + 1)).
+  const rowValue = (r) => r.expected != null ? Number(r.expected) : (Number(r.bt || 0) / (Number(r.bt || 0) + 1));
   function colourMap(series) {
     const map = { exploring: "#7f95a3" }; let k = 0;
-    series.generations.forEach(g => (g.standings || []).forEach(r => { const a = r.archetype || "—"; if (!(a in map)) map[a] = PALETTE[k++ % PALETTE.length]; }));
+    series.generations.forEach(g => (g.standings || []).forEach(r => { const a = r.archetype || NO_ARCH; if (!(a in map)) map[a] = PALETTE[k++ % PALETTE.length]; }));
     return map;
   }
   function chart(series, width) {
@@ -371,7 +430,7 @@ const Report = (() => {
     const x = (k) => padL + (G > 1 ? (k / (G - 1)) : 0.5) * (W - padL - padR);
     const y = (v) => padT + (1 - v) * (H - padT - padB);
     const root = svg("svg", { viewBox: `0 0 ${W} ${H}`, class: "evo", role: "img" });
-    root.setAttribute("aria-label", "strength of each builder per generation");
+    root.setAttribute("aria-label", "expected win rate of each builder against its generation's field, per generation");
     [0, 0.25, 0.5, 0.75, 1].forEach(v => {
       root.append(svg("line", { x1: padL, x2: W - padR, y1: y(v), y2: y(v), class: v === 0.5 ? "mid" : "grid" }));
       const tx = svg("text", { x: padL - 6, y: y(v) + 4, class: "tick", "text-anchor": "end" }); tx.textContent = `${round0(100 * v)}%`; root.append(tx);
@@ -382,21 +441,24 @@ const Report = (() => {
     gens.forEach((g, k) => (g.standings || []).forEach(r => { (byName[r.name] = byName[r.name] || []).push({ k, r }); }));
     const ends = [];
     Object.entries(byName).forEach(([name, pts]) => {
-      const v = (r) => { const b = Number(r.bt || 0); return b / (b + 1); };
+      const v = rowValue;
       for (let a = 1; a < pts.length; a++) {
         const p = pts[a - 1], q = pts[a];
         if (q.k !== p.k + 1) continue;
-        root.append(svg("line", { x1: x(p.k), y1: y(v(p.r)), x2: x(q.k), y2: y(v(q.r)), class: "seg", stroke: colours[q.r.archetype || "—"] }));
+        // A replaced deck and the fresh deck that inherits its builder name are two different
+        // lists: the segment between them is dashed, not drawn as one deck improving.
+        const dashed = p.r.replaced || q.r.fresh;
+        root.append(svg("line", { x1: x(p.k), y1: y(v(p.r)), x2: x(q.k), y2: y(v(q.r)), class: "seg" + (dashed ? " newdeck" : ""), stroke: colours[q.r.archetype || NO_ARCH] }));
       }
       pts.forEach(p => {
-        const c = colours[p.r.archetype || "—"];
+        const c = colours[p.r.archetype || NO_ARCH];
         const dot = svg("circle", { cx: x(p.k), cy: y(v(p.r)), r: 4.5, stroke: c, fill: p.r.fresh ? "#0d1420" : c, "stroke-width": 2 });
-        const title = svg("title"); title.textContent = `${name} · gen ${gens[p.k].gen} · ${p.r.archetype || "no archetype"} · strength ${Number(p.r.bt || 0).toFixed(2)} (${pctOf(v(p.r))} expected vs an average deck) · won ${p.r.wins} of ${p.r.games}${p.r.fresh ? " · built fresh this generation" : ""}${p.r.replaced ? " · replaced after this generation" : ""}`;
+        const title = svg("title"); title.textContent = `${name} · gen ${gens[p.k].gen} · ${p.r.archetype || NO_ARCH} · ${pctOf(v(p.r))} expected vs that generation's field (rating ${Number(p.r.bt || 0).toFixed(2)}) · won ${p.r.wins} of ${p.r.games}${p.r.fresh ? " · built fresh this generation" : ""}${p.r.replaced ? " · replaced after this generation" : ""}`;
         dot.append(title); root.append(dot);
         if (p.r.replaced) { const t = svg("text", { x: x(p.k), y: y(v(p.r)) - 8, class: "cross", "text-anchor": "middle" }); t.textContent = "✕"; root.append(t); }
       });
       const last = pts[pts.length - 1];
-      ends.push({ name, y: y(v(last.r)), x: x(last.k), c: colours[last.r.archetype || "—"] });
+      ends.push({ name, y: y(v(last.r)), x: x(last.k), c: colours[last.r.archetype || NO_ARCH] });
     });
     ends.sort((a, b) => a.y - b.y);
     for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 12) ends[i].y = ends[i - 1].y + 12;
@@ -406,17 +468,21 @@ const Report = (() => {
   function seriesTable(series) {
     const agg = {};
     series.generations.forEach(g => (g.standings || []).forEach(r => {
-      const a = r.archetype || "—";
-      const s = agg[a] = agg[a] || { gens: new Set(), decks: 0, wins: 0, games: 0, bt: 0, n: 0 };
-      s.gens.add(g.gen); s.decks += 1; s.wins += r.wins || 0; s.games += r.games || 0; s.bt += Number(r.bt || 0); s.n += 1;
+      const a = r.archetype || NO_ARCH;
+      const s = agg[a] = agg[a] || { gens: new Set(), decks: 0, wins: 0, games: 0, bt: 0, exp: 0, n: 0 };
+      s.gens.add(g.gen); s.decks += 1; s.wins += r.wins || 0; s.games += r.games || 0; s.bt += Number(r.bt || 0); s.exp += rowValue(r); s.n += 1;
     }));
     const rows = Object.entries(agg).sort((a, b) => (b[1].games ? b[1].wins / b[1].games : 0) - (a[1].games ? a[1].wins / a[1].games : 0));
     const table = h("table", "rep small");
-    const head = h("tr"); ["Archetype", "Generations", "Deck-generations", "Win rate (95% range, games)", "Average strength"].forEach(x => head.append(h("th", "", x))); table.append(head);
+    const head = h("tr");
+    [["Archetype", ""], ["Generations", "generations in which a deck of this kind played"], ["Deck-generations", "one deck playing one round robin"],
+     ["Win rate (95% range, games)", ""], ["Strength (relative to its own generation)", "expected win rate against its own generation's field, averaged over the group's deck-generations; every generation's field averages 50%, so this compares a deck with its rivals, not with an absolute scale"]]
+      .forEach(([x, tip]) => { const th = h("th", "", x); if (tip) th.title = tip; head.append(th); });
+    table.append(head);
     rows.forEach(([a, s]) => {
-      const [lo, hi] = wilson(s.wins, s.games); const mean = s.bt / Math.max(1, s.n);
-      table.append(h("tr", "", h("td", "", kindBadge(a === "—" ? null : a) || "—"), h("td", "", `${s.gens.size}`), h("td", "", `${s.decks}`),
-        h("td", "", `${pct(s.wins, s.games)} (${pctOf(lo)}–${pctOf(hi)}, ${num(s.games)})`), h("td", "", `${pctOf(mean / (mean + 1))} vs average`, h("small", "dim", ` (${mean.toFixed(2)})`))));
+      const [lo, hi] = wilson(s.wins, s.games); const mean = s.bt / Math.max(1, s.n), exp = s.exp / Math.max(1, s.n);
+      table.append(h("tr", "", h("td", "", kindBadge(a === NO_ARCH ? null : a) || NO_ARCH), h("td", "", `${s.gens.size}`), h("td", "", `${s.decks}`),
+        h("td", "", `${pct(s.wins, s.games)} (${pctOf(lo)}–${pctOf(hi)}, ${num(s.games)})`), h("td", "", `${pctOf(exp)}`, h("small", "dim", ` (rating ${mean.toFixed(2)})`))));
     });
     return table;
   }
@@ -426,10 +492,10 @@ const Report = (() => {
     sec.append(node);
     const leg = h("div", "evolegend");
     Object.entries(colours).forEach(([a, c]) => { const sw = h("i"); sw.style.background = c; leg.append(h("span", "", sw, a === "exploring" ? "exploring (Explorer builder)" : a)); });
-    leg.append(h("span", "dim", "hollow point = built fresh that generation · ✕ = replaced after that generation"));
+    leg.append(h("span", "dim", "hollow point = built fresh that generation · ✕ = replaced after that generation · a dashed segment joins a replaced deck to the new list that took its slot"));
     sec.append(leg);
     sec.append(h("h4", "", "Archetype win rate across all generations of this league"),
-      h("p", "lede", "Every deck of every generation, pooled by the archetype it was built toward. A deck-generation is one deck playing one round robin. The range is the 95% interval of plausible values for the pooled win rate; a group that only ever fielded one or two decks is thin evidence however good the number looks."),
+      h("p", "lede", "Every deck of every generation, pooled by the archetype it was built toward. A deck-generation is one deck playing one round robin. The range is the 95% interval of plausible values for the pooled win rate; strength is relative to each deck's own generation. A group that only ever fielded one or two decks is thin evidence however good the number looks."),
       scrollX(seriesTable(series)));
   }
   // The series comes with the report (league.json); an older league without one is rebuilt from
@@ -444,15 +510,16 @@ const Report = (() => {
       const r = f === t.file ? t : await ctx.api(`/api/report?file=${encodeURIComponent(f)}`);
       const g = +(/gen(\d+)\//.exec(f) || [])[1];
       const info = r.info || {};
-      gens.push({ gen: g, standings: (r.decks || []).map((d, i) => ({ name: d.name, archetype: kindOf(d), bt: (r.bradley_terry || [])[i] || 0,
-        wins: (r.field || [])[i]?.wins || 0, games: (r.field || [])[i]?.games || 0, fresh: null, replaced: info.replaced === d.name })) });
+      const exp = (r.expected && r.expected.length === (r.decks || []).length) ? r.expected : fieldExpected((r.bradley_terry || []).map(Number));
+      gens.push({ gen: g, standings: (r.decks || []).map((d, i) => ({ name: d.name, archetype: kindOf(d), bt: (r.bradley_terry || [])[i] || 0, expected: exp[i],
+        wins: (r.field || [])[i]?.wins || 0, games: (r.field || [])[i]?.games || 0, fresh: (info.fresh || []).includes(d.name) || null, replaced: info.replaced === d.name })) });
     }
     return { generations: gens.sort((a, b) => a.gen - b.gen) };
   }
   function evolution(t, m, ctx) {
     const isLeague = !!(t.league_series || m.info.generation || /\/gen\d+\/tournament\.json$/.test(t.file || ""));
     if (!isLeague) return null;
-    const s = section("League evolution", "How each builder's strength moved from generation to generation, shown as the win rate it predicts against an average deck (50% is average). Points are coloured by the archetype the deck was built toward.");
+    const s = section("League evolution", "Each builder's strength from generation to generation, shown as the win rate it predicts against that generation's field — relative to its rivals: the field always averages 50%, so a rising line means the deck gained on the others, not that it got stronger on an absolute scale. Points are coloured by the archetype the deck was built toward.");
     const series = t.league_series;
     if (series && series.generations && series.generations.length) fillEvolution(s, series, ctx);
     else {
