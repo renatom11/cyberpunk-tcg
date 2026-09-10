@@ -1,0 +1,28 @@
+{
+  "name": "The Heist",
+  "legends": [
+    "v-corporate-exile",
+    "viktor-vektor-sit-down-and-relax",
+    "jackie-welles-pour-one-out-for-me"
+  ],
+  "main": {
+    "dexter-deshawn-one-last-chance": 2,
+    "heywood-ripperdoc": 2,
+    "offduty-malfini": 2,
+    "secondhand-bombus": 2,
+    "t-bug-amateur-philosopher": 2,
+    "kiroshi-optics": 3,
+    "mandibular-upgrade": 3,
+    "zetatech-faceplate": 3,
+    "afterparty-at-lizzies": 2,
+    "delamain-cab": 3,
+    "evelyn-parker-scheming-siren": 3,
+    "mtod12-flathead": 2,
+    "psycho-squad": 2,
+    "dying-night-vs-pistol": 2,
+    "tetratronic-rippler": 2,
+    "floor-it": 3,
+    "reboot-optics": 2
+  },
+  "note": "Retail starter deck (S001-HEI), list from WeirdCo's 21 Aug 2026 announcement."
+}

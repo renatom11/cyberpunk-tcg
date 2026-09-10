@@ -1,0 +1,28 @@
+{
+  "name": "Embracing Power",
+  "legends": [
+    "goro-takemura-hands-unclean",
+    "yorinobu-arasaka-embracing-destruction",
+    "saburo-arasaka-stubborn-patriarch"
+  ],
+  "main": {
+    "chrome-fang": 2,
+    "minotaur": 2,
+    "ruthless-lowlife": 3,
+    "swordwise-huscle": 2,
+    "emergency-atlus": 2,
+    "field-operator": 2,
+    "goro-takemura-losing-his-way": 2,
+    "maxtac-av": 2,
+    "arasaka-emergency-radioport": 2,
+    "mantis-blades": 3,
+    "satori-sword-of-saburo": 3,
+    "industrial-assembly": 2,
+    "over-the-edge": 2,
+    "shattered-memories": 2,
+    "corpo-security": 3,
+    "sandevistan": 3,
+    "corporate-surveillance": 3
+  },
+  "note": "Retail starter deck (S002-EBP), list from WeirdCo's 21 Aug 2026 announcement."
+}

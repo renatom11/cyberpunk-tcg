@@ -10,6 +10,7 @@
 <header class="top">
   <div class="brand">CYBERPUNK TCG <span>sim lab</span></div>
   <nav>
+    <button data-mode="guide">GUIDE</button>
     <button data-mode="play" class="active">PLAY</button>
     <button data-mode="watch">WATCH</button>
     <button data-mode="lab">LAB</button>
@@ -18,9 +19,96 @@
   </nav>
 </header>
 
+<main id="guide" class="mode hidden">
+  <div class="setup guide">
+    <h2>Guide</h2>
+    <p class="lede">This is a simulator for the Cyberpunk Trading Card Game. It plays the game by the official comprehensive rules, lets you play against an AI with the real cards, and — its main purpose — lets AIs build decks and play each other thousands of times so you can find out which decks are actually good.</p>
+
+    <h3>The tabs</h3>
+    <table class="rep">
+      <tr><th>Tab</th><th>What it is for</th><th>You can…</th></tr>
+      <tr><td>PLAY</td><td>A game between you and the AI.</td><td>Pick decks, play a full game with click-to-act and a button for every legal move, undo, concede, export the replay.</td></tr>
+      <tr><td>WATCH</td><td>Replay any recorded game.</td><td>Step through a game decision by decision with both hands visible; auto-play; see every legal option and the one taken.</td></tr>
+      <tr><td>LAB</td><td>AI-vs-AI measurement.</td><td>Run tournaments between decks, run leagues where AI builders evolve decks, generate and screen batches of decks, open the reports.</td></tr>
+      <tr><td>BUILD</td><td>Deck construction.</td><td>Build a deck by hand with live legality and RAM, or let a builder personality build one; save, load, export.</td></tr>
+      <tr><td>CARDS</td><td>The card pool.</td><td>Search and read every card at full size; find the starter-set cards.</td></tr>
+    </table>
+
+    <h3>How a game works (the short version)</h3>
+    <p>Each player brings <b>3 Legends</b> and a deck of 40–50 cards, and starts with <b>6 dice</b> (d4, d6, d8, d10, d12, d20) in their <b>fixer area</b>. Every die that has been rolled into your <b>Gig area</b> is a <b>Gig</b>; its face value is worth that much <b>Street Cred</b>. <b>You win the moment you begin a turn with 7 or more Gigs</b> — and since you only own 6, you must steal at least one from the Rival. You also win if the Rival must draw from an empty deck.</p>
+    <ol>
+      <li><b>Start of turn:</b> win check; ready everything (Units, Legends, Eddies); draw 1; take a die from your fixer, roll it, and put it in your Gig area (the d20 only when it is the last die left).</li>
+      <li><b>Main phase, in any order:</b> play cards from hand by paying their cost in €$ (each ready Eddie or Legend is 1 €$); <b>sell</b> one card per turn — it goes face-down into your Eddies area and pays for things from now on; <b>Call a Legend</b> once per turn for 1 €$ to flip one face-up and use its text; <b>GO SOLO</b> a Legend that allows it, paying its cost to put it on the field as a Unit; use abilities; <b>attack</b> with ready Units that did not enter this turn.</li>
+      <li><b>Attacking:</b> choose the attacker and a target — a <b>spent rival Unit</b> (a fight: higher power wins, the loser is defeated, ties defeat both) or the <b>rival's Gig area</b>. The attacker is spent. The defender may react: <b>BLOCKER</b> Units redirect the attack to themselves, <b>QUICK</b> cards can be played, a Legend can be Called. If the Gig attack goes through, you <b>steal</b> one die, plus one more for every 10 power (power 10 steals 2). Stolen dice keep their values.</li>
+      <li><b>End of turn:</b> "this turn" effects end and all Units lose Lag. Once both players have run out of fixer dice, <b>Overtime</b> begins: from then on 7 Gigs at any moment wins instantly.</li>
+    </ol>
+    <p>The sim follows the comprehensive rules precisely, including the fine points (a spent Legend may GO SOLO and arrives spent; a Legend that leaves play is removed from the game; a 0-power Unit cannot defeat anything). Every judgement call is written down in <code>docs/rulings.md</code> with the rule it comes from.</p>
+
+    <h3>Reading the board</h3>
+    <ul>
+      <li><b>Hand</b> — your cards; the Rival's are face-down (in WATCH both are shown). A card glows when it can be played or sold right now.</li>
+      <li><b>Fixer</b> — the dice you have not rolled yet. <b>Gig area</b> — your Gigs, with a count out of 7 and your Street Cred (the sum). "Null" means no Gigs yet, which counts as less than 0.</li>
+      <li><b>Legends</b> — three slots. Face-down Legends are unknown even to you until Called. SPENT means the Legend was used as an Eddie this turn. A rotated, dimmed card of any kind is spent.</li>
+      <li><b>Field</b> — Units in play. A Unit that entered this turn has Lag and cannot attack or use its ⊡ abilities. The numbers on a card are cost (top left) and power (bottom right); the ⚔ on the board shows current power with all modifiers.</li>
+      <li><b>Eddies / Deck / Trash</b> — ready-of-total Eddies, cards left in the deck, cards in the trash. GO SOLO Legends that leave the field are removed from the game and appear nowhere.</li>
+      <li><b>Phase banner</b> — whose decision it is and the turn number; it also announces Overtime and the winner.</li>
+      <li><b>Prompt</b> — the current question with every legal answer as a button. Cards and dice you can click are the same options drawn on the board.</li>
+    </ul>
+
+    <h3>Reading a report</h3>
+    <ul>
+      <li><b>BT (Bradley–Terry rating)</b> — a strength score fitted to all results at once, so a deck that beat strong decks scores higher than one that beat weak ones. Differences are what matter; 1.0 apart means roughly 73% expected win rate.</li>
+      <li><b>vs field</b> — plain win rate over all its games, with the number of games. Most intuitive, but depends on who was in the field.</li>
+      <li><b>Nash</b> — if you had to pick a deck blind against an opponent doing the same, the share of the time you should bring this one. 100% means it is simply the best; a spread means rock–paper–scissors is going on.</li>
+      <li><b>Head-to-head</b> — win rate of the row deck against the column deck and the number of games. Bold means the edge is statistically significant after correcting for the number of matchups; unbold cells could be noise.</li>
+      <li><b>Card table (Markdown report)</b> — for each deck, win rate when a card was drawn versus when it was not (<i>IWD</i>). Large positive values are the cards carrying the deck; negative ones are candidates to cut. It is correlation, not proof.</li>
+      <li><b>Confidence</b> — 100 games gives roughly ±10%; 400 gives ±5%; 1,000 gives ±3%. The tournament stops a pairing early once the winner is clear.</li>
+    </ul>
+
+    <h3>The builder personalities</h3>
+    <ul>
+      <li><b>aggro</b> — cheap power early and ways to attack the turn a Unit lands; wants to steal Gigs before the Rival stabilises.</li>
+      <li><b>control</b> — blockers, removal and reactions to keep its Gigs, wins late or in Overtime.</li>
+      <li><b>economy</b> — as many sellable cards as possible so it always has Eddies, with a few big bombs.</li>
+      <li><b>gig</b> — everything that adjusts, sets, swaps or rerolls dice, and the payoffs for value-pairs and 8+ Gigs.</li>
+      <li><b>synergy</b> — tribes: Legends and cards that name the same tags (ARASAKA, BRAINDANCE, GANGER…).</li>
+      <li><b>balanced</b> — the original all-round heuristic, kept as the control group.</li>
+    </ul>
+    <p>Every personality scores the whole legal pool for its Legends, fills the deck along a cost curve, and adds a little noise so two builds differ. In a league they also add <b>learned values</b>: after each tournament the store remembers how much each card raised or lowered win rates, and later builds lean on that.</p>
+
+    <h3>Decks and files</h3>
+    <ul>
+      <li>The two <b>retail starter decks</b>, <b>The Heist</b> (V, Viktor, Jackie — low Street Cred payoffs, quickhacks, blockers) and <b>Embracing Power</b> (Goro, Yorinobu, Saburo — Arasaka muscle and Gear), are included exactly as WeirdCo published them and are the default matchup in PLAY. The <b>sample decks</b> are generated, legal lists — one per faction — for variety. The starter-only cards can be isolated with the set filter in CARDS or BUILD.</li>
+      <li>Decks are JSON files in <code>data/decks/</code>; generated batches go to <code>data/decks/generated/</code>; lab results to <code>out/lab/</code>; exported replays download from the browser.</li>
+      <li>Everything here has a command-line twin (<code>cptcg sim</code>, <code>tourney</code>, <code>league</code>, <code>generate</code>, <code>build</code>, <code>serve</code>); see the README for the exact flags.</li>
+    </ul>
+
+    <h3>Tips</h3>
+    <ul>
+      <li>Hover a card to read it; on a phone tap a card that has nothing to do, or long-press any card.</li>
+      <li>On a phone the board is the same layout stacked — the Rival's half on top — and never scrolls; hands and fields scroll sideways. The LOG button opens the log over the board.</li>
+      <li>Identical buttons are merged (three face-down Legends are one "Call a Legend" button) because the choice is genuinely the same.</li>
+      <li>UNDO is free and unlimited because every game is a deterministic replay of your choices.</li>
+    </ul>
+  </div>
+</main>
+
 <main id="play" class="mode">
   <div id="setup" class="setup">
     <h2>New game</h2>
+  <details class="how" id="how-play" open>
+    <summary>What PLAY does, and how to use it</summary>
+    <p><b>Play a full game against the AI</b>, with you making every decision for one seat. The engine enforces the rules; you only ever choose among legal actions.</p>
+    <ol>
+      <li><b>Pick your deck and the AI's deck.</b> The list holds the sample decks, anything you saved in BUILD, and decks generated in LAB. Only legal decks (3 Legends, 40–50 cards, RAM limits) are listed.</li>
+      <li><b>Choose the AI.</b> <i>heuristic</i> looks one move ahead and plays sensibly; <i>random</i> plays legal moves at random (useful to learn the interface).</li>
+      <li><b>Seat and seed.</b> Seat 0/1 only changes which side of the log you are. A seed makes the shuffles and dice repeatable: the same seed replays the same game if you make the same choices. Leave it blank for a random game.</li>
+      <li><b>Press START.</b> The board opens. A d20 roll-off decides who chooses to go first; the first player's two left-most Legends start spent.</li>
+    </ol>
+    <p><b>On the board</b>, your half is at the bottom. When it is your decision, the PROMPT panel (bottom right, or bottom on a phone) says what is being asked and shows <b>one button for every legal action</b>. Cards that can act glow: click a glowing card to play, sell, attack with, Call or GO SOLO it; when a card has more than one option a small menu appears. Dice in your fixer tray glow when you must take one. Anything you can click is also always in the prompt list, so the buttons are never wrong.</p>
+    <p><b>Read a card</b> by hovering it (on a phone: tap a card that has nothing to do, or long-press any card). The LOG narrates everything both players do. <b>UNDO</b> takes back your last decision (the AI's replies are recomputed), <b>CONCEDE</b> ends the game, <b>EXPORT</b> downloads the replay so you can watch it again in WATCH or share it, and <b>NEW GAME</b> returns to this form.</p>
+  </details>
+
     <div class="row"><label>Your deck <select id="deckMe"></select></label></div>
     <div class="row"><label>AI deck <select id="deckAi"></select></label></div>
     <div class="row">
@@ -37,6 +125,17 @@
 <main id="watch" class="mode hidden">
   <div class="setup">
     <h2>Watch a replay</h2>
+    <details class="how" id="how-watch" open>
+      <summary>What WATCH does, and how to use it</summary>
+      <p><b>Replay any recorded game, one decision at a time, with both hands visible.</b> Every game the engine plays can be recorded as a tiny replay file: the decks, the seed and the list of choices. Replaying re-runs the engine, so what you see is exactly what happened.</p>
+      <ol>
+        <li><b>Where replays come from.</b> Games you EXPORT from PLAY; batch simulations run with <code>cptcg sim --replays DIR</code>; anything under <code>out/</code> ending in <code>.json</code> inside a <code>replays</code> folder.</li>
+        <li><b>Pick a file and press LOAD.</b> The board shows the game at its first decision.</li>
+        <li><b>Step with ◀ ▶</b>, drag the slider, or press <b>AUTO</b> to play it back at about one decision per second. The PROMPT panel shows every legal option at that moment and, in green, the one the player chose ("Next: …"). The LOG fills in as you go.</li>
+      </ol>
+      <p>Use it to check why a deck won, to audit a rule ("why could that Unit not block?"), or to review your own game after the fact.</p>
+    </details>
+
     <div class="row"><label>Replay <select id="replayFile"></select></label>
       <button id="loadReplay" class="primary">LOAD</button></div>
     <div class="row replay-controls hidden" id="replayControls">
@@ -53,6 +152,17 @@
 <main id="lab" class="mode hidden">
   <div class="lab">
     <div class="labcol">
+      <details class="how" id="how-lab" open>
+        <summary>What LAB does, and how to use it</summary>
+        <p><b>The lab is where AIs play each other in bulk so you can measure decks instead of guessing.</b> Three kinds of job run in the background on this machine; you can keep using the other tabs while they run, and the Jobs panel shows progress. Results are files under <code>out/lab/</code> and stay available after a restart.</p>
+        <ul>
+          <li><b>Run a tournament</b> — tick the decks, set games per pair, START. Every pair plays that many games with the first player alternating, stopping early when one side is clearly ahead. The report ranks decks three ways (see the Guide: <i>Reading a report</i>).</li>
+          <li><b>Run a league</b> — the AI invents decks. Each builder has a personality (aggro, control, economy, gig, synergy, balanced); every generation they improve their deck by trial swaps against each other, play a round robin, and the worst is replaced by a fresh build. Learned card values and past champions carry over to the next league.</li>
+          <li><b>Generate decks</b> — build many different legal decks at once (novelty rules keep them varied), optionally screen them against a panel and keep only the best. They appear in every deck list, so you can play them, edit them in BUILD or enter them in a tournament.</li>
+        </ul>
+        <p><b>Reports</b> on the right: open any finished tournament (including each generation of a league). The table lists rating, win rate against the field and Nash weight; the head-to-head matrix shows who beats whom, bold when the result is statistically significant; the full Markdown report adds the cards that most raised or lowered each deck's win rate when drawn.</p>
+        <p>Rough cost: heuristic AIs play about 5 games per second per core. A 4-deck tournament at 200 games per pair is ~1,200 games, about a minute; a 6-builder league of 3 generations takes 10–20 minutes.</p>
+      </details>
       <div class="setup">
         <h2>Run a tournament</h2>
         <p class="hint">Every pair plays mirrored games until the cap or until the SPRT is sure. Reports rank decks by Bradley–Terry rating, field win rate and Nash weight.</p>
@@ -113,12 +223,24 @@
 </main>
 
 <main id="build" class="mode hidden">
+    <details class="how wide" id="how-build" open>
+      <summary>What BUILD does, and how to use it</summary>
+      <p><b>Build a deck by hand, or let a personality build one, and save it for PLAY and LAB.</b> A legal deck is exactly <b>3 Legends with different names</b> plus <b>40–50 other cards, at most 3 copies each</b>. Your Legends decide what you may play: each Legend gives <b>2 RAM</b> of its colour, and a card is legal only if its RAM is at most your total in that colour (so a Blue card with RAM 4 needs two Blue Legends).</p>
+      <ol>
+        <li><b>Choose Legends first</b>: click Legend cards in the library (they sit at the end; filter type = Legend). The RAM badges update and the library greys out cards you can't run. Click a Legend in the slots to remove it.</li>
+        <li><b>Add cards</b> by clicking them (up to 3 copies, right-click removes one), or use the + / − controls in the list on the right. The cost curve, the size counter and the legality check update live; errors are spelled out.</li>
+        <li><b>AI build</b>: pick a personality and press BUILD. With <i>keep my Legends</i> ticked it builds around your three; otherwise it picks its own. It uses learned card values from past leagues when there are any.</li>
+        <li><b>SAVE</b> writes <code>data/decks/&lt;name&gt;.json</code> and the deck appears in PLAY and LAB at once. <b>EXPORT</b> shows a plain-text list to copy. <b>load…</b> opens any existing deck to edit; saving under a new name makes a copy.</li>
+      </ol>
+      <p>The library filters: search matches name, subtitle, rules text, tags and keywords; <i>legal for these Legends</i> hides what your Legends can't run; the set filter isolates the cards that come only in the two starter decks, <i>The Heist</i> and <i>Embracing Power</i>. To tune a starter, load it from <i>load…</i>, edit, and SAVE under a new name.</p>
+    </details>
   <div class="builder">
     <section class="library panel">
       <div class="row">
         <input id="bSearch" placeholder="search name, text, tag…">
         <select id="bType"><option value="">any type</option><option>Legend</option><option>Unit</option><option>Program</option><option>Gear</option></select>
         <select id="bColor"><option value="">any colour</option><option>Red</option><option>Green</option><option>Blue</option><option>Yellow</option><option>Purple</option><option>Grey</option></select>
+        <select id="bSet"><option value="">any set</option><option value="MS01-WNC">Welcome to Night City</option><option value="S001-HEI">The Heist (starter)</option><option value="S002-EBP">Embracing Power (starter)</option><option value="PR001">Promo</option></select>
         <select id="bCost"><option value="">any cost</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6+</option></select>
         <label><input id="bLegal" type="checkbox" checked> legal for these Legends</label>
         <span id="bCount" class="dim"></span>
@@ -156,7 +278,13 @@
 <main id="cards" class="mode hidden">
   <div class="setup">
     <h2>Card pool</h2>
-    <div class="row"><input id="cardSearch" placeholder="search name, text, tag…"></div>
+    <details class="how" id="how-cards" open>
+      <summary>What CARDS does</summary>
+      <p><b>Browse the whole pool</b> — 151 cards of <i>Welcome to Night City</i> plus the cards that come only in the starter decks. Search matches name, subtitle, rules text, tags, type and colour (try <code>blocker</code>, <code>arasaka</code>, <code>steal</code>). Hover or tap a card to read it at full size. The set filter isolates the starter-only cards.</p>
+      <p>Card data is transcribed from the printed cards and is the source of truth for the engine; the images are the real faces. Three cards are still placeholders because their full face was never captured: 6th Street Recruits, Adam Smasher — Metal Over Meat and Adrenaline Converter; Rebecca's ability is not yet revealed. These can't be put in a deck.</p>
+    </details>
+    <div class="row"><input id="cardSearch" placeholder="search name, text, tag…">
+      <select id="cardSet"><option value="">any set</option><option value="MS01-WNC">Welcome to Night City</option><option value="S001-HEI">The Heist (starter)</option><option value="S002-EBP">Embracing Power (starter)</option><option value="PR001">Promo</option></select></div>
     <div id="cardGrid" class="card-grid"></div>
   </div>
 </main>

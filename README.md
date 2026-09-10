@@ -71,7 +71,8 @@ python -m cptcg league --builders 6 --generations 3 --steps 5 --out out/league \
 python -m cptcg serve            # then open http://127.0.0.1:8000/
 ```
 
-The web client's board follows the layout of the popular online sim: hand, fixer dice tray and
+The client has a GUIDE tab and an explainer at the top of every tab that says what the tab is for,
+how to use it and what each control does. The board follows the layout of the popular online sim: hand, fixer dice tray and
 Gig area on the left; Legends and field in the centre; log and a prompt panel with one button per
 legal action on the right. Click a glowing card to act on it. UNDO and EXPORT (a replay file) are
 free because games are deterministic. It holds no game logic — it renders the engine's view and
@@ -85,7 +86,9 @@ the time. Speed is roughly 5 ms/game for random bots and ~220 ms/game for heuris
 on one core; `-j` spreads games across cores and results are identical regardless of `-j`.
 
 The card pool is in `data/cards/wnc.json` (see `data/COVERAGE.md` for what is verified and
-scripted); the sample decks are generated, RAM-legal lists, not the retail starters.
+scripted). `data/decks/the_heist.json` and `data/decks/embracing_power.json` are the two retail
+starter decks exactly as WeirdCo published them; the `sample_*` decks are generated, RAM-legal
+lists for variety.
 
 Card faces live in `data/images/<id>.jpg` (plus `_back.jpg`) and were cut from screenshots of
 the official card database with `tools/crop_cards.py`, which OCRs each page's captions, crops the

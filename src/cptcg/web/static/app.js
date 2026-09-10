@@ -187,13 +187,16 @@ function renderBoard(root, v, { interactive, onAct } = {}) {
   logp.scrollTop = logp.scrollHeight;
 }
 function hintFor(p) {
-  return { MULLIGAN: "Keep your opening hand or shuffle it back and draw 6 new cards (once).",
-           ORDER: "You won the roll-off. Going first costs 2 spent Legends on turn 1.",
-           GIG_DIE: "Take a die from the fixer area, roll it, add it to your Gig area (d20 always last).",
-           MAIN: "Play, sell (once), Call a Legend (once), attack, or end the turn. Click a glowing card or use the buttons.",
-           TARGET: "Attack a spent rival Unit (red) or the Gig area.",
-           REACTION: "A rival Unit is attacking. Block, play a QUICK card, Call a Legend, or pass.",
-           PICK: "Choose an option." }[p.kind] || "";
+  const h = {
+    MULLIGAN: "Keep your opening hand, or shuffle it back and draw 6 new cards. You may do this only once.",
+    ORDER: "You won the d20 roll-off, so you choose. Going first means the first turn's draw and Gig, but your two left-most Legends start spent and don't ready on that turn.",
+    GIG_DIE: "Start of your turn: take one die from your fixer area, roll it and add it to your Gig area. Click a glowing die, or a button. The d20 can only be taken when it is the last die left.",
+    MAIN: "Your main phase. Do things in any order: play cards (pay their cost in €$ from ready Eddies and Legends), sell one card this turn for an Eddie, Call a Legend for 1 €$ (once per turn), GO SOLO a Legend, use abilities, and attack with ready Units that didn't enter this turn. Glowing cards can act — click them — and every legal action is also a button here. End the turn when you're done.",
+    TARGET: "Declare the target of the attack: a spent rival Unit starts a fight (higher power wins, ties defeat both), or the rival's Gig area lets you steal 1 die plus 1 more per 10 power. The attacker is then spent and its ATTACK effects resolve.",
+    REACTION: "A rival Unit is attacking. You may spend a ready BLOCKER Unit to redirect the attack to it, play a QUICK Program or ability by paying its cost, or Call a Legend for 1 €$ (if you haven't this turn). Pass to let the attack resolve.",
+    PICK: "A card effect is asking you to choose. The buttons list every legal choice; where the choice is a die, the label shows which die and its value.",
+  };
+  return h[p.kind] || p.prompt || "";
 }
 function badge(label, val) { const b = el("div", "badge", `${label}<b>${val}</b>`); return b; }
 function gigPanel(p) {
@@ -364,8 +367,8 @@ async function initLab(decks, strategies) {
 // ---------------------------------------------------------------- cards
 function renderCardGrid(q) {
   const grid = $("#cardGrid"); grid.innerHTML = "";
-  const s = (q || "").toLowerCase();
-  Object.values(CARDS).filter(c => !s || `${c.name} ${c.subtitle || ""} ${c.text} ${c.tags.join(" ")} ${c.type} ${c.color}`.toLowerCase().includes(s))
+  const s = (q || "").toLowerCase(), set = $("#cardSet").value;
+  Object.values(CARDS).filter(c => (!set || c.set === set) && (!s || `${c.name} ${c.subtitle || ""} ${c.text} ${c.tags.join(" ")} ${c.keywords.join(" ")} ${c.type} ${c.color}`.toLowerCase().includes(s)))
     .slice(0, 200).forEach(c => grid.append(cardNode(c)));
 }
 
@@ -416,9 +419,10 @@ function bRemove(id) { if (!B.main[id]) return; B.main[id] -= 1; if (!B.main[id]
 
 function renderLibrary() {
   const grid = $("#bGrid"); grid.innerHTML = "";
-  const s = $("#bSearch").value.toLowerCase(), t = $("#bType").value, col = $("#bColor").value, cost = $("#bCost").value, legalOnly = $("#bLegal").checked;
+  const s = $("#bSearch").value.toLowerCase(), t = $("#bType").value, col = $("#bColor").value, cost = $("#bCost").value, legalOnly = $("#bLegal").checked, set = $("#bSet").value;
   const list = Object.values(CARDS).filter(c => {
     if (t && c.type !== t) return false;
+    if (set && c.set !== set) return false;
     if (col && c.color !== col) return false;
     if (cost) { const k = c.cost == null ? -1 : c.cost; if (cost === "6+" ? k < 6 : k !== +cost) return false; }
     if (legalOnly && c.type !== "Legend" && !bLegal(c)) return false;
@@ -495,7 +499,7 @@ async function initBuilder(decks) {
   const sel = $("#bLoad");
   decks.forEach(d => { const o = el("option", "", `${d.name} (${d.size})`); o.value = d.path; sel.append(o); });
   sel.onchange = async () => { if (!sel.value) return; bLoadDeck(await api(`/api/deck?path=${encodeURIComponent(sel.value)}`)); };
-  ["#bSearch", "#bType", "#bColor", "#bCost", "#bLegal"].forEach(id => { $(id).oninput = renderLibrary; $(id).onchange = renderLibrary; });
+  ["#bSearch", "#bType", "#bColor", "#bCost", "#bLegal", "#bSet"].forEach(id => { $(id).oninput = renderLibrary; $(id).onchange = renderLibrary; });
   $("#bName").onchange = (e) => { B.name = e.target.value; renderDeckSheet(); };
   $("#bClear").onclick = () => { B = { name: "New deck", legends: [], main: {}, note: "", v: null, path: null }; renderDeckSheet(); renderLibrary(); };
   $("#bExport").onclick = () => { const t = $("#bText"); t.classList.toggle("hidden"); if (!t.classList.contains("hidden")) { t.select(); } };
@@ -535,10 +539,13 @@ async function init() {
   for (const sel of [$("#deckMe"), $("#deckAi")]) {
     decks.filter(d => d.ok).forEach(d => { const o = el("option", "", `${d.name} (${d.size}) — ${d.path}`); o.value = d.path; sel.append(o); });
   }
-  if ($("#deckAi").options.length > 1) $("#deckAi").selectedIndex = 1;
+  const pick = (sel, path, fallback) => { const o = [...sel.options].find(x => x.value === path); if (o) sel.value = path; else if (sel.options.length > fallback) sel.selectedIndex = fallback; };
+  pick($("#deckMe"), "data/decks/the_heist.json", 0);            // the retail starters are the default matchup
+  pick($("#deckAi"), "data/decks/embracing_power.json", 1);
   $("#newGame").onclick = () => newGame().catch(e => alert(e.message));
   const reps = await api("/api/replays");
   reps.forEach(f => { const o = el("option", "", f); o.value = f; $("#replayFile").append(o); });
+  if (!reps.length) { const o = el("option", "", "no replays yet — EXPORT a game from PLAY, or run: cptcg sim --replays out/replays"); o.value = ""; o.disabled = true; $("#replayFile").append(o); }
   $("#loadReplay").onclick = async () => { RP.file = $("#replayFile").value; $("#replayControls").classList.remove("hidden"); await rpGo(0); };
   $("#rpPrev").onclick = () => rpGo(Math.max(0, RP.step - 1));
   $("#rpNext").onclick = () => rpGo(Math.min(RP.steps - 1, RP.step + 1));
@@ -548,8 +555,10 @@ async function init() {
   $("#rpAuto").onclick = () => { if (RP.auto) { clearInterval(RP.auto); RP.auto = null; } else RP.auto = setInterval(() => { if (RP.step < RP.steps - 1) rpGo(RP.step + 1); else { clearInterval(RP.auto); RP.auto = null; } }, 900); };
   const reports = await api("/api/reports");
   reports.forEach(f => { const o = el("option", "", f); o.value = f; $("#reportFile").append(o); });
+  if (!reports.length) { const o = el("option", "", "no reports yet — run a tournament or league on the left"); o.value = ""; o.disabled = true; $("#reportFile").append(o); }
   $("#loadReport").onclick = async () => renderReport(await api(`/api/report?file=${encodeURIComponent($("#reportFile").value)}`));
   $("#cardSearch").oninput = (e) => renderCardGrid(e.target.value);
+  $("#cardSet").onchange = () => renderCardGrid($("#cardSearch").value);
   renderCardGrid("");
   await initBuilder(decks);
   await initLab(decks.filter(d => d.ok), await api("/api/strategies"));
@@ -558,4 +567,8 @@ async function init() {
     document.querySelectorAll("main.mode").forEach(m => m.classList.toggle("hidden", m.id !== b.dataset.mode));
   });
 }
+document.querySelectorAll("details.how").forEach(d => {
+  try { if (localStorage.getItem("how:" + d.id) === "closed") d.open = false; } catch (e) {}
+  d.addEventListener("toggle", () => { try { localStorage.setItem("how:" + d.id, d.open ? "open" : "closed"); } catch (e) {} });
+});
 init().catch(e => alert("init failed: " + e.message));

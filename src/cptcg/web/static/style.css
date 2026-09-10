@@ -229,3 +229,18 @@ table.rep th { color: var(--cyan); }
 }
 /* touch preview: centred, any size screen */
 .preview.touch { left: 50% !important; top: 50% !important; transform: translate(-50%, -50%); width: min(84vw, 423px); height: calc(min(84vw, 423px) * 1.395); pointer-events: auto; box-shadow: 0 0 0 100vmax #000a, 0 12px 40px #000c; }
+
+/* ---------------------------------------------------------------- guide + explainers */
+.how { margin: 0 0 14px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: #0a1018; font-size: 13px; line-height: 1.45; max-width: 80ch; }
+.how.wide { margin: 8px; max-width: none; }
+.how summary { cursor: pointer; color: var(--cyan); font-weight: 700; letter-spacing: .04em; }
+.how p, .how li { color: var(--text); } .how p { margin: 8px 0; }
+.how ol, .how ul { padding-left: 22px; margin: 6px 0; } .how li { margin: 4px 0; }
+.how code, .guide code { background: #121a26; padding: 1px 5px; border-radius: 4px; color: var(--yellow); font-size: 12px; }
+.how b, .guide b { color: #fff; }
+.guide { max-width: 90ch; font-size: 14px; line-height: 1.5; }
+.guide .lede { font-size: 15px; color: #fff; }
+.guide h3 { color: var(--cyan); letter-spacing: .06em; font-size: 13px; margin: 22px 0 6px; text-transform: uppercase; }
+.guide ol, .guide ul { padding-left: 22px; } .guide li { margin: 5px 0; }
+.guide table.rep td { vertical-align: top; }
+@media (max-width: 700px) { .how { font-size: 12px; } .how.wide { margin: 4px; } }

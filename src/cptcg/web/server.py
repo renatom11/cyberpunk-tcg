@@ -520,7 +520,7 @@ def card_json_static(d) -> dict:
     return {"id": d.id, "name": d.name, "subtitle": d.subtitle, "type": d.type.name.title(), "color": d.color.name.title(),
             "cost": d.cost, "power": (f"{d.power}+" if d.power_variable else d.power), "ram": d.ram,
             "sell_tag": d.sell_tag, "tags": sorted(d.tags), "keywords": [k.name.replace("_", " ") for k in d.keywords],
-            "text": d.text, "verified": d.verified}
+            "text": d.text, "verified": d.verified, "set": d.set_code, "number": d.number}
 
 
 def serve(host: str = "127.0.0.1", port: int = 8000) -> None:
