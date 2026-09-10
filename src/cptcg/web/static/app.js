@@ -366,8 +366,9 @@ async function refreshDecks() {
 function strategyChecklist(root, strategies) {
   strategies.filter(s => s.name !== "random").forEach(s => { const l = el("label"); const c = el("input"); c.type = "checkbox"; c.value = s.name; c.checked = s.name !== "legacy"; l.title = s.description; l.append(c, s.name, el("small", "", s.description.split(". ")[0])); root.append(l); });
 }
-// Rough job sizes, so nobody starts an hours-long run by accident. Games per second: a phone's
-// single browser thread manages ~1.5 heuristic games/s; the local server uses every core.
+// Rough job sizes, so nobody starts an hours-long run by accident. Games per second: a browser
+// engine plays ~2-3 heuristic games/s per core and the LAB pools one engine per core; the local
+// server uses every core. The bridge reports the rate measured on this device once a job has run.
 function gamesPerSecond() { return window.CPTCG_BRIDGE ? window.CPTCG_BRIDGE.rate() : 15; }
 function estimateGames(kind) {
   let games = 0;

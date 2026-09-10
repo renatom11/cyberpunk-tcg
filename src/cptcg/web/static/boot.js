@@ -62,11 +62,14 @@
   let files = {}, manifest = null, main = null, jobs = null, pool = null;
   const JOBS = {};
   const CORES = Math.max(1, navigator.hardwareConcurrency || 2);
-  // game workers: leave a core for the page and the jobs engine; each Pyodide instance costs ~60 MB
-  const POOL = window.crossOriginIsolated && typeof SharedArrayBuffer !== "undefined" ? Math.min(CORES - 1, 6) : 0;
-  const RATE_KEY = "cptcg:rate";
+  const MEM = navigator.deviceMemory || 8;                           // GB; only Chromium reports it
+  // One game engine per core: while a pool runs, the jobs engine sleeps in Atomics.wait and the page
+  // only polls the JS-side job table, so no core needs reserving. Each Pyodide engine costs ~60 MB,
+  // so low-memory devices keep one core free. 0 = no pool (page not cross-origin isolated).
+  const POOL = window.crossOriginIsolated && typeof SharedArrayBuffer !== "undefined" ? Math.min(MEM <= 4 ? CORES - 1 : CORES, 8) : 0;
+  const RATE_KEY = "cptcg:rate:" + (cfg.v || "dev") + ":" + POOL;   // re-measured per build and pool size
   function measuredRate() { try { const r = +localStorage.getItem(RATE_KEY); return r > 0 ? r : null; } catch (e) { return null; } }
-  function defaultRate() { return 1.4 * Math.max(1, POOL || 1); }   // heuristic games/s per engine thread, roughly
+  function defaultRate() { return 2.0 * Math.max(1, POOL || 1); }   // heuristic games/s per engine thread, roughly
 
   async function boot() {
     manifest = await (await fetch(base + "manifest.json" + V)).json();

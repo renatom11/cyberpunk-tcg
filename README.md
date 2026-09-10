@@ -89,8 +89,11 @@ a cost curve, live legality, text export, save to `data/decks/`, and one-click A
 the builder personalities (using learned card values when `out/knowledge.json` exists).
 
 Agents: `random`, `heuristic` (greedy one-ply lookahead). The heuristic beats random ~95% of
-the time. Speed is roughly 5 ms/game for random bots and ~220 ms/game for heuristic-vs-heuristic
-on one core; `-j` spreads games across cores and results are identical regardless of `-j`.
+the time. Speed is roughly 4 ms/game for random bots and ~175 ms/game (5–6 games/s) for
+heuristic-vs-heuristic on one core; `-j` spreads games across cores and results are identical
+regardless of `-j`. `python tools/bench.py check` replays 224 golden games and must print
+IDENTICAL after any engine change; `bench.py time` measures speed and `bench.py fuzz` prints a
+digest over random decks from the whole card pool for cross-checking two branches.
 
 The card pool is in `data/cards/wnc.json` (see `data/COVERAGE.md` for what is verified and
 scripted). `data/decks/the_heist.json` and `data/decks/embracing_power.json` are the two retail

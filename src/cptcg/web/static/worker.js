@@ -5,9 +5,13 @@
 let pyodide = null, bridge = null, runner = null, role = "main";
 
 // Shared-memory pool layout (Int32 words): [0] done count, [1] byte allocator, [2] error flag,
-// [3] number of chunks; from word TABLE0: (offset, length) per chunk; data follows the table.
-const CTRL_DONE = 0, CTRL_ALLOC = 1, CTRL_ERROR = 2, CTRL_N = 3, TABLE0 = 8, MAX_CHUNKS = 4096;
-const DATA0 = (TABLE0 + 2 * MAX_CHUNKS) * 4;
+// [3] number of chunks, [4] next chunk to claim; from word TABLE0: (offset, length) of each chunk's
+// result; from INTABLE0: (offset, length) of each chunk's job; data follows the tables.
+// Chunks are a work queue: every game worker keeps claiming the next unplayed chunk until none are
+// left, so a run ends when the last chunk does, not when the unluckiest worker finishes its share.
+const CTRL_DONE = 0, CTRL_ALLOC = 1, CTRL_ERROR = 2, CTRL_N = 3, CTRL_NEXT = 4, TABLE0 = 8, MAX_CHUNKS = 4096;
+const INTABLE0 = TABLE0 + 2 * MAX_CHUNKS;
+const DATA0 = (INTABLE0 + 2 * MAX_CHUNKS) * 4;
 let sab = null, ctrl = null, bytes = null, ports = [];
 
 async function init(msg) {
@@ -44,13 +48,23 @@ function attachPool(msg) {
 function poolRun(jobsJson) {
   const jobs = JSON.parse(jobsJson);
   if (jobs.length > MAX_CHUNKS) throw new Error("too many chunks for the pool");
-  Atomics.store(ctrl, CTRL_DONE, 0); Atomics.store(ctrl, CTRL_ALLOC, DATA0); Atomics.store(ctrl, CTRL_ERROR, 0); Atomics.store(ctrl, CTRL_N, jobs.length);
-  jobs.forEach((job, i) => ports[i % ports.length].postMessage({ chunk: i, job: JSON.stringify(job) }));
+  Atomics.store(ctrl, CTRL_DONE, 0); Atomics.store(ctrl, CTRL_ALLOC, DATA0); Atomics.store(ctrl, CTRL_ERROR, 0);
+  Atomics.store(ctrl, CTRL_N, jobs.length); Atomics.store(ctrl, CTRL_NEXT, 0);
+  const enc = new TextEncoder();
+  jobs.forEach((job, i) => {
+    const buf = enc.encode(JSON.stringify(job));
+    const off = Atomics.add(ctrl, CTRL_ALLOC, (buf.length + 7) & ~7);
+    if (off + buf.length > bytes.length) throw new Error("pool buffer too small for the jobs");
+    bytes.set(buf, off);
+    Atomics.store(ctrl, INTABLE0 + 2 * i, off); Atomics.store(ctrl, INTABLE0 + 2 * i + 1, buf.length);
+  });
+  ports.forEach((port) => port.postMessage({ type: "run", n: jobs.length }));
+  // Every chunk is always claimed and completed (a failed run skips the work but still counts), so
+  // when done reaches n no worker is still writing into the buffer and the next run can reuse it.
   for (;;) {
     const done = Atomics.load(ctrl, CTRL_DONE);
     if (done >= jobs.length) break;
     Atomics.wait(ctrl, CTRL_DONE, done, 30000);
-    if (Atomics.load(ctrl, CTRL_ERROR)) break;
   }
   if (Atomics.load(ctrl, CTRL_ERROR)) throw new Error("a game worker failed: " + readError());
   const dec = new TextDecoder(); const out = [];
@@ -62,19 +76,28 @@ function poolRun(jobsJson) {
 }
 function readError() { const off = Atomics.load(ctrl, TABLE0), len = Atomics.load(ctrl, TABLE0 + 1); return new TextDecoder().decode(bytes.slice(off, off + len)); }
 
-// ---- game role: play a chunk, publish the results into shared memory
+// ---- game role: claim chunks off the shared queue, publish each result into shared memory
 function gamePort(port) {
   port.onmessage = (e) => {
-    const { chunk, job } = e.data;
-    let payload, failed = false;
-    try { payload = new TextEncoder().encode(runner.run_chunk_json(job)); }
-    catch (err) { payload = new TextEncoder().encode(String(err).split("\n").slice(-2).join(" ")); failed = true; }
-    const off = Atomics.add(ctrl, CTRL_ALLOC, (payload.length + 7) & ~7);
-    if (off + payload.length > bytes.length) { failed = true; }
-    else bytes.set(payload, off);
-    Atomics.store(ctrl, TABLE0 + 2 * chunk, off); Atomics.store(ctrl, TABLE0 + 2 * chunk + 1, payload.length);
-    if (failed) { Atomics.store(ctrl, TABLE0, off); Atomics.store(ctrl, TABLE0 + 1, payload.length); Atomics.store(ctrl, CTRL_ERROR, 1); }
-    Atomics.add(ctrl, CTRL_DONE, 1); Atomics.notify(ctrl, CTRL_DONE);
+    const n = e.data.n, enc = new TextEncoder(), dec = new TextDecoder();
+    for (;;) {
+      const chunk = Atomics.add(ctrl, CTRL_NEXT, 1);
+      if (chunk >= n) break;
+      let payload, failed = false;
+      if (Atomics.load(ctrl, CTRL_ERROR)) { payload = new Uint8Array(0); }            // run already failed: drain
+      else {
+        const joff = Atomics.load(ctrl, INTABLE0 + 2 * chunk), jlen = Atomics.load(ctrl, INTABLE0 + 2 * chunk + 1);
+        const job = dec.decode(bytes.slice(joff, joff + jlen));                       // slice: TextDecoder refuses shared memory
+        try { payload = enc.encode(runner.run_chunk_json(job)); }
+        catch (err) { payload = enc.encode(String(err).split("\n").slice(-2).join(" ")); failed = true; }
+      }
+      const off = Atomics.add(ctrl, CTRL_ALLOC, (payload.length + 7) & ~7);
+      if (off + payload.length > bytes.length) { failed = true; }
+      else bytes.set(payload, off);
+      Atomics.store(ctrl, TABLE0 + 2 * chunk, off); Atomics.store(ctrl, TABLE0 + 2 * chunk + 1, payload.length);
+      if (failed) { Atomics.store(ctrl, TABLE0, off); Atomics.store(ctrl, TABLE0 + 1, payload.length); Atomics.store(ctrl, CTRL_ERROR, 1); }
+      Atomics.add(ctrl, CTRL_DONE, 1); Atomics.notify(ctrl, CTRL_DONE);
+    }
   };
 }
 
