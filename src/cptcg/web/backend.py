@@ -270,7 +270,8 @@ def report_json(path_: Path) -> dict:
     the loaded tournament, and each deck's meta (archetype, generation, ...) comes from the
     sibling ``<name>.json`` a league writes next to it. The league series (``league.json`` in
     the run's directory) is attached as ``league_series`` when there is one."""
-    from cptcg.sim.report import glossary_json, how_played, label_nearest, profile_sentence, render_report
+    from cptcg.sim.report import (disclosure, glossary_json, how_played, label_nearest, profile_sentence,
+                                  render_report)
     from cptcg.sim.tournament import Tournament
     data = json.loads(path_.read_text(encoding="utf-8"))
     old = int(data.get("version", 1)) < Tournament.JSON_VERSION or "summary" not in data
@@ -295,6 +296,9 @@ def report_json(path_: Path) -> dict:
         d.setdefault("shape", profile_sentence(d["profile"]) if d.get("profile") else None)
         d.setdefault("nearest", None)
     data.setdefault("how_played", "")
+    # The disclosure and the glossary are the report's words, not the run's data: they are taken
+    # fresh from Python on every read so a saved file never carries stale wording.
+    data["disclosure"] = disclosure(data.get("agent") or "heuristic")
     data["glossary"] = glossary_json()
     for parent in (path_.parent, path_.parent.parent):
         series = parent / "league.json"

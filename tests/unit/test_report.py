@@ -194,6 +194,33 @@ def test_api_report_upgrades_a_version_1_file():
     assert "## How to read this report" in data["markdown"] and "ruthless-lowlife" not in data["markdown"]
 
 
+def test_every_rendered_report_discloses_who_played_the_games(reg):
+    """The ranking is conditional on the agent, so the disclosure is part of the report: it names
+    the agent, states the three measured defects, gives the numbers behind them, and sits above the
+    standings. The Markdown, the web report and the GUIDE all print the one Python string."""
+    from cptcg.sim.report import disclosure
+    text = disclosure("heuristic")
+    for phrase in ("heuristic agent", "one ply ahead", "cannot plan across turns", "never holds a Blocker back",
+                   "largest Gig die", "mulligans by a fixed rule", "98.6%", "61.7%", "59.4%",
+                   "No human games are recorded anywhere in this project"):
+        assert phrase in text, phrase
+    assert "**" not in text and "`" not in text          # plain text: the page prints it verbatim
+    assert disclosure("random").startswith("Both sides of every game here were played by the random agent")
+
+    t = Tournament.load(ROOT / "out/league_demo/gen1/tournament.json", siblings=False)
+    rep = render_report(t, reg=reg)
+    assert "## Who played these games" in rep and text in rep
+    assert rep.index(text) < rep.index("## Standings")    # ahead of the numbers it qualifies
+
+    from cptcg.web import backend
+    data = backend.report_json(ROOT / "out/league_demo/gen1/tournament.json")
+    assert data["disclosure"] == text                      # the page prints the same words
+    js = (ROOT / "src/cptcg/web/static/report.js").read_text(encoding="utf-8")
+    assert "t.disclosure" in js
+    guide = (ROOT / "src/cptcg/web/static/index.html").read_text(encoding="utf-8")
+    assert text in guide                                   # the GUIDE entry, word for word
+
+
 def test_glossary_entries_back_both_the_markdown_and_the_page():
     from cptcg.sim.report import GLOSSARY, GLOSSARY_ENTRIES, glossary_json
     assert GLOSSARY[0] == "## How to read this report" and len(GLOSSARY) == 2 + len(GLOSSARY_ENTRIES)

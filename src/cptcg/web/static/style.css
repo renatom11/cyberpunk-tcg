@@ -328,6 +328,10 @@ table.rep th { color: var(--cyan); }
 .report .lede { color: var(--dim); font-size: 12.5px; margin: 2px 0 8px; line-height: 1.4; }
 .report .rsec { margin: 18px 0 0; padding-top: 10px; border-top: 1px solid var(--line); }
 .report .rsec h3 { margin: 0 0 4px; color: var(--cyan); font-size: 14px; letter-spacing: .06em; text-transform: uppercase; }
+/* The disclosure of who played the games: readable body text, not a footnote, marked with the
+   yellow rule so it is not skimmed past on the way to the standings. */
+.report .disc { margin: 4px 0 0; padding: 8px 12px; border-left: 3px solid var(--yellow); background: #10161f;
+  border-radius: 0 6px 6px 0; font-size: 13px; line-height: 1.5; color: var(--text); }
 .report h4 { margin: 14px 0 4px; color: var(--text); font-size: 13px; }
 .report h5 { margin: 8px 0 4px; color: var(--cyan); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
 .report .words { margin: 4px 0; padding-left: 20px; font-size: 14px; line-height: 1.5; color: #fff; }

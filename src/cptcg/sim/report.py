@@ -2,9 +2,9 @@
 
 Everything a reader sees is produced here, once, in Python: the summary sentences
 (``summarize``), the significance wording (``sig_word``), how the games were played
-(``how_played``), the deck shape numbers (``deck_profile_json``) and the Markdown document
-(``render_report``). The web page prints the same sentences from the JSON, so the words are
-unit-tested and never duplicated in JavaScript.
+(``how_played``), who played them and what that is worth (``disclosure``), the deck shape numbers
+(``deck_profile_json``) and the Markdown document (``render_report``). The web page prints the
+same sentences from the JSON, so the words are unit-tested and never duplicated in JavaScript.
 
 Statistics are described honestly: an interval is a range of plausible values, "statistically
 solid" means the false-discovery-adjusted q is below 0.05, a rock–paper–scissors pattern is only
@@ -235,6 +235,40 @@ def how_played(t: Tournament) -> str:
     rest = len(cells) - len(stopped)
     return (head + f"{len(stopped)} of {len(cells)} stopped before the cap of {cap} ({at}), "
             + _join(reasons) + (f"; the other {rest} ran to the cap." if rest else "."))
+
+
+# ------------------------------------------------------------------ who played the games
+# The honest disclosure that heads every report. It is written once here, in plain text with no
+# Markdown, so the Markdown report, the web report (through ``/api/report``) and the GUIDE on the
+# site all print exactly the same words. The measured figures are from 360 games per comparison
+# over three deck pairings with the seats mirrored.
+def disclosure(agent: str = "heuristic") -> str:
+    """One paragraph naming the agent that played both sides and saying what that costs the
+    reader: the ranking is conditional on that opponent, the agent's known limits, and the fact
+    that nothing in this project is measured against human play."""
+    never_human = ("No human games are recorded anywhere in this project, so nothing here is validated "
+                   "against human play.")
+    if agent == "heuristic":
+        return (
+            "Both sides of every game here were played by the heuristic agent, a one-ply greedy bot, so the "
+            "ranking is conditional on that opponent: a deck can place highly because it exploits this bot "
+            "rather than because it is good. The agent scores the board one ply ahead and cannot plan across "
+            "turns; it never holds a Blocker back, because its preview assumes the rival passes on every "
+            "reaction; and it always takes the largest Gig die and mulligans by a fixed rule. Over 360 games "
+            "per comparison, on three deck pairings with the seats mirrored, it wins 98.6% against random play "
+            "but loses 61.7% of its games to a two-ply version of itself and 59.4% to versions that never "
+            "mulligan or that take the smallest die. It is a floor rather than a fraud: it plays a recognisable "
+            "game, and every deck here met the same opponent, so the comparison between decks is fair \u2014 what "
+            "is untested is how much of it survives a stronger player. " + never_human)
+    if agent == "random":
+        return (
+            "Both sides of every game here were played by the random agent, which picks uniformly among the "
+            "legal options and never tries to win, so these numbers say which deck wins when neither side is "
+            "played at all. Read them as a check on the engine, not as a ranking of decks. " + never_human)
+    return (
+        f"Both sides of every game here were played by the {agent} agent, so the ranking is conditional on that "
+        "opponent: a deck can place highly because it exploits that agent rather than because it is good, and a "
+        "stronger opponent could order these decks differently. " + never_human)
 
 
 # ------------------------------------------------------------------ the summary in words
@@ -493,6 +527,10 @@ def render_report(t: Tournament, title: str | None = None, reg=None) -> str:
     if played:
         out.append(played)
     out.append("")
+
+    # ---- who played the games: the disclosure comes before any number a reader could take at
+    # face value, because every number below is conditional on the agent that produced it.
+    out += ["## Who played these games", "", disclosure(t.agent), ""]
 
     # ---- summary
     out += ["## Summary", ""]

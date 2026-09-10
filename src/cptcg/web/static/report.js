@@ -1,8 +1,9 @@
 /* report.js — the LAB report page, drawn entirely from a saved tournament.json as GET /api/report
-   serves it. Every sentence about the statistics (the summary, the shape of each deck, the
-   glossary) is computed and unit-tested in Python and printed here verbatim; this file lays the
-   numbers out, draws the win-rate bars, the head-to-head matrix and the league chart, and gives
-   every card its name and picture. Loaded before app.js; app.js calls Report.render(). */
+   serves it. Every sentence about the statistics (the disclosure of who played, the summary, the
+   shape of each deck, the glossary) is computed and unit-tested in Python and printed here
+   verbatim; this file lays the numbers out, draws the win-rate bars, the head-to-head matrix and
+   the league chart, and gives every card its name and picture. Loaded before app.js; app.js
+   calls Report.render(). */
 
 // A deck list grouped Units / Programs / Gear (then anything the card map does not know), each
 // group sorted by cost then name. Shared by the BUILD sheet and the report. Returns
@@ -191,6 +192,17 @@ const Report = (() => {
     root.append(h("p", "lede", how));
     if (t.file) root.append(h("p", "dim file", t.file));
     return root;
+  }
+
+  // ------------------------------------------------------------ 1b. who played the games
+  // The disclosure is written once in Python (report.disclosure) and printed here verbatim, above
+  // every number it qualifies: the standings rank decks against one particular agent, and a
+  // reader who does not know which agent cannot read the numbers correctly.
+  function disclosure(t) {
+    if (!t.disclosure) return null;
+    const s = section("Who played these games", null, "rdisc");
+    s.append(h("p", "disc", t.disclosure));
+    return s;
   }
 
   // ------------------------------------------------------------ 2. summary in words
@@ -619,7 +631,10 @@ const Report = (() => {
     target.innerHTML = "";
     const root = h("div", "report");
     const m = model(t);
-    root.append(header(t, m), summary(t), standings(t, m, ctx), matrix(t, m, ctx), decks(t, m, ctx), cardsSection(t, m, ctx));
+    root.append(header(t, m));
+    const disc = disclosure(t);
+    if (disc) root.append(disc);
+    root.append(summary(t), standings(t, m, ctx), matrix(t, m, ctx), decks(t, m, ctx), cardsSection(t, m, ctx));
     [evolution(t, m, ctx), glossary(t), textVersion(t)].forEach(x => { if (x) root.append(x); });
     target.append(root);
     return root;
