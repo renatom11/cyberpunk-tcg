@@ -263,9 +263,16 @@ def report_json(path_: Path) -> dict:
             decks.append(d)
         t.decks, t.paths = decks, paths
         data = t.to_json(reg())
-    md = path_.with_name("report.md")
-    data["markdown"] = md.read_text(encoding="utf-8") if md.exists() else ""
+        from cptcg.sim.report import render_report
+        data["markdown"] = render_report(t, reg=reg())     # the old report.md printed raw card ids
+    else:
+        md = path_.with_name("report.md")
+        data["markdown"] = md.read_text(encoding="utf-8") if md.exists() else ""
     data["file"] = rel(path_)
+    from cptcg.sim.report import glossary_json, profile_sentence
+    for d in data.get("decks", []):          # files saved before the shape sentence was stored
+        d.setdefault("shape", profile_sentence(d["profile"]) if d.get("profile") else None)
+    data["glossary"] = glossary_json()
     for parent in (path_.parent, path_.parent.parent):
         series = parent / "league.json"
         if series.is_file():

@@ -57,13 +57,17 @@
     </ul>
 
     <h3>Reading a report</h3>
+    <p>A report is what a tournament or a league generation leaves behind. It opens with the run's facts, then says in plain sentences who won and how much to trust it, and every number after that is explained where it appears; the glossary at the end of each report has the full definitions.</p>
     <ul>
-      <li><b>BT (Bradley–Terry rating)</b> — a strength score fitted to all results at once, so a deck that beat strong decks scores higher than one that beat weak ones. Differences are what matter; 1.0 apart means roughly 73% expected win rate.</li>
-      <li><b>vs field</b> — plain win rate over all its games, with the number of games. Most intuitive, but depends on who was in the field.</li>
-      <li><b>Nash</b> — if you had to pick a deck blind against an opponent doing the same, the share of the time you should bring this one. 100% means it is simply the best; a spread means rock–paper–scissors is going on.</li>
-      <li><b>Head-to-head</b> — win rate of the row deck against the column deck and the number of games. Bold means the edge is statistically significant after correcting for the number of matchups; unbold cells could be noise.</li>
-      <li><b>Card table (Markdown report)</b> — for each deck, win rate when a card was drawn versus when it was not (<i>IWD</i>). Large positive values are the cards carrying the deck; negative ones are candidates to cut. It is correlation, not proof.</li>
-      <li><b>Confidence</b> — 100 games gives roughly ±10%; 400 gives ±5%; 1,000 gives ±3%. The tournament stops a pairing early once the winner is clear.</li>
+      <li><b>Summary in words</b> — the strongest deck, which of its matchups are statistically solid and which could still be luck, whether the decks counter each other (rock–paper–scissors), and what to bring if you had to pick blind. These sentences are computed from the results, not written by hand.</li>
+      <li><b>Win rate</b> — games won divided by games played, against every opponent. The bar carries a lighter band: the 95% range of plausible values for the true win rate given this many games. A short run gives a wide band; when two decks' bands overlap heavily, the games have not separated them.</li>
+      <li><b>Strength</b> — a rating fitted to all matchups at once, so beating strong decks counts for more than beating weak ones. It is shown as the win rate it predicts against an average deck in this field (50% is average); the raw rating is in the tooltip.</li>
+      <li><b>Bring it?</b> — if you had to pick a deck blind against an opponent doing the same, how often you should bring this one. 100% means nothing here beats it; a split means the decks counter each other.</li>
+      <li><b>Head-to-head</b> — the row deck's win rate against the column deck, coloured green or red by how far it is from even, with the games in brackets. A tick marks a result that is statistically solid: after correcting for the number of matchups looked at, fewer than one tick in twenty is expected to be a fluke. Cells without a tick could be noise.</li>
+      <li><b>The decks</b> — each list in full: archetype, the shape in words (curve, share of Units, sellable cards, how many blockers, removal, Gig cards and so on), Legends, cards by type, the cost curve, and in a league the swaps tried this generation with how the new card did in the games that came out differently.</li>
+      <li><b>Cards that helped and hurt</b> — per deck, the win rate when a card was drawn against when it stayed in the deck, and the difference in points. It is a correlation, not proof: a card is drawn in particular games against particular opponents. The league's swap test is the causal check.</li>
+      <li><b>League evolution</b> — a chart of each builder's strength across the generations, coloured by archetype, with fresh and replaced decks marked, and a table of how each archetype did over the whole league.</li>
+      <li><b>Games differ per matchup</b> — a matchup stops as soon as one deck is clearly ahead or the two are clearly even, so lopsided pairs use few games and close ones run to the cap. As a rule of thumb 100 games pin a win rate to about ±10 points, 400 to ±5, 1,000 to ±3.</li>
     </ul>
 
     <h3>Archetypes: kinds of deck learned from play</h3>
@@ -166,12 +170,12 @@
           <li><b>Run a league</b> — the AI invents decks. Each builder either explores (invents a deck shape) or builds toward an archetype learned from earlier runs; every generation they improve their deck by trial swaps against each other, play a round robin, and the worst is replaced by a fresh build. Learned card values, past champions and the archetypes themselves carry over to the next league.</li>
           <li><b>Generate decks</b> — build many different legal decks at once (novelty rules keep them varied), optionally screen them against a panel and keep only the best. They appear in every deck list, so you can play them, edit them in BUILD or enter them in a tournament.</li>
         </ul>
-        <p><b>Reports</b> on the right: open any finished tournament (including each generation of a league). The table lists rating, win rate against the field and Nash weight; the head-to-head matrix shows who beats whom, bold when the result is statistically significant; the full Markdown report adds the cards that most raised or lowered each deck's win rate when drawn.</p>
+        <p><b>Reports</b> on the right: open any finished tournament (including each generation of a league). A report says in words who won and how much to trust it, ranks the decks with their win rate and its range of plausible values, colours the head-to-head matrix by who beats whom and ticks the results that are statistically solid, prints every deck list with its archetype and shape, lists the cards that helped and hurt each deck, and for a league draws how every builder's strength moved across the generations. Each deck can be opened in BUILD with one tap.</p>
         <p>Rough cost: heuristic AIs play about 5 games per second per core on a computer, 2–3 per core in the browser, and the LAB runs one engine per core. A 4-deck tournament at 200 games per pair is ~1,200 games, a minute or two; a 6-builder league of 3 generations takes 10–20 minutes. The estimate under each START button is a range, because every comparison stops as soon as its result is clear: the low end assumes each one settles at its first batch of games, the high end that every one runs to its cap. While a job runs, its card shows what it is doing, how many of its comparisons are settled, a progress bar, and a time-left range that applies the speed measured on this device to the games it can still play — the range narrows as comparisons settle. The games counter is information about the run so far, not a target.</p>
       </details>
       <div class="setup">
         <h2>Run a tournament</h2>
-        <p class="hint">Every pair plays mirrored games until the cap or until the SPRT is sure. Reports rank decks by Bradley–Terry rating, field win rate and Nash weight.</p>
+        <p class="hint">Every pair plays mirrored games (each seed twice, seats swapped) until the cap, or until one deck is clearly ahead or the two are clearly even. The report ranks the decks by win rate with its range of plausible values, by a strength rating fitted to all matchups at once, and by what to bring if you had to pick blind.</p>
         <div id="tDecks" class="checklist"></div>
         <div class="row">
           <label>Name <input id="tName" placeholder="my tournament" size="14"></label>
@@ -220,6 +224,7 @@
     <div class="labcol">
       <div class="setup">
         <h2>Reports</h2>
+        <p class="hint">Pick a finished run and press OPEN. The page starts with the result in words, then the standings, the head-to-head matrix, every deck list, the cards that helped and hurt, and (for leagues) the evolution chart; a glossary at the end explains each term and a text version can be copied. Nothing on it needs prior knowledge of the statistics: a range is the plausible values, a tick means the result is unlikely to be luck.</p>
         <div class="row"><label>Tournament <select id="reportFile"></select></label>
           <button id="loadReport" class="primary">OPEN</button></div>
         <div id="report"></div>
@@ -297,6 +302,7 @@
 
 <div id="popover" class="popover hidden"></div>
 <!-- STATIC_BOOT -->
+<script src="static/report.js"></script>
 <script src="static/app.js"></script>
 </body>
 </html>

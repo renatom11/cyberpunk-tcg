@@ -307,3 +307,104 @@ table.rep th { color: var(--cyan); }
 .jobs .job .prog-text { margin-top: 4px; line-height: 1.4; }
 .jobs .job .prog { height: 3px; background: #121a26; border-radius: 2px; overflow: hidden; margin: 5px 0 2px; }
 .jobs .job .prog i { display: block; height: 100%; width: 0; background: var(--cyan); transition: width .5s ease; }
+
+/* ---------------------------------------------------------------- lab: the report page
+   Everything sits inside the right lab column; tables that can be wider than a phone live in a
+   .scroll-x wrapper so the page itself never scrolls sideways. */
+.report { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.report .rhead h2 { margin: 12px 0 4px; color: var(--yellow); font-size: 17px; letter-spacing: .04em; }
+.report .facts { margin: 0 0 6px; color: var(--text); font-size: 13px; }
+.report .file { font-size: 11px; margin: 0; }
+.report .lede { color: var(--dim); font-size: 12.5px; margin: 2px 0 8px; line-height: 1.4; }
+.report .rsec { margin: 18px 0 0; padding-top: 10px; border-top: 1px solid var(--line); }
+.report .rsec h3 { margin: 0 0 4px; color: var(--cyan); font-size: 14px; letter-spacing: .06em; text-transform: uppercase; }
+.report h4 { margin: 14px 0 4px; color: var(--text); font-size: 13px; }
+.report h5 { margin: 8px 0 4px; color: var(--cyan); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.report .words { margin: 4px 0; padding-left: 20px; font-size: 14px; line-height: 1.5; color: #fff; }
+.report .words li { margin: 4px 0; }
+.report .scroll-x { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
+.report table { border-collapse: collapse; font-size: 13px; }
+.report table.rep.small { font-size: 12px; margin: 6px 0; }
+.report table.rep.small th, .report table.rep.small td { white-space: nowrap; }
+.report .kind { display: inline-block; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--cyan); color: var(--cyan); font-size: 11px; font-weight: 600; white-space: nowrap; vertical-align: middle; }
+.report .kind.exploring { border-color: var(--dim); color: var(--dim); }
+.report .cardchip { color: var(--text); cursor: default; }
+.report .cardchip.pic { display: inline-flex; flex-direction: column; align-items: center; width: 64px; text-align: center; font-size: 10px; line-height: 1.15; color: var(--dim); }
+.report .cardchip.pic img { width: 60px; height: 84px; object-fit: cover; border-radius: 4px; border: 1px solid var(--line2); display: block; margin-bottom: 2px; }
+.report .legs { display: flex; gap: 6px; flex-wrap: wrap; }
+.report .legs.big .cardchip.pic { width: 92px; font-size: 11px; }
+.report .legs.big .cardchip.pic img { width: 88px; height: 123px; }
+.report .acts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.report .acts button, .report .textver button { padding: 3px 9px; font-size: 11px; }
+/* standings */
+.report table.stand { width: 100%; }
+.report table.stand th, .report table.stand td { border-bottom: 1px solid var(--line); padding: 6px 6px; text-align: left; vertical-align: middle; }
+.report table.stand th { color: var(--cyan); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+.report table.stand td.rank { color: var(--yellow); font-weight: 800; font-size: 15px; width: 28px; }
+.report table.stand td.deck b { color: #fff; }
+.report table.stand td.wr { min-width: 150px; }
+.report table.stand td.legends { min-width: 216px; } .report table.stand td.legends .legs { flex-wrap: nowrap; }
+.report table.stand td.bt small, .report table.stand td.nash small { color: var(--dim); }
+.report .barwrap { display: flex; flex-direction: column; gap: 3px; }
+.report .bar { position: relative; height: 12px; background: #121a26; border-radius: 6px; overflow: hidden; }
+.report .bar s { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--line2); text-decoration: none; }
+.report .bar .ci { position: absolute; top: 0; bottom: 0; background: rgba(88, 224, 255, .28); }
+.report .bar b { position: absolute; top: 2px; bottom: 2px; width: 3px; margin-left: -1.5px; background: var(--cyan); border-radius: 2px; }
+.report .bartext { font-size: 12px; white-space: nowrap; } .report .bartext small { color: var(--dim); }
+.report .kinds { margin-top: 10px; }
+/* head-to-head */
+.report table.matrix th, .report table.matrix td { border: 1px solid var(--line); padding: 5px 7px; text-align: center; font-size: 12px; white-space: nowrap; }
+.report table.matrix th { color: var(--cyan); font-weight: 600; }
+.report table.matrix tr th:first-child { text-align: left; }
+.report table.matrix td .r { font-weight: 700; color: #fff; }
+.report table.matrix td .sig { color: var(--yellow); font-weight: 900; margin-left: 2px; }
+.report table.matrix td small { color: var(--dim); }
+.report table.matrix td.self { color: var(--dim); }
+.report table.matrix .short { display: none; }
+.report .legend { color: var(--dim); font-size: 11.5px; margin: 6px 0 0; }
+/* the decks */
+.report details.deck { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; margin: 6px 0; background: #0a1018; }
+.report details.deck summary { cursor: pointer; font-size: 13px; }
+.report details.deck summary b { color: #fff; }
+.report details.deck .legnames { font-size: 12px; }
+.report details.deck .body { padding: 6px 0 2px; }
+.report .shape { font-size: 12.5px; margin: 4px 0 8px; color: var(--text); } .report .shape b { color: var(--cyan); }
+.report details.deck .row { align-items: flex-start; }
+.report details.deck .lbl { font-size: 10px; color: var(--dim); letter-spacing: .1em; flex-basis: 100%; }
+.report .deckgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 4px 14px; margin: 6px 0; }
+.report .deckgrid .line { font-size: 12px; padding: 1px 0; border-bottom: 1px solid #0f1620; }
+.report .deckgrid .line .n { color: var(--yellow); font-weight: 800; margin-right: 5px; }
+.report .curve.mini { height: 44px; margin: 14px 0 12px; } .report .curve.mini div { width: 18px; }
+.report .changes { margin: 8px 0; font-size: 12.5px; } .report .changes ul { margin: 2px 0; padding-left: 20px; } .report .changes p { margin: 4px 0; }
+.report .replaced { color: var(--yellow); font-size: 12.5px; }
+/* cards that helped and hurt */
+.report table.helped td.pos { color: var(--green); font-weight: 700; } .report table.helped td.neg { color: var(--red); font-weight: 700; }
+.report table.helped tr.gap td { color: var(--dim); }
+/* league evolution */
+.report svg.evo { width: 100%; height: auto; display: block; margin: 6px 0; }
+.report svg.evo .grid { stroke: var(--line); stroke-width: 1; } .report svg.evo .mid { stroke: var(--line2); stroke-dasharray: 4 4; }
+.report svg.evo .seg { stroke-width: 2; opacity: .8; }
+.report svg.evo .tick { fill: var(--dim); font-size: 11px; } .report svg.evo .name { font-size: 11px; font-weight: 700; }
+.report svg.evo .cross { fill: var(--red); font-size: 11px; font-weight: 900; }
+.report .evolegend { display: flex; gap: 6px 14px; flex-wrap: wrap; font-size: 11.5px; color: var(--text); margin: 4px 0; }
+.report .evolegend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+/* glossary + text version */
+.report .rglossary { margin-top: 18px; max-width: none; }
+.report .rglossary dl { margin: 6px 0; } .report .rglossary dt { color: #fff; font-weight: 700; margin-top: 8px; } .report .rglossary dd { margin: 2px 0 0; color: var(--text); }
+.report .textver { margin-top: 12px; font-size: 12px; color: var(--dim); } .report .textver summary { cursor: pointer; }
+@media (max-width: 700px) {
+  .report .lede { font-size: 12px; }
+  /* standings become cards: one block per deck, each cell labelled */
+  .report table.stand, .report table.stand tbody, .report table.stand tr, .report table.stand td { display: block; width: 100%; }
+  .report table.stand thead { display: none; }
+  .report table.stand tr { border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; margin: 6px 0; background: #0a1018; }
+  .report table.stand td { border: 0; padding: 3px 0; }
+  .report table.stand td[data-l]:not(.rank):not(.deck):not(.act)::before { content: attr(data-l); display: block; font-size: 10px; color: var(--dim); letter-spacing: .08em; text-transform: uppercase; }
+  .report table.stand td.rank { float: left; width: auto; margin-right: 8px; font-size: 18px; }
+  .report table.stand td.deck { font-size: 14px; }
+  .report table.stand td.bt, .report table.stand td.nash { display: inline-block; width: 48%; }
+  .report .cardchip.pic { width: 52px; } .report .cardchip.pic img { width: 50px; height: 70px; }
+  .report table.matrix .full { display: none; } .report table.matrix .short { display: inline; }
+  .report .deckgrid { grid-template-columns: 1fr; }
+  .report .rsec h3 { font-size: 13px; }
+}

@@ -45,6 +45,7 @@ def build(out: Path, pyodide_url: str = PYODIDE) -> dict:
             f'<script src="static/boot.js?v={v}"></script>')
     html = html.replace("<!-- STATIC_BOOT -->", boot)
     html = html.replace('href="static/style.css"', f'href="static/style.css?v={v}"')
+    html = html.replace('src="static/report.js"', f'src="static/report.js?v={v}"')
     html = html.replace('src="static/app.js"', f'src="static/app.js?v={v}"')
     (out / "index.html").write_text(html, encoding="utf-8")
     (out / ".nojekyll").write_text("")

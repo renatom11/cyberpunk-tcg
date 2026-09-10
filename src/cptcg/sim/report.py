@@ -430,38 +430,46 @@ def render_report(t: Tournament, title: str | None = None, reg=None) -> str:
     return "\n".join(out) + "\n"
 
 
-GLOSSARY = [
-    "## How to read this report", "",
-    "- **Win rate** — games won divided by games played, against every opponent. The range in brackets is a 95% "
-    "confidence interval: the values the deck's true win rate could plausibly have, given this many games. Fewer games "
-    "make the range wider; when two decks' ranges overlap heavily, the games have not separated them.",
-    "- **Strength** — a Bradley–Terry rating fitted to all matchups at once. 1.0 is an average deck in this field; a deck "
-    "rated 2.0 is expected to win about 67% of its games against an average deck (2 ÷ (2 + 1)), one rated 0.5 about 33%. "
-    "Unlike the plain win rate it accounts for who each deck actually played.",
-    "- **Bring it?** — how often a player who must pick a deck blind for exactly this field should bring it: the mix "
-    "(a Nash equilibrium of the head-to-head results) that no other mix beats. 100% on one deck means nothing here beats "
-    "it; a split means the decks counter each other.",
-    "- **Statistically solid** — a matchup result far enough from 50–50 that luck alone would rarely produce it. The "
-    "test is corrected for looking at many matchups at once (Benjamini–Hochberg false-discovery rate): \"solid\" means the "
-    "adjusted value q is below 0.05, so among all results marked solid we expect fewer than one in twenty to be flukes; "
-    "\"very solid\" is q below 0.01, \"suggestive\" is q below 0.2, and everything else is \"not established\". Results "
-    "resting on fewer than 30 games are flagged, because small samples swing.",
-    "- **Games differ per matchup** — a matchup stopped as soon as a sequential test (an SPRT) found one deck clearly "
-    "ahead, or the two clearly even, so lopsided matchups used few games and close ones ran to the cap.",
-    "- **Won when drawn / when not drawn** — of the games in which the deck drew a card at least once, the share it won; "
-    "and the same for the games where the card stayed in the deck. **Difference** is the first minus the second, in "
-    "percentage points. It is correlational, so a large number is a lead to test, not a proof.",
-    "- **Archetype** — a kind of deck learned from play, not written down in advance: the lab groups every deck that "
-    "has played by its shape numbers (average cost, share of Units, removal, Gig cards, economy, …) and names each "
-    "group after the two features that set it apart, such as \"Low-curve swarm\". A builder labelled \"exploring\" "
-    "was not aiming at any group: it invented a shape at random, which is how new archetypes get found. The "
-    "Archetypes table pools the decks of each group so a group can be judged as a whole.",
-    "- **Shape** — a few numbers that describe the list itself: the curve (average cost), the share of Units, the "
-    "share of cards with a sell tag, and how many blockers, removal effects, Gig-manipulation cards, haste, economy, "
-    "extra-steal and draw effects it runs. These are the numbers archetypes are learned from.",
-    "- **Changes this generation** — in a league each builder tries single-card swaps, playing the same games with the "
-    "old and the new card; a swap is accepted only when the new card wins clearly more of the games that came out "
-    "differently.",
-    "- **Mirrored games** — every random seed is played twice with the seats swapped, so neither deck gains from going "
-    "first more often.",
+# The glossary: one (term, explanation) per entry. The Markdown prints it as a list under
+# "How to read this report"; the web page prints the same entries from ``/api/report``.
+GLOSSARY_ENTRIES = [
+    ("Win rate", "games won divided by games played, against every opponent. The range in brackets is a 95% "
+     "confidence interval: the values the deck's true win rate could plausibly have, given this many games. Fewer games "
+     "make the range wider; when two decks' ranges overlap heavily, the games have not separated them."),
+    ("Strength", "a Bradley–Terry rating fitted to all matchups at once. 1.0 is an average deck in this field; a deck "
+     "rated 2.0 is expected to win about 67% of its games against an average deck (2 ÷ (2 + 1)), one rated 0.5 about 33%. "
+     "Unlike the plain win rate it accounts for who each deck actually played."),
+    ("Bring it?", "how often a player who must pick a deck blind for exactly this field should bring it: the mix "
+     "(a Nash equilibrium of the head-to-head results) that no other mix beats. 100% on one deck means nothing here beats "
+     "it; a split means the decks counter each other."),
+    ("Statistically solid", "a matchup result far enough from 50–50 that luck alone would rarely produce it. The "
+     "test is corrected for looking at many matchups at once (Benjamini–Hochberg false-discovery rate): \"solid\" means the "
+     "adjusted value q is below 0.05, so among all results marked solid we expect fewer than one in twenty to be flukes; "
+     "\"very solid\" is q below 0.01, \"suggestive\" is q below 0.2, and everything else is \"not established\". Results "
+     "resting on fewer than 30 games are flagged, because small samples swing."),
+    ("Games differ per matchup", "a matchup stopped as soon as a sequential test (an SPRT) found one deck clearly "
+     "ahead, or the two clearly even, so lopsided matchups used few games and close ones ran to the cap."),
+    ("Won when drawn / when not drawn", "of the games in which the deck drew a card at least once, the share it won; "
+     "and the same for the games where the card stayed in the deck. **Difference** is the first minus the second, in "
+     "percentage points. It is correlational, so a large number is a lead to test, not a proof."),
+    ("Archetype", "a kind of deck learned from play, not written down in advance: the lab groups every deck that "
+     "has played by its shape numbers (average cost, share of Units, removal, Gig cards, economy, …) and names each "
+     "group after the two features that set it apart, such as \"Low-curve swarm\". A builder labelled \"exploring\" "
+     "was not aiming at any group: it invented a shape at random, which is how new archetypes get found. The "
+     "Archetypes table pools the decks of each group so a group can be judged as a whole."),
+    ("Shape", "a few numbers that describe the list itself: the curve (average cost), the share of Units, the "
+     "share of cards with a sell tag, and how many blockers, removal effects, Gig-manipulation cards, haste, economy, "
+     "extra-steal and draw effects it runs. These are the numbers archetypes are learned from."),
+    ("Changes this generation", "in a league each builder tries single-card swaps, playing the same games with the "
+     "old and the new card; a swap is accepted only when the new card wins clearly more of the games that came out "
+     "differently."),
+    ("Mirrored games", "every random seed is played twice with the seats swapped, so neither deck gains from going "
+     "first more often."),
 ]
+
+GLOSSARY = ["## How to read this report", ""] + [f"- **{term}** — {text}" for term, text in GLOSSARY_ENTRIES]
+
+
+def glossary_json() -> list[dict]:
+    """The glossary as ``[{"term", "text"}]`` for the web page (plain text, no Markdown)."""
+    return [{"term": term, "text": text.replace("**", "")} for term, text in GLOSSARY_ENTRIES]

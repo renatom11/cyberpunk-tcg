@@ -152,18 +152,20 @@ class Tournament:
     def to_json(self, reg=None) -> dict:
         """Everything a report needs, computed once. ``reg`` (default: the standard registry)
         resolves card names for the summary sentences and the deck profiles."""
-        from cptcg.sim.report import deck_profile_json, registry, summarize
+        from cptcg.sim.report import deck_profile_json, profile_sentence, registry, summarize
         reg = registry(reg)
         n = self.n()
         bt = self.bt()
         nash = self.nash()
         q = self.qvalues()
+        profiles = [deck_profile_json(d, reg) for d in self.decks]
         return {
             "version": self.JSON_VERSION,
             "agent": self.agent, "seed": self.seed, "rules": DEFAULT_CONFIG.digest(),
             "info": dict(self.info),
             "decks": [{"name": d.name, "legends": list(d.legends), "main": d.counts(),
-                       "meta": dict(d.meta), "profile": deck_profile_json(d, reg), "path": self.deck_path(i)}
+                       "meta": dict(d.meta), "profile": profiles[i],
+                       "shape": profile_sentence(profiles[i]) if profiles[i] else None, "path": self.deck_path(i)}
                       for i, d in enumerate(self.decks)],
             "cells": [{"i": c.i, "j": c.j, "wins_i": c.wins_i, "n": c.n, "verdict": c.verdict,
                        "wilson": list(wilson(c.wins_i, c.n)), "q": q[(c.i, c.j)],

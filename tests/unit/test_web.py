@@ -34,7 +34,12 @@ def post(base, path, body):
 
 def test_static_and_lists(base):
     with urllib.request.urlopen(base + "/") as r:
-        assert b"CYBERPUNK TCG" in r.read()
+        html = r.read().decode()
+    assert "CYBERPUNK TCG" in html
+    # the report renderer is a separate script that app.js relies on, so it loads first
+    assert html.index('src="static/report.js"') < html.index('src="static/app.js"')
+    with urllib.request.urlopen(base + "/static/report.js") as r:
+        assert b"Report.render" in r.read()
     decks = get(base, "/api/decks")
     assert any(d["name"] == "Sample Corpos" for d in decks)
     assert len(get(base, "/api/cards")) == 151
@@ -180,3 +185,16 @@ def test_job_cancel(base):
         time.sleep(0.1)
     assert j["status"] == "cancelled", j["status"]
     shutil.rmtree(web.ROOT / "out" / "lab" / f"cancel-me-{job['id']}", ignore_errors=True)
+
+
+def test_site_build_stamps_every_script(tmp_path):
+    import importlib.util
+    from pathlib import Path
+    spec = importlib.util.spec_from_file_location("build_site", Path(__file__).resolve().parents[2] / "tools/build_site.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    m = mod.build(tmp_path / "site")
+    html = (tmp_path / "site/index.html").read_text(encoding="utf-8")
+    v = m["build"]
+    assert f'src="static/report.js?v={v}"' in html and f'src="static/app.js?v={v}"' in html and f'href="static/style.css?v={v}"' in html
+    assert (tmp_path / "site/static/report.js").is_file()

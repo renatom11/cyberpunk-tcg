@@ -7,7 +7,7 @@ import pytest
 
 from cptcg.cards.registry import load_default
 from cptcg.deck.decklist import Decklist
-from cptcg.sim.report import (card_name, deck_profile_json, render_report, sig_word, summarize,
+from cptcg.sim.report import (card_name, deck_profile_json, profile_sentence, render_report, sig_word, summarize,
                               top_and_bottom)
 from cptcg.sim.tournament import CardStat, Cell, Tournament, run_tournament
 
@@ -139,6 +139,7 @@ def test_version_1_file_loads_and_renders(reg):
     assert "Dexter DeShawn — Off the Grid" in rep and "| dexter-deshawn" not in rep
     data = t.to_json(reg)
     assert data["version"] == 2 and data["summary"][0].startswith("builder1 is the strongest deck")
+    assert all(d["shape"] == profile_sentence(d["profile"]) for d in data["decks"])
 
 
 def test_api_report_upgrades_a_version_1_file():
@@ -149,3 +150,15 @@ def test_api_report_upgrades_a_version_1_file():
     assert d0["meta"]["generated"] == "heuristic"                    # pulled from the sibling builder1.json
     assert d0["path"] == "out/league_demo/gen1/builder1.json" and d0["profile"]["cards"] == 40
     assert data["file"] == "out/league_demo/gen1/tournament.json" and "league_series" not in data
+    # What the web page prints: the shape sentence per deck, the glossary, and a Markdown text
+    # version re-rendered from the loaded run (the old report.md printed raw card ids).
+    assert d0["shape"].endswith("sellable") or "% Units" in d0["shape"]
+    assert [g["term"] for g in data["glossary"]][:2] == ["Win rate", "Strength"] and "**" not in data["glossary"][5]["text"]
+    assert "## How to read this report" in data["markdown"] and "ruthless-lowlife" not in data["markdown"]
+
+
+def test_glossary_entries_back_both_the_markdown_and_the_page():
+    from cptcg.sim.report import GLOSSARY, GLOSSARY_ENTRIES, glossary_json
+    assert GLOSSARY[0] == "## How to read this report" and len(GLOSSARY) == 2 + len(GLOSSARY_ENTRIES)
+    for (term, text), line, entry in zip(GLOSSARY_ENTRIES, GLOSSARY[2:], glossary_json()):
+        assert line == f"- **{term}** — {text}" and entry == {"term": term, "text": text.replace("**", "")}

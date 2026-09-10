@@ -279,28 +279,23 @@ async function rpGo(step) {
 }
 
 // ---------------------------------------------------------------- lab
-function renderReport(t) {
-  const names = t.decks.map(d => d.name);
-  const bt = t.bradley_terry, nash = t.nash, order = t.standings;
-  let h = `<table class="rep"><tr><th>#</th><th>Deck</th><th>Legends</th><th>BT</th><th>vs field</th><th>Nash</th></tr>`;
-  order.forEach((i, r) => { const f = t.field[i]; h += `<tr><td>${r + 1}</td><td>${names[i]}</td><td>${t.decks[i].legends.join(", ")}</td><td>${bt[i].toFixed(2)}</td><td>${f.games ? Math.round(100 * f.wins / f.games) + "%" : "—"} (${f.games})</td><td>${Math.round(100 * nash[i])}%</td></tr>`; });
-  h += `</table><h3>Head-to-head (row beats column)</h3><table class="rep"><tr><th></th>${order.map(i => `<th>${names[i].slice(0, 14)}</th>`).join("")}</tr>`;
-  const cell = {}; t.cells.forEach(c => { cell[`${c.i},${c.j}`] = c; });
-  order.forEach(i => {
-    h += `<tr><th>${names[i].slice(0, 14)}</th>`;
-    order.forEach(j => {
-      if (i === j) { h += "<td>·</td>"; return; }
-      const c = cell[`${Math.min(i, j)},${Math.max(i, j)}`];
-      if (!c) { h += "<td>—</td>"; return; }
-      const w = i < j ? c.wins_i : c.n - c.wins_i;
-      const sig = c.q < 0.05 ? "font-weight:800;color:#f4e01f" : "";
-      h += `<td style="${sig}">${Math.round(100 * w / c.n)}% <small>(${c.n})</small></td>`;
-    });
-    h += "</tr>";
-  });
-  h += "</table>";
-  if (t.markdown) h += `<details><summary>Full report (${t.file || ""})</summary><pre class="md">${t.markdown.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}</pre></details>`;
-  $("#report").innerHTML = h;
+// The report page is drawn by report.js from the /api/report JSON; this page lends it the card
+// map, the hover/tap preview, the API and a way into BUILD.
+function renderReport(t) { Report.render($("#report"), t, { cards: CARDS, preview: (c, touch) => showPreview(`images/${c.id}.jpg`, c, touch), unpreview: hidePreview, openInBuild: openDeckInBuild, api }); }
+// Open a report's deck in BUILD: the saved file when the report knows it, else a deck of the same
+// name from the deck lists, else the list exactly as the report carries it (validated on load).
+async function openDeckInBuild(d) {
+  let deck = null;
+  const load = async (path) => { try { return await api(`/api/deck?path=${encodeURIComponent(path)}`); } catch (e) { return null; } };
+  if (d.path) deck = await load(d.path);
+  if (!deck) { const same = (await api("/api/decks")).find(x => x.name === d.name); if (same) deck = await load(same.path); }
+  if (!deck) {
+    try { deck = { ...(await api("/api/validate", { name: d.name, legends: d.legends, main: d.main })), name: d.name, legends: d.legends, main: d.main }; }
+    catch (e) { alert("could not open this deck: " + e.message); return; }
+  }
+  bLoadDeck(deck);
+  $("nav button[data-mode=build]").click();
+  window.scrollTo(0, 0);
 }
 
 // ---------------------------------------------------------------- lab jobs
@@ -591,11 +586,9 @@ function renderDeckSheet() {
   }
   // list grouped by type
   const list = $("#bList"); list.innerHTML = "";
-  const groups = { Unit: [], Program: [], Gear: [] };
-  Object.entries(B.main).forEach(([id, n]) => { const c = CARDS[id]; if (c) (groups[c.type] || (groups[c.type] = [])).push([c, n]); });
-  Object.entries(groups).forEach(([type, rows]) => {
+  const groups = groupDeck(B.main, CARDS);          // shared with the report (report.js)
+  groups.forEach(([type, rows]) => {
     if (!rows.length) return;
-    rows.sort((a, b) => (a[0].cost ?? 99) - (b[0].cost ?? 99) || a[0].name.localeCompare(b[0].name));
     list.append(el("h4", "", `${type.toUpperCase()}S · ${rows.reduce((a, r) => a + r[1], 0)}`));
     rows.forEach(([c, n]) => {
       const line = el("div", "line" + (bLegal(c) ? "" : " bad"));
@@ -607,7 +600,7 @@ function renderDeckSheet() {
   });
   // text export
   const lines = [`# ${B.name}`, "", "## Legends", ...B.legends.map(id => `- ${CARDS[id]?.name || id}`), "", "## Main deck"];
-  Object.entries(groups).forEach(([type, rows]) => { if (rows.length) { lines.push(`### ${type}s`); rows.forEach(([c, n]) => lines.push(`${n} ${c.name}${c.subtitle ? " — " + c.subtitle : ""}`)); } });
+  groups.forEach(([type, rows]) => { if (rows.length) { lines.push(`### ${type}s`); rows.forEach(([c, n]) => lines.push(`${n} ${c.name}${c.subtitle ? " — " + c.subtitle : ""}`)); } });
   $("#bText").value = lines.join("\n");
 }
 
