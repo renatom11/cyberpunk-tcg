@@ -376,26 +376,70 @@ def hill_climb(reg: Registry, deck: Decklist, field_decks: list[Decklist], steps
 # ------------------------------------------------------------------ league
 def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int = 5, seed: int = 0,
            agent: str = "heuristic", workers: int | None = None, games_per_pair: int = 60,
-           out_dir: str | Path | None = None, progress=None):
+           out_dir: str | Path | None = None, progress=None, strategies=None,
+           knowledge_path: str | Path | None = None, hall_of_fame_path: str | Path | None = None,
+           hof_opponents: int = 2, seeds_per_batch: int = 20, max_batches: int = 3):
     """N builders invent decks, improve them against the current population, then play a round
     robin; the worst is replaced by a fresh build each generation. Yields (generation, Tournament,
-    decks) so callers can report as it runs."""
+    decks) so callers can report as it runs.
+
+    Each builder carries a personality from deck/strategies.py (``strategies``: a list of names
+    or BuilderStrategy objects, cycled; None = all personalities in turn; ``"legacy"`` = the
+    original unopinionated ``heuristic_deck``) and records it in ``deck.meta["strategy"]``.
+    With ``knowledge_path`` every generation's tournament feeds the Knowledge store, which the
+    builders read when they construct. With ``hall_of_fame_path`` past champions join the field
+    the builders climb against (``hof_opponents`` of them) and each generation's best are
+    offered to the hall."""
     from cptcg.sim.report import render_report
     from cptcg.sim.tournament import run_tournament
     rng = Pcg32(seed, seq=5)
-    decks = [heuristic_deck(reg, None, rng, name=f"builder{i + 1}") for i in range(n_builders)]
     out = Path(out_dir) if out_dir else None
+
+    knowledge = hof = None
+    if knowledge_path is not None:
+        from cptcg.deck.knowledge import Knowledge
+        knowledge = Knowledge.load(knowledge_path, reg)
+    if hall_of_fame_path is not None:
+        from cptcg.deck.hall_of_fame import HallOfFame, deck_signature
+        hof = HallOfFame.load(hall_of_fame_path)
+
+    if strategies == "legacy":
+        cycle = None
+    else:
+        from cptcg.deck.strategies import all_strategies, get_strategy
+        cycle = all_strategies() if strategies is None else [get_strategy(s) for s in strategies]
+
+    def fresh(i: int) -> Decklist:
+        name = f"builder{i + 1}"
+        if cycle is None:
+            return heuristic_deck(reg, None, rng, name=name)
+        strat = cycle[i % len(cycle)]
+        return strat.build(reg, None, rng, knowledge=knowledge, name=name)
+
+    decks = [fresh(i) for i in range(n_builders)]
     for gen in range(1, generations + 1):
+        extra = []
+        if hof is not None:
+            extra = hof.opponents(hof_opponents, exclude={deck_signature(d) for d in decks})
         improved = []
         for i, d in enumerate(decks):
-            field_decks = [o for j, o in enumerate(decks) if j != i]
+            field_decks = [o for j, o in enumerate(decks) if j != i] + extra
             if progress:
-                progress(f"gen {gen}: improving {d.name}")
+                progress(f"gen {gen}: improving {d.name}" + (f" [{d.meta['strategy']}]" if "strategy" in d.meta else ""))
             best, _hist = hill_climb(reg, d, field_decks, steps=steps, seed=seed * 100 + gen * 10 + i,
-                                     agent=agent, workers=workers)
+                                     agent=agent, workers=workers, seeds_per_batch=seeds_per_batch,
+                                     max_batches=max_batches)
             improved.append(best)
         decks = improved
         t = run_tournament(decks, agent, games_per_pair, seed=seed * 1000 + gen, workers=workers, sprt=SPRT(0.08))
+        if knowledge is not None:
+            knowledge.update_from_tournament(t)
+            if knowledge.path:
+                knowledge.save()
+        if hof is not None:
+            hof.update_from_tournament(t, generation=gen, source=f"league seed {seed}")
+            if hof.path:
+                hof.save()
         if out:
             (out / f"gen{gen}").mkdir(parents=True, exist_ok=True)
             t.save(out / f"gen{gen}" / "tournament.json")
@@ -404,4 +448,4 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
                 d.save(out / f"gen{gen}" / f"{d.name}.json")
         yield gen, t, decks
         worst = t.standings()[-1]
-        decks[worst] = heuristic_deck(reg, None, rng, name=f"builder{worst + 1}")
+        decks[worst] = fresh(worst)
