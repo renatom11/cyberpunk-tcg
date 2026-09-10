@@ -183,9 +183,9 @@ table.rep th { color: var(--cyan); }
    becomes an overlay and the prompt bar sits at the bottom. */
 @media (max-width: 700px) {
   .top { padding: 3px 6px; height: 36px; box-sizing: border-box; flex-wrap: nowrap; }
-  .brand { font-size: 11px; white-space: nowrap; } .brand span { display: none; }
+  .brand { font-size: 10px; white-space: nowrap; letter-spacing: 0; } .brand span { display: none; }
   nav { display: flex; flex-wrap: nowrap; }
-  nav button { padding: 3px 5px; font-size: 9.5px; margin-left: 2px; }
+  nav button { padding: 3px 4px; font-size: 8.5px; margin-left: 2px; letter-spacing: 0; }
   .board {
     --card-w: 46px; --card-h: 64px;
     display: grid; gap: 3px; padding: 3px; height: calc(100dvh - 36px); overflow: hidden; box-sizing: border-box;
