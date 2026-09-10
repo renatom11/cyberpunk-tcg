@@ -99,6 +99,8 @@ class CardScript:
     on_defeated: Callable | None = None   # DEFEATED trigger
     on_event: Callable | None = None      # on_event(ctx, ev) for any card in play; ev is a tuple
     power_mod: Callable | None = None     # power_mod(ctx, unit, situation) -> delta, for any unit
+    kw_mod: Callable | None = None        # kw_mod(ctx, inst, kw) -> True if this card grants ``kw``
+                                          # to ``inst`` right now (conditional, re-read every time)
     cost_mod: Callable | None = None      # cost_mod(ctx, player, inst, go_solo) -> delta
     self_cost: Callable | None = None     # self_cost(ctx, player, base) -> cost to play this card
     attack_perm: Callable | None = None   # attack_perm(ctx, (units_ok, gigs_ok)) -> new pair or None
@@ -165,15 +167,15 @@ def _hook_row(d: CardDef) -> tuple | None:
     """Per-CardDef hook tuple for ops._rebuild_active, or None when the card has no in-play hook.
 
     (power_mod, cost_mod, on_event, events, would_steal, would_defeat,
-     script-if-it-has-abilities, suppress_new_units)
+     script-if-it-has-abilities, suppress_new_units, kw_mod)
     """
     sc = d.script
     if sc is None or (sc.power_mod is None and sc.cost_mod is None and sc.on_event is None
                       and sc.would_steal is None and sc.would_defeat is None and not sc.abilities
-                      and not sc.extra.get("suppress_new_units")):
+                      and sc.kw_mod is None and not sc.extra.get("suppress_new_units")):
         return None
     return (sc.power_mod, sc.cost_mod, sc.on_event, sc.events, sc.would_steal, sc.would_defeat,
-            sc if sc.abilities else None, bool(sc.extra.get("suppress_new_units")))
+            sc if sc.abilities else None, bool(sc.extra.get("suppress_new_units")), sc.kw_mod)
 
 
 class Registry:

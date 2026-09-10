@@ -114,4 +114,8 @@ pip install pillow rapidocr-onnxruntime
 python tools/crop_cards.py shots/*.png --back back.png --out data/images
 ```
 
+Three faces the desktop grid never showed whole — 6th Street Recruits, Adam Smasher (Metal Over
+Meat) and Adrenaline Converter — were cut by hand from phone captures of the same database, to
+the same 423x590 geometry.
+
 The art is © CD PROJEKT S.A. / WeirdCo and is included for personal use of this tool only.

@@ -37,13 +37,14 @@ def _rebuild_active(s: GameState) -> tuple:
       7     per-player ((inst, would_steal), ...)    8  per-player ((inst, would_defeat), ...)
       9     per-player ((inst, script), ...) for scripts with abilities
       10    per-player suppress_new_units flag
+      11    ((inst, kw_mod), ...)             conditional keyword grants (see has_keyword)
 
-    Per-player slots list player p's cards in slot-p order. Slots 2-4 and 6 list player 0's cards
-    then player 1's, which is also ownership order: an instance only ever sits in its owner's
-    zones.
+    Per-player slots list player p's cards in slot-p order. Slots 2-4, 6 and 11 list player 0's
+    cards then player 1's, which is also ownership order: an instance only ever sits in its
+    owner's zones.
     """
     per = ([], [])
-    pm, cm = [], []
+    pm, cm, kwm = [], [], []
     evs, ws, wd, ab = ([], []), ([], []), ([], []), ([], [])
     sup = [False, False]
     gear_of: dict[int, tuple] = {}
@@ -88,11 +89,13 @@ def _rebuild_active(s: GameState) -> tuple:
                 ab_p.append((i, hk[6]))
             if hk[7]:
                 sup[p] = True
+            if hk[8] is not None:
+                kwm.append((i, hk[8]))
     ev0, ev1 = tuple(evs[0]), tuple(evs[1])
     ev = ev0 + ev1
     cache = (tuple(per[0]), tuple(per[1]), tuple(pm), tuple(cm), ev, gear_of, (ev, ev1 + ev0),
              (tuple(ws[0]), tuple(ws[1])), (tuple(wd[0]), tuple(wd[1])), (tuple(ab[0]), tuple(ab[1])),
-             (sup[0], sup[1]))
+             (sup[0], sup[1]), tuple(kwm))
     s._active = cache
     return cache
 
@@ -356,7 +359,14 @@ def has_keyword(s: GameState, inst: int, kw: Keyword) -> bool:
     for g in gear:
         if kw in defs[s.i_card[g]].keywords:
             return True
-    return bool(s.mods) and s.has_mod("kw", inst) and kw in s.mod_values("kw", inst)
+    if s.mods and s.has_mod("kw", inst) and kw in s.mod_values("kw", inst):
+        return True
+    kwm = _active(s)[11]                   # conditional grants: one truthiness test when unused
+    if kwm:
+        for i, hook in kwm:
+            if hook(_ctx(s, i), inst, kw):
+                return True
+    return False
 
 
 def power(s: GameState, inst: int, sit: int = 0) -> int:

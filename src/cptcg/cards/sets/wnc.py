@@ -381,6 +381,17 @@ def _():
 # =============================================================================
 # Units: PLAY triggers
 # =============================================================================
+@script("adam-smasher-metal-over-meat")
+def _():
+    def play(c):
+        # Every Unit on both sides but himself. Legends are not Units, so a face-up Legend
+        # stays; each Unit's Gear follows its host through the normal defeat path, which also
+        # gives replacement effects ("if this Unit would be defeated ...") their chance.
+        for u in [u for p in (0, 1) for u in c.units(p) if u != c.inst]:
+            c.defeat(u)
+    return CardScript(on_play=play)
+
+
 @script("caliber-totentanzs-top-dog")
 def _():
     def defeated(c):
@@ -924,6 +935,18 @@ def _():
     return CardScript(on_event=ev, events=frozenset({"steal"}))
 
 
+@script("6th-street-recruits")
+def _():
+    def ev(c, e):
+        # "increase a Gig" is unscoped here, as it is on La Llorona and Dexter Deshawn in this
+        # set, so either player's Gig may be increased; only text that says "a friendly Gig"
+        # (Jackie Welles) narrows it. Increase only, hence 1..6.
+        if e[0] == "steal" and e[3] == 6 and c.s.i_owner[e[1]] == c.player \
+                and c.d(e[1]).type is UNIT:
+            c.adjust_up_to([c.player, c.rival], 1, 6, prompt="Increase a Gig")
+    return CardScript(on_event=ev, events=frozenset({"steal"}))
+
+
 @script("maelstrom-goons")
 def _():
     def ev(c, e):
@@ -1006,6 +1029,16 @@ def _():
             cands = [i for i, (_k, v) in enumerate(c.gigs(c.rival)) if v not in mine]
             c.choose(cands, lambda c2, i: push_steals(c2.s, c2.host(), [i]), prompt="Steal a rival Gig")
     return CardScript(on_event=ev, events=frozenset({"steal"}))
+
+
+@script("adrenaline-converter")
+def _():
+    def kw_mod(c, inst, kw):
+        # "this Unit" is the host and nobody else. The Gig counts change mid-turn (a steal is
+        # enough), so the condition is read on every has_keyword call instead of being granted.
+        return (kw is ADRENALINE and inst == c.host()
+                and len(c.gigs(c.rival)) >= len(c.gigs()) + 2)
+    return CardScript(kw_mod=kw_mod)
 
 
 @script("zetatech-faceplate")

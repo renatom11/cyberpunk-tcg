@@ -52,7 +52,9 @@ def evaluate(s: GameState, me: int, w: dict = W) -> float:
     act = _active(s)                     # same call site as the original gear_of = _active(s)[5]
     gear_of = act[5]
     pm = act[2]
+    kwm = act[11]                        # conditional keyword grants; empty for most pools
     hooks = None                         # [(hook, ctx)], resolved once on the first unit
+    kw_hooks = None                      # [(hook, ctx)] for kwm, resolved on the first miss
     z = s.z; i_host = s.i_host; i_card = s.i_card; i_spent = s.i_spent; i_faceup = s.i_faceup
     defs = s.reg.defs; temp_power = s.temp_power; mods = s.mods
     w_spent = w["unit_spent"]; w_ready = w["unit_ready"]; w_count = w["unit_count"]
@@ -105,6 +107,13 @@ def evaluate(s: GameState, me: int, w: dict = W) -> float:
                 else:
                     if mods and s.has_mod("kw", u) and _BLOCKER in s.mod_values("kw", u):
                         ready_blocker = True
+                if not ready_blocker and kwm:
+                    if kw_hooks is None:
+                        kw_hooks = [(hook, _ctx(s, i)) for i, hook in kwm]
+                    for hook, c in kw_hooks:
+                        if hook(c, u, _BLOCKER):
+                            ready_blocker = True
+                            break
             if ready_blocker:
                 v += s_blocker
             v += s_gear * len(gear)

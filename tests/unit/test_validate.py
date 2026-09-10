@@ -1,8 +1,9 @@
+import json
 from pathlib import Path
 
 import pytest
 
-from cptcg.cards.registry import load_default
+from cptcg.cards.registry import SCRIPTS, Registry, load_default
 from cptcg.core.enums import Color
 from cptcg.deck.decklist import Decklist
 from cptcg.deck.validate import ram_limits, validate
@@ -57,10 +58,35 @@ def test_sample_decks_validate_cleanly_now_that_the_pool_is_scripted(pool):
     assert validate(deck, pool).ok
 
 
-def test_unverified_and_unscripted_cards_are_refused_by_default(pool):
+GAP = "6th-street-recruits"
+
+
+def _pool_with_a_data_gap():
+    """The real pool with one card knocked back to unverified and unscripted.
+
+    Every card in data/ is now verified, and every card with rules text has a script, so the two
+    data-quality gates need a synthetic gap to fire on."""
+    raws = json.loads((ROOT / "data/cards/wnc.json").read_text(encoding="utf-8"))["cards"]
+    raws = [{**c, "verified": False} if c["id"] == GAP else c for c in raws]
+    saved = SCRIPTS.pop(GAP)
+    try:
+        return Registry(raws)
+    finally:
+        SCRIPTS[GAP] = saved
+
+
+def test_unverified_and_unscripted_cards_are_refused_by_default():
+    pool = _pool_with_a_data_gap()
     deck = Decklist.load(ROOT / "tests/fixtures/decks/sample_mercs.json")
-    with_placeholder = Decklist.from_counts("x", list(deck.legends), {**deck.counts(), "6th-street-recruits": 1})
+    with_placeholder = Decklist.from_counts("x", list(deck.legends), {**deck.counts(), GAP: 1})
     v = validate(with_placeholder, pool)
     assert any("not verified" in e for e in v.errors) and any("no script" in e for e in v.errors)
     v = validate(with_placeholder, pool, allow_unverified=True, allow_unscripted=True)
     assert v.ok and len(v.warnings) == 2
+
+
+def test_the_shipped_pool_has_no_unscripted_cards(pool):
+    """The gate above is synthetic because the real pool passes it; if that ever stops being
+    true, this is the test that says so."""
+    assert [d.id for d in pool.defs if d.needs_script] == []
+    assert [d.id for d in pool.defs if not d.verified] == ["rebecca-having-a-moment"]

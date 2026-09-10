@@ -2,8 +2,9 @@
 from conftest import Side, board, defeat_now, do, during_main, find
 
 from cptcg.core.actions import Activate, Attack, Block, EndTurn, Pass, Pick, Play, TakeGigDie, Target
-from cptcg.core.enums import NO_INST, TARGET_GIG, TARGET_UNIT, Zone
-from cptcg.core.ops import ATTACKING, FIGHTING, VS_LEGEND, VS_UNIT, available, play_cost, power
+from cptcg.core.enums import NO_INST, TARGET_GIG, TARGET_UNIT, Keyword, Zone
+from cptcg.core.ops import (ATTACKING, FIGHTING, VS_LEGEND, VS_UNIT, available, has_keyword,
+                            play_cost, power)
 
 E = 9
 L3 = ["padre-man-of-the-cross", "wakako-okada-peace-and-harmony", "muamar-reyes-el-capitan"]
@@ -232,6 +233,21 @@ def test_gorilla_arms_extra_steal(pool):
     do(s, Attack(find(s, "psycho-squad")))
     do(s, Pick((0,)))                                       # steal the d6=2
     assert len(s.gig[0]) == 3                               # then the 5 (not shared) automatically
+
+
+def test_adrenaline_converter_grants_adrenaline_only_when_2_gigs_behind(pool):
+    def equipped(rival_gigs):
+        s = board(pool, Side(hand=["adrenaline-converter"], eddies=E, gig=[(4, 1)],
+                             field=[("psycho-squad", {"lag": True})]),
+                  Side(gig=rival_gigs))
+        host = find(s, "psycho-squad")
+        do(s, Play(find(s, "adrenaline-converter", Zone.HAND), host))
+        return s, host
+
+    s, host = equipped([(4, 1), (6, 2), (8, 3)])            # 3 rival Gigs to my 1
+    assert has_keyword(s, host, Keyword.ADRENALINE) and Attack(host) in s.pending.options
+    s, host = equipped([(4, 1), (6, 2)])                    # only 1 more: no ADRENALINE
+    assert not has_keyword(s, host, Keyword.ADRENALINE) and Attack(host) not in s.pending.options
 
 
 def test_zetatech_faceplate_on_spend(pool):

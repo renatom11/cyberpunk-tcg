@@ -1,7 +1,7 @@
 """The active-card index (ops._rebuild_active) against a reference rebuild and brute force.
 
 Slots 0-6 must match the previous implementation exactly (the heuristic, gear_on and play_cost
-read them); slots 7-10 must match what a scan of active_cards() + the card scripts yields; and
+read them); slots 7-11 must match what a scan of active_cards() + the card scripts yields; and
 ability_options must return the same menu as the previous scan-based implementation.
 """
 import sys
@@ -93,7 +93,7 @@ def _ref_ability_options(s, player, quick_only):
 
 
 def _brute_slots(s):
-    """Slots 7-10 rebuilt by brute force from active_cards() and the card scripts."""
+    """Slots 7-11 rebuilt by brute force from active_cards() and the card scripts."""
     ws, wd, ab, sup = [], [], [], []
     for p in (0, 1):
         mine = [i for i in active_cards(s, first=p) if s.i_owner[i] == p]
@@ -102,7 +102,10 @@ def _brute_slots(s):
         wd.append(tuple((i, sc.would_defeat) for i, sc in scripts if sc is not None and sc.would_defeat is not None))
         ab.append(tuple((i, sc) for i, sc in scripts if sc is not None and sc.abilities))
         sup.append(any(sc is not None and bool(sc.extra.get("suppress_new_units")) for _i, sc in scripts))
-    return tuple(ws), tuple(wd), tuple(ab), tuple(sup)
+    kwm = tuple((i, s.card(i).script.kw_mod)          # slot 11: player 0's cards, then player 1's
+                for i in active_cards(s, first=0)
+                if s.card(i).script is not None and s.card(i).script.kw_mod is not None)
+    return tuple(ws), tuple(wd), tuple(ab), tuple(sup), kwm
 
 
 def _pairs(hooks):
@@ -113,7 +116,7 @@ def _pairs(hooks):
 def _check_state(s):
     a = _rebuild_active(s.clone())
     b = _ref_rebuild(s.clone())
-    assert len(a) == 11
+    assert len(a) == 12
     assert a[:4] == b[:4] and a[5] == b[5]
     assert _pairs(a[4]) == b[4]
     assert (_pairs(a[6][0]), _pairs(a[6][1])) == b[6]
@@ -190,9 +193,9 @@ def test_registry_hook_table_matches_scripts(pool):
         sc = d.script
         if sc is None or (sc.power_mod is None and sc.cost_mod is None and sc.on_event is None
                           and sc.would_steal is None and sc.would_defeat is None and not sc.abilities
-                          and not sc.extra.get("suppress_new_units")):
+                          and sc.kw_mod is None and not sc.extra.get("suppress_new_units")):
             assert row is None, d.id
             continue
         assert row == (sc.power_mod, sc.cost_mod, sc.on_event, sc.events, sc.would_steal,
                        sc.would_defeat, sc if sc.abilities else None,
-                       bool(sc.extra.get("suppress_new_units"))), d.id
+                       bool(sc.extra.get("suppress_new_units")), sc.kw_mod), d.id

@@ -4,7 +4,7 @@ from cptcg.cards.registry import load_default
 from cptcg.core.enums import CardType
 from cptcg.core.rng import Pcg32
 from cptcg.deck.builder import (BuildPrefs, hill_climb, heuristic_deck, legend_triples, mutate,
-                                random_deck, random_legends)
+                                random_deck, random_legends, usable)
 from cptcg.deck.decklist import Decklist
 from cptcg.deck.validate import validate
 
@@ -12,6 +12,14 @@ from cptcg.deck.validate import validate
 @pytest.fixture(scope="module")
 def reg():
     return load_default()
+
+
+def test_playable_pool_is_150_of_151(reg):
+    """Every card but Rebecca is transcribed from its face and scripted, so the deck builder
+    can reach all of them; her ability has never been revealed."""
+    assert len(usable(reg)) == 150
+    assert [d.id for d in reg.defs if not d.verified] == ["rebecca-having-a-moment"]
+    assert [d.id for d in reg.unimplemented()] == []
 
 
 def test_many_legend_triples(reg):

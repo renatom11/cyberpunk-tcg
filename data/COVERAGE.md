@@ -4,25 +4,21 @@ Pool: **151 cards** (Welcome to Night City + starter sets).
 
 | | Count |
 |---|---|
-| Transcribed and verified against the card face | 147 |
-| Needing a card-face screenshot | 4 |
+| Transcribed and verified against the card face | 150 |
+| Needing a card-face screenshot | 1 |
 | Vanilla (no rules text — need no script) | 10 |
-| Scripted | 137 |
-| Rules text not yet scripted | 1 |
+| Scripted | 140 |
+| Rules text not yet scripted | 0 |
 
 ## Needs a card-face screenshot
 
 These have placeholder or partial data. Decks containing them are refused unless `--allow-unverified` is passed.
 
-- **6th Street Recruits** (`6th-street-recruits`): Stats and tags read from a gameplay screenshot; the rules text was tiny and is a best guess. Needs a card-face screenshot.
-- **Adam Smasher** — Metal Over Meat (`adam-smasher-metal-over-meat`): Summary row only: cost 9, power 15, RAM 6. Text unread.
-- **Adrenaline Converter** (`adrenaline-converter`): Name partially visible ('Adrenaline Con...'); summary row: Gear, cost 2, power +3, RAM 4. Text unread.
 - **Rebecca** — Having a Moment (`rebecca-having-a-moment`): Promo-style full-art card; no stats or text were visible in the screenshot. Everything here is a placeholder.
 
 ## Rules text not yet scripted
 
 Transcribed, but the effect is not implemented. Decks containing them are refused unless `--allow-unscripted` is passed (the card would play as vanilla).
 
-Unit: 1
 
-- `6th-street-recruits`
+

@@ -212,6 +212,18 @@ def test_yorinobu_steel_dragon_free_unit_can_attack_units(pool):
     assert Attack(u) in s.pending.options
 
 
+def test_adam_smasher_metal_over_meat_defeats_every_other_unit(pool):
+    s = board(pool, Side(hand=["adam-smasher-metal-over-meat"], eddies=E, field=["psycho-squad"],
+                         legends=[("v-streetkid", {"faceup": True})]),
+              Side(field=["corpo-security", ("animals-wrecker", {"gear": ["gorilla-arms"]})]))
+    play(s, "adam-smasher-metal-over-meat")
+    smasher = find(s, "adam-smasher-metal-over-meat")
+    assert s.i_zone[smasher] == Zone.FIELD
+    for cid in ("psycho-squad", "corpo-security", "animals-wrecker", "gorilla-arms"):
+        assert s.i_zone[find(s, cid)] == Zone.TRASH, cid    # both sides, and Gear with its host
+    assert s.i_zone[find(s, "v-streetkid")] == Zone.LEGENDS  # a Legend is not a Unit
+
+
 def test_sandayu_oda(pool):
     s = board(pool, Side(hand=["sandayu-oda-hanakos-guardian"], eddies=E, gig=[(4, 2), (6, 2)]),
               Side(field=["psycho-squad", ("corpo-security", {"spent": True})]))
@@ -315,6 +327,17 @@ def test_t_bug_looks_and_calls(pool):
     assert all(s.i_known[l] & 1 for l in s.legends(0))
     do(s, Pick((2,)))
     assert s.i_faceup[s.legends(0)[2]]
+
+
+def test_6th_street_recruits_only_fires_on_a_d6_steal(pool):
+    s = board(pool, Side(field=["6th-street-recruits", "psycho-squad"]), Side(gig=[(6, 3)]))
+    do(s, Attack(find(s, "psycho-squad")))                  # a friendly Unit steals the d6
+    assert [o.picks for o in s.pending.options] == [(0,), (1,), (2,), ()]   # +1..+3 (caps at 6)
+    do(s, Pick((2,)))
+    assert s.gig[0] == [(6, 6)]
+    s = board(pool, Side(field=["6th-street-recruits", "psycho-squad"]), Side(gig=[(8, 3)]))
+    do(s, Attack(find(s, "psycho-squad")))                  # a d8: nothing to increase
+    assert s.gig[0] == [(8, 3)] and isinstance(s.pending.options[0], EndTurn)
 
 
 def test_dying_night_gear_attack_trigger_and_v_ready(pool):

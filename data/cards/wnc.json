@@ -19,8 +19,7 @@
    "text": "When a friendly Unit steals a d6, increase a Gig by up to 6.",
    "set": "MS01-WNC",
    "number": 6,
-   "verified": false,
-   "notes": "Stats and tags read from a gameplay screenshot; the rules text was tiny and is a best guess. Needs a card-face screenshot."
+   "verified": true
   },
   {
    "id": "adam-smasher-ender-of-legends",
@@ -54,13 +53,15 @@
    "cost": 9,
    "power": 15,
    "sell_tag": false,
-   "tags": [],
+   "tags": [
+    "ARASAKA",
+    "MERC"
+   ],
    "keywords": [],
-   "text": "",
+   "text": "PLAY: Defeat all other Units.",
    "set": "MS01-WNC",
    "number": 41,
-   "verified": false,
-   "notes": "Summary row only: cost 9, power 15, RAM 6. Text unread."
+   "verified": true
   },
   {
    "id": "adrenaline-converter",
@@ -73,14 +74,14 @@
    "power": 3,
    "sell_tag": true,
    "tags": [
-    "CYBERWARE"
+    "CYBERWARE",
+    "MEDTECH"
    ],
    "keywords": [],
-   "text": "",
+   "text": "(Equip to a friendly Unit or face-up Legend.)\nIf a Rival controls at least 2 more Gigs than you, this Unit has ADRENALINE.",
    "set": "MS01-WNC",
-   "number": 60,
-   "verified": false,
-   "notes": "Name partially visible ('Adrenaline Con...'); summary row: Gear, cost 2, power +3, RAM 4. Text unread."
+   "number": 59,
+   "verified": true
   },
   {
    "id": "afterparty-at-lizzies",
@@ -2116,6 +2117,7 @@
    "set": "MS01-WNC",
    "number": 59,
    "verified": true,
+   "notes": "Number 59 was read from a summary row and now conflicts with Adrenaline Converter, whose card face reads 059. Needs a card-face screenshot to settle; number is display-only.",
    "flavor": "Scream your throat raw for something. Anything."
   },
   {
