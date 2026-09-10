@@ -1,0 +1,1300 @@
+{
+ "version": 1,
+ "rules": "149b39c8f55e9d41",
+ "note": "The delayed-reward suite. Every position has a winning line for the player to move that an exhaustive search over that player's own decisions for the turn found, and that the frozen heuristic does not find on any trial seed. Positions are data with their verification attached; cptcg.learn.delayed.verify_suite re-derives all of it, and tests/learn/test_delayed_reward.py fails if a stored claim stops being true.",
+ "positions": [
+  {
+   "id": "gear-before-the-raid",
+   "kind": "board",
+   "player": 0,
+   "source": "hand-built",
+   "why": "Five Gigs and one ready 8-power Unit. Attacking now steals one Gig, which is the biggest immediate gain on the board and is what a one-ply agent takes; it ends the turn on six. Equipping the +2 Gear first is worth almost nothing on the board, but it lifts the attacker to 10 power, and steal_count(10) is two Gigs, which is the game. The plan's A-then-C in its smallest honest form.",
+   "spec": {
+    "turn": 9,
+    "active": 0,
+    "seed": 7,
+    "turns_taken": [
+     4,
+     4
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "rockn-rockerboy",
+        {}
+       ]
+      ],
+      "hand": [
+       "mantis-blades"
+      ],
+      "legends": [
+       "goro-takemura-hands-unclean",
+       "v-corporate-exile"
+      ],
+      "deck": [
+       "secondhand-bombus",
+       "secondhand-bombus",
+       "psycho-squad"
+      ],
+      "eddies": 2,
+      "gig": [
+       [
+        4,
+        3
+       ],
+       [
+        6,
+        2
+       ],
+       [
+        8,
+        5
+       ],
+       [
+        10,
+        7
+       ],
+       [
+        12,
+        1
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "legends": [
+       "goro-takemura-hands-unclean",
+       "v-corporate-exile"
+      ],
+      "deck": [
+       "secondhand-bombus",
+       "psycho-squad",
+       "emergency-atlus"
+      ],
+      "eddies": 1,
+      "gig": [
+       [
+        4,
+        2
+       ],
+       [
+        6,
+        5
+       ],
+       [
+        8,
+        3
+       ]
+      ],
+      "fixer": [
+       10,
+       12,
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "gigs_before": 5,
+    "line": [
+     2,
+     1,
+     1,
+     0,
+     0
+    ],
+    "nodes": 47,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       5,
+       1,
+       3,
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       5,
+       1,
+       4,
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       5,
+       1,
+       3,
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       5,
+       1,
+       4,
+       2,
+       0
+      ]
+     }
+    ],
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "seconds": 0.01,
+    "when": "2026-09-10 19:58 UTC"
+   }
+  },
+  {
+   "id": "sell-to-afford-the-raid",
+   "kind": "board",
+   "player": 0,
+   "source": "hand-built",
+   "why": "The same shape one move deeper: there is no \u20ac$ ready, so the Gear has to be paid for by selling the other card in hand first. Selling is worth +0.2 to the frozen evaluation and the Gear +2.8, against roughly +48 for attacking, so the greedy order is attack, then sell, then hold a Gear nothing can carry. Two low-impact moves have to come first.",
+   "spec": {
+    "turn": 9,
+    "active": 0,
+    "seed": 11,
+    "turns_taken": [
+     4,
+     4
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "rockn-rockerboy",
+        {}
+       ]
+      ],
+      "hand": [
+       "mantis-blades",
+       "mandibular-upgrade"
+      ],
+      "legends": [
+       [
+        "goro-takemura-hands-unclean",
+        {
+         "spent": true
+        }
+       ],
+       [
+        "v-corporate-exile",
+        {
+         "spent": true
+        }
+       ]
+      ],
+      "deck": [
+       "secondhand-bombus",
+       "secondhand-bombus",
+       "psycho-squad"
+      ],
+      "eddies": 0,
+      "gig": [
+       [
+        4,
+        3
+       ],
+       [
+        6,
+        2
+       ],
+       [
+        8,
+        5
+       ],
+       [
+        10,
+        7
+       ],
+       [
+        12,
+        1
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "legends": [
+       "goro-takemura-hands-unclean",
+       "v-corporate-exile"
+      ],
+      "deck": [
+       "secondhand-bombus",
+       "psycho-squad",
+       "emergency-atlus"
+      ],
+      "eddies": 1,
+      "gig": [
+       [
+        4,
+        2
+       ],
+       [
+        6,
+        5
+       ],
+       [
+        8,
+        3
+       ]
+      ],
+      "fixer": [
+       10,
+       12,
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "gigs_before": 5,
+    "line": [
+     2,
+     1,
+     1,
+     0,
+     0
+    ],
+    "nodes": 62,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       3,
+       1,
+       2,
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       3,
+       1,
+       1,
+       3,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       3,
+       1,
+       2,
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       3,
+       1,
+       2,
+       3,
+       0
+      ]
+     }
+    ],
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "seconds": 0.01,
+    "when": "2026-09-10 19:58 UTC"
+   }
+  },
+  {
+   "id": "two-pieces-of-gear",
+   "kind": "board",
+   "player": 0,
+   "source": "hand-built",
+   "why": "A 7-power attacker and two cheap Gear. Neither one is enough on its own \u2014 7+2 and 7+1 both still steal a single Gig \u2014 so *both* have to be equipped before the attack, and each of them scores as a rounding error next to attacking. A one-ply agent cannot see past either of them; the position needs three moves in the right order.",
+   "spec": {
+    "turn": 9,
+    "active": 0,
+    "seed": 17,
+    "turns_taken": [
+     4,
+     4
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "mtod12-flathead",
+        {}
+       ]
+      ],
+      "hand": [
+       "mantis-blades",
+       "kiroshi-optics"
+      ],
+      "legends": [
+       [
+        "goro-takemura-hands-unclean",
+        {
+         "spent": true
+        }
+       ],
+       [
+        "v-corporate-exile",
+        {
+         "spent": true
+        }
+       ]
+      ],
+      "deck": [
+       "secondhand-bombus",
+       "psycho-squad",
+       "emergency-atlus"
+      ],
+      "eddies": 2,
+      "gig": [
+       [
+        4,
+        3
+       ],
+       [
+        6,
+        2
+       ],
+       [
+        8,
+        5
+       ],
+       [
+        10,
+        7
+       ],
+       [
+        12,
+        1
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "legends": [
+       "goro-takemura-hands-unclean",
+       "v-corporate-exile"
+      ],
+      "deck": [
+       "secondhand-bombus",
+       "psycho-squad",
+       "emergency-atlus"
+      ],
+      "eddies": 1,
+      "gig": [
+       [
+        4,
+        2
+       ],
+       [
+        6,
+        5
+       ],
+       [
+        8,
+        3
+       ]
+      ],
+      "fixer": [
+       10,
+       12,
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "gigs_before": 5,
+    "line": [
+     3,
+     2,
+     1,
+     0,
+     0,
+     0
+    ],
+    "nodes": 428,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       7,
+       1,
+       6,
+       3,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       7,
+       1,
+       6,
+       3,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       7,
+       1,
+       6,
+       3,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       7,
+       1,
+       5,
+       3,
+       1,
+       0
+      ]
+     }
+    ],
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "seconds": 0.02,
+    "when": "2026-09-10 19:58 UTC"
+   }
+  },
+  {
+   "id": "mined-23767-79",
+   "kind": "replay",
+   "player": 1,
+   "source": "mined from heuristic self-play",
+   "why": "a win was available this turn and the frozen heuristic did not take it",
+   "seed": 23767,
+   "prefix": [
+    1,
+    0,
+    0,
+    4,
+    5,
+    1,
+    0,
+    4,
+    5,
+    8,
+    1,
+    4,
+    0,
+    3,
+    8,
+    0,
+    7,
+    0,
+    2,
+    2,
+    0,
+    3,
+    10,
+    2,
+    2,
+    0,
+    2,
+    5,
+    2,
+    1,
+    2,
+    1,
+    0,
+    2,
+    13,
+    2,
+    10,
+    4,
+    2,
+    0,
+    1,
+    11,
+    1,
+    0,
+    3,
+    7,
+    4,
+    2,
+    0,
+    1,
+    13,
+    1,
+    0,
+    2,
+    12,
+    1,
+    0,
+    0,
+    10,
+    2,
+    0,
+    9,
+    2,
+    0,
+    4,
+    8,
+    2,
+    0,
+    0,
+    4,
+    1,
+    4,
+    4,
+    7,
+    0,
+    1,
+    1,
+    0,
+    0
+   ],
+   "decks": [
+    {
+     "name": "built",
+     "legends": [
+      "goro-takemura-vengeful-bodyguard",
+      "padre-man-of-the-cross",
+      "hanako-arasaka-daughter-of-the-emperor"
+     ],
+     "main": {
+      "corpo-security": 3,
+      "sandayu-oda-hanakos-guardian": 3,
+      "pepe-najarro-working-doubles": 3,
+      "goro-takemura-losing-his-way": 3,
+      "take-control": 3,
+      "corporate-surveillance": 3,
+      "maxtac-av": 3,
+      "saul-bright-stormrider": 3,
+      "wild-in-the-streets": 3,
+      "sandevistan": 3,
+      "overwatch-panams-gift": 3,
+      "synapse-burnout": 3,
+      "zetatech-berserk": 3,
+      "riot-shield": 2,
+      "we-gotta-live-together": 3,
+      "memory-relapse": 1
+     }
+    },
+    {
+     "name": "explorer",
+     "legends": [
+      "padre-man-of-the-cross",
+      "saburo-arasaka-stubborn-patriarch",
+      "jackie-welles-mamas-favorite"
+     ],
+     "main": {
+      "corporate-surveillance": 3,
+      "pepe-najarro-working-doubles": 3,
+      "fool-on-the-hill": 3,
+      "wild-in-the-streets": 3,
+      "goro-takemura-losing-his-way": 3,
+      "riot-shield": 2,
+      "tygers-whisper": 3,
+      "field-operator": 3,
+      "wraith-marauders": 3,
+      "synapse-burnout": 3,
+      "nadia-fighting-through-grief": 1,
+      "peace-offering": 3,
+      "maelstrom-zealots": 3,
+      "corpo-security": 1,
+      "sandayu-oda-hanakos-guardian": 1,
+      "take-control": 1,
+      "sandevistan": 1
+     }
+    }
+   ],
+   "verified": {
+    "ok": true,
+    "player": 1,
+    "gigs_before": 6,
+    "line": [
+     1,
+     1,
+     1,
+     0,
+     0,
+     1,
+     1,
+     1,
+     1,
+     0,
+     1,
+     1,
+     0,
+     0
+    ],
+    "nodes": 238,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       6,
+       2,
+       3,
+       5,
+       2,
+       1,
+       5,
+       2,
+       1,
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       6,
+       2,
+       5,
+       5,
+       2,
+       1,
+       5,
+       2,
+       3,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       6,
+       2,
+       3,
+       5,
+       2,
+       1,
+       5,
+       2,
+       3,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       6,
+       2,
+       5,
+       5,
+       2,
+       1,
+       5,
+       2,
+       3,
+       1,
+       0
+      ]
+     }
+    ],
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "seconds": 1.23,
+    "when": "2026-09-10 19:58 UTC"
+   }
+  },
+  {
+   "id": "mined-23773-81",
+   "kind": "replay",
+   "player": 1,
+   "source": "mined from heuristic self-play",
+   "why": "a win was available this turn and the frozen heuristic did not take it",
+   "seed": 23773,
+   "prefix": [
+    1,
+    1,
+    1,
+    4,
+    7,
+    2,
+    0,
+    4,
+    5,
+    2,
+    2,
+    1,
+    0,
+    3,
+    1,
+    5,
+    4,
+    2,
+    0,
+    3,
+    10,
+    1,
+    6,
+    0,
+    2,
+    0,
+    4,
+    3,
+    1,
+    0,
+    2,
+    17,
+    1,
+    8,
+    12,
+    1,
+    11,
+    0,
+    1,
+    0,
+    12,
+    1,
+    0,
+    3,
+    4,
+    1,
+    1,
+    0,
+    1,
+    21,
+    1,
+    3,
+    4,
+    11,
+    1,
+    3,
+    1,
+    0,
+    0,
+    0,
+    17,
+    1,
+    4,
+    16,
+    1,
+    2,
+    6,
+    3,
+    2,
+    1,
+    0,
+    6,
+    2,
+    4,
+    5,
+    2,
+    4,
+    3,
+    1,
+    0,
+    1
+   ],
+   "decks": [
+    {
+     "name": "built",
+     "legends": [
+      "viktor-vektor-sit-down-and-relax",
+      "river-ward-detective-on-the-hunt",
+      "royce-psycho-on-the-edge"
+     ],
+     "main": {
+      "ruthless-lowlife": 3,
+      "screw-lovelorn-fool": 3,
+      "la-llorona-ghost-of-the-past": 3,
+      "meredith-stout-stone-cold-corpo": 3,
+      "heywood-ripperdoc": 3,
+      "maxtac-suppression-team": 3,
+      "valentino-guerrera": 2,
+      "mantis-blades": 3,
+      "adrenaline-converter": 3,
+      "safety-override": 3,
+      "cyberpsychosis": 2,
+      "gorilla-arms": 3,
+      "satori-sword-of-saburo": 3,
+      "kiroshi-optics": 3
+     }
+    },
+    {
+     "name": "random",
+     "legends": [
+      "kerry-eurodyne-axe-attitude-audience",
+      "river-ward-detective-on-the-hunt",
+      "adam-smasher-ender-of-legends"
+     ],
+     "main": {
+      "maxtac-suppression-team": 1,
+      "trauma-team-operatives": 3,
+      "safety-override": 3,
+      "detonate": 1,
+      "over-the-edge": 1,
+      "shattered-memories": 2,
+      "arasaka-emergency-radioport": 1,
+      "dexter-deshawn-one-last-chance": 2,
+      "johnny-silverhand-never-stop-fighting": 2,
+      "all-is-lost": 2,
+      "satori-sword-of-saburo": 1,
+      "live-with-the-aftermath": 1,
+      "jackie-welles-ride-or-die-choom": 2,
+      "alt-cunningham-mother-of-daemons": 2,
+      "royce-dont-call-me-simon": 2,
+      "mandibular-upgrade": 1,
+      "la-llorona-ghost-of-the-past": 1,
+      "industrial-assembly": 1,
+      "adrenaline-converter": 1,
+      "zetatech-faceplate": 2,
+      "viktor-vektor-you-might-feel-a-little-pinch": 3,
+      "minotaur": 1,
+      "afterparty-at-lizzies": 1,
+      "sketchy-ripper": 1,
+      "maelstrom-goons": 1,
+      "chrome-fang": 1,
+      "cyberpsychosis": 1,
+      "secondhand-bombus": 1
+     }
+    }
+   ],
+   "verified": {
+    "ok": true,
+    "player": 1,
+    "gigs_before": 5,
+    "line": [
+     1,
+     1,
+     0,
+     1,
+     1,
+     0,
+     1,
+     1,
+     0,
+     1,
+     1,
+     2,
+     0,
+     0
+    ],
+    "nodes": 1405,
+    "exhausted": false,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       10,
+       2,
+       3,
+       14,
+       11,
+       2,
+       1,
+       10,
+       2,
+       2,
+       5,
+       1,
+       2,
+       14,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       10,
+       2,
+       1,
+       14,
+       11,
+       2,
+       1,
+       10,
+       2,
+       2,
+       6,
+       1,
+       2,
+       16,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       10,
+       2,
+       1,
+       14,
+       11,
+       2,
+       1,
+       10,
+       2,
+       1,
+       6,
+       1,
+       2,
+       13,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       10,
+       2,
+       3,
+       14,
+       11,
+       2,
+       1,
+       10,
+       2,
+       2,
+       6,
+       1,
+       2,
+       7,
+       0
+      ]
+     }
+    ],
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "seconds": 3.4,
+    "when": "2026-09-10 19:58 UTC"
+   }
+  },
+  {
+   "id": "mined-23782-53",
+   "kind": "replay",
+   "player": 0,
+   "source": "mined from heuristic self-play",
+   "why": "a win was available this turn and the frozen heuristic did not take it",
+   "seed": 23782,
+   "prefix": [
+    1,
+    1,
+    1,
+    4,
+    5,
+    4,
+    0,
+    4,
+    5,
+    2,
+    2,
+    0,
+    3,
+    5,
+    6,
+    1,
+    3,
+    1,
+    1,
+    0,
+    3,
+    8,
+    1,
+    0,
+    5,
+    2,
+    2,
+    0,
+    0,
+    2,
+    6,
+    1,
+    0,
+    2,
+    7,
+    1,
+    7,
+    2,
+    8,
+    1,
+    1,
+    0,
+    1,
+    1,
+    7,
+    2,
+    0,
+    0,
+    2,
+    2,
+    1,
+    0,
+    1
+   ],
+   "decks": [
+    {
+     "name": "random",
+     "legends": [
+      "goro-takemura-vengeful-bodyguard",
+      "panam-palmer-nomad-cavalry",
+      "jackie-welles-pour-one-out-for-me"
+     ],
+     "main": {
+      "trust-no-one": 2,
+      "floor-it": 1,
+      "maxtac-av": 1,
+      "we-gotta-live-together": 3,
+      "valentino-street-racer": 2,
+      "dont-fear-the-reaper": 2,
+      "wraith-marauders": 1,
+      "rita-wheeler-no-stupid-questions": 1,
+      "lizzy-wizzy-delicate-weapon": 2,
+      "corporate-surveillance": 3,
+      "misty-olszewski-mender-of-broken-spirits": 1,
+      "field-operator": 2,
+      "panam-palmer-strength-through-family": 1,
+      "modded-kusanagi": 2,
+      "emergency-atlus": 1,
+      "peace-offering": 2,
+      "saul-bright-stormrider": 1,
+      "maxtac-squadron": 1,
+      "westbrook-netrunner": 1,
+      "tetratronic-rippler": 1,
+      "psycho-squad": 1,
+      "memory-relapse": 1,
+      "overwatch-panams-gift": 1,
+      "corpo-security": 1,
+      "sandevistan": 1,
+      "goro-takemura-losing-his-way": 1,
+      "sandayu-oda-hanakos-guardian": 1,
+      "take-control": 1,
+      "chrome-reverie": 1,
+      "maxtac-heavy": 2,
+      "unlikely-bond": 1,
+      "reboot-optics": 1,
+      "pepe-najarro-working-doubles": 1
+     }
+    },
+    {
+     "name": "explorer",
+     "legends": [
+      "panam-palmer-nomad-cavalry",
+      "goro-takemura-vengeful-bodyguard",
+      "dexter-deshawn-off-the-grid"
+     ],
+     "main": {
+      "goro-takemura-losing-his-way": 1,
+      "corporate-surveillance": 3,
+      "sandayu-oda-hanakos-guardian": 3,
+      "arasaka-emergency-radioport": 3,
+      "v-roamer-of-the-badlands": 1,
+      "saul-bright-stormrider": 3,
+      "detonate": 3,
+      "fool-on-the-hill": 3,
+      "johnny-silverhand-never-stop-fighting": 1,
+      "industrial-assembly": 3,
+      "nadia-fighting-through-grief": 3,
+      "panam-palmer-strength-through-family": 1,
+      "riding-nomad": 3,
+      "over-the-edge": 3,
+      "minotaur": 3,
+      "satori-sword-of-saburo": 3
+     }
+    }
+   ],
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "gigs_before": 6,
+    "line": [
+     1,
+     1,
+     1,
+     0,
+     1,
+     1,
+     0,
+     1,
+     0,
+     1,
+     0
+    ],
+    "nodes": 68,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       12,
+       1,
+       1,
+       11,
+       1,
+       3,
+       1,
+       1,
+       1,
+       1,
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       12,
+       1,
+       1,
+       11,
+       1,
+       3,
+       1,
+       1,
+       1,
+       1,
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       12,
+       1,
+       1,
+       11,
+       1,
+       3,
+       1,
+       1,
+       0,
+       1,
+       0,
+       1
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       12,
+       1,
+       1,
+       11,
+       1,
+       3,
+       1,
+       1,
+       0,
+       1,
+       0,
+       0
+      ]
+     }
+    ],
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "seconds": 0.26,
+    "when": "2026-09-10 19:58 UTC"
+   }
+  }
+ ]
+}

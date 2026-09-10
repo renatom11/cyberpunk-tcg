@@ -1,0 +1,35 @@
+{
+ "version": 1,
+ "frozen_on": "2026-09-10",
+ "note": "The frozen benchmark panel. Its opponents, its decks, its seeds and its game count never change, so a win rate against it is comparable across every future generation. Any edit to this file changes the digest and invalidates that comparison; say so in docs/learning.md when you make one.",
+ "protocol": {
+  "deck_pairs": 6,
+  "games_per_pair": 60,
+  "deck_seed": 20260910,
+  "seed": 4242,
+  "sprt": false,
+  "note": "60 games per pairing is 15 seeds, each played from both seats and with the deck assignments swapped. No early stopping: a fixed sample is what makes two generations comparable."
+ },
+ "members": [
+  {
+   "id": "random",
+   "agent": "random",
+   "label": "uniform random legal play",
+   "frozen_note": "agents/random_agent.py; the floor, and a state-space coverage check"
+  },
+  {
+   "id": "heuristic",
+   "agent": "heuristic",
+   "label": "the frozen one-ply heuristic",
+   "frozen_note": "agents/heuristic.py, byte-exact tested by tests/unit/test_heuristic_eval.py and recorded in tests/golden/: the shipping AI, and a floor rather than a baseline"
+  },
+  {
+   "id": "gen0",
+   "agent": "gen0",
+   "label": "the generation-0 snapshot",
+   "available_when": "lands with the first trained model; until then this row reads \"not available yet\" and the panel is two members",
+   "frozen_note": "the first accepted weights, kept forever"
+  }
+ ],
+ "digest": "17064172ad6626e2"
+}

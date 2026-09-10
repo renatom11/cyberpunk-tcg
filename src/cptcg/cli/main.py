@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 
 from cptcg.cards.registry import load_default
+from cptcg.cli.arena import add_arguments as add_arena_arguments
 from cptcg.cli.render import describe, render
 from cptcg.core.config import DEFAULT_CONFIG
 from cptcg.deck.decklist import Decklist
@@ -427,6 +428,9 @@ def main(argv=None) -> None:
     p.add_argument("--any-rules", action="store_true",
                    help="read even if the record was played under a different ruleset")
     p.set_defaults(fn=cmd_dump)
+
+    p = sub.add_parser("arena", help="the gate: measure an agent against agents, panels and positions")
+    add_arena_arguments(p)
 
     p = sub.add_parser("cards", help="list the card pool")
     p.add_argument("--unimplemented", action="store_true")

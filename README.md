@@ -79,6 +79,16 @@ python -m cptcg generate --count 12 --archetypes explorer --legends v-streetkid,
 python -m cptcg league --builders 6 --generations 3 --steps 5 --out out/league \
     --knowledge out/knowledge.json --hof out/hall_of_fame.json
 
+# the gate: no claim about the AI without a number from here. Every match is played over freshly
+# sampled deck pairs with the seats mirrored AND the deck assignments swapped, so neither seat
+# order nor deck strength can be mistaken for agent strength. See docs/learning.md.
+python tools/arena.py a-vs-b heuristic random    # paired seeds, SPRT stopping, Wilson intervals
+python tools/arena.py panel heuristic            # the frozen benchmark panel (data/arena/panel.json)
+python tools/arena.py delayed heuristic          # the delayed-reward suite: solved N of M
+python tools/arena.py generalisation heuristic   # training decks vs the held-out retail starters
+python tools/arena.py exploit AGENT              # the cost of hidden information, for an agent that searches
+python -m cptcg arena a-vs-b heuristic random    # the same commands under the package CLI
+
 # the web client: play against the AI, watch any replay back, browse lab reports, build decks
 python -m cptcg serve            # then open http://127.0.0.1:8000/
 ```
@@ -94,8 +104,9 @@ a cost curve, live legality, text export, save to `data/decks/`, and one-click A
 Explorer that invents a deck shape, or a build toward any archetype learned from play (using
 learned card values when `out/knowledge.json` exists).
 
-Agents: `random`, `heuristic` (greedy one-ply lookahead). The heuristic beats random ~95% of
-the time. Speed is roughly 4 ms/game for random bots and ~175 ms/game (5–6 games/s) for
+Agents: `random`, `heuristic` (greedy one-ply lookahead). The heuristic beats random 93.9%
+[90.9-95.9] of the time over 360 balanced games (`tools/arena.py`; older figures around 98% held
+the deck assignment fixed and are high by about a point and a half — see docs/learning.md). Speed is roughly 4 ms/game for random bots and ~175 ms/game (5–6 games/s) for
 heuristic-vs-heuristic on one core; `-j` spreads games across cores and results are identical
 regardless of `-j`. `python tools/bench.py check` replays 224 golden games and must print
 IDENTICAL after any engine change; `bench.py time` measures speed and `bench.py fuzz` prints a

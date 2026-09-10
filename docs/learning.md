@@ -9,11 +9,12 @@ constants that ten thousand games leave untouched. The training loop closes that
           └────────────────────  accepted weights  ◄────────────────────────────────┘
 ```
 
-This page is the shipped record of that loop. **What exists today is the first box: experience
-capture.** The search agent, the model and the gate arrive in later stages, and each one adds its
-section here — including the generation-by-generation numbers, published whether or not they
-flatter the run. Until then the honest summary is: the format is in place, and the only games it
-has stored were played by the existing heuristic agent, which does not search.
+This page is the shipped record of that loop. **What exists today is the first box and the last
+one: experience capture, and the gate that every future generation has to pass.** The search agent
+and the model arrive in later stages, and each one adds its section here — including the
+generation-by-generation numbers, published whether or not they flatter the run. Until then the
+honest summary is: the format is in place, the measuring instruments are built and tested, and the
+only games stored so far were played by the existing heuristic agent, which does not search.
 
 ## What is stored, and what is deliberately not
 
@@ -186,6 +187,168 @@ weights are not. So weights are committed and kept forever, and a generation's e
 deleted once the generation that learned from it has been gated. This is a public repository and a
 few hundred MB of regenerable JSONL has no business in its history.
 
+## The gate
+
+`tools/arena.py` (also `cptcg arena`) is the gate. **Nothing about this project's AI may be claimed
+without a number from it**, so it matters more than anything else built for the loop. Five
+instruments, one command each:
+
+```bash
+python tools/arena.py a-vs-b heuristic random     # two agents, paired seeds, SPRT, Wilson
+python tools/arena.py panel heuristic             # the frozen benchmark panel
+python tools/arena.py exploit AGENT               # the cheating upper bound
+python tools/arena.py delayed heuristic           # the delayed-reward suite: solved N of M
+python tools/arena.py generalisation heuristic    # training decks vs the held-out starters
+```
+
+Every command writes JSON under `out/arena/` and appends its report to the end of this page,
+whether or not the numbers flatter the run.
+
+### The design: a strong deck must never read as a strong agent
+
+`sim.runner.run_match` already plays every seed from both seats, so first-player advantage and
+shuffle luck cancel for free. That is not enough. In `run_match(a, b, A, B)` agent A always holds
+deck `a`, so an agent handed the better half of a pairing looks better than it is. So every match
+here is played **twice**, with the deck assignments swapped and the seeds shared:
+
+| | agent A holds | agent B holds |
+|---|---|---|
+| match 0 | deck a | deck b |
+| match 1 | deck b | deck a |
+
+Four games per seed, and each agent has held each deck in each seat. Those two games also form a
+**pair**, and the pair is what the sequential test runs on, exactly as `deck.builder.hill_climb`
+pairs a champion against a challenger on shared seeds:
+
+* the same deck won both games — the *deck* decided the pair, and it says nothing about play;
+* different decks won — the *agent* decided; count the pair for whoever won both games.
+
+The SPRT then runs on those decisive pairs only, which strips out most of the deck-and-shuffle
+variance; a hopeless matchup settles in a few dozen games rather than a few hundred. The headline
+rate and its Wilson interval are still reported over every game played, because that is the number
+a reader wants and a paired count is not a win rate.
+
+The design is exact rather than merely unbiased, and that is a test rather than a claim: put the
+*same* agent name on both sides and the two swapped matches are the same games, so the headline
+rate is exactly 50%, there are no decisive pairs at all, and each agent sits in each seat in
+exactly half the games (`tests/learn/test_arena.py`). Decks come from `learn.decks.sample_pair`, so
+a match is measured over many freshly sampled decks and an agent that is only good with one list
+has nowhere to hide.
+
+### Calibration: the 98.6% figure, and why this tool does not print it
+
+The plan quotes the shipping heuristic at **98.6% against random**, measured over 360 games, three
+deck pairings, seats mirrored. Reproducing that number was the acceptance test for the arena. It
+does not reproduce it, and the reason is the whole point of building the tool:
+
+| measurement | games | heuristic vs random |
+|---|---:|---|
+| balanced, sampled decks (`arena a-vs-b heuristic random --no-sprt`) | 360 | **93.9%** [90.9–95.9] |
+| unbalanced, sampled decks (`--no-swap`) | 360 | 95.8% [93.2–97.5] |
+| unbalanced, the three retail matchups (the original recipe), seeds 0 / 11 / 21 | 360 each | 96.7% / 97.5% / 97.8% |
+| the same with the four `bench.py` matchups | 360 each | 96.9% / 97.8% / 98.1% |
+
+So the historical figure is reproducible *under the historical protocol* — 96.7–98.1% across
+seeds, with 98.6% at the top of that spread — and it is about a point and a half too high because
+the heuristic always held the same half of every pairing. On the three retail matchups at one seed
+the effect is stark:
+
+| the heuristic holds | its win rate |
+|---|---|
+| deck A of each pairing (the old recipe) | 97.2% |
+| deck B of each pairing | 88.6% |
+| both, half the games each (the arena) | 93.1% |
+
+An 8.6-point swing from nothing but which list the agent was handed. `--no-swap` is kept as a flag
+so anyone can re-derive that table, and it prints a warning line into its own report saying deck
+strength is inside the number.
+
+**The honest summary: the shipping heuristic beats random about 94% of the time, not 98.6%.** Every
+older number in this repository that compared two agents on fixed deck assignments is high by
+roughly this much, and none of them is restated here — they are simply superseded by whatever the
+arena prints from now on.
+
+### The frozen panel
+
+`data/arena/panel.json` is **data, not code**, so freezing it is visible in a diff. It pins the
+opponents (`random`, the frozen `heuristic`, and a generation-0 snapshot that does not exist yet
+and is reported as "not available yet" rather than quietly skipped), *and* the protocol: six deck
+pairings from deck seed 20260910, 60 games each, no early stopping. A fixed sample is what makes
+two generations comparable, so the panel never uses the SPRT.
+
+The file carries a digest of its own contents; loading it checks that digest, and
+`tests/learn/test_arena.py` pins the digest a second time in the test itself. Changing the panel is
+allowed — changing it silently is not, and a change makes scores before and after incomparable.
+
+### The cheating upper bound
+
+`arena exploit AGENT` plays an agent against `cheat:AGENT`: the same agent, the same budget, the
+same evaluation, with determinization (`core/view.determinize`) replaced by the true state. The
+gap is the value of perfect information to that search, which is the cost of hidden information —
+**a ceiling for that agent at that budget, and not an upper bound on play quality in general.**
+
+`cheat:` is a name prefix, so a worker process can build the cheating variant from the name alone,
+and it refuses an agent that never samples hidden information: the one-ply heuristic reads the true
+state already, so there is nothing to take away from it. No search agent exists yet, so today the
+mechanism is exercised end to end against a stub that consults `core/view.py`
+(`tests/learn/test_arena.py::test_exploit_measures_honest_against_cheating`). The instrument is
+built and tested; the number it exists to print arrives with the search agent.
+
+### The delayed-reward suite
+
+This is the falsifiability instrument for the whole loop. `data/arena/delayed.json` holds positions
+where the winning move has low immediate impact, each of which qualifies only if **both** halves
+hold:
+
+1. an exhaustive search over the acting player's own decisions for that turn finds a line that
+   wins the game, and
+2. the frozen heuristic does **not** find it, on every trial seed.
+
+Reaching seven Gigs does not end the game where it happens — `WinCheckStep` runs at the *start* of
+a turn — so "wins" is not "seven Gigs on the board". After the searched turn ends the game is
+played on with the frozen heuristic in both seats through the rival's entire reply, and the line
+counts only if the game then really ends with the searched player as the winner. A line that
+reaches seven and has them stolen back does not count.
+
+The solver (`learn/delayed.turn_search`) is exhaustive up to two limits it states rather than
+hides: a node cap, after which it reports `exhausted=False` and has proved nothing, and the same
+option equivalence the frozen agent uses (two options that differ only in which *copy* of a card
+they name are one option). It stops at the first win, because existence is all the suite needs.
+
+Positions arrive two ways. Hand-built ones are board specs in the same shape as
+`tests/conftest.board`, and a test builds one both ways and compares information keys so the two
+cannot drift. Mined ones come from `arena delayed --mine N`, which scans self-play games for turns
+where the solver finds a win the heuristic misses and stores them as a replay prefix, which
+reproduces the position exactly. Every position is stored **with its verification** — the winning
+line, the nodes it cost, the heuristic's failure — and `tests/learn/test_delayed_reward.py`
+re-derives all of it, so a stored claim that stops being true is a test failure and not a silent
+lie.
+
+The suite is calibrated so that **the frozen heuristic scores zero on it**. That is the baseline:
+any future generation that solves a position has done something the greedy agent cannot, and if the
+number never rises, the loop is not doing what this plan claims.
+
+The honest caveat: the rival's reply is one competent defence and one sample of their Gig die, not
+a proof against every defence. A position is a witness that a win was available, not a
+game-theoretic value.
+
+### The generalisation gap
+
+`arena generalisation AGENT` measures the same agent against the same baseline on three deck
+populations: the training mix, the two **held-out retail starters**, and fresh random decks from a
+deck seed training never used. Both seats draw from the same population in every row, so each
+number is about play rather than about which population is stronger; what matters is the difference
+between the rows. A gap that grows generation over generation means the model is memorising
+matchups instead of learning the game, and it is reported every generation whether or not it
+flatters the run.
+
+The frozen heuristic's baseline, measured below, is **negative**: against random it wins 91.1% on
+the training mix, 95.8% on the held-out starters and 94.4% on fresh random decks, a gap of −4.7
+points to the holdout (z = −2.56). That is the expected sign for an agent that cannot memorise
+anything — a hand-built retail deck rewards competent play more than a random list does, so the
+held-out row is the *easier* one. The number to watch is the change: a model that has learned the
+game keeps this gap where it is, and one that has learned six deck pairings drives it positive.
+
 ## Honest caveats
 
 * **The games stored today were played by the heuristic agent**, which does not search. They carry
@@ -198,3 +361,98 @@ few hundred MB of regenerable JSONL has no business in its history.
   itself.
 * **The card pool is 150 of 151.** `rebecca-having-a-moment` is excluded until her ability is
   revealed, so a model trained now has never seen her; see `data/COVERAGE.md`.
+
+## Arena runs
+
+Everything below this line is appended by `tools/arena.py`, newest last. A run's machine-readable
+twin is in `out/arena/`.
+
+
+### heuristic vs random — 2026-09-10 19:58 UTC
+
+`arena a-vs-b heuristic random --no-sprt` over 6 deck pairings sampled from deck seed 20260910.
+
+360 games over 6 deck pairings, 180 paired comparisons — every seed played from both seats and with the deck assignments swapped. Ruleset `149b39c8f55e9d41`, 2.7s.
+
+| | games | win rate | 95% Wilson |
+|---|---:|---:|---|
+| **heuristic** | 360 | 93.9% | 90.9–95.9% |
+| random | 360 | 6.1% | 4.1–9.1% |
+
+Paired test: 159 of 160 decisive pairs (99.4%) — no sequential test was run (fixed sample).
+
+heuristic sat in seat 0 in 180 of 360 games — exactly half, by construction. heuristic on the play: 98.9% [94.0–99.8] (who goes first is the d20 winner's *choice*, so this is description, not balance). Average game length 11.4 turns. End reasons: OVERTIME 15, SEVEN_GIGS 345.
+
+| deck pairing | games | heuristic win rate |
+|---|---:|---|
+| `sampled-0` built vs built-b | 60 | 95.0% [86.3–98.3] |
+| `sampled-1` built vs explorer | 60 | 91.7% [81.9–96.4] |
+| `sampled-2` Sample Gangers vs random | 60 | 91.7% [81.9–96.4] |
+| `sampled-3` random vs random-b | 60 | 95.0% [86.3–98.3] |
+| `sampled-4` random vs random-b | 60 | 95.0% [86.3–98.3] |
+| `sampled-5` random vs built | 60 | 95.0% [86.3–98.3] |
+
+
+### heuristic vs random — 2026-09-10 19:58 UTC
+
+`arena a-vs-b heuristic random --no-swap --no-sprt` over 6 deck pairings sampled from deck seed 20260910.
+
+360 games over 6 deck pairings, seats mirrored but deck assignments **not** swapped — agent A held deck A in every game, so deck strength is inside this number. Ruleset `149b39c8f55e9d41`, 2.4s.
+
+| | games | win rate | 95% Wilson |
+|---|---:|---:|---|
+| **heuristic** | 360 | 95.8% | 93.2–97.5% |
+| random | 360 | 4.2% | 2.5–6.8% |
+
+Unpaired test on 360 games (95.8%) — no sequential test was run (fixed sample).
+
+heuristic sat in seat 0 in 180 of 360 games — exactly half, by construction. heuristic on the play: 100.0% [96.1–100.0] (who goes first is the d20 winner's *choice*, so this is description, not balance). Average game length 11.2 turns. End reasons: OVERTIME 14, SEVEN_GIGS 346.
+
+| deck pairing | games | heuristic win rate |
+|---|---:|---|
+| `sampled-0` built vs built-b | 60 | 90.0% [79.9–95.3] |
+| `sampled-1` built vs explorer | 60 | 100.0% [94.0–100.0] |
+| `sampled-2` Sample Gangers vs random | 60 | 98.3% [91.1–99.7] |
+| `sampled-3` random vs random-b | 60 | 95.0% [86.3–98.3] |
+| `sampled-4` random vs random-b | 60 | 96.7% [88.6–99.1] |
+| `sampled-5` random vs built | 60 | 95.0% [86.3–98.3] |
+
+
+### Frozen panel: heuristic — 2026-09-10 19:58 UTC
+
+Panel `17064172ad6626e2`, frozen 2026-09-10: 6 deck pairings from deck seed 20260910, 60 games each, no early stopping. The protocol never changes, so these numbers are comparable across every generation.
+
+| opponent | games | win rate | 95% Wilson | decisive pairs |
+|---|---:|---:|---|---|
+| uniform random legal play (`random`) | 360 | 93.9% | 90.9–95.9% | 159/160 |
+| the frozen one-ply heuristic (`heuristic`) | 360 | 50.0% | 44.9–55.1% | 0/0 |
+| the generation-0 snapshot (`gen0`) | — | not available yet | — | lands with the first trained model; until then this row reads "not available yet" and the panel is two members |
+
+
+### Generalisation gap: heuristic vs random — 2026-09-10 20:00 UTC
+
+The same agent against the same baseline on three deck populations. Both seats draw from the same population in each row, so the number measures play, not deck strength; what matters is the difference between the rows.
+
+| deck population | games | win rate | 95% Wilson |
+|---|---:|---:|---|
+| training — the training mix (learn.decks.DEFAULT_MIX), the distribution self-play draws from | 360 | 91.1% | 87.7–93.6% |
+| holdout — the two retail starters, held out of training entirely | 360 | 95.8% | 93.2–97.5% |
+| unseen-random — fresh RAM-legal random decks from a deck seed training never used | 360 | 94.4% | 91.6–96.4% |
+
+Gap to the held-out starters: -4.7 points (z = -2.56). Gap to fresh random decks: -3.3 points (z = -1.73). A gap that grows generation over generation means memorised matchups.
+
+
+### Delayed-reward suite: heuristic — 2026-09-10 20:00 UTC
+
+**Solved 0 of 6** (0 of 24 trials won). Every position has a verified winning line that the frozen heuristic does not find; a position counts as solved only when the agent wins it on every trial seed.
+
+| position | source | trials won | solved |
+|---|---|---:|---|
+| `gear-before-the-raid` | hand-built | 0/4 | no |
+| `sell-to-afford-the-raid` | hand-built | 0/4 | no |
+| `two-pieces-of-gear` | hand-built | 0/4 | no |
+| `mined-23767-79` | mined from heuristic self-play | 0/4 | no |
+| `mined-23773-81` | mined from heuristic self-play | 0/4 | no |
+| `mined-23782-53` | mined from heuristic self-play | 0/4 | no |
+
+The win is confirmed by playing the turn out and the rival's whole reply with the frozen heuristic in both seats, so a line that reaches seven Gigs and has them stolen back does not count. That reply is one competent defence and one sample of the rival's Gig die, not a proof against every defence.
