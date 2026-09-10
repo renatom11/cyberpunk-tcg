@@ -264,14 +264,14 @@ class EffectCtx:
         d = self.s.card(inst)
         if d.type is CardType.GEAR:
             def _host(c: "EffectCtx", h: int) -> None:
-                play_card(c.s, c.player, inst, host=h, cost=0)
                 if then is not None:
-                    then(c, inst)
+                    c.later(lambda c2: then(c2, inst))       # after the Gear's own PLAY trigger
+                play_card(c.s, c.player, inst, host=h, cost=0)
             self.choose(gear_hosts(self.s, self.player), _host, prompt="Equip to")
             return
-        play_card(self.s, self.player, inst, cost=0)
         if then is not None:
-            then(self, inst)
+            self.later(lambda c2: then(c2, inst))
+        play_card(self.s, self.player, inst, cost=0)
 
     # ------------------------------------------------------------- in play
     def defeat(self, inst: int) -> None:
@@ -323,24 +323,21 @@ class EffectCtx:
 
     def adjust_up_to(self, owners: Iterable[int], lo: int, hi: int, *, cont: Callable | None = None,
                      prompt: str = "Adjust a Gig") -> None:
-        """'Increase/decrease/adjust a Gig by up to N': pick a die, then an amount in lo..hi."""
-        def _die(c: "EffectCtx", owner: int, index: int) -> None:
-            k, v = c.gigs(owner)[index]
-            amounts = [a for a in range(lo, hi + 1) if a != 0 and 1 <= v + a <= k]
-            if not amounts:
-                if cont is not None:
-                    cont(c, owner, index)
-                return
+        """'Increase/decrease/adjust a Gig by up to N' as ONE decision over (owner, index, amount)
+        triples, plus a decline option. Fewer, richer decisions keep search trees small."""
+        cands = []
+        for o in owners:
+            for i, (k, v) in enumerate(self.gigs(o)):
+                for a in range(lo, hi + 1):
+                    if a != 0 and 1 <= v + a <= k:
+                        cands.append((o, i, a))
 
-            def _amt(c2: "EffectCtx", a: int) -> None:
-                c2.adjust_gig(owner, index, a)
-                if cont is not None:
-                    cont(c2, owner, index)
+        def _do(c: "EffectCtx", t: tuple) -> None:
+            c.adjust_gig(t[0], t[1], t[2])
+            if cont is not None:
+                cont(c, t[0], t[1])
 
-            c.choose(amounts, _amt, prompt=prompt, optional=True,
-                     otherwise=(lambda c3: cont(c3, owner, index)) if cont is not None else None)
-
-        self.choose_gig(owners, _die, prompt=prompt, optional=True)
+        self.choose(cands, _do, prompt=prompt, optional=True)
 
     # ------------------------------------------------------------- legends
     def call_free(self, inst: int) -> None:

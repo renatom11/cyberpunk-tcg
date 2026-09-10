@@ -1,0 +1,25 @@
+{
+  "name": "Sample Corpos",
+  "legends": [
+    "hanako-arasaka-daughter-of-the-emperor",
+    "sasha-yakovleva-wont-let-you-down",
+    "v-corporate-exile"
+  ],
+  "main": {
+    "corpo-security": 3,
+    "corporate-surveillance": 3,
+    "emergency-atlus": 3,
+    "field-operator": 3,
+    "valentino-street-racer": 3,
+    "delamain-cab": 3,
+    "hacked-corpo": 3,
+    "les-elemens": 3,
+    "maxtac-av": 3,
+    "modded-muramasa": 3,
+    "floor-it": 3,
+    "peace-offering": 1,
+    "tetratronic-rippler": 3,
+    "dying-night-vs-pistol": 3
+  },
+  "note": "Generated sample deck, not a retail starter list."
+}

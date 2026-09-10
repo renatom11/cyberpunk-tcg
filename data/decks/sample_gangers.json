@@ -1,0 +1,25 @@
+{
+  "name": "Sample Gangers",
+  "legends": [
+    "royce-psycho-on-the-edge",
+    "johnny-silverhand-rocking-renegade",
+    "wakako-okada-peace-and-harmony"
+  ],
+  "main": {
+    "japantown-jonin": 3,
+    "ruthless-lowlife": 3,
+    "appetite-for-destruction": 3,
+    "la-llorona-ghost-of-the-past": 3,
+    "mox-inciters": 3,
+    "valentino-guerrera": 3,
+    "gunpoint-diplomacy": 3,
+    "rita-wheeler-no-stupid-questions": 3,
+    "unlikely-bond": 3,
+    "chrome-fang": 3,
+    "el-sombreron-la-venganza-lenta": 3,
+    "all-is-lost": 1,
+    "mantis-blades": 3,
+    "tetratronic-rippler": 3
+  },
+  "note": "Generated sample deck, not a retail starter list."
+}

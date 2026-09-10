@@ -74,7 +74,7 @@ class Ability:
     """An activated ability. ``effect(ctx)`` runs after the costs are paid."""
 
     effect: Callable
-    cost: int = 0                 # €$ to pay
+    cost: int | Callable = 0      # €$ to pay, or cost(ctx) -> int
     self_spend: bool = False      # the ⊡ symbol: spend this card
     quick: bool = False           # may also be used as a reaction when a rival Unit attacks
     legal: Callable | None = None # extra precondition, legal(ctx) -> bool
@@ -97,7 +97,7 @@ class CardScript:
     power_mod: Callable | None = None     # power_mod(ctx, unit, situation) -> delta, for any unit
     cost_mod: Callable | None = None      # cost_mod(ctx, player, inst, go_solo) -> delta
     self_cost: Callable | None = None     # self_cost(ctx, player, base) -> cost to play this card
-    attack_perm: Callable | None = None   # attack_perm(ctx) -> (units_ok, gigs_ok) or None
+    attack_perm: Callable | None = None   # attack_perm(ctx, (units_ok, gigs_ok)) -> new pair or None
     would_defeat: Callable | None = None  # would_defeat(ctx, inst) -> True if replaced
     would_steal: Callable | None = None   # would_steal(ctx, thief, victim, index) -> True if handled
     unblockable: Callable | None = None   # unblockable(ctx) -> bool, for this attacking Unit

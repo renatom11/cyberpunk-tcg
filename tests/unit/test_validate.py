@@ -52,14 +52,15 @@ def test_copy_limit_size_and_legend_rules(pool):
     assert any("40-50" in e for e in validate(small, pool, allow_unscripted=True).errors)
 
 
-def test_unscripted_and_unverified_cards_are_refused_by_default(pool):
+def test_sample_decks_validate_cleanly_now_that_the_pool_is_scripted(pool):
     deck = Decklist.load(ROOT / "data/decks/sample_mercs.json")
-    v = validate(deck, pool)
-    assert not v.ok and any("no script" in e for e in v.errors)
-    with_placeholder = Decklist.from_counts("x", list(deck.legends),
-                                            {**deck.counts(), "adam-smasher-metal-over-meat": 1})
-    v = validate(with_placeholder, pool, allow_unscripted=True)
-    assert any("not verified" in e for e in v.errors)
-    assert validate(with_placeholder, pool, allow_unscripted=True, allow_unverified=True).errors == [
-        e for e in validate(with_placeholder, pool, allow_unscripted=True, allow_unverified=True).errors
-        if "RAM" in e]
+    assert validate(deck, pool).ok
+
+
+def test_unverified_and_unscripted_cards_are_refused_by_default(pool):
+    deck = Decklist.load(ROOT / "data/decks/sample_mercs.json")
+    with_placeholder = Decklist.from_counts("x", list(deck.legends), {**deck.counts(), "6th-street-recruits": 1})
+    v = validate(with_placeholder, pool)
+    assert any("not verified" in e for e in v.errors) and any("no script" in e for e in v.errors)
+    v = validate(with_placeholder, pool, allow_unverified=True, allow_unscripted=True)
+    assert v.ok and len(v.warnings) == 2

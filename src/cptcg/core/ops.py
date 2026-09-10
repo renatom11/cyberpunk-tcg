@@ -272,11 +272,14 @@ def defeat(s: GameState, inst: int, *, allow_replace: bool = True) -> bool:
     dest = Zone.REMOVED if s.i_flags[inst] & F_GO_SOLO else Zone.TRASH
     s.emit("defeated", inst)
     owner = s.i_owner[inst]
-    equipped = bool(s.gear_on(inst))
+    gear = s.gear_on(inst)
     move(s, inst, dest)
     if d.type is CardType.UNIT or d.type is CardType.LEGEND:
+        for g in gear:                                  # Gear DEFEATED triggers refer to the host
+            s.add_mod("was_host", g, inst)
+            push_trigger(s, Trigger.DEFEATED, g)
         push_trigger(s, Trigger.DEFEATED, inst)
-        dispatch(s, ("defeated", inst, owner, equipped))
+        dispatch(s, ("defeated", inst, owner, bool(gear)))
     return True
 
 

@@ -1,0 +1,25 @@
+{
+  "name": "Sample Netrunners",
+  "legends": [
+    "alt-cunningham-soulkiller-architect",
+    "judy-alvarez-braindance-maestro",
+    "jackie-welles-pour-one-out-for-me"
+  ],
+  "main": {
+    "trust-no-one": 3,
+    "jacked-in-voodoo-boy": 3,
+    "three-mouths-one-desire": 3,
+    "chrome-reverie": 3,
+    "mox-inciters": 3,
+    "netwatch-netdriver": 3,
+    "pyramid-song": 1,
+    "rita-wheeler-no-stupid-questions": 3,
+    "westbrook-netrunner": 3,
+    "maman-brigitte-spirit-of-death": 3,
+    "judy-alvarez-nothing-to-doubt": 3,
+    "placide-voodoo-sentinel": 3,
+    "tetratronic-rippler": 3,
+    "evelyn-parker-scheming-siren": 3
+  },
+  "note": "Generated sample deck, not a retail starter list."
+}

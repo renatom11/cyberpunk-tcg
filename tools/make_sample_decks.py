@@ -42,10 +42,25 @@ def build(name, legend_ids, prefer_tags=(), size=40):
     return deck
 
 
-arasaka = build("Sample Arasaka", ["goro-takemura-hands-unclean", "saburo-arasaka-stubborn-patriarch",
-                                   "yorinobu-arasaka-embracing-destruction"], ("ARASAKA", "CORPO"))
-mercs = build("Sample Mercs", ["v-streetkid", "dexter-deshawn-off-the-grid", "rogue-amendiares-preem-solo"],
-              ("MERC", "ROCKER"))
-for d, fn in ((arasaka, "sample_arasaka.json"), (mercs, "sample_mercs.json")):
-    d.save(ROOT / "data" / "decks" / fn)
-    print(fn, len(d.main), "cards;", ram_limits([reg.get(l) for l in d.legends]))
+DECKS = {
+    "sample_arasaka": (["goro-takemura-hands-unclean", "saburo-arasaka-stubborn-patriarch",
+                        "yorinobu-arasaka-embracing-destruction"], ("ARASAKA", "CORPO")),
+    "sample_mercs": (["v-streetkid", "dexter-deshawn-off-the-grid", "rogue-amendiares-preem-solo"],
+                     ("MERC", "ROCKER")),
+    "sample_netrunners": (["alt-cunningham-soulkiller-architect", "judy-alvarez-braindance-maestro",
+                           "jackie-welles-pour-one-out-for-me"], ("NETRUNNER", "BRAINDANCE", "MOX")),
+    "sample_ripperdocs": (["viktor-vektor-sit-down-and-relax", "dum-dum-maelstrom-triggerman",
+                           "river-ward-detective-on-the-hunt"], ("CYBERWARE", "RIPPERDOC", "NCPD")),
+    "sample_nomads": (["panam-palmer-nomad-cavalry", "padre-man-of-the-cross", "jackie-welles-mamas-favorite"],
+                      ("NOMAD", "ALDECALDO", "VALENTINO")),
+    "sample_gangers": (["royce-psycho-on-the-edge", "johnny-silverhand-rocking-renegade", "wakako-okada-peace-and-harmony"],
+                       ("GANGER", "MAELSTROM", "TYGER CLAWS")),
+    "sample_fixers": (["muamar-reyes-el-capitan", "kerry-eurodyne-axe-attitude-audience", "evelyn-parker-beautiful-enigma"],
+                      ("FIXER", "DOLL", "ROCKER")),
+    "sample_corpos": (["hanako-arasaka-daughter-of-the-emperor", "sasha-yakovleva-wont-let-you-down", "v-corporate-exile"],
+                      ("CORPO", "MILITECH", "VEHICLE")),
+}
+for name, (legs, tags) in DECKS.items():
+    d = build(name.replace("_", " ").title(), legs, tags)
+    d.save(ROOT / "data" / "decks" / f"{name}.json")
+    print(name, len(d.main), "cards;", {c.name: v for c, v in ram_limits([reg.get(l) for l in d.legends]).items() if v})

@@ -129,3 +129,20 @@ def pool():
 
 def gig_area(s, p):
     return s.gig[p]
+
+
+def during_main(s, fn):
+    """Run fn(s) as if it happened during the active player's main phase, resolving any steps it
+    queues, and return to the main menu."""
+    from cptcg.core.engine import advance
+    from cptcg.core.steps import MainPhaseStep
+    s.pending = None
+    s.stack.append(MainPhaseStep())
+    fn(s)
+    advance(s)
+    return s
+
+
+def defeat_now(s, inst):
+    from cptcg.core.ops import defeat
+    return during_main(s, lambda st: defeat(st, inst))

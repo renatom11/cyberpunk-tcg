@@ -159,7 +159,7 @@ def play_card(s: GameState, p: int, inst: int, host: int = NO_INST, cost: int = 
     s.played.append(inst)
     if d.type is CardType.UNIT:
         move(s, inst, Zone.FIELD)
-        s.i_lag[inst] = 0 if Keyword.ADRENALINE in d.keywords else 1
+        s.i_lag[inst] = 1                         # ADRENALINE grants attacking, not freedom from Lag
         push_trigger(s, Trigger.PLAY, inst)
     elif d.type is CardType.PROGRAM:
         # Pay, resolve, trash. We trash first and then resolve: with no priority stack the
@@ -191,7 +191,8 @@ def go_solo(s: GameState, p: int, inst: int, cost: int) -> None:
 def activate(s: GameState, p: int, inst: int, k: int) -> None:
     ab = s.card(inst).script.abilities[k]
     excl = inst if (ab.self_spend and s.card(inst).type is CardType.LEGEND) else NO_INST
-    pay(s, p, ab.cost, exclude=excl)
+    cost = ab.cost(_ctx(s, inst)) if callable(ab.cost) else ab.cost
+    pay(s, p, cost, exclude=excl)
     if ab.self_spend:
         spend(s, inst)
     s.emit("activate", p, inst, k)
@@ -207,6 +208,8 @@ def _attack(s: GameState, p: int, unit: int) -> None:
     s.stack.append(ResolveAttackStep())
     s.stack.append(ReactionWindowStep())
     s.stack.append(DeclareTargetStep())
+    for g in s.gear_on(unit):
+        push_trigger(s, Trigger.ATTACK, g)
     push_trigger(s, Trigger.ATTACK, unit)
     dispatch(s, ("attack", unit, p))
 

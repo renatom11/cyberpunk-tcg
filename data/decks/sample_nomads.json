@@ -1,0 +1,25 @@
+{
+  "name": "Sample Nomads",
+  "legends": [
+    "panam-palmer-nomad-cavalry",
+    "padre-man-of-the-cross",
+    "jackie-welles-mamas-favorite"
+  ],
+  "main": {
+    "valentino-street-racer": 3,
+    "pepe-najarro-working-doubles": 3,
+    "riding-nomad": 3,
+    "we-gotta-live-together": 3,
+    "wraith-marauders": 3,
+    "panam-palmer-strength-through-family": 3,
+    "saul-bright-stormrider": 3,
+    "peace-offering": 3,
+    "synapse-burnout": 3,
+    "corpo-security": 3,
+    "corporate-surveillance": 1,
+    "riot-shield": 3,
+    "tygers-whisper": 3,
+    "sandevistan": 3
+  },
+  "note": "Generated sample deck, not a retail starter list."
+}

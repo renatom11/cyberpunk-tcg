@@ -91,7 +91,7 @@ def test_memory_relapse_spends_and_locks_and_draws_on_even_cred(pool):
 
 
 def test_chrome_reverie_locks_attacker_and_may_call(pool):
-    s = board(pool, Side(hand=["chrome-reverie"], eddies=E, gig=[(6, 1)], legends=["padre-man-of-the-cross", "wakako-okada-peace-and-harmony", "muamar-reyes-el-capitan"]),
+    s = board(pool, Side(hand=["chrome-reverie"], eddies=E, gig=[(6, 1)], legends=["saburo-arasaka-stubborn-patriarch", "kerry-eurodyne-axe-attitude-audience", "river-ward-detective-on-the-hunt"]),
               Side(field=["psycho-squad"]))
     play(s, "chrome-reverie")
     do(s, Pick((0,)))                                       # call a legend for free (min gig)

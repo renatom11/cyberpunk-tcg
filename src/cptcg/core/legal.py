@@ -41,9 +41,9 @@ def attack_permission(s: GameState, unit: int) -> tuple[bool, bool]:
             units_ok = s.has_mod("attack_units_now", unit)
             gigs_ok = s.has_mod("attack_gigs_now", unit)
     if d.script is not None and d.script.attack_perm is not None:
-        r = d.script.attack_perm(_ctx(s, unit))
+        r = d.script.attack_perm(_ctx(s, unit), (units_ok, gigs_ok))
         if r is not None:
-            units_ok, gigs_ok = units_ok and r[0], gigs_ok and r[1]
+            units_ok, gigs_ok = r
     return units_ok, gigs_ok
 
 
@@ -88,7 +88,8 @@ def ability_options(s: GameState, player: int, quick_only: bool) -> list[Activat
                 if d.type is CardType.UNIT and s.i_lag[inst]:
                     continue                     # Lag: no self-spend effects
             excl = inst if (ab.self_spend and d.type is CardType.LEGEND) else NO_INST
-            if available(s, player, exclude=excl) < ab.cost:
+            cost = ab.cost(_ctx(s, inst)) if callable(ab.cost) else ab.cost
+            if available(s, player, exclude=excl) < cost:
                 continue
             if ab.legal is not None and not ab.legal(_ctx(s, inst)):
                 continue
