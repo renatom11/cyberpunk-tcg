@@ -11,7 +11,7 @@ from itertools import combinations
 from typing import Callable, Iterable
 
 from cptcg.core import ops
-from cptcg.core.actions import Choice, ChoiceKind, Pick
+from cptcg.core.actions import Choice, ChoiceKind, Pick, call_site
 from cptcg.core.enums import NO_INST, NZONE, CardType, Keyword, Zone
 from cptcg.core.state import GameState
 
@@ -143,10 +143,16 @@ class EffectCtx:
 
     def choose(self, values: Iterable, cont: Callable[["EffectCtx", object], None], *,
                prompt: str = "", player: int | None = None, optional: bool = False,
-               otherwise: Callable[["EffectCtx"], None] | None = None) -> None:
+               otherwise: Callable[["EffectCtx"], None] | None = None,
+               tag: str = "", revealed: Iterable[int] = ()) -> None:
         """Pick one of ``values``; ``cont(ctx, value)`` runs with the pick. With ``optional``,
         a decline option is added and ``otherwise(ctx)`` runs on decline (if given).
-        If there is nothing to choose, ``otherwise`` runs immediately."""
+        If there is nothing to choose, ``otherwise`` runs immediately.
+
+        ``revealed`` names the instances this question has *shown* to the chooser — the top cards
+        a peek looked at. Declare it whenever the effect read a card the chooser could not
+        otherwise see; ``core.view`` pins exactly what is declared here (see ``view._pinned``).
+        ``tag`` overrides the call site used to identify the question."""
         vals = list(values)
         if not vals:
             if otherwise is not None:
@@ -165,12 +171,14 @@ class EffectCtx:
                 otherwise(c)
 
         self.ask(Choice(ChoiceKind.PICK, self.player if player is None else player, opts, _cont,
-                        prompt=prompt or self.card.name))
+                        prompt=prompt or self.card.name, tag=f"{inst}@{tag or call_site(cont)}",
+                        revealed=tuple(revealed)))
 
     def choose_many(self, values: Iterable, lo: int, hi: int,
                     cont: Callable[["EffectCtx", list], None], *, prompt: str = "",
-                    player: int | None = None) -> None:
-        """Pick between ``lo`` and ``hi`` of ``values`` (clamped to what's available)."""
+                    player: int | None = None, tag: str = "", revealed: Iterable[int] = ()) -> None:
+        """Pick between ``lo`` and ``hi`` of ``values`` (clamped to what's available).
+        ``revealed`` and ``tag`` are as in ``choose``."""
         vals = list(values)
         hi = min(hi, len(vals))
         lo = min(lo, hi)
@@ -184,7 +192,8 @@ class EffectCtx:
             cont(EffectCtx(st, inst), [vals[i] for i in act.picks])
 
         self.ask(Choice(ChoiceKind.PICK, self.player if player is None else player, opts, _cont,
-                        prompt=prompt or self.card.name))
+                        prompt=prompt or self.card.name, tag=f"{inst}@{tag or call_site(cont)}",
+                        revealed=tuple(revealed)))
 
     def choose_one(self, effects: list[tuple[str, Callable[["EffectCtx"], None]]], *, both: bool = False,
                    player: int | None = None) -> None:
@@ -193,12 +202,15 @@ class EffectCtx:
             for _label, fn in reversed(effects):
                 self.later(fn)
             return
-        self.choose(effects, lambda c, e: e[1](c), prompt="Choose one effect", player=player)
+        self.choose(effects, lambda c, e: e[1](c), prompt="Choose one effect", player=player,
+                    tag=call_site(effects[0][1]) if effects else "")
 
-    def maybe(self, cont: Callable[["EffectCtx"], None], *, prompt: str = "", player: int | None = None) -> None:
-        """'You may ...' — a yes/no decision."""
+    def maybe(self, cont: Callable[["EffectCtx"], None], *, prompt: str = "",
+              player: int | None = None, revealed: Iterable[int] = ()) -> None:
+        """'You may ...' — a yes/no decision. ``revealed`` is as in ``choose``: name the card a
+        peek showed the chooser, so the mask knows they have seen it."""
         self.choose([True], lambda c, _v: cont(c), prompt=prompt or f"{self.card.name}: use effect?",
-                    player=player, optional=True)
+                    player=player, optional=True, tag=call_site(cont), revealed=revealed)
 
     def later(self, fn: Callable[["EffectCtx"], None]) -> None:
         """Queue ``fn(ctx)`` to run after whatever is currently queued above it resolves."""
@@ -220,7 +232,8 @@ class EffectCtx:
             if cont is not None:
                 cont(c, picks)
 
-        self.choose_many(hand, min(n, len(hand)), min(n, len(hand)), _done, prompt="Discard", player=p)
+        self.choose_many(hand, min(n, len(hand)), min(n, len(hand)), _done, prompt="Discard",
+                         player=p, tag=call_site(cont))
 
     def trash_top(self, n: int, player: int | None = None) -> list[int]:
         return ops.trash_top(self.s, self.player if player is None else player, n)
@@ -259,7 +272,9 @@ class EffectCtx:
             if cont is not None:
                 cont(c, picks)
 
-        self.choose_many(cands, lo, hi, _done, prompt="Search")
+        # The peek is real: the searcher has seen all ``n``, not just the ones they may take.
+        self.choose_many(cands, lo, hi, _done, prompt="Search", tag=call_site(cont),
+                         revealed=tuple(cards))
 
     def sell(self, inst: int) -> None:
         ops.move(self.s, inst, Zone.EDDIES)
@@ -277,7 +292,7 @@ class EffectCtx:
                 if then is not None:
                     c.later(lambda c2: then(c2, inst))       # after the Gear's own PLAY trigger
                 play_card(c.s, c.player, inst, host=h, cost=0)
-            self.choose(gear_hosts(self.s, self.player), _host, prompt="Equip to")
+            self.choose(gear_hosts(self.s, self.player), _host, prompt="Equip to", tag="equip")
             return
         if then is not None:
             self.later(lambda c2: then(c2, inst))
@@ -334,7 +349,8 @@ class EffectCtx:
             gigs = c.gigs(o)
             if i < len(gigs) and gigs[i] == (k, v):
                 cont(c, o, i)
-        self.choose(cands, _do, prompt=prompt, optional=optional, player=player)
+        self.choose(cands, _do, prompt=prompt, optional=optional, player=player,
+                    tag=call_site(cont))
 
     def adjust_up_to(self, owners: Iterable[int], lo: int, hi: int, *, cont: Callable | None = None,
                      prompt: str = "Adjust a Gig") -> None:
@@ -356,7 +372,7 @@ class EffectCtx:
             if cont is not None:
                 cont(c, o, i)
 
-        self.choose(cands, _do, prompt=prompt, optional=True)
+        self.choose(cands, _do, prompt=prompt, optional=True, tag=call_site(cont) or "adjust_gig")
 
     # ------------------------------------------------------------- legends
     def call_free(self, inst: int) -> None:
@@ -370,8 +386,9 @@ class EffectCtx:
     def offer_call_free(self, prompt: str = "Call a Legend for free?") -> None:
         if not ops.can_call_free(self.s, self.player):
             return
+        # Blind by design (ruling: you Call without peeking), so nothing is revealed here.
         self.choose([i for i in self.legends(faceup=False)], lambda c, i: c.call_free(i),
-                    prompt=prompt, optional=True)
+                    prompt=prompt, optional=True, tag="call_free")
 
 
 ops._EffectCtx = EffectCtx   # see ops._ctx: bind once instead of importing on every cache miss

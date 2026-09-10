@@ -102,14 +102,36 @@ class Pick(Action):
     picks: tuple[int, ...]   # whatever the continuation asked for: instances, dice indices...
 
 
+def call_site(fn) -> str:
+    """``file:line`` of ``fn`` — a stable name for the code that asked a question.
+
+    ``prompt`` is player-facing text and shipped cards build it by formatting a card name
+    (``f"Trash {c.d(top[0]).name}?"``), so it is unsafe as an identity: anything that keys on a
+    prompt hands that card name to whoever holds the key, including a seat that may not see the
+    card (``view._pending_key``). A call site draws the same distinction — this card, this
+    question — and carries no card text at all.
+    """
+    code = getattr(fn, "__code__", None)
+    if code is None:
+        return ""
+    return f"{code.co_filename.rpartition('/')[2]}:{code.co_firstlineno}"
+
+
 @dataclass(frozen=True, slots=True)
 class Choice:
     kind: ChoiceKind
     player: int
     options: tuple[Action, ...]
     cont: Callable | None = None   # PICK only: cont(state, action) resolves the choice
-    prompt: str = ""
+    prompt: str = ""               # player-facing text; may name a hidden card, so never a key
     lazy: bool = False             # options not computed yet (see engine.legal_actions)
+    #: Identity of the question, safe to key on: ``"<asking instance>@<call site>"``. Empty for the
+    #: fixed-kind choices (MAIN, REACTION, ...), whose ``kind`` already identifies them.
+    tag: str = ""
+    #: Instances this choice has *shown* to ``player`` — the top cards of a deck a peek looked at
+    #: before asking. Declared by the effect, never guessed: ``view`` pins exactly these while the
+    #: choice is open, and pins nothing otherwise.
+    revealed: tuple[int, ...] = ()
 
     def index_of(self, action: Action) -> int:
         return self.options.index(action)

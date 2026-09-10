@@ -253,7 +253,8 @@ def _():
                     from cptcg.core.ops import ask
                     unit = ev[1]
                     ask(s, Choice(ChoiceKind.PICK, me, tuple(Pick((i,)) for i in cands),
-                                  lambda st, a: push_steals(st, unit, a.picks), prompt="Also steal a Gig"))
+                                  lambda st, a: push_steals(st, unit, a.picks),
+                                  prompt="Also steal a Gig", tag=f"{unit}@also_steal"))
         c.mod("listener", me, listen)
     return CardScript(on_play=play)
 
@@ -1059,7 +1060,8 @@ def _():
             top = c.top(1)
             if top:
                 from cptcg.core.ops import move
-                c.maybe(lambda c2: move(c2.s, top[0], Zone.TRASH), prompt=f"Trash {c.d(top[0]).name}?")
+                c.maybe(lambda c2: move(c2.s, top[0], Zone.TRASH), revealed=top,
+                        prompt=f"Trash {c.d(top[0]).name}?")
     return CardScript(on_event=ev, events=frozenset({"spent"}))
 
 
@@ -1207,7 +1209,8 @@ def _():
         if e[0] == "defeated" and e[2] == c.player and e[3] and c.d(e[1]).type is UNIT:
             from cptcg.core.ops import move
             top = c.top(2)
-            c.choose(top, lambda c2, i: move(c2.s, i, Zone.TRASH), prompt="Trash 1 of the top 2")
+            c.choose(top, lambda c2, i: move(c2.s, i, Zone.TRASH), revealed=top,
+                     prompt="Trash 1 of the top 2")
     return CardScript(abilities=(Ability(effect=free_gear, self_spend=True, quick=True, label="Play a cheap Gear"),),
                       on_event=ev, events=frozenset({"defeated"}))
 

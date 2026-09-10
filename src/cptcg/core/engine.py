@@ -74,7 +74,8 @@ def legal_actions(s: GameState) -> tuple[Action, ...]:
         return ()
     if ch.lazy:
         from cptcg.core.legal import main_menu
-        ch = Choice(ch.kind, ch.player, tuple(main_menu(s)), ch.cont, ch.prompt)
+        ch = Choice(ch.kind, ch.player, tuple(main_menu(s)), ch.cont, ch.prompt, False,
+                    ch.tag, ch.revealed)
         s.pending = ch
     return ch.options
 

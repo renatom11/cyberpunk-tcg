@@ -26,6 +26,16 @@ class Step:
     def run(self, s: GameState) -> None:  # pragma: no cover - interface
         raise NotImplementedError
 
+    def key(self) -> tuple:
+        """What this queued step *is*, for a search that keys positions on ``view.info_key``.
+
+        Two positions about to resolve a different card's trigger, or to steal a different die,
+        are different positions: the class name alone collides them. A step carries only public
+        things (instances in play, die indices, code identity), never a card definition, so this
+        is safe to hand to either seat.
+        """
+        return (type(self).__name__,)
+
 
 class AskStep(Step):
     """Present a choice. The only way effects ask questions."""
@@ -40,6 +50,10 @@ class AskStep(Step):
             return
         s.pending = self.choice
 
+    def key(self) -> tuple:
+        ch = self.choice
+        return ("AskStep", int(ch.kind), ch.player, ch.tag)     # never the prompt: it names cards
+
 
 # ----------------------------------------------------------------- setup
 class MulliganStep(Step):
@@ -47,6 +61,9 @@ class MulliganStep(Step):
 
     def __init__(self, player: int) -> None:
         self.player = player
+
+    def key(self) -> tuple:
+        return ("MulliganStep", self.player)
 
     def run(self, s: GameState) -> None:
         s.pending = Choice(ChoiceKind.MULLIGAN, self.player,
@@ -271,6 +288,9 @@ class StealOneStep(Step):
     def __init__(self, unit: int, thief: int, index: int) -> None:
         self.unit, self.thief, self.index = unit, thief, index
 
+    def key(self) -> tuple:
+        return ("StealOneStep", self.unit, self.thief, self.index)
+
     def run(self, s: GameState) -> None:
         victim = 1 - self.thief
         if self.index >= len(s.gig[victim]) or s.over:
@@ -324,7 +344,8 @@ class ResolveAttackStep(Step):
             def cont(st: GameState, act: Pick, unit=a) -> None:
                 push_steals(st, unit, act.picks)
 
-            ask(s, Choice(ChoiceKind.PICK, thief, opts, cont, prompt="Steal which Gig(s)?"))
+            ask(s, Choice(ChoiceKind.PICK, thief, opts, cont, prompt="Steal which Gig(s)?",
+                          tag=f"{a}@steal"))
 
 
 def fight(s: GameState, a: int, t: int) -> None:
@@ -394,6 +415,9 @@ class HookStep(Step):
         self.hook = hook
         self.inst = inst
 
+    def key(self) -> tuple:
+        return ("HookStep", self.inst, getattr(self.hook, "__code__", None))
+
     def run(self, s: GameState) -> None:
         if s.over:
             return
@@ -406,6 +430,9 @@ class FnStep(Step):
 
     def __init__(self, fn) -> None:
         self.fn = fn
+
+    def key(self) -> tuple:
+        return ("FnStep", getattr(self.fn, "__code__", None))
 
     def run(self, s: GameState) -> None:
         if not s.over:
