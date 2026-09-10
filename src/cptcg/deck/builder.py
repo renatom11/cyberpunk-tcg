@@ -122,12 +122,18 @@ def card_score(d: CardDef, legends: list[CardDef], prefs: BuildPrefs, rng: Pcg32
 
 
 def heuristic_deck(reg: Registry, legends: list[str] | None, rng: Pcg32, prefs: BuildPrefs | None = None,
-                   name: str = "built") -> Decklist:
+                   name: str = "built", score_fn=None, generated: str = "heuristic", **meta) -> Decklist:
+    """Greedy filler: rank the legal pool by a score, then fill type quotas along the curve and
+    top up the sell-tag density. ``score_fn(d) -> float`` replaces the default ``card_score`` so
+    a strategy (deck/strategies.py) can bring its own opinion while reusing the filler; extra
+    ``meta`` is recorded on the Decklist (e.g. ``strategy="aggro"``)."""
     prefs = prefs or BuildPrefs()
     legends = legends or random_legends(reg, rng)
     ldefs = [reg.get(l) for l in legends]
     pool = legal_pool(reg, legends)
-    scored = sorted(pool, key=lambda d: -card_score(d, ldefs, prefs, rng))
+    if score_fn is None:
+        score_fn = lambda d: card_score(d, ldefs, prefs, rng)  # noqa: E731
+    scored = sorted(pool, key=lambda d: -score_fn(d))
     quota = {UNIT: round(prefs.size * prefs.unit_share), PROGRAM: round(prefs.size * prefs.program_share)}
     quota[GEAR] = prefs.size - quota[UNIT] - quota[PROGRAM]
     curve_target = [round(prefs.size * c) for c in prefs.curve]
@@ -176,7 +182,7 @@ def heuristic_deck(reg: Registry, legends: list[str] | None, rng: Pcg32, prefs: 
         counts[victim.id] -= 1
         counts[gain.id] += 1
     counts = Counter({k: v for k, v in counts.items() if v > 0})
-    deck = Decklist.from_counts(name, legends, dict(counts), generated="heuristic")
+    deck = Decklist.from_counts(name, legends, dict(counts), generated=generated, **meta)
     _assert_legal(deck, reg)
     return deck
 
