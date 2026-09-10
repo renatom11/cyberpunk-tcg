@@ -129,17 +129,23 @@ def dispatch(s: GameState, ev: tuple) -> None:
     a step, and the stack is LIFO, hooks are called in reverse so the first card's question
     surfaces first.
     """
-    hooks = _active(s)[6][s.active]                  # active player's cards first
+    act = s._active
+    if act is None:
+        act = _rebuild_active(s)
+    hooks = act[6][s.active]                         # active player's cards first
     if hooks:
         for inst, h in reversed(hooks):
             if s.over:
                 return
             h(_ctx(s, inst), ev)
     # Temporary listeners registered by effects ("the next time ... this turn"): (s, ev) callables.
-    for kind, _subject, fn, _exp in list(s.mods):
-        if kind == "listener" and not s.over:
-            fn(s, ev)
-    s.emit("event", ev)
+    # Most dispatches find no mods at all; when there are some, walk a copy (listeners may append).
+    if s.mods:
+        for kind, _subject, fn, _exp in list(s.mods):
+            if kind == "listener" and not s.over:
+                fn(s, ev)
+    if s.log is not None:                            # s.emit("event", ev), inlined
+        s.log.append(("event", ev))
 
 
 def ask(s: GameState, choice) -> None:
