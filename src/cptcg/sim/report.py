@@ -240,12 +240,24 @@ def how_played(t: Tournament) -> str:
 # ------------------------------------------------------------------ who played the games
 # The honest disclosure that heads every report. It is written once here, in plain text with no
 # Markdown, so the Markdown report, the web report (through ``/api/report``) and the GUIDE on the
-# site all print exactly the same words. The measured figures are from 360 games per comparison
-# over three deck pairings with the seats mirrored.
+# site all print exactly the same words.
+#
+# Every figure in it is one a reader can re-derive, and the sentence that quotes a figure names the
+# command that prints it: the strength figures come from the arena (``tools/arena.py panel
+# heuristic``, ``tools/arena.py a-vs-b ...``, ``tools/arena.py delayed heuristic``, each of which
+# appends its report to ``docs/learning.md``), and the Blocker rate is re-measured by
+# ``tests/unit/test_report.py``. Nothing here is quoted from a probe that no longer exists. The
+# previous version of this paragraph quoted 98.6% against random and two loss rates against
+# variants of the agent; those came from a throwaway script over three fixed curated deck pairings,
+# no shipped tool reproduces them, and over sampled decks the arena falsifies them — see
+# "Calibration" in ``docs/learning.md``. When a claim cannot be re-derived by a shipped command,
+# cut the claim rather than keep the number.
 def disclosure(agent: str = "heuristic") -> str:
     """One paragraph naming the agent that played both sides and saying what that costs the
-    reader: the ranking is conditional on that opponent, the agent's known limits, and the fact
-    that nothing in this project is measured against human play."""
+    reader: the ranking is conditional on that opponent, the agent's known limits with the command
+    that measures each one, and the fact that nothing in this project is measured against human
+    play. The generic branch names those same commands for an agent this text has no figures for,
+    so an agent that lands later cannot disclose less than the heuristic does."""
     never_human = ("No human games are recorded anywhere in this project, so nothing here is validated "
                    "against human play.")
     if agent == "heuristic":
@@ -253,22 +265,49 @@ def disclosure(agent: str = "heuristic") -> str:
             "Both sides of every game here were played by the heuristic agent, a one-ply greedy bot, so the "
             "ranking is conditional on that opponent: a deck can place highly because it exploits this bot "
             "rather than because it is good. The agent scores the board one ply ahead and cannot plan across "
-            "turns; it never holds a Blocker back, because its preview assumes the rival passes on every "
-            "reaction; and it always takes the largest Gig die and mulligans by a fixed rule. Over 360 games "
-            "per comparison, on three deck pairings with the seats mirrored, it wins 98.6% against random play "
-            "but loses 61.7% of its games to a two-ply version of itself and 59.4% to versions that never "
-            "mulligan or that take the smallest die. It is a floor rather than a fraud: it plays a recognisable "
-            "game, and every deck here met the same opponent, so the comparison between decks is fair \u2014 what "
-            "is untested is how much of it survives a stronger player. " + never_human)
+            "turns; its preview answers every rival reaction with a pass, so an attack always looks "
+            "unopposed and it almost never keeps a Blocker home to defend — in self-play it holds one back "
+            "at a few per cent of the turns where it could have attacked with it, which "
+            "tests/unit/test_report.py re-measures so that almost cannot quietly become never; and it always "
+            "takes the largest Gig die and mulligans by a fixed rule, neither of which anything here has "
+            "measured against the alternatives. Its one strength figure comes from the frozen benchmark "
+            "panel, which anyone can re-run with tools/arena.py panel heuristic: six deck pairings whose "
+            "twelve lists are written out card for card in data/arena/panel.json, 60 games each, every seed "
+            "played from both seats and with the deck assignments swapped as well. Over those 360 games it "
+            "wins 93.9% against uniform random play (95% Wilson 90.9–95.9%, and 91.7–95.0% across the six "
+            "pairings) and exactly 50.0% against itself, which is the protocol showing that no seat or deck "
+            "advantage is left inside the number. That 93.9% is a score on those twelve decklists and "
+            "travels no further: run the same protocol on other samples of decks, with tools/arena.py a-vs-b "
+            "heuristic random --no-sprt --deck-seed N, and it lands anywhere from 88% to 95% while nothing "
+            "about either agent changes, so read it as about nine games in ten rather than as a constant. "
+            "What it cannot do has an instrument too: on the delayed-reward suite, tools/arena.py delayed "
+            "heuristic, it wins 0 of 128 trials over eight positions that each hold a verified winning line, "
+            "where uniform random play wins 12 of the same 128 — those positions were chosen because this "
+            "agent misses them, so the zero is a definition rather than a discovery, and the suite is there "
+            "for whatever plays next. It is a floor rather than a fraud: it plays a recognisable game, and "
+            "every deck here met the same opponent, so the comparison between decks is fair — what is "
+            "untested is how much of it survives a stronger player. "
+            + never_human)
     if agent == "random":
         return (
             "Both sides of every game here were played by the random agent, which picks uniformly among the "
             "legal options and never tries to win, so these numbers say which deck wins when neither side is "
-            "played at all. Read them as a check on the engine, not as a ranking of decks. " + never_human)
+            "played at all. Read them as a check on the engine, not as a ranking of decks. "
+            + never_human)
     return (
-        f"Both sides of every game here were played by the {agent} agent, so the ranking is conditional on that "
-        "opponent: a deck can place highly because it exploits that agent rather than because it is good, and a "
-        "stronger opponent could order these decks differently. " + never_human)
+        f"Both sides of every game here were played by the {agent} agent, so the ranking is conditional on "
+        "that opponent: a deck can place highly because it exploits that agent rather than because it is "
+        "good, and a stronger opponent could order these decks differently. This paragraph quotes no "
+        f"strength figure for {agent}, because the only figures this project trusts are the ones a shipped "
+        "command re-derives, and the four commands that measured the heuristic measure this agent too: "
+        f"tools/arena.py panel {agent} for its win rate against the frozen benchmark panel, the twelve fixed "
+        f"decklists every generation is scored on; tools/arena.py a-vs-b {agent} heuristic for how it does "
+        "against the one-ply bot, over freshly sampled decks and with the deck assignments swapped; "
+        f"tools/arena.py delayed {agent} for whether it can set up a payoff that arrives a turn later, which "
+        f"the heuristic cannot; and tools/arena.py exploit {agent} for how much of its play an opponent "
+        "allowed to cheat can take apart. Each of them appends its report to docs/learning.md. Until they "
+        "have been run, the only thing established about this agent is that it played these games. "
+        + never_human)
 
 
 # ------------------------------------------------------------------ the summary in words

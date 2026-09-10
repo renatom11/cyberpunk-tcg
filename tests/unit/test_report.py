@@ -196,14 +196,22 @@ def test_api_report_upgrades_a_version_1_file():
 
 def test_every_rendered_report_discloses_who_played_the_games(reg):
     """The ranking is conditional on the agent, so the disclosure is part of the report: it names
-    the agent, states the three measured defects, gives the numbers behind them, and sits above the
-    standings. The Markdown, the web report and the GUIDE all print the one Python string."""
+    the agent, states the measured defects, and quotes only figures a shipped command re-derives,
+    naming that command. The Markdown, the web report and the GUIDE all print the one Python
+    string."""
     from cptcg.sim.report import disclosure
     text = disclosure("heuristic")
-    for phrase in ("heuristic agent", "one ply ahead", "cannot plan across turns", "never holds a Blocker back",
-                   "largest Gig die", "mulligans by a fixed rule", "98.6%", "61.7%", "59.4%",
+    for phrase in ("heuristic agent", "one ply ahead", "cannot plan across turns",
+                   "almost never keeps a Blocker home", "largest Gig die", "mulligans by a fixed rule",
+                   "tools/arena.py panel heuristic", "93.9%", "tools/arena.py delayed heuristic",
+                   "data/arena/panel.json", "88% to 95%",
                    "No human games are recorded anywhere in this project"):
         assert phrase in text, phrase
+    # The retired numbers: measured by a throwaway probe over three fixed curated pairings, never
+    # reproduced by a shipped tool, and falsified over sampled decks by tools/arena.py. If one of
+    # these comes back, it has to come back with a command that prints it.
+    for gone in ("98.6%", "61.7%", "59.4%", "never holds a Blocker back"):
+        assert gone not in text, gone
     assert "**" not in text and "`" not in text          # plain text: the page prints it verbatim
     assert disclosure("random").startswith("Both sides of every game here were played by the random agent")
 
@@ -219,6 +227,100 @@ def test_every_rendered_report_discloses_who_played_the_games(reg):
     assert "t.disclosure" in js
     guide = (ROOT / "src/cptcg/web/static/index.html").read_text(encoding="utf-8")
     assert text in guide                                   # the GUIDE entry, word for word
+
+
+def test_the_disclosure_only_names_commands_that_exist():
+    """Every 'tools/arena.py X' in any branch of the disclosure has to be a real arena subcommand,
+    for the heuristic and for the agents that land later. A figure whose command was renamed is a
+    figure the reader cannot re-derive, which is exactly the failure this paragraph is here to
+    avoid."""
+    import argparse
+    import re
+
+    from cptcg.cli.arena import add_arguments
+    from cptcg.sim.report import disclosure
+
+    ap = add_arguments(argparse.ArgumentParser())
+    commands = set(ap._subparsers._group_actions[0].choices)
+    for agent in ("heuristic", "random", "gen0", "search"):
+        named = set(re.findall(r"tools/arena\.py ([a-z-]+)", disclosure(agent)))
+        assert named <= commands, (agent, named - commands)
+
+
+def test_the_generic_disclosure_says_no_less_than_the_heuristic_one():
+    """An agent this text has no figures for must not disclose less than the heuristic does: it
+    still names the agent, still carries the never-validated-against-humans line, and points at
+    every arena command that would produce the missing figures — including the two the heuristic's
+    own paragraph quotes."""
+    from cptcg.sim.report import disclosure
+    text = disclosure("gen0")
+    assert text.startswith("Both sides of every game here were played by the gen0 agent")
+    for phrase in ("tools/arena.py panel gen0", "tools/arena.py a-vs-b gen0 heuristic",
+                   "tools/arena.py delayed gen0", "tools/arena.py exploit gen0", "docs/learning.md",
+                   "No human games are recorded anywhere in this project"):
+        assert phrase in text, phrase
+    assert "quotes no strength figure" in text and "%" not in text   # no number without a run
+    assert "**" not in text and "`" not in text
+
+
+def test_the_panel_figure_in_the_disclosure_is_the_one_the_arena_printed():
+    """The disclosure's numbers and the instrument's numbers cannot drift: every figure the
+    heuristic paragraph quotes for the frozen panel is written in the arena section of
+    docs/learning.md, which is where tools/arena.py appends what it measured."""
+    from cptcg.sim.report import disclosure
+    learning = (ROOT / "docs/learning.md").read_text(encoding="utf-8")
+    text = disclosure("heuristic")
+    for figure in ("93.9%", "90.9\u201395.9%", "91.7\u201395.0%", "50.0%"):
+        assert figure in text and figure in learning, figure
+
+
+def test_the_heuristic_almost_never_keeps_a_blocker_home(reg):
+    """The disclosure says 'almost never', not 'never', and that word is a measurement: over
+    heuristic self-play, count the turns in which a ready Blocker could have attacked and the turn
+    ended without it attacking. Both ends matter — if it becomes never the sentence is an
+    overstatement again, and if it becomes common the sentence is simply wrong."""
+    from cptcg.agents.base import make_agent
+    from cptcg.core import ops
+    from cptcg.core.actions import Attack, ChoiceKind
+    from cptcg.core.engine import apply, legal_actions, new_game
+    from cptcg.core.enums import Keyword
+    from cptcg.core.rng import Pcg32
+    from cptcg.learn.decks import sample_pair
+
+    rng = Pcg32(21, seq=5)
+    chances = held = 0
+    for g in range(12):
+        s = new_game(reg, sample_pair(reg, rng), 900 + g)
+        agents = [make_agent("heuristic", 31 + p) for p in range(2)]
+        for p, a in enumerate(agents):
+            a.new_game(g, p)
+        turn, could, swung = None, False, False
+        for _ in range(6000):
+            if s.over:
+                break
+            legal_actions(s)
+            choice = s.pending
+            if choice is None:
+                break
+            i = agents[choice.player].act(s, choice)
+            if choice.kind is ChoiceKind.MAIN:
+                if (s.turn, s.active) != turn:
+                    chances += could
+                    held += could and not swung
+                    turn, could, swung = (s.turn, s.active), False, False
+                ready = [o for o in choice.options if isinstance(o, Attack)
+                         and ops.has_keyword(s, o.inst, Keyword.BLOCKER)]
+                could = could or bool(ready)
+                chosen = choice.options[i]
+                swung = swung or (isinstance(chosen, Attack)
+                                  and ops.has_keyword(s, chosen.inst, Keyword.BLOCKER))
+            apply(s, i)
+        chances += could
+        held += could and not swung
+
+    assert chances > 50, chances                     # the sample has to contain the decision at all
+    assert 0 < held, "it never keeps a Blocker home: the disclosure now overstates the other way"
+    assert held / chances < 0.15, f"{held}/{chances} is not 'almost never' any more"
 
 
 def test_glossary_entries_back_both_the_markdown_and_the_page():

@@ -301,6 +301,29 @@ older number in this repository that compared two agents on fixed deck assignmen
 roughly this much, and none of them is restated here — they are simply superseded by whatever the
 arena prints from now on.
 
+**The disclosure printed the old figures until now.** `sim.report.disclosure` is the one
+paragraph that heads every Markdown report, the web report and the GUIDE, and it quoted 98.6%
+against random plus two loss rates — 61.7% to a two-ply version of the agent and 59.4% to
+versions that never mulligan or take the smallest die — that no shipped command prints. Those
+came from a throwaway probe over three fixed curated deck pairings — the two retail starters
+plus two of the `sample_*` matchups — 360 games, seats mirrored. The arena measures over
+*sampled* decks instead, so the paragraph was presenting a measurement of one population as the
+number, and the reconstruction in the table above lands 96.7–98.1% under the old protocol and
+93.9% under this one. It now quotes the frozen panel — 93.9%, with `tools/arena.py panel
+heuristic` named beside it, the decks and the game count stated, and the 88–95% spread across
+deck seeds printed so the figure cannot be read as a constant — and the delayed-reward suite
+for what the agent cannot do. The two variant figures are simply gone: no variant of the frozen
+agent ships, so no command re-derives them, and a claim that cannot be re-derived is cut rather
+than kept.
+
+The same paragraph also said the heuristic "never holds a Blocker back". Counting, over 240
+heuristic self-play games on decks from `learn.decks.sample_pair`, the turns in which a ready
+Blocker could have attacked and the turn ended without it attacking: **54 of 1126**, about one
+turn in twenty (per deck sample: 20/281, 14/270, 7/292, 13/283). So it is "almost never", not
+"never", and `tests/unit/test_report.py` re-measures a 12-game slice of that count and fails if
+it reaches zero or passes 15%. The rule the paragraph now follows is the same one this page
+follows: no figure without a shipped command that prints it.
+
 ### The frozen panel
 
 `data/arena/panel.json` is **data, not code**, so freezing it is visible in a diff. It pins the
