@@ -123,3 +123,24 @@ Each generation writes `report.md`. When decks carry `meta["strategy"]`:
 
 The hall of fame entries record the strategy too (`HallOfFame.by_strategy()`), so the long-run
 question — which philosophy keeps producing champions? — has a one-line answer.
+
+### A first data point
+
+One deck per personality, each on the Legends it chose for itself, round robin with the
+`heuristic` agent (seed 42, 40 games per pair, ~200 games per deck, no hill-climb):
+
+| # | Strategy | BT | vs field | Nash |
+|---|---|---|---|---|
+| 1 | aggro | 1.68 | 68% | 100% |
+| 2 | control | 1.25 | 60% | 0% |
+| 3 | synergy | 1.10 | 56% | 0% |
+| 4 | balanced | 0.92 | 52% | 0% |
+| 5 | gig | 0.86 | 50% | 0% |
+| 6 | economy | 0.20 | 14% | 0% |
+
+Read with the cautions above: a single deck per thesis, unimproved, against one agent. But it
+already says something about the pool. Racing works — Aggro carries the whole Nash support —
+and the "sell everything" thesis fails as built: a deck that is 65% Programs and Gear has too
+few bodies to steal with, and an Eddie a turn buys nothing if there is nothing to spend it on.
+Whether Economy's *cards* are wrong or only its *shape* is, the knowledge store will show:
+its Eddie engines will accumulate IWD in every context they appear in.
