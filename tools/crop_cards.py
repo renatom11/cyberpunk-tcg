@@ -88,6 +88,15 @@ def captions(ocr_boxes, scale: float):
         yield x0, y0, text, (sub[0][4] if sub else None)
 
 
+def legend_back(back: Image.Image, yellow=(255, 230, 0)) -> Image.Image:
+    """Legend cards have the same back with the two colours swapped: yellow shapes on black.
+    Map luminance onto the yellow so black areas become yellow and yellow areas become black."""
+    lum = back.convert("L")
+    lo, hi = lum.getextrema()
+    inv = lum.point(lambda v: 255 - int(255 * (v - lo) / max(1, hi - lo)))
+    return Image.merge("RGB", [inv.point(lambda v, c=c: v * c // 255) for c in yellow])
+
+
 def crop_all(paths: list[Path], out: Path, scale: float, back: Path | None) -> dict:
     from rapidocr_onnxruntime import RapidOCR
     ocr = RapidOCR()
@@ -121,7 +130,9 @@ def crop_all(paths: list[Path], out: Path, scale: float, back: Path | None) -> d
             face.save(dest, quality=93, optimize=True, subsampling=0)
             found[card["id"]] = (dest, score)
     if back is not None:
-        Image.open(back).convert("RGB").resize((FACE_W, FACE_H), Image.LANCZOS).save(out / "_back.jpg", quality=93, optimize=True, subsampling=0)
+        bk = Image.open(back).convert("RGB").resize((FACE_W, FACE_H), Image.LANCZOS)
+        bk.save(out / "_back.jpg", quality=93, optimize=True, subsampling=0)
+        legend_back(bk).save(out / "_back_legend.jpg", quality=93, optimize=True, subsampling=0)
     missing = [c["id"] for c in cards if c["id"] not in found]
     return {"found": {k: (str(v[0]), v[1]) for k, v in found.items()}, "missing": missing, "unmatched": unmatched}
 

@@ -18,7 +18,7 @@ function cardNode(c, opts = {}) {
   const d = el("div", "card " + (c.color || ""));
   if (opts.back) {
     d.className = "card back" + (opts.small ? " sm" : "");
-    if (HAS_BACK) { const img = el("img"); img.src = "/images/_back.jpg"; img.alt = "card back"; img.onerror = () => { HAS_BACK = false; img.remove(); }; d.append(img); }
+    if (HAS_BACK) { const img = el("img"); img.src = opts.legend ? "/images/_back_legend.jpg" : "/images/_back.jpg"; img.alt = "card back"; img.onerror = () => { HAS_BACK = false; img.remove(); }; d.append(img); }
     return d;
   }
   if (opts.small) d.classList.add("sm");
@@ -106,7 +106,7 @@ function renderBoard(root, v, { interactive, onAct } = {}) {
     p.legends.forEach(l => {
       let n;
       if (l.faceup || l.known_only) { n = cardNode(l, { small: true }); if (l.faceup) n.classList.add("faceup-legend"); if (l.known_only) n.style.opacity = .7; }
-      else { n = cardNode({}, { back: true, small: true }); }
+      else { n = cardNode({}, { back: true, small: true, legend: true }); }
       if (l.spent) n.classList.add("spent");
       if (l.gear && l.gear.length) { const g = el("div", "gearlist"); l.gear.forEach(x => g.append(el("span", "", x.name))); n.append(g); }
       decorate(n, l.inst);
