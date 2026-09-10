@@ -117,14 +117,19 @@ def main_menu(s: GameState) -> list:
     opts: list = [EndTurn()]
     avail = available(s, p)
     once = s.once[p]
+    defs = s.reg.defs
+    i_card = s.i_card
+    i_spent = s.i_spent
+    hand = s.z[base + Zone.HAND]
+    units = s.units(p)                     # nothing below changes the field: reuse for attacks
 
     if not once & ONCE_SOLD:
-        opts += [Sell(i) for i in s.z[base + Zone.HAND] if s.card(i).sell_tag]
+        opts += [Sell(i) for i in hand if defs[i_card[i]].sell_tag]
 
     hosts = None
-    field_full = (s.cfg.field_limit is not None and len(s.units(p)) >= s.cfg.field_limit)
-    for i in s.z[base + Zone.HAND]:
-        d = s.card(i)
+    field_full = (s.cfg.field_limit is not None and len(units) >= s.cfg.field_limit)
+    for i in hand:
+        d = defs[i_card[i]]
         if d.cost is None or play_cost(s, p, i) > avail:
             continue
         if d.type is CardType.UNIT:
@@ -137,18 +142,21 @@ def main_menu(s: GameState) -> list:
                 hosts = gear_hosts(s, p)
             opts += [Play(i, h) for h in hosts]
 
+    # available(s, p, exclude=i) is avail minus one iff Legend i is itself a payable source
+    # (payable_sources): ready and face-down, or ready, face-up and carrying a sell tag (CR 5.7.2.2).
     for i in s.legends(p):
-        d = s.card(i)
+        d = defs[i_card[i]]
         if s.i_faceup[i]:
             if (Keyword.GO_SOLO in d.keywords and d.cost is not None and not field_full
-                    and (not s.cfg.go_solo_requires_ready or not s.i_spent[i])
-                    and available(s, p, exclude=i) >= play_cost(s, p, i, go_solo=True)):
+                    and (not s.cfg.go_solo_requires_ready or not i_spent[i])
+                    and avail - (1 if (not i_spent[i] and d.sell_tag) else 0)
+                    >= play_cost(s, p, i, go_solo=True)):
                 opts.append(GoSolo(i))
-        elif not once & ONCE_CALLED and available(s, p, exclude=i) >= 1:
+        elif not once & ONCE_CALLED and avail - (0 if i_spent[i] else 1) >= 1:
             opts.append(CallLegend(i))
 
     opts += ability_options(s, p, quick_only=False)
-    opts += [Attack(u) for u in s.units(p) if can_attack(s, u)]
+    opts += [Attack(u) for u in units if can_attack(s, u)]
     return opts
 
 
@@ -158,22 +166,37 @@ def reaction_menu(s: GameState) -> list:
     atk = s.atk
     d = 1 - atk.attacker_ctrl
     opts: list = [Pass()]
+    defs = s.reg.defs
+    i_card = s.i_card
+    i_faceup = s.i_faceup
+    i_spent = s.i_spent
+    avail = None                           # available(s, d): pure, so computed at most once, lazily
     if not s.once[d] & ONCE_CALLED:
-        opts += [CallLegend(i) for i in s.legends(d)
-                 if not s.i_faceup[i] and available(s, d, exclude=i) >= 1]
-    asc = s.card(atk.attacker).script
+        for i in s.legends(d):
+            if not i_faceup[i]:
+                if avail is None:
+                    avail = available(s, d)
+                # available(s, d, exclude=i): a face-down Legend is a payable source iff it is
+                # ready (payable_sources)
+                if avail - (0 if i_spent[i] else 1) >= 1:
+                    opts.append(CallLegend(i))
+    asc = defs[i_card[atk.attacker]].script
     unblockable = asc is not None and asc.unblockable is not None and asc.unblockable(_ctx(s, atk.attacker))
     if not unblockable and atk.redirects < s.cfg.max_redirects_per_attack and (
             atk.target_kind == TARGET_GIG or s.cfg.blocker_redirects_unit_attacks):
+        lag_ok = s.cfg.lagged_units_can_block
+        i_lag = s.i_lag
+        target = atk.target
         for u in s.units(d):
-            if (u != atk.target and not s.i_spent[u]
-                    and (s.cfg.lagged_units_can_block or not s.i_lag[u])
+            if (u != target and not i_spent[u] and (lag_ok or not i_lag[u])
                     and has_keyword(s, u, Keyword.BLOCKER)):
                 opts.append(Block(u))
-    avail = available(s, d)
     for i in s.z[d * NZONE + Zone.HAND]:
-        c = s.card(i)
-        if c.type is CardType.PROGRAM and Keyword.QUICK in c.keywords and play_cost(s, d, i) <= avail:
-            opts.append(Play(i))
+        c = defs[i_card[i]]
+        if c.type is CardType.PROGRAM and Keyword.QUICK in c.keywords:
+            if avail is None:
+                avail = available(s, d)
+            if play_cost(s, d, i) <= avail:
+                opts.append(Play(i))
     opts += ability_options(s, d, quick_only=True)
     return opts
