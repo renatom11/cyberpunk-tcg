@@ -107,12 +107,12 @@ go, each one on purpose:
    best. A screen is deliberately cheap (10 games per opponent is enough to discard the bottom
    half); rank the survivors properly with `cptcg tourney`.
 
-The Legend space itself: 27 Legends are printed, 25 are usable today (Rebecca and Adam Smasher
-*Ender of Legends* have no verified text yet, so the builders never pick them). Three of the
-names appear twice (V, Goro Takemura, Jackie Welles) and a deck may not repeat a name, which cuts
-the 2,300 triples of usable Legends to **2,231 legal triples**, every one with at least 29 legal
-main-deck cards (median 53). Around 1,200 of them mix two colours, 935 three, and 95 are
-mono-colour — the only way to reach RAM 5–6 cards.
+The Legend space itself: 27 Legends are printed, 26 are usable today (Rebecca's ability is not
+revealed yet, so the builders never pick her). Three of the names appear twice (V, Goro Takemura,
+Jackie Welles) and a deck may not repeat a name, which cuts the 2,600 triples of usable Legends to
+**2,528 legal triples** (297 of them with Adam Smasher), every one with at least 29 legal
+main-deck cards. Most mix two colours, about a third use three, and a few are mono-colour — the
+only way to reach RAM 5–6 cards.
 
 ## Running a learning league
 

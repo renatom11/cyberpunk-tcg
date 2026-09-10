@@ -47,8 +47,8 @@ R, GR, B, Y = "Red", "Green", "Blue", "Yellow"
 C("6th Street Recruits", None, U, R, 1, 4, 6, False, ["6TH STREET", "GANGER"], [],
   "When a friendly Unit steals a d6, increase a Gig by up to 6.", 6, verified=False,
   notes="Stats and tags read from a gameplay screenshot; the rules text was tiny and is a best guess. Needs a card-face screenshot.")
-C("Adam Smasher", "Ender of Legends", L, R, 2, 9, 9, True, [], ["GO SOLO"], "", 1, verified=False,
-  notes="Summary row only: Legend, cost 9, power 9, RAM 2. GO SOLO inferred from having a cost. Text unread.")
+C("Adam Smasher", "Ender of Legends", L, R, 2, 9, 9, True, ["ARASAKA", "MERC"], ["GO SOLO"],
+  "GO SOLO\nPLAY: Defeat a rival Unit.", 1)
 C("Adam Smasher", "Metal Over Meat", U, Y, 6, 9, 15, False, [], [], "", 41, verified=False,
   notes="Summary row only: cost 9, power 15, RAM 6. Text unread.")
 C("Adrenaline Converter", None, G, Y, 4, 2, 3, True, ["CYBERWARE"], [], "", 60, verified=False,

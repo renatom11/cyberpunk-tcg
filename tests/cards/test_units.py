@@ -1,7 +1,7 @@
 """One scenario per scripted Unit/Gear trigger (batch 2)."""
 from conftest import Side, board, defeat_now, do, find
 
-from cptcg.core.actions import Activate, Attack, EndTurn, Pick, Play, TakeGigDie, Target
+from cptcg.core.actions import Activate, Attack, EndTurn, GoSolo, Pick, Play, TakeGigDie, Target
 from cptcg.core.enums import TARGET_GIG, TARGET_UNIT, Keyword, Zone
 from cptcg.core.ops import available, has_keyword, power
 
@@ -339,3 +339,15 @@ def test_the_relic_recurs_a_unit_and_bottom_decks_host(pool):
     do(s, Attack(find(s, "animals-wrecker")))
     do(s, Target(TARGET_UNIT, find(s, "corpo-security")))
     assert s.i_zone[find(s, "psycho-squad")] == Zone.FIELD and s.i_zone[find(s, "corpo-security")] == Zone.DECK
+
+
+def test_adam_smasher_ender_of_legends_defeats_a_unit_on_go_solo(pool):
+    s = board(pool, Side(eddies=E, legends=[("adam-smasher-ender-of-legends", {"faceup": True}),
+                                            "padre-man-of-the-cross", "wakako-okada-peace-and-harmony"]),
+              Side(field=["la-llorona-ghost-of-the-past", "corpo-security"]))
+    l = find(s, "adam-smasher-ender-of-legends")
+    do(s, GoSolo(l))
+    do(s, Pick((1,)))                                       # candidates in field order: La Llorona, Corpo Security
+    assert s.i_zone[l] == Zone.FIELD and power(s, l) == 9
+    assert s.i_zone[find(s, "corpo-security")] == Zone.TRASH
+    assert s.i_zone[find(s, "la-llorona-ghost-of-the-past")] == Zone.FIELD

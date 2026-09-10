@@ -41,3 +41,4 @@ game. **Uncertain**: a real coin-flip; revisit when official clarification lands
 | 029 | Can power go below 0? | **No** — effective power floors at 0. Cards like Towerfall ("-5 power, then bottom-deck rival Units with power 0") only make sense this way. | — | Settled |
 | 030 | What does ⊡ spend on a Gear ability? | **The Gear itself** — the glossary says the symbol means "spend this card". The host keeps its own ready state. | — | Uncertain |
 | 031 | Are face-down Legends' texts active? | **No** — only face-up Legends contribute static effects, event triggers and abilities. Their identity is unknown, so their text can't apply. | — | Settled |
+| 032 | Does a Legend's `PLAY` trigger when it GOES SOLO? | **Yes** — GO SOLO reads "pay this Legend's cost to **play it** as a ready Unit", and Adam Smasher *Ender of Legends* (GO SOLO + "PLAY: Defeat a rival Unit") only makes sense this way. Calling a Legend is not playing it. | — | Settled |

@@ -32,15 +32,17 @@
    "cost": 9,
    "power": 9,
    "sell_tag": true,
-   "tags": [],
+   "tags": [
+    "ARASAKA",
+    "MERC"
+   ],
    "keywords": [
     "GO SOLO"
    ],
-   "text": "",
+   "text": "GO SOLO\nPLAY: Defeat a rival Unit.",
    "set": "MS01-WNC",
    "number": 1,
-   "verified": false,
-   "notes": "Summary row only: Legend, cost 9, power 9, RAM 2. GO SOLO inferred from having a cost. Text unread."
+   "verified": true
   },
   {
    "id": "adam-smasher-metal-over-meat",

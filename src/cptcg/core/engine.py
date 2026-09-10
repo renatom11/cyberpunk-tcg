@@ -196,6 +196,8 @@ def go_solo(s: GameState, p: int, inst: int, cost: int) -> None:
     s._active = None
     s.i_flags[inst] |= F_GO_SOLO
     s.emit("go_solo", p, inst)
+    s.played.append(inst)
+    push_trigger(s, Trigger.PLAY, inst)           # "play it as a ready Unit": PLAY triggers (ruling 032)
     dispatch(s, ("played", inst, p))
 
 

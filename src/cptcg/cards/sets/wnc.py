@@ -848,6 +848,12 @@ def _():
                       on_event=ev)
 
 
+@script("adam-smasher-ender-of-legends")
+def _():
+    # PLAY on a Legend fires when it GOES SOLO onto the field.
+    return CardScript(on_play=lambda c: defeat_one(c, c.rival_units()))
+
+
 @script("royce-psycho-on-the-edge")
 def _():
     return CardScript(power_mod=lambda c, unit, sit: 2 * len(c.gear()) if unit == c.inst and c.is_active_turn()
