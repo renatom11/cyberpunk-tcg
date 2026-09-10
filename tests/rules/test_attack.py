@@ -11,10 +11,17 @@ def test_steal_count_table():
 
 
 def test_ready_units_cannot_be_attacked_only_spent_ones(reg):
-    s = board(reg, Side(field=["T-U3"]), Side(field=["T-U1", ("T-U2", {"spent": True})]))
+    s = board(reg, Side(field=["T-U3"]), Side(field=["T-U1", ("T-U2", {"spent": True})], gig=[(6, 3)]))
     do(s, Attack(find(s, "T-U3")))
     kinds = {(t.kind, s.card(t.inst).id if t.inst >= 0 else None) for t in s.pending.options}
     assert kinds == {(TARGET_UNIT, "T-U2"), (TARGET_GIG, None)}
+
+
+def test_empty_gig_area_is_not_a_valid_target(reg):
+    """CR 9.3.2.2. With one spent Unit and no Gigs there is exactly one target: the engine declares it."""
+    s = board(reg, Side(field=["T-U3"]), Side(field=["T-U1", ("T-U2", {"spent": True})]))
+    do(s, Attack(find(s, "T-U3")))
+    assert s.i_zone[find(s, "T-U2")] == Zone.TRASH
 
 
 def test_fight_higher_power_wins_tie_defeats_both(reg):
@@ -93,12 +100,39 @@ def test_pass_lets_the_steal_through(reg):
     assert s.gig[0] == [(6, 3)]
 
 
-def test_spent_or_lagged_blocker_cannot_block(reg):
-    s = board(reg, Side(field=["T-U3"]),
-              Side(field=[("T-U6", {"spent": True}), ("T-U7", {"lag": True})], gig=[(6, 3)]))
+def test_spent_blocker_cannot_block_but_a_lagged_one_can(reg):
+    s = board(reg, Side(field=["T-U3"]), Side(field=[("T-U6", {"spent": True})], gig=[(6, 3)]))
     do(s, Attack(find(s, "T-U3")))
     do(s, Target(TARGET_GIG))
     assert s.gig[0] == [(6, 3)]                          # no reaction window opened at all
+    s = board(reg, Side(field=["T-U3"]), Side(field=[("T-U6", {"lag": True})], gig=[(6, 3)]))
+    do(s, Attack(find(s, "T-U3")))
+    do(s, Target(TARGET_GIG))
+    assert Block(find(s, "T-U6")) in s.pending.options   # CR 11.3.1: Lag only stops attacking and ⊡
+
+
+def test_defender_may_block_again_after_a_redirect(reg):
+    """CR 9.7 / 9.9.1: as many reactions as the defender wants; each BLOCKER replaces the target."""
+    s = board(reg, Side(field=["T-U3"]), Side(field=["T-U6", "T-U6"], gig=[(6, 3)]))
+    do(s, Attack(find(s, "T-U3")))
+    do(s, Target(TARGET_GIG))
+    first, second = [a.inst for a in s.pending.options if isinstance(a, Block)]
+    do(s, Block(first))
+    assert Block(second) in s.pending.options
+    do(s, Block(second))                                 # only Pass is left, so the attack resolves
+    assert s.i_zone[second] == Zone.TRASH and s.i_zone[first] == Zone.FIELD and s.gig[1] == [(6, 3)]
+
+
+def test_zero_power_units_cannot_defeat_each_other(reg):
+    """CR 9.19.2: a tie at 0 power is a loss for both, but neither can defeat the other."""
+    from cptcg.core.ops import add_temp_power
+    s = board(reg, Side(field=["T-U1"]), Side(field=[("T-U1", {"spent": True})]))
+    a, t = find(s, "T-U1", player=0), find(s, "T-U1", player=1)
+    add_temp_power(s, a, -99)
+    add_temp_power(s, t, -99)
+    do(s, Attack(a))
+    do(s, Target(TARGET_UNIT, t))
+    assert s.i_zone[a] == Zone.FIELD and s.i_zone[t] == Zone.FIELD
 
 
 def test_gear_goes_with_defeated_host(reg):
@@ -114,15 +148,15 @@ def test_lagged_unit_cannot_attack_but_adrenaline_can(reg):
     assert attacks == {find(s, "T-U5")}
 
 
-def test_spent_triggers_resolve_before_the_target_is_declared(pool):
-    """A 'when this Unit is spent' Gear effect (Zetatech Faceplate) fires as the attacker is
-    spent, i.e. before targeting — and must not crash if it references dice that later move."""
+def test_target_is_declared_before_the_attacker_is_spent(pool):
+    """CR 9.3-9.5: choose the target, then spend the attacker; a 'when this Unit is spent' Gear
+    effect (Zetatech Faceplate) resolves after the declaration and must survive dice moving."""
     from cptcg.core.actions import ChoiceKind
     s = board(pool, Side(field=[("psycho-squad", {"gear": ["zetatech-faceplate"]})], gig=[(4, 2)]),
               Side(field=[("corpo-security", {"spent": True})], gig=[(6, 3)]))
     do(s, Attack(find(s, "psycho-squad")))
-    assert s.pending.kind is ChoiceKind.PICK and "Adjust" in s.pending.prompt      # Faceplate first
-    do(s, Pick((len(s.pending.options) - 2,)))                                       # adjust the rival's die
-    assert s.pending.kind is ChoiceKind.TARGET                                       # then targeting
+    assert s.pending.kind is ChoiceKind.TARGET                                       # target first
     do(s, Target(TARGET_GIG))
+    assert s.pending.kind is ChoiceKind.PICK and "Adjust" in s.pending.prompt      # then the Faceplate
+    do(s, Pick((len(s.pending.options) - 2,)))                                       # adjust the rival's die
     assert len(s.gig[0]) == 2

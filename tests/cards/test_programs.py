@@ -247,3 +247,17 @@ def test_cyberpsychosis_buffs_then_kills_at_end_of_turn(pool):
     from cptcg.core.actions import EndTurn
     do(s, EndTurn())
     assert s.i_zone[u] == Zone.TRASH
+
+
+def test_program_is_outside_every_area_while_it_resolves(pool):
+    """CR 4.14.2: not in the trash until its effect has resolved."""
+    from cptcg.core.actions import Play
+    s = board(pool, Side(hand=["wild-in-the-streets"], eddies=E,
+                         field=[("corpo-security", {"spent": True})]),
+              Side(field=[("ruthless-lowlife", {"spent": True})]))
+    prog = find(s, "wild-in-the-streets")
+    do(s, Play(prog))
+    assert s.pending is not None and s.i_zone[prog] == Zone.LIMBO
+    assert prog not in s.z[Zone.TRASH]
+    do(s, Pick((0,)))
+    assert s.i_zone[prog] == Zone.TRASH

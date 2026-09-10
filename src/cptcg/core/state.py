@@ -55,7 +55,7 @@ class GameState:
         # shared, immutable
         "cfg", "reg",
         # scalars
-        "rng", "seed", "turn", "active", "first_player", "turns_taken", "overtime",
+        "rng", "seed", "turn", "active", "first_player", "turns_taken", "overtime", "empty_starts",
         "over", "winner", "end_reason", "pending", "stack", "atk", "once",
         # instance arrays (SoA)
         "i_card", "i_owner",                       # static after setup: shared by clones
@@ -90,6 +90,7 @@ class GameState:
         self.first_player = 0
         self.turns_taken = [0, 0]
         self.overtime = False
+        self.empty_starts = 0               # bit p: player p has begun a turn with an empty fixer area
         self.over = False
         self.winner = -1
         self.end_reason = -1
@@ -134,6 +135,7 @@ class GameState:
         s.first_player = self.first_player
         s.turns_taken = self.turns_taken[:]
         s.overtime = self.overtime
+        s.empty_starts = self.empty_starts
         s.over = self.over
         s.winner = self.winner
         s.end_reason = self.end_reason

@@ -12,11 +12,11 @@ from itertools import combinations
 
 from cptcg.core.actions import Choice, ChoiceKind, Mulligan, Pick, TakeGigDie, Target
 from cptcg.core.enums import (F_NO_READY_NEXT, NO_INST, NZONE, TARGET_GIG, TARGET_UNIT, CardType,
-                              EndReason, Zone)
+                              EndReason, Trigger, Zone)
 from cptcg.core.legal import attack_targets, gig_die_options, main_menu, reaction_menu
 from cptcg.core.ops import (ATTACKING, FIGHTING, VS_LEGEND, VS_UNIT, _ctx, active_cards, ask,
-                            defeat, dispatch, draw, end_game, gain_gig, power, steal_count,
-                            steal_gig)
+                            defeat, dispatch, draw, end_game, gain_gig, power, push_trigger, spend,
+                            steal_count, steal_gig)
 from cptcg.core.state import GameState
 
 
@@ -65,12 +65,13 @@ class StartGameStep(Step):
 # ------------------------------------------------------------ turn phases
 def push_turn(s: GameState) -> None:
     """Queue one full turn for ``s.active``: start-phase steps, the main phase, then end of turn."""
+    # CR 8.6: win check, start-of-turn effects, ready, draw, roll in a Gig (LIFO: pushed last runs first).
     s.stack.append(EndTurnStep())
     s.stack.append(MainPhaseStep())
-    s.stack.append(StartTurnEventsStep())
     s.stack.append(GainGigStep())
     s.stack.append(DrawStep())
     s.stack.append(ReadyStep())
+    s.stack.append(StartTurnEventsStep())
     s.stack.append(WinCheckStep())
 
 
@@ -79,6 +80,8 @@ class WinCheckStep(Step):
 
     def run(self, s: GameState) -> None:
         s.emit("turn", s.turn, s.active)
+        if not s.fixer[s.active]:
+            s.empty_starts |= 1 << s.active           # CR 1.11.1: Overtime starts once both have
         if len(s.gig[s.active]) >= s.cfg.gigs_to_win:
             end_game(s, s.active, EndReason.SEVEN_GIGS)
 
@@ -156,9 +159,14 @@ class EndTurnCleanupStep(Step):
         s.played.clear()
         s.once[0] = s.once[1] = 0
         s.turns_taken[p] += 1
-        if min(s.turns_taken) >= s.cfg.overtime_after_turn and not s.overtime:
-            s.overtime = True
-            s.emit("overtime")
+        if not s.overtime:                            # CR 8.17: checked as the turn ends
+            if s.cfg.overtime_start == "empty_fixers":
+                begin = s.empty_starts == 0b11
+            else:
+                begin = min(s.turns_taken) >= 7
+            if begin:
+                s.overtime = True
+                s.emit("overtime")
         s.turn += 1
         if s.turn > s.cfg.max_turns:
             raise RuntimeError(f"game exceeded {s.cfg.max_turns} turns — rules bug?")
@@ -186,6 +194,25 @@ class DeclareTargetStep(Step):
                            prompt="Declare a target")
 
 
+def attack_triggers(s: GameState, unit: int) -> None:
+    """Spend the attacker; ATTACK and 'when spent' effects become pending together (CR 11.21.2)."""
+    for g in s.gear_on(unit):
+        push_trigger(s, Trigger.ATTACK, g)
+    push_trigger(s, Trigger.ATTACK, unit)
+    spend(s, unit)
+    dispatch(s, ("attack", unit, s.atk.attacker_ctrl))
+
+
+class AttackDeclaredStep(Step):
+    """CR 9.3.3-9.5: after the target is declared, spend the attacker and resolve its triggers."""
+    __slots__ = ()
+
+    def run(self, s: GameState) -> None:
+        if s.atk.fizzled or s.over:
+            return
+        attack_triggers(s, s.atk.attacker)
+
+
 def set_target(s: GameState, t: Target) -> None:
     s.atk.target_kind = t.kind
     s.atk.target = t.inst
@@ -198,6 +225,11 @@ class ReactionWindowStep(Step):
     def run(self, s: GameState) -> None:
         atk = s.atk
         if atk.fizzled or s.over:
+            return
+        # CR 9.6 / 9.13: the attack ends if the attacker or the defending Unit has left the field.
+        if s.i_zone[atk.attacker] is not Zone.FIELD or (
+                atk.target_kind == TARGET_UNIT and s.i_zone[atk.target] is not Zone.FIELD):
+            atk.fizzled = True
             return
         opts = reaction_menu(s)
         if len(opts) == 1:                                 # only Pass: no real decision
@@ -263,6 +295,8 @@ class ResolveAttackStep(Step):
             t = atk.target
             if s.i_zone[t] is not Zone.FIELD:
                 return                                     # target left play; no fight, no steal
+            if not atk.redirects and Target(TARGET_UNIT, t) not in attack_targets(s, a):
+                return                                     # CR 9.26.3: no longer a legal target
             fight(s, a, t)
         elif atk.target_kind == TARGET_GIG and atk.gig_steal_allowed:
             thief = atk.attacker_ctrl
@@ -304,6 +338,11 @@ def fight(s: GameState, a: int, t: int) -> None:
         defeat_t = False
     if s.has_mod("no_defeat_in_fight", a):
         defeat_a = False
+    if s.cfg.zero_power_cannot_defeat:                     # CR 9.19.2
+        if pa <= 0:
+            defeat_t = False
+        if pt <= 0:
+            defeat_a = False
     # Reboot Optics: the next time a rival Unit fights this turn, it doesn't defeat our Unit.
     if defeat_t and s.has_mod("next_fight_no_defeat", ot):
         defeat_t = False

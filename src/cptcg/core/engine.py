@@ -11,7 +11,8 @@ from cptcg.core.enums import (DICE, F_GO_SOLO, F_NO_READY_NEXT, NO_INST, TARGET_
 from cptcg.core.ops import (_ctx, call_legend, consume_cost_mods, dispatch, draw, end_game,
                             gain_gig, move, pay, play_cost, push_trigger, shuffle_deck, spend)
 from cptcg.core.state import ONCE_SOLD, AttackContext, GameState
-from cptcg.core.steps import (DeclareTargetStep, EndAttackStep, HookStep, MainPhaseStep,
+from cptcg.core.steps import (AttackDeclaredStep, DeclareTargetStep, EndAttackStep, FnStep, HookStep, MainPhaseStep,
+                              attack_triggers,
                               MulliganStep, ReactionWindowStep, ResolveAttackStep, StartGameStep,
                               set_target)
 from cptcg.deck.decklist import Decklist
@@ -91,7 +92,13 @@ def advance(s: GameState) -> None:
 
 
 def _overtime_check(s: GameState) -> bool:
-    total = len(s.gig[0]) + len(s.gig[1])
+    if s.cfg.overtime_win == "seven_gigs":                # CR 1.11: 7+ Gigs at any point
+        for p in (0, 1):
+            if len(s.gig[p]) >= s.cfg.gigs_to_win:
+                end_game(s, p, EndReason.OVERTIME)
+                return True
+        return False
+    total = len(s.gig[0]) + len(s.gig[1])                 # legacy "majority" reading
     for p in (0, 1):
         if 2 * len(s.gig[p]) > total:
             end_game(s, p, EndReason.OVERTIME)
@@ -172,9 +179,12 @@ def play_card(s: GameState, p: int, inst: int, host: int = NO_INST, cost: int = 
         s.i_lag[inst] = 1                         # ADRENALINE grants attacking, not freedom from Lag
         push_trigger(s, Trigger.PLAY, inst)
     elif d.type is CardType.PROGRAM:
-        # Pay, resolve, trash. We trash first and then resolve: with no priority stack the
-        # only observable difference is what "your trash" contains mid-resolution.
-        move(s, inst, Zone.TRASH)
+        if s.cfg.programs_resolve_outside_areas:
+            # CR 4.14.2: outside every area while it resolves, then into the trash.
+            move(s, inst, Zone.LIMBO)
+            s.stack.append(FnStep(lambda st, i=inst: move(st, i, Zone.TRASH) if st.i_zone[i] is Zone.LIMBO else None))
+        else:
+            move(s, inst, Zone.TRASH)
         push_trigger(s, Trigger.PLAY, inst)
     elif d.type is CardType.GEAR:
         if host == NO_INST:
@@ -189,9 +199,10 @@ def play_card(s: GameState, p: int, inst: int, host: int = NO_INST, cost: int = 
 def go_solo(s: GameState, p: int, inst: int, cost: int) -> None:
     pay(s, p, cost, exclude=inst)
     consume_cost_mods(s, p, inst, True)
-    move(s, inst, Zone.FIELD)
-    s.i_spent[inst] = 0
-    s.i_lag[inst] = 0
+    move(s, inst, Zone.FIELD)                     # CR 4.5.1: keeps its orientation (spent stays spent)
+    if s.cfg.go_solo_requires_ready:
+        s.i_spent[inst] = 0
+    s.i_lag[inst] = 1 if s.cfg.go_solo_enters_lagged else 0   # CR 4.5.2; GO SOLO still lets it attack
     s.i_faceup[inst] = 1
     s._active = None
     s.i_flags[inst] |= F_GO_SOLO
@@ -219,13 +230,12 @@ def _attack(s: GameState, p: int, unit: int) -> None:
     s.stack.append(EndAttackStep())
     s.stack.append(ResolveAttackStep())
     s.stack.append(ReactionWindowStep())
-    s.stack.append(DeclareTargetStep())
-    for g in s.gear_on(unit):
-        push_trigger(s, Trigger.ATTACK, g)
-    push_trigger(s, Trigger.ATTACK, unit)
-    # Spend last so "when this Unit is spent" effects land on top and resolve before targeting.
-    spend(s, unit)
-    dispatch(s, ("attack", unit, p))
+    if s.cfg.attack_triggers_before_target:
+        s.stack.append(DeclareTargetStep())       # legacy order: triggers, then target
+        attack_triggers(s, unit)
+    else:
+        s.stack.append(AttackDeclaredStep())      # CR 9.3: target, then spend + triggers
+        s.stack.append(DeclareTargetStep())
 
 
 def _reaction(s: GameState, d: int, a: Action) -> None:

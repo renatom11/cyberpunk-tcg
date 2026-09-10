@@ -117,8 +117,11 @@ def find(s, cid, zone=None, player=None):
 
 def do(s, action):
     """Apply ``action`` (must be legal) and return the state."""
+    from cptcg.core.actions import Target
     from cptcg.core.engine import apply, legal_actions
     legal_actions(s)
+    if isinstance(action, Target) and (s.pending is None or s.pending.kind is not ChoiceKind.TARGET):
+        return s        # the only legal target: the engine declared it without asking (CR 9.3.2)
     apply(s, s.pending.index_of(action))
     legal_actions(s)                                    # materialise the next menu for assertions
     return s

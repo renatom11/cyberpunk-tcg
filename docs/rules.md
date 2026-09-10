@@ -22,8 +22,9 @@ Playmat areas: **Fixer area**, **Gig area**, **Field**, **Eddies area**, **Legen
 - Each player owns only 6 dice, so reaching 7 **requires stealing at least one** from the Rival.
 - **Deckout.** If you are required to draw a card but have no cards left in your deck, your **Rival**
   immediately wins.
-- **Overtime.** Starts after the last player's 7th turn. Sudden death: as soon as a player has a
-  **majority** of Gig dice in their Gig area, they win.
+- **Overtime.** Begins at the end of a turn once both players have begun a turn with an empty
+  fixer area (normally after each has taken 7 turns). During Overtime a player with **7 or more**
+  Gig dice in their Gig area wins immediately, at any point (Comprehensive Rules 1.11).
 
 Each discrete die is a single Gig. Controlling two dice is always closer to winning than one.
 

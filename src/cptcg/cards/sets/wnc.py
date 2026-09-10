@@ -97,7 +97,7 @@ def _():
     def play(c):
         def after(c2, u):
             c2.cant_ready(u)
-            if c2.cred() % 2 == 0:
+            if c2.cred_even():
                 c2.draw(1)
         spend_one(c, c.rival_units(), then=after)
     return CardScript(on_play=play)
@@ -408,7 +408,7 @@ def _():
 
 @script("field-operator")
 def _():
-    return CardScript(on_play=lambda c: c.draw(1) if c.cred() % 2 == 0 else None)
+    return CardScript(on_play=lambda c: c.draw(1) if c.cred_even() else None)
 
 
 @script("gilded-maton")
@@ -515,7 +515,7 @@ def _():
 @script("pacifica-netrunner")
 def _():
     def play(c):
-        if c.cred() % 2 == 0:
+        if c.cred_even():
             c.choose(c.rival_units(), lambda c2, u: c2.cant_ready(u), prompt="Can't ready")
     return CardScript(on_play=play)
 

@@ -59,10 +59,33 @@ def test_go_solo_plays_legend_as_ready_unit_that_can_attack(reg):
               Side(gig=[(6, 3)]))
     l = find(s, "T-L1")
     do(s, GoSolo(l))
-    assert s.i_zone[l] == Zone.FIELD and s.i_lag[l] == 0 and s.i_flags[l] & F_GO_SOLO
-    assert Attack(l) in s.pending.options
+    assert s.i_zone[l] == Zone.FIELD and s.i_lag[l] == 1 and s.i_flags[l] & F_GO_SOLO   # CR 4.5.2: Lag
+    assert Attack(l) in s.pending.options                                               # but GO SOLO attacks
     do(s, Attack(l))
     assert s.gig[0] == [(6, 3)]
+
+
+def test_spent_legend_may_go_solo_and_arrives_spent(reg):
+    """CR 4.5.1: a Legend played to the field keeps its orientation."""
+    s = board(reg, Side(eddies=5, legends=[("T-L1", {"faceup": True, "spent": True}), "T-L5", "T-L6"]),
+              Side(gig=[(6, 3)]))
+    l = find(s, "T-L1")
+    assert GoSolo(l) in s.pending.options
+    do(s, GoSolo(l))
+    assert s.i_zone[l] == Zone.FIELD and s.i_spent[l] == 1 and s.i_lag[l] == 1
+    assert Attack(l) not in s.pending.options
+
+
+def test_any_legend_leaving_play_is_removed_and_its_gear_stays_behind(reg):
+    """CR 4.4.1 / 4.12.2."""
+    from cptcg.core.ops import move
+    s = board(reg, Side(field=[("T-L1", {"faceup": True, "gear": ["T-G1"]})]), Side())
+    l, g = find(s, "T-L1"), find(s, "T-G1")
+    move(s, l, Zone.TRASH)
+    assert s.i_zone[l] == Zone.REMOVED and s.i_zone[g] == Zone.TRASH
+    s = board(reg, Side(field=[("T-L1", {"faceup": True})]), Side())
+    move(s, find(s, "T-L1"), Zone.HAND)
+    assert s.i_zone[find(s, "T-L1")] == Zone.REMOVED
 
 
 def test_go_solo_legend_is_removed_from_game_when_defeated(reg):
@@ -113,13 +136,63 @@ def test_deckout_loses_immediately(reg):
     assert s.over and s.winner == 0 and s.end_reason == EndReason.DECKOUT
 
 
-def test_overtime_majority_wins_instantly(reg):
-    s = board(reg, Side(field=["T-U3"], gig=[(4, 1), (6, 1)]), Side(gig=[(8, 1), (10, 1)]),
-              overtime=True, turns_taken=[7, 7])
+def test_overtime_seven_gigs_wins_instantly(reg):
+    """CR 1.11: in Overtime, 7+ Gigs at any point wins on the spot."""
+    s = board(reg, Side(field=["T-U3"], gig=[(4, 1), (6, 1), (8, 1), (10, 1), (12, 1), (20, 1)]),
+              Side(gig=[(4, 2), (6, 2)]), overtime=True, turns_taken=[7, 7])
     do(s, Attack(find(s, "T-U3")))
     from cptcg.core.actions import Pick
     do(s, Pick((0,)))
     assert s.over and s.winner == 0 and s.end_reason == EndReason.OVERTIME
+
+
+def test_six_gigs_is_not_enough_in_overtime(reg):
+    s = board(reg, Side(field=["T-U3"], gig=[(4, 1), (6, 1), (8, 1), (10, 1), (12, 1)]),
+              Side(gig=[(4, 2), (6, 2)]), overtime=True, turns_taken=[7, 7])
+    do(s, Attack(find(s, "T-U3")))
+    from cptcg.core.actions import Pick
+    do(s, Pick((0,)))
+    assert not s.over and len(s.gig[0]) == 6
+
+
+def test_overtime_begins_once_both_players_started_a_turn_with_an_empty_fixer(reg):
+    """CR 1.11.1 / 8.17."""
+    s = board(reg, Side(deck=["T-U1"] * 5, fixer=[]), Side(deck=["T-U1"] * 5, fixer=[]), turns_taken=[6, 6])
+    do(s, EndTurn())                 # player 1 begins with an empty fixer
+    assert not s.overtime
+    do(s, EndTurn())                 # player 0 begins with an empty fixer
+    assert not s.overtime
+    do(s, EndTurn())                 # ...and at the end of that turn Overtime begins
+    assert s.overtime
+
+
+def test_effect_sell_uses_the_sell_action(reg):
+    """CR 11.9.2.2."""
+    from cptcg.core.actions import Sell
+    from cptcg.core.ops import _ctx
+    s = board(reg, Side(hand=["T-P1", "T-P1"], field=["T-U1"]), Side())
+    a, b = [i for i in s.z[Zone.HAND] if s.card(i).id == "T-P1"]
+    assert Sell(a) in s.pending.options
+    _ctx(s, find(s, "T-U1")).sell(a)
+    from cptcg.core.engine import legal_actions
+    s.pending = None
+    from cptcg.core.steps import MainPhaseStep
+    MainPhaseStep().run(s)
+    assert Sell(b) not in legal_actions(s)
+
+
+def test_adjusting_a_gig_off_its_faces_fails(reg):
+    """CR 6.4.4 / 6.4.5."""
+    from cptcg.core.ops import adjust_gig, set_gig
+    s = board(reg, Side(gig=[(6, 3)]), Side())
+    set_gig(s, 0, 0, 0, 8)
+    assert s.gig[0] == [(6, 3)]
+    adjust_gig(s, 0, 0, 0, +5)
+    assert s.gig[0] == [(6, 3)]
+    adjust_gig(s, 0, 0, 0, +2)
+    assert s.gig[0] == [(6, 5)]
+    set_gig(s, 0, 0, 0, 5)
+    assert s.gig[0] == [(6, 5)]
 
 
 def test_lag_clears_at_end_of_turn_and_units_can_attack_next_turn(reg):

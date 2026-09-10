@@ -37,7 +37,7 @@ def attack_permission(s: GameState, unit: int) -> tuple[bool, bool]:
                          for i in active_cards(s, first=rival) if s.i_owner[i] == rival)
         if suppressed:
             return False, False
-        if not has_keyword(s, unit, Keyword.ADRENALINE):
+        if not (has_keyword(s, unit, Keyword.ADRENALINE) or has_keyword(s, unit, Keyword.GO_SOLO)):
             units_ok = s.has_mod("attack_units_now", unit)
             gigs_ok = s.has_mod("attack_gigs_now", unit)
     if d.script is not None and d.script.attack_perm is not None:

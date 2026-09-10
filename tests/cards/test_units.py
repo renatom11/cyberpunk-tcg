@@ -351,3 +351,13 @@ def test_adam_smasher_ender_of_legends_defeats_a_unit_on_go_solo(pool):
     assert s.i_zone[l] == Zone.FIELD and power(s, l) == 9
     assert s.i_zone[find(s, "corpo-security")] == Zone.TRASH
     assert s.i_zone[find(s, "la-llorona-ghost-of-the-past")] == Zone.FIELD
+
+
+def test_null_street_cred_is_neither_even_nor_odd(pool):
+    """CR 11.2.3: Field Operator draws on even Street Cred; with no Gigs there is no number."""
+    s = board(pool, Side(hand=["field-operator"], eddies=E, deck=["corpo-security"] * 3), Side())
+    play(s, "field-operator")
+    assert len(s.z[Zone.HAND]) == 0
+    s = board(pool, Side(hand=["field-operator"], eddies=E, deck=["corpo-security"] * 3, gig=[(4, 2)]), Side())
+    play(s, "field-operator")
+    assert len(s.z[Zone.HAND]) == 1

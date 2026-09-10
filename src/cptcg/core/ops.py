@@ -103,6 +103,10 @@ def move(s: GameState, inst: int, zone: Zone, *, bottom: bool = False, host: int
     """Move an instance (and any Gear equipped to it) to ``zone`` of its owner."""
     owner = s.i_owner[inst]
     old = s.i_zone[inst]
+    gear_zone = zone
+    if (s.cfg.legends_removed_when_leaving and zone not in (Zone.FIELD, Zone.LEGENDS, Zone.REMOVED)
+            and s.card(inst).type is CardType.LEGEND):
+        zone = Zone.REMOVED                          # CR 4.4.1; its Gear still goes where it was sent (4.12.2)
     s.z[owner * NZONE + old].remove(inst)
     dst = s.z[owner * NZONE + zone]
     if bottom:
@@ -117,8 +121,10 @@ def move(s: GameState, inst: int, zone: Zone, *, bottom: bool = False, host: int
         s.i_lag[inst] = 0
         s.i_faceup[inst] = 0
         s.i_flags[inst] = 0
+        if s.temp_power:
+            s.temp_power = [t for t in s.temp_power if t[0] != inst]   # CR 5.3.2.2
     for g in [i for i in s.z[owner * NZONE + old] if s.i_host[i] == inst]:
-        move(s, g, zone, bottom=bottom, host=inst if zone in (Zone.FIELD, Zone.LEGENDS) else NO_INST)
+        move(s, g, gear_zone, bottom=bottom, host=inst if gear_zone in (Zone.FIELD, Zone.LEGENDS) else NO_INST)
     s.emit("move", inst, old, zone)
 
 
@@ -176,7 +182,7 @@ def payable_sources(s: GameState, player: int, exclude: int = NO_INST) -> list[i
     eddies = [i for i in s.z[base + Zone.EDDIES] if not spent[i]]
     legs = [i for i in s.legends(player) if not spent[i] and i != exclude]
     facedown = [i for i in legs if not s.i_faceup[i]]
-    faceup = [i for i in legs if s.i_faceup[i]]
+    faceup = [i for i in legs if s.i_faceup[i] and s.card(i).sell_tag]   # CR 5.7.2.2
     return eddies + facedown + faceup
 
 
@@ -336,6 +342,8 @@ def adjust_gig(s: GameState, actor: int, owner: int, index: int, delta: int) -> 
     if index >= len(s.gig[owner]):
         return                                          # the die moved before the choice resolved
     sides, value = s.gig[owner][index]
+    if s.cfg.set_gig_off_face_fails and not 1 <= value + delta <= sides:
+        return                                          # CR 6.4.4: not a face of the die — the effect fails
     nv = max(1, min(sides, value + delta))
     if nv == value:
         return
@@ -348,9 +356,11 @@ def set_gig(s: GameState, actor: int, owner: int, index: int, value: int) -> Non
     if index >= len(s.gig[owner]):
         return
     sides, old = s.gig[owner][index]
+    if s.cfg.set_gig_off_face_fails and not 1 <= value <= sides:
+        return                                          # CR 6.4.4
     nv = max(1, min(sides, value))
     if nv == old:
-        return
+        return                                          # CR 6.4.5: already that value — the effect fails
     s.gig[owner][index] = (sides, nv)
     s.emit("adjust", owner, index, old, nv)
     dispatch(s, ("gig_changed", actor, owner, index))

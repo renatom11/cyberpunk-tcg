@@ -13,6 +13,7 @@ class Zone(IntEnum):
     TRASH = 4
     LEGENDS = 5
     REMOVED = 6
+    LIMBO = 7          # a Program while it resolves: outside every area (CR 4.14.2)
 
 
 NZONE = len(Zone)

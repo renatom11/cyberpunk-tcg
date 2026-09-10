@@ -90,6 +90,13 @@ class EffectCtx:
     def cred(self, player: int | None = None) -> int:
         return self.s.street_cred(self.player if player is None else player)
 
+    def cred_even(self, player: int | None = None) -> bool:
+        """CR 11.2.3: with no Gigs Street Cred is Null — neither even nor odd."""
+        p = self.player if player is None else player
+        if self.s.cfg.null_cred and not self.s.gig[p]:
+            return False
+        return self.cred(p) % 2 == 0
+
     def more_cred(self) -> bool:
         return self.cred() > self.cred(self.rival)
 
@@ -256,6 +263,9 @@ class EffectCtx:
 
     def sell(self, inst: int) -> None:
         ops.move(self.s, inst, Zone.EDDIES)
+        if self.s.cfg.effect_sell_uses_action:           # CR 11.9.2.2
+            from cptcg.core.state import ONCE_SOLD
+            self.s.once[self.player] |= ONCE_SOLD
 
     def play_free(self, inst: int, *, then: Callable | None = None) -> None:
         """Play a card for free from hand or trash. Gear asks for a host."""
