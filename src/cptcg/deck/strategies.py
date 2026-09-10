@@ -443,6 +443,14 @@ PERSONALITIES: dict[str, type[BuilderStrategy]] = {
 }
 
 
+def blurb(text: str, sentences: int = 2) -> str:
+    """The first ``sentences`` of a wrapped docstring on one line."""
+    flat = " ".join(text.split())
+    parts = flat.split(". ")
+    out = ". ".join(parts[:sentences])
+    return out if out.endswith(".") or len(parts) <= sentences else out + "."
+
+
 def all_strategies() -> list[BuilderStrategy]:
     return [cls() for cls in PERSONALITIES.values()]
 

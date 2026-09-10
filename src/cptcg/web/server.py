@@ -170,9 +170,29 @@ def build_deck(body: dict) -> Decklist:
     legends = [str(x) for x in body.get("legends") or []] or None
     seed = int(body.get("seed", int(time.time()) % 1_000_000))
     rng = Pcg32(seed, seq=9)
-    if body.get("mode") == "random":
-        return random_deck(reg(), rng, legends, name=body.get("name") or f"random {seed}")
-    return heuristic_deck(reg(), legends, rng, name=body.get("name") or f"built {seed}")
+    mode = body.get("mode") or "balanced"
+    name = body.get("name") or f"{mode} {seed}"
+    if mode == "random":
+        return random_deck(reg(), rng, legends, name=name)
+    if mode in ("heuristic", "legacy"):
+        return heuristic_deck(reg(), legends, rng, name=name)
+    from cptcg.deck.strategies import get_strategy
+    return get_strategy(mode).build(reg(), legends, rng, knowledge=knowledge(), name=name)
+
+
+def knowledge():
+    """Learned card values from past leagues, if a store exists; builders add them to their opinions."""
+    from cptcg.deck.knowledge import DEFAULT_PATH, Knowledge
+    path = ROOT / DEFAULT_PATH
+    return Knowledge.load(path, reg()) if path.exists() else None
+
+
+def list_strategies() -> list[dict]:
+    from cptcg.deck.strategies import all_strategies, blurb
+    out = [{"name": st.name, "description": blurb(st.describe())} for st in all_strategies()]
+    out.append({"name": "legacy", "description": "The original unopinionated builder: curve, type mix and sell-tag floor only."})
+    out.append({"name": "random", "description": "A uniformly random legal deck: the control group."})
+    return out
 
 
 def list_replays() -> list[str]:
@@ -248,6 +268,8 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._file(IMAGES / p[len("/images/"):])
             if p == "/api/decks":
                 return self._json(list_decks())
+            if p == "/api/strategies":
+                return self._json(list_strategies())
             if p == "/api/deck":
                 path = abs_deck_path(q.get("path", ""))
                 if path is None:

@@ -389,13 +389,16 @@ async function initBuilder(decks) {
     for (const s of [$("#deckMe"), $("#deckAi")]) if (![...s.options].some(o => o.value === r.path)) { const o = el("option", "", `${r.name} (${r.size}) — ${r.path}`); o.value = r.path; s.append(o); }
     alert(`saved ${r.path}`);
   };
-  const build = (mode) => async () => {
+  const strategies = await api("/api/strategies");
+  const ssel = $("#bStrategy");
+  strategies.forEach(st => { const o = el("option", "", st.name); o.value = st.name; o.title = st.description; ssel.append(o); });
+  const showDesc = () => { const st = strategies.find(x => x.name === ssel.value); $("#bStrategyDesc").textContent = st ? st.description : ""; };
+  ssel.onchange = showDesc; showDesc();
+  $("#bBuild").onclick = async () => {
     const keep = $("#bKeepLegends").checked && B.legends.length === 3;
-    try { bLoadDeck(await api("/api/build", { mode, legends: keep ? B.legends : null, name: $("#bName").value })); }
+    try { bLoadDeck(await api("/api/build", { mode: ssel.value, legends: keep ? B.legends : null, name: $("#bName").value })); }
     catch (e) { alert(e.message); }
   };
-  $("#bBuildH").onclick = build("heuristic");
-  $("#bBuildR").onclick = build("random");
   renderDeckSheet(); renderLibrary();
 }
 

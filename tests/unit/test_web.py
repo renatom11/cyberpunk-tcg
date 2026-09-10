@@ -74,6 +74,10 @@ def test_deck_builder_endpoints(base, tmp_path):
     assert built["ok"] and built["legends"] == sample["legends"] and 40 <= built["size"] <= 50
     rnd = post(base, "/api/build", {"mode": "random", "seed": 4})
     assert rnd["ok"] and len(rnd["legends"]) == 3
+    names = [s["name"] for s in get(base, "/api/strategies")]
+    assert {"aggro", "control", "economy", "gig", "synergy", "balanced", "legacy", "random"} <= set(names)
+    aggro = post(base, "/api/build", {"mode": "aggro", "legends": sample["legends"], "seed": 5})
+    assert aggro["ok"] and aggro["legends"] == sample["legends"]
 
     # Saving writes a loadable file; a second save without overwrite is refused.
     orig = web.DECK_DIRS[0]

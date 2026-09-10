@@ -48,14 +48,19 @@ python -m cptcg cards --unimplemented            # cards still needing a script
 # the lab: round robin with Bradley-Terry ratings, Nash support, FDR-corrected matrix, card IWD
 python -m cptcg tourney data/decks/sample_*.json -n 300 -j 4 --out out/league1
 
-# AI deck-building: construct a plausible RAM-legal deck, then improve it by measured play
-python -m cptcg build --steps 30 --out out/built.json          # random Legends
+# AI deck-building: a builder personality constructs a RAM-legal deck, then improves it by measured play
+python -m cptcg strategies                                      # aggro, control, economy, gig, synergy, balanced, legacy
+python -m cptcg build --strategy aggro --steps 30 --out out/built.json          # random Legends
 python -m cptcg build --legends v-streetkid,dexter-deshawn-off-the-grid,rogue-amendiares-preem-solo --steps 30
+python -m cptcg build --strategy control --knowledge out/knowledge.json         # build with learned card values
 
-# AI builders evolving against each other, with a tournament report every generation
-python -m cptcg league --builders 6 --generations 3 --steps 5 --out out/league
+# AI builders evolving against each other, with a tournament report every generation.
+# Each builder has a personality; every generation feeds the knowledge store (per-card values
+# learned from play) and the hall of fame (past champions join the field). See docs/deckbuilding.md.
+python -m cptcg league --builders 6 --generations 3 --steps 5 --out out/league \
+    --knowledge out/knowledge.json --hof out/hall_of_fame.json
 
-# the web client: play against the AI, watch any replay back, browse lab reports and the card pool
+# the web client: play against the AI, watch any replay back, browse lab reports, build decks
 python -m cptcg serve            # then open http://127.0.0.1:8000/
 ```
 
@@ -63,7 +68,10 @@ The web client's board follows the layout of the popular online sim: hand, fixer
 Gig area on the left; Legends and field in the centre; log and a prompt panel with one button per
 legal action on the right. Click a glowing card to act on it. UNDO and EXPORT (a replay file) are
 free because games are deterministic. It holds no game logic — it renders the engine's view and
-posts back an option index — so anything the engine can do, it can show.
+posts back an option index — so anything the engine can do, it can show. The BUILD page is a
+deck builder in the same style: a filterable library, Legend slots with the RAM budget they unlock,
+a cost curve, live legality, text export, save to `data/decks/`, and one-click AI builds by any of
+the builder personalities (using learned card values when `out/knowledge.json` exists).
 
 Agents: `random`, `heuristic` (greedy one-ply lookahead). The heuristic beats random ~95% of
 the time. Speed is roughly 5 ms/game for random bots and ~220 ms/game for heuristic-vs-heuristic

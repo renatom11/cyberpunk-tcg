@@ -139,3 +139,5 @@ table.rep th { color: var(--cyan); }
 .decklist .line button { padding: 0 6px; font-size: 11px; line-height: 16px; }
 .decklist .line.bad { color: #ff5d5d; }
 @media (max-width: 1100px) { .builder { grid-template-columns: 1fr; height: auto; } }
+.dim.small { font-size: 11px; flex-basis: 100%; }
+.builder .library .card .have { top: 18px; }

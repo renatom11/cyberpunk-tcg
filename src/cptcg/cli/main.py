@@ -128,7 +128,15 @@ def cmd_build(args) -> None:
     reg = load_default()
     rng = Pcg32(args.seed, seq=9)
     legends = args.legends.split(",") if args.legends else None
-    deck = heuristic_deck(reg, legends, rng, name=args.name)
+    if args.strategy == "legacy":
+        deck = heuristic_deck(reg, legends, rng, name=args.name)
+    else:
+        from cptcg.deck.strategies import get_strategy
+        knowledge = None
+        if args.knowledge:
+            from cptcg.deck.knowledge import Knowledge
+            knowledge = Knowledge.load(args.knowledge, reg)
+        deck = get_strategy(args.strategy).build(reg, legends, rng, knowledge=knowledge, name=args.name)
     print(f"start: {deck.name}  legends {list(deck.legends)}")
     for cid, n in sorted(deck.counts().items()):
         print(f"  {n}x {cid}")
@@ -156,14 +164,28 @@ def cmd_league(args) -> None:
     from cptcg.deck.builder import league
     reg = load_default()
     t0 = time.perf_counter()
+    strategies = args.strategies.split(",") if args.strategies else None
     for gen, t, decks in league(reg, args.builders, args.generations, args.steps, seed=args.seed,
                                 agent=args.agent, workers=args.jobs, games_per_pair=args.games,
-                                out_dir=args.out, progress=lambda m: print("  " + m, file=sys.stderr)):
+                                out_dir=args.out, progress=lambda m: print("  " + m, file=sys.stderr),
+                                strategies=strategies, knowledge_path=args.knowledge,
+                                hall_of_fame_path=args.hof, hof_opponents=args.hof_opponents):
         order = t.standings()
         bt = t.bt()
         print(f"generation {gen} ({time.perf_counter() - t0:.0f}s): " +
               ", ".join(f"{decks[i].name} {bt[i]:.2f}" for i in order))
     print(f"reports in {args.out}/genN/report.md")
+
+
+def cmd_strategies(args) -> None:
+    from cptcg.deck.strategies import all_strategies, blurb
+    for st in all_strategies():
+        print(f"{st.name:9s} {blurb(st.describe())}")
+    print(f"{'legacy':9s} The original unopinionated builder: curve, type mix and sell-tag floor only.")
+    if args.knowledge:
+        from cptcg.deck.knowledge import Knowledge
+        print()
+        print(Knowledge.load(args.knowledge, load_default()).summary())
 
 
 def cmd_serve(args) -> None:
@@ -225,6 +247,9 @@ def main(argv=None) -> None:
     p.add_argument("--batches", type=int, default=3)
     p.add_argument("--delta", type=float, default=0.1)
     p.add_argument("--out", default="out/built.json")
+    p.add_argument("--strategy", default="balanced",
+                   help="builder personality: aggro, control, economy, gig, synergy, balanced, or legacy")
+    p.add_argument("--knowledge", help="learned card values (out/knowledge.json from a league) to build with")
     p.set_defaults(fn=cmd_build)
 
     p = sub.add_parser("league", help="N AI builders evolve decks against each other")
@@ -236,7 +261,15 @@ def main(argv=None) -> None:
     p.add_argument("--agent", default="heuristic")
     p.add_argument("-j", "--jobs", type=int, default=None)
     p.add_argument("--out", default="out/league")
+    p.add_argument("--strategies", help="comma-separated personalities to cycle (default: all)")
+    p.add_argument("--knowledge", help="path of the learned card-value store to read and update")
+    p.add_argument("--hof", help="path of the hall of fame; champions of past leagues join the field")
+    p.add_argument("--hof-opponents", type=int, default=2)
     p.set_defaults(fn=cmd_league)
+
+    p = sub.add_parser("strategies", help="list the deck-builder personalities")
+    p.add_argument("--knowledge", help="also summarise a learned card-value store")
+    p.set_defaults(fn=cmd_strategies)
 
     p = sub.add_parser("serve", help="web client: play vs AI, watch replays, browse the lab")
     p.add_argument("--host", default="127.0.0.1")
