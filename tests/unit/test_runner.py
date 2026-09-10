@@ -38,3 +38,23 @@ def test_replays_recorded_when_asked():
     a, b = _decks()
     m = run_match(a, b, "random", "random", 2, seed=2, workers=1, record=True)
     assert all(r.replay is not None and r.replay.actions for r in m.results)
+
+
+def test_external_executor_gives_identical_results(monkeypatch):
+    """The browser build hands chunks to an external executor as JSON; results must round-trip
+    exactly and match the in-process run."""
+    import json
+    from cptcg.deck.decklist import Decklist
+    from cptcg.sim import runner
+    a = Decklist.load("data/decks/the_heist.json")
+    b = Decklist.load("data/decks/embracing_power.json")
+    ref = runner.run_match(a, b, "random", "random", 12, seed=3, workers=1, record=True)
+
+    def executor(jobs_json):
+        return json.dumps([json.loads(runner.run_chunk_json(json.dumps(j))) for j in json.loads(jobs_json)])
+    monkeypatch.setattr(runner, "EXECUTOR", executor)
+    before = runner.GAMES_PLAYED
+    got = runner.run_match(a, b, "random", "random", 12, seed=3, workers=4, record=True)
+    assert [(r.seed, r.deck_a_seat, r.winner_deck, r.turns, r.replay.actions, r.drawn_a) for r in got.results] == \
+           [(r.seed, r.deck_a_seat, r.winner_deck, r.turns, r.replay.actions, r.drawn_a) for r in ref.results]
+    assert runner.GAMES_PLAYED - before == 12

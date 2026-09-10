@@ -194,8 +194,11 @@ class GameState:
                 if self.i_host[i] == NO_INST and defs[self.i_card[i]].type is not CardType.GEAR]
 
     def gear_on(self, host: int) -> list[int]:
+        zone = self.i_zone[host]
+        if (zone is Zone.FIELD or zone is Zone.LEGENDS) and self._active is not None:
+            return list(self._active[5].get(host, ()))
         owner = self.i_owner[host]
-        return [i for i in self.z[owner * NZONE + self.i_zone[host]] if self.i_host[i] == host]
+        return [i for i in self.z[owner * NZONE + zone] if self.i_host[i] == host]
 
     def legends(self, player: int) -> list[int]:
         """Legend cards in the Legends area (excludes Gear equipped to them, which shares the zone)."""

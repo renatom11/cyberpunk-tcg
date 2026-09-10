@@ -27,14 +27,21 @@ def _rebuild_active(s: GameState) -> tuple:
     the state and invalidated by any zone or face-up change."""
     per = ([], [])
     pm, cm, ev = [], [], []
+    gear_of: dict[int, tuple] = {}
     defs = s.reg.defs
+    i_host = s.i_host
     for p in (0, 1):
         base = p * NZONE
         lst = per[p]
         lst += s.z[base + Zone.FIELD]
         for i in s.z[base + Zone.LEGENDS]:
-            if s.i_faceup[i] or (s.i_host[i] != NO_INST and s.i_faceup[s.i_host[i]]):
+            if s.i_faceup[i] or (i_host[i] != NO_INST and s.i_faceup[i_host[i]]):
                 lst.append(i)
+        for zone in (Zone.FIELD, Zone.LEGENDS):
+            for g in s.z[base + zone]:
+                h = i_host[g]
+                if h != NO_INST:
+                    gear_of[h] = gear_of.get(h, ()) + (g,)
         for i in lst:
             sc = defs[s.i_card[i]].script
             if sc is None:
@@ -45,9 +52,18 @@ def _rebuild_active(s: GameState) -> tuple:
                 cm.append((i, sc.cost_mod))
             if sc.on_event is not None:
                 ev.append((i, sc.on_event))
-    cache = (tuple(per[0]), tuple(per[1]), tuple(pm), tuple(cm), tuple(ev))
+    ev = tuple(ev)
+    owner = s.i_owner
+    # event hooks in both delivery orders (active player's cards first), precomputed once
+    ev1 = tuple(h for h in ev if owner[h[0]] == 1) + tuple(h for h in ev if owner[h[0]] == 0)
+    cache = (tuple(per[0]), tuple(per[1]), tuple(pm), tuple(cm), ev, gear_of, (ev, ev1))
     s._active = cache
     return cache
+
+
+def gear_of(s: GameState, inst: int) -> tuple:
+    """Gear equipped to ``inst`` while it is in play (cached with the active-card index)."""
+    return _active(s)[5].get(inst, ())
 
 
 def _active(s: GameState) -> tuple:
@@ -77,11 +93,8 @@ def dispatch(s: GameState, ev: tuple) -> None:
     a step, and the stack is LIFO, hooks are called in reverse so the first card's question
     surfaces first.
     """
-    hooks = _active(s)[4]
+    hooks = _active(s)[6][s.active]                  # active player's cards first
     if hooks:
-        # order: active player's cards first; the index is player 0 then 1
-        if s.active == 1:
-            hooks = tuple(h for h in hooks if s.i_owner[h[0]] == 1) + tuple(h for h in hooks if s.i_owner[h[0]] == 0)
         for inst, h in reversed(hooks):
             if s.over:
                 return
@@ -258,28 +271,43 @@ def has_keyword(s: GameState, inst: int, kw: Keyword) -> bool:
     if kw in s.card(inst).keywords:
         return True
     defs = s.reg.defs
-    owner = s.i_owner[inst]
-    for g in s.z[owner * NZONE + s.i_zone[inst]]:
-        if s.i_host[g] == inst and kw in defs[s.i_card[g]].keywords:
+    zone = s.i_zone[inst]
+    if zone is Zone.FIELD or zone is Zone.LEGENDS:
+        gear = _active(s)[5].get(inst, ())
+    else:
+        owner = s.i_owner[inst]
+        gear = [g for g in s.z[owner * NZONE + zone] if s.i_host[g] == inst]
+    for g in gear:
+        if kw in defs[s.i_card[g]].keywords:
             return True
-    return s.has_mod("kw", inst) and kw in s.mod_values("kw", inst)
+    return bool(s.mods) and s.has_mod("kw", inst) and kw in s.mod_values("kw", inst)
 
 
 def power(s: GameState, inst: int, sit: int = 0) -> int:
     """Effective power in a situation: printed + Gear + temporary mods + static auras. Never cached."""
-    d = s.card(inst)
-    p = d.power or 0
-    owner = s.i_owner[inst]
     defs = s.reg.defs
-    for g in s.z[owner * NZONE + s.i_zone[inst]]:
-        if s.i_host[g] == inst:
-            p += defs[s.i_card[g]].power or 0
-    for target, delta, cond in s.temp_power:
-        if target == inst and (cond == 0 or sit & cond == cond):
-            p += delta
-    for i, hook in _active(s)[2]:
-        p += hook(_ctx(s, i), inst, sit)
-    return max(0, p)                                   # ruling 029: power never drops below 0
+    p = defs[s.i_card[inst]].power or 0
+    act = _active(s)
+    zone = s.i_zone[inst]
+    if zone is Zone.FIELD or zone is Zone.LEGENDS:
+        gear = act[5].get(inst, ())
+    else:
+        owner = s.i_owner[inst]
+        gear = [g for g in s.z[owner * NZONE + zone] if s.i_host[g] == inst]
+    for g in gear:
+        p += defs[s.i_card[g]].power or 0
+    if s.temp_power:
+        for target, delta, cond in s.temp_power:
+            if target == inst and (cond == 0 or sit & cond == cond):
+                p += delta
+    if act[2]:
+        ctxs = s._ctxs
+        for i, hook in act[2]:
+            c = ctxs.get(i)
+            if c is None:
+                c = _ctx(s, i)
+            p += hook(c, inst, sit)
+    return p if p > 0 else 0                           # ruling 029: power never drops below 0
 
 
 def add_temp_power(s: GameState, inst: int, delta: int, cond: int = 0) -> None:

@@ -4,6 +4,18 @@
   const cfg = window.CPTCG_STATIC;
   if (!cfg) return;
   const base = document.baseURI.replace(/[^/]*$/, "");
+  // Several engine workers can share memory only on a cross-origin-isolated page. A static
+  // host can't send those headers, so a service worker adds them; the page reloads once.
+  if (!window.crossOriginIsolated && "serviceWorker" in navigator && window.isSecureContext) {
+    let tried = false; try { tried = sessionStorage.getItem("cptcg:coi") === "1"; } catch (e) {}
+    if (!tried) {
+      navigator.serviceWorker.register(base + "coi.js" + (cfg.v ? "?v=" + encodeURIComponent(cfg.v) : ""), { scope: base }).then((reg) => {
+        try { sessionStorage.setItem("cptcg:coi", "1"); } catch (e) {}
+        if (reg.active && !navigator.serviceWorker.controller) return;     // nothing to gain
+        navigator.serviceWorker.ready.then(() => { if (!navigator.serviceWorker.controller) location.reload(); else location.reload(); });
+      }).catch(() => {});
+    }
+  }
   const V = cfg.v ? "?v=" + encodeURIComponent(cfg.v) : "";      // cache-buster stamped at build time
   const STORE = "cptcg:files";
   const brand = document.querySelector(".brand");
@@ -42,13 +54,19 @@
       };
       w.onerror = (e) => rej(new Error("engine failed to start: " + e.message));
     });
-    w.postMessage({ type: "init", role, base, v: V, pyodideUrl: cfg.pyodide, files, imageIds });
+    w.postMessage({ type: "init", role, base, v: V, pyodideUrl: new URL(cfg.pyodide, base).href, files, imageIds });
     return { w, ready };
   }
   const send = (w, msg) => new Promise((res) => { msg.id = ++seq; pending[msg.id] = res; w.postMessage(msg); });
 
-  let files = {}, manifest = null, main = null, jobs = null;
+  let files = {}, manifest = null, main = null, jobs = null, pool = null;
   const JOBS = {};
+  const CORES = Math.max(1, navigator.hardwareConcurrency || 2);
+  // game workers: leave a core for the page and the jobs engine; each Pyodide instance costs ~60 MB
+  const POOL = window.crossOriginIsolated && typeof SharedArrayBuffer !== "undefined" ? Math.min(CORES - 1, 6) : 0;
+  const RATE_KEY = "cptcg:rate";
+  function measuredRate() { try { const r = +localStorage.getItem(RATE_KEY); return r > 0 ? r : null; } catch (e) { return null; } }
+  function defaultRate() { return 1.4 * Math.max(1, POOL || 1); }   // heuristic games/s per engine thread, roughly
 
   async function boot() {
     manifest = await (await fetch(base + "manifest.json" + V)).json();
@@ -65,7 +83,22 @@
   async function jobsWorker() {
     if (jobs) return jobs.ready;
     jobs = makeWorker("jobs", files, manifest.images);
+    if (POOL >= 2) {
+      // one engine per core: the jobs engine hands chunks of games to them through shared memory
+      const sab = new SharedArrayBuffer(48 * 1024 * 1024);
+      const cards = { "data/cards/wnc.json": files["data/cards/wnc.json"] };       // decks travel inside each chunk
+      const games = Array.from({ length: POOL }, () => makeWorker("game", cards, []));
+      pool = games;
+      const ports = [];
+      await Promise.all([jobs.ready, ...games.map(g => g.ready)]);
+      games.forEach((g) => { const ch = new MessageChannel(); g.w.postMessage({ type: "port", sab, port: ch.port2 }, [ch.port2]); ports.push(ch.port1); });
+      jobs.w.postMessage({ type: "pool", sab, ports }, ports);
+    }
     return jobs.ready;
+  }
+  function killJobs() {
+    if (jobs) { try { jobs.w.terminate(); } catch (e) {} jobs = null; }
+    if (pool) { pool.forEach(g => { try { g.w.terminate(); } catch (e) {} }); pool = null; }
   }
 
   async function api(path, body) {
@@ -78,7 +111,7 @@
     if (p.startsWith("/api/jobs/") && p.endsWith("/cancel") && method === "POST") {
       const j = JOBS[p.split("/")[3]];
       if (j && j.status === "running") {
-        if (jobs) { try { (await jobs.ready).terminate(); } catch (e) {} jobs = null; }   // kills the job outright
+        killJobs();                                                            // kills the job outright
         j.status = "cancelled"; j.lines.push("cancelled"); j.finished = Date.now();
       }
       return j;
@@ -95,6 +128,8 @@
           const r = await send(w, { type: "api", method: "POST", path: "/api/jobs", body: job.params });
           if (r.status !== 200) throw new Error(r.body.error || "job failed");
           Object.assign(job, r.body);
+          const secs = (Date.now() - job.started) / 1000;
+          if (job.games >= 40 && secs > 5) { try { localStorage.setItem(RATE_KEY, String(job.games / secs)); } catch (e) {} }
           // bring the produced files (reports, generated decks) into the main engine and the browser store
           for (const prefix of ["out/lab", "data/decks/generated"]) {
             const { files: produced } = await send(w, { type: "list", prefix });
@@ -119,7 +154,7 @@
     return r.body;
   }
 
-  window.CPTCG_BRIDGE = { ready: boot(), api, download(name, obj) {
+  window.CPTCG_BRIDGE = { ready: boot(), api, pool: POOL, cores: CORES, rate: () => measuredRate() || defaultRate(), measured: () => !!measuredRate(), download(name, obj) {
     const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(obj)], { type: "application/json" })); a.download = name; a.click();
   } };
 })();

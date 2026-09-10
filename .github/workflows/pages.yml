@@ -22,8 +22,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Fetch the Pyodide runtime (self-hosted so the page can be cross-origin isolated)
+        run: |
+          mkdir -p /tmp/pyo && cd /tmp/pyo && npm pack pyodide@0.26.4 && tar xzf pyodide-0.26.4.tgz
       - name: Build the static site
-        run: python tools/build_site.py --out site
+        run: python tools/build_site.py --out site --pyodide-dir /tmp/pyo/package
       - uses: actions/configure-pages@v5
         with:
           enablement: true

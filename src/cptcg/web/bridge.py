@@ -27,6 +27,14 @@ def setup(root: str, image_ids: list[str] | None = None, progress=None) -> None:
     backend.reg()
 
 
+def use_pool(executor, workers: int) -> None:
+    """Route every run_match through ``executor`` (the JS shared-memory pool) with ``workers``
+    game workers. Results are identical to the single-threaded run: games are seeded."""
+    from cptcg.sim import runner
+    runner.EXECUTOR = executor
+    backend.DEFAULT_WORKERS = max(2, int(workers))
+
+
 def handle(method: str, path: str, query_json: str, body_json: str) -> str:
     try:
         status, obj = backend.dispatch(method, path, json.loads(query_json or "{}"), json.loads(body_json or "{}"))

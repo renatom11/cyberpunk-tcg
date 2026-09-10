@@ -12,7 +12,7 @@ from cptcg.agents.base import Agent, register
 from cptcg.core.actions import Choice, ChoiceKind, ChooseOrder, Mulligan, Pass, TakeGigDie
 from cptcg.core.engine import apply
 from cptcg.core.enums import NZONE, CardType, Keyword, Zone
-from cptcg.core.ops import ATTACKING, available, has_keyword, power, steal_count
+from cptcg.core.ops import _active, ATTACKING, available, has_keyword, power, steal_count
 from cptcg.core.rng import Pcg32
 from cptcg.core.state import GameState
 
@@ -36,26 +36,33 @@ def evaluate(s: GameState, me: int, w: dict = W) -> float:
     if g_me >= 6:
         v += w["my_six"]
     v += w["cred"] * (s.street_cred(me) - s.street_cred(r))
+    gear_of = _active(s)[5]
+    i_spent = s.i_spent
+    threat = 0            # Gigs the rival's ready Units could steal next turn ...
+    blockers = 0          # ... less what my ready Blockers can absorb
     for p, sign in ((me, 1.0), (r, -1.0)):
         base = p * NZONE
-        units = s.units(p)
-        for u in units:
+        for u in s.units(p):
             pw = power(s, u, ATTACKING)
-            v += sign * (w["unit_spent"] if s.i_spent[u] else w["unit_ready"]) * pw
+            spent = i_spent[u]
+            v += sign * (w["unit_spent"] if spent else w["unit_ready"]) * pw
             v += sign * w["unit_count"]
-            if has_keyword(s, u, Keyword.BLOCKER) and not s.i_spent[u]:
+            ready_blocker = (not spent) and has_keyword(s, u, Keyword.BLOCKER)
+            if ready_blocker:
                 v += sign * w["blocker"]
-            v += sign * w["gear"] * len(s.gear_on(u))
-        v += sign * w["eddies"] * (len(s.z[base + Zone.EDDIES]) + sum(
-            1 for i in s.legends(p) if s.i_zone[i] is Zone.LEGENDS))
-        v += sign * w["faceup"] * sum(s.i_faceup[i] for i in s.legends(p))
+            v += sign * w["gear"] * len(gear_of.get(u, ()))
+            if p == r:
+                if not spent:
+                    threat += steal_count(pw)
+            elif ready_blocker:
+                blockers += 1
+        legends = s.legends(p)
+        v += sign * w["eddies"] * (len(s.z[base + Zone.EDDIES]) + len(legends))
+        v += sign * w["faceup"] * sum(s.i_faceup[i] for i in legends)
         v += sign * w["removed"] * len(s.z[base + Zone.REMOVED])
         v += sign * w["deck"] * len(s.z[base + Zone.DECK])
     v += w["hand"] * len(s.z[me * NZONE + Zone.HAND])
-    # Threat: how many Gigs the rival's ready Units could steal on their turn, less what my
-    # ready Blockers can absorb. Counted whoever's turn it is, so ending the turn isn't "safe".
-    threat = sum(steal_count(power(s, u, ATTACKING)) for u in s.units(r) if not s.i_spent[u])
-    blockers = sum(1 for u in s.units(me) if not s.i_spent[u] and has_keyword(s, u, Keyword.BLOCKER))
+    # Counted whoever's turn it is, so ending the turn isn't "safe".
     v += w["threat"] * max(0, min(threat, g_me) - blockers)
     return v
 

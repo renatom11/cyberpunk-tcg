@@ -226,6 +226,14 @@ class Job:
         self.started = time.time()
         self.finished: float | None = None
         self.cancel_requested = False
+        from cptcg.sim import runner
+        self._games0 = runner.GAMES_PLAYED
+
+    @property
+    def games(self) -> int:
+        """Games played so far by this job (the runner counts every finished game)."""
+        from cptcg.sim import runner
+        return runner.GAMES_PLAYED - self._games0
 
     def log(self, msg: str) -> None:
         self.lines.append(msg)
@@ -237,7 +245,7 @@ class Job:
     def to_json(self) -> dict:
         return {"id": self.id, "kind": self.kind, "params": self.params, "status": self.status,
                 "lines": self.lines[-60:], "n_lines": len(self.lines), "reports": self.reports, "decks": self.decks,
-                "error": self.error,
+                "error": self.error, "games": self.games,
                 "elapsed": round((self.finished or time.time()) - self.started, 1)}
 
 

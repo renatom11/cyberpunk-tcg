@@ -316,8 +316,18 @@ function renderJobs(jobs) {
   if (!jobs.length) { root.append(el("div", "hint", "No jobs yet. Start a tournament or a league above; results land in out/lab/.")); return; }
   jobs.forEach(j => {
     const d = el("div", "job");
+    if (j.est_games == null && j.params) j.est_games = j.params.est_games;
     const head = el("div", "head");
     head.append(el("b", "", j.kind.toUpperCase()), el("span", "", j.params.name || j.id), el("span", "dim", `${j.elapsed}s`), el("span", "st " + j.status, j.status));
+    if (j.games != null && (j.status === "running" || j.games > 0)) {
+      let txt = `${j.games.toLocaleString()} games played`;
+      if (j.status === "running" && j.est_games && j.games > 0) {
+        const rate = j.games / Math.max(1, j.elapsed);
+        const left = Math.max(0, j.est_games - j.games) / rate;
+        txt += ` · ~${fmtDuration(left)} left (${rate.toFixed(1)} games/s)`;
+      } else if (j.status === "running" && j.est_games) txt += ` of ≈ ${j.est_games.toLocaleString()}`;
+      head.append(el("span", "dim", txt));
+    }
     if (j.status === "running") { const c = el("button", "cancel", "CANCEL"); c.onclick = async () => { c.disabled = true; try { await api(`/api/jobs/${j.id}/cancel`, {}); } catch (e) { alert(e.message); } pollJobs(); }; head.append(c); }
     d.append(head);
     if (j.decks && j.decks.length) d.append(el("div", "dim", `${j.decks.length} decks saved under ${j.decks[0].split("/").slice(0, -1).join("/")}/ — they are now in the deck lists.`));
@@ -332,7 +342,7 @@ async function pollJobs() {
   const running = jobs.some(j => j.status === "running");
   if (running && !JOBTIMER) JOBTIMER = setInterval(async () => {
     const js = await api("/api/jobs"); renderJobs(js);
-    if (!js.some(j => j.status === "running")) { clearInterval(JOBTIMER); JOBTIMER = null; refreshReports(); refreshDecks(); }
+    if (!js.some(j => j.status === "running")) { clearInterval(JOBTIMER); JOBTIMER = null; refreshReports(); refreshDecks(); ESTIMATES.forEach(f => f()); }
   }, 1500);
 }
 async function refreshReports() {
@@ -358,8 +368,8 @@ function strategyChecklist(root, strategies) {
 }
 // Rough job sizes, so nobody starts an hours-long run by accident. Games per second: a phone's
 // single browser thread manages ~1.5 heuristic games/s; the local server uses every core.
-const GAMES_PER_S = window.CPTCG_BRIDGE ? 1.5 : 15;
-function estimate(kind) {
+function gamesPerSecond() { return window.CPTCG_BRIDGE ? window.CPTCG_BRIDGE.rate() : 15; }
+function estimateGames(kind) {
   let games = 0;
   if (kind === "tourney") {
     const n = document.querySelectorAll("#tDecks input:checked").length, g = +$("#tGames").value || 0;
@@ -372,15 +382,22 @@ function estimate(kind) {
     const c = +$("#gCount").value || 0, s = +$("#gScreen").value || 0;
     games = c * 4 * s;
   }
-  const secs = games / GAMES_PER_S + (kind === "generate" ? (+$("#gCount").value || 0) * 0.4 : 0);
-  const t = secs < 90 ? `${Math.round(secs)} s` : secs < 5400 ? `${Math.round(secs / 60)} min` : `${(secs / 3600).toFixed(1)} h`;
-  const slow = window.CPTCG_BRIDGE ? " on this device" : " on this machine";
-  const warn = secs > 1200 ? " — that is long; consider fewer games, steps or builders" : "";
-  return `≈ ${Math.round(games).toLocaleString()} games, about ${t}${slow}${warn}`;
+  return Math.round(games);
 }
+function fmtDuration(secs) { return secs < 90 ? `${Math.round(secs)} s` : secs < 5400 ? `${Math.round(secs / 60)} min` : `${(secs / 3600).toFixed(1)} h`; }
+function estimate(kind) {
+  const games = estimateGames(kind);
+  const secs = games / gamesPerSecond() + (kind === "generate" ? (+$("#gCount").value || 0) * 0.4 : 0);
+  const b = window.CPTCG_BRIDGE;
+  const where = b ? (b.measured() ? " on this device (measured)" : ` on this device (${b.pool >= 2 ? b.pool + " engines" : "1 engine"}, rough guess until a job has run)`) : " on this machine";
+  const warn = secs > 1200 ? " — that is long; consider fewer games, steps or builders" : "";
+  return `≈ ${games.toLocaleString()} games, about ${fmtDuration(secs)}${where}${warn}`;
+}
+const ESTIMATES = [];       // refreshed when a job finishes (the measured speed changes the numbers)
 function wireEstimate(kind, form, inputs) {
   const note = el("div", "estimate"); form.append(note);
-  const upd = () => { note.textContent = estimate(kind); note.classList.toggle("warn", estimate(kind).includes("long")); };
+  const upd = () => { const t = estimate(kind); note.textContent = t; note.classList.toggle("warn", t.includes("long")); };
+  ESTIMATES.push(upd);
   inputs.forEach(sel => document.querySelectorAll(sel).forEach(i => { i.addEventListener("input", upd); i.addEventListener("change", upd); }));
   upd();
   return upd;
@@ -395,7 +412,7 @@ async function initLab(decks, strategies) {
   $("#gRun").onclick = async () => {
     const picked = [...gl.querySelectorAll("input:checked")].map(c => c.value);
     if (!picked.length) { alert("pick at least one builder personality"); return; }
-    try { await api("/api/jobs", { kind: "generate", name: $("#gName").value, strategies: picked, count: +$("#gCount").value, seed: +$("#gSeed").value, screen: +$("#gScreen").value, keep: +$("#gKeep").value }); }
+    try { await api("/api/jobs", { kind: "generate", name: $("#gName").value, strategies: picked, count: +$("#gCount").value, seed: +$("#gSeed").value, screen: +$("#gScreen").value, keep: +$("#gKeep").value, est_games: estimateGames("generate") }); }
     catch (e) { alert(e.message); return; }
     pollJobs();
   };
@@ -404,7 +421,7 @@ async function initLab(decks, strategies) {
   $("#tRun").onclick = async () => {
     const picked = [...tl.querySelectorAll("input:checked")].map(c => c.value);
     if (picked.length < 2) { alert("pick at least two decks"); return; }
-    try { await api("/api/jobs", { kind: "tourney", name: $("#tName").value, decks: picked, games: +$("#tGames").value, agent: $("#tAgent").value, seed: +$("#tSeed").value }); }
+    try { await api("/api/jobs", { kind: "tourney", name: $("#tName").value, decks: picked, games: +$("#tGames").value, agent: $("#tAgent").value, seed: +$("#tSeed").value, est_games: estimateGames("tourney") }); }
     catch (e) { alert(e.message); return; }
     pollJobs();
   };
@@ -415,7 +432,7 @@ async function initLab(decks, strategies) {
   $("#lRun").onclick = async () => {
     const picked = [...sl.querySelectorAll("input:checked")].map(c => c.value);
     if (!picked.length) { alert("pick at least one builder personality"); return; }
-    try { await api("/api/jobs", { kind: "league", name: $("#lName").value, strategies: picked, builders: +$("#lBuilders").value, generations: +$("#lGens").value, steps: +$("#lSteps").value, games: +$("#lGames").value, seed: +$("#lSeed").value, knowledge: $("#lKnowledge").checked, hof: $("#lHof").checked }); }
+    try { await api("/api/jobs", { kind: "league", name: $("#lName").value, strategies: picked, builders: +$("#lBuilders").value, generations: +$("#lGens").value, steps: +$("#lSteps").value, games: +$("#lGames").value, seed: +$("#lSeed").value, knowledge: $("#lKnowledge").checked, hof: $("#lHof").checked, est_games: estimateGames("league") }); }
     catch (e) { alert(e.message); return; }
     pollJobs();
   };

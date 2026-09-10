@@ -48,6 +48,7 @@ def build(out: Path, pyodide_url: str = PYODIDE) -> dict:
     html = html.replace('src="static/app.js"', f'src="static/app.js?v={v}"')
     (out / "index.html").write_text(html, encoding="utf-8")
     (out / ".nojekyll").write_text("")
+    shutil.copy(static / "coi.js", out / "coi.js")          # service worker must sit at the site root to scope it
 
     # the engine
     with zipfile.ZipFile(out / "cptcg.zip", "w", zipfile.ZIP_DEFLATED) as z:
@@ -86,9 +87,16 @@ def build(out: Path, pyodide_url: str = PYODIDE) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--out", default="site")
-    ap.add_argument("--pyodide-url", default=PYODIDE)
+    ap.add_argument("--pyodide-url", default=PYODIDE, help="where the Pyodide runtime is served from")
+    ap.add_argument("--pyodide-dir", help="copy a local Pyodide runtime (the npm package dir) into site/pyo and use it")
     a = ap.parse_args()
-    m = build(Path(a.out), a.pyodide_url)
+    m = build(Path(a.out), "pyo/" if a.pyodide_dir else a.pyodide_url)
+    if a.pyodide_dir:
+        src = Path(a.pyodide_dir)
+        dst = Path(a.out) / "pyo"
+        dst.mkdir()
+        for name in ("pyodide.js", "pyodide.asm.js", "pyodide.asm.wasm", "python_stdlib.zip", "pyodide-lock.json"):
+            shutil.copy(src / name, dst / name)
     print(f"site written to {a.out}/ (build {m['build']}): {len(m['decks'])} decks, {len(m['images'])} card images, {len(m['replays'])} replays")
 
 
