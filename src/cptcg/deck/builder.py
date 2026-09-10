@@ -11,6 +11,7 @@ Three layers, each usable alone:
 from __future__ import annotations
 
 import json
+import math
 from collections import Counter
 from dataclasses import dataclass, field
 from itertools import combinations
@@ -189,8 +190,11 @@ def _assert_legal(deck: Decklist, reg: Registry) -> None:
 # ------------------------------------------------------------------ mutation
 def mutate(reg: Registry, deck: Decklist, rng: Pcg32, legend_swap_rate: float = 0.1) -> tuple[Decklist, str]:
     """One card swap for a legal alternative (biased to the same type and cost band); sometimes
-    a Legend swap with RAM repair. Returns (deck, description)."""
-    counts = Counter(deck.counts())
+    a Legend swap with RAM repair. The replacement takes the removed card's exact position in
+    the list, so the shuffle maps identically and champion and challenger differ in one slot —
+    otherwise a paired comparison measures the reshuffle, not the card."""
+    main = list(deck.main)
+    counts = Counter(main)
     legends = list(deck.legends)
     if rng.below(1000) < legend_swap_rate * 1000:
         legs = [d for d in usable(reg) if d.type is LEGEND]
@@ -200,24 +204,23 @@ def mutate(reg: Registry, deck: Decklist, rng: Pcg32, legend_swap_rate: float = 
         new = rng.choice(cands)
         old = legends[slot]
         legends[slot] = new.id
-        pool_ids = {d.id for d in legal_pool(reg, legends)}
         pool = legal_pool(reg, legends)
-        desc = f"legend {old} -> {new.id}"
-        # repair: replace now-illegal cards
-        for cid in list(counts):
-            if cid not in pool_ids:
-                n = counts.pop(cid)
-                for _ in range(n):
-                    for _try in range(50):
-                        d = rng.choice(pool)
-                        if counts[d.id] < 3:
-                            counts[d.id] += 1
-                            break
         if not pool:
             return deck, "no-op"
-        return Decklist.from_counts(deck.name, legends, dict(counts), **deck.meta), desc
+        pool_ids = {d.id for d in pool}
+        for idx, cid in enumerate(main):                     # repair illegal cards in place
+            if cid not in pool_ids:
+                for _try in range(50):
+                    d = rng.choice(pool)
+                    if counts[d.id] < 3:
+                        counts[cid] -= 1
+                        counts[d.id] += 1
+                        main[idx] = d.id
+                        break
+        return Decklist(deck.name, tuple(legends), tuple(main), dict(deck.meta)), f"legend {old} -> {new.id}"
     pool = legal_pool(reg, legends)
-    out_id = rng.choice(sorted(counts))
+    idx = rng.below(len(main))
+    out_id = main[idx]
     out = reg.get(out_id)
     cands = [d for d in pool if d.id != out_id and counts[d.id] < 3]
     same = [d for d in cands if d.type is out.type and abs((d.cost or 0) - (out.cost or 0)) <= 1]
@@ -226,11 +229,8 @@ def mutate(reg: Registry, deck: Decklist, rng: Pcg32, legend_swap_rate: float = 
     if not cands:
         return deck, "no-op"
     inn = rng.choice(cands)
-    counts[out_id] -= 1
-    if counts[out_id] == 0:
-        del counts[out_id]
-    counts[inn.id] += 1
-    return Decklist.from_counts(deck.name, legends, dict(counts), **deck.meta), f"{out_id} -> {inn.id}"
+    main[idx] = inn.id
+    return Decklist(deck.name, tuple(legends), tuple(main), dict(deck.meta)), f"{out_id} -> {inn.id}"
 
 
 # ------------------------------------------------------------------ measured improvement
@@ -312,7 +312,11 @@ def hill_climb(reg: Registry, deck: Decklist, field_decks: list[Decklist], steps
             verdict = sprt.test(wins, disc) if disc else "continue"
             if verdict != "continue":
                 break
-        accepted = verdict == "high"
+        # Accept on SPRT "high", or when the budget is spent and the challenger is clearly ahead
+        # in the discordant games (one-sided z >= 1.28, ~90%). A hill-climb tolerates a few false
+        # accepts; it can't afford to stall on true improvements the SPRT didn't settle in time.
+        z = (wins - disc / 2) / math.sqrt(disc / 4) if disc >= 10 else 0.0
+        accepted = verdict == "high" or (verdict == "continue" and z >= 1.28)
         c_all = ev.outcomes_parallel(champ, [seed * 1000 + k for k in range(seeds_per_batch)])
         champ_rate = sum(c_all.values()) / max(1, len(c_all))
         rec = Step(step, desc, wins, disc, games, verdict, accepted, champ_rate)

@@ -56,3 +56,15 @@ def test_hill_climb_runs_and_logs(reg, tmp_path):
                                 seeds_per_batch=3, max_batches=1, log=log)
     assert validate(best, reg).ok and len(hist) <= 2
     assert (tmp_path / "log.jsonl").read_text().count("\n") == len(hist)
+
+
+def test_mutation_swaps_in_place(reg):
+    rng = Pcg32(11)
+    d = heuristic_deck(reg, None, rng)
+    for _ in range(30):
+        m, desc = mutate(reg, d, rng, legend_swap_rate=0.0)
+        if desc == "no-op":
+            continue
+        diff = [i for i in range(40) if m.main[i] != d.main[i]]
+        assert len(diff) == 1, desc
+        d = m
