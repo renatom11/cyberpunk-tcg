@@ -120,7 +120,8 @@ function renderBoard(root, v, { interactive, onAct } = {}) {
   // ----- centre column
   const center = el("div", "col center");
   const legRow = (p, mine) => {
-    const row = el("div", "panel legends"); row.append(el("span", "lbl", "LEGENDS"));
+    const row = el("div", "panel legends");
+    const lbl = el("span", "lbl", "LEGENDS"); lbl.dataset.counts = `DECK ${p.deck} · TRASH ${p.trash.length}`; row.append(lbl);
     p.legends.forEach(l => {
       let n;
       if (l.faceup || l.known_only) { n = cardNode(l, { small: true }); if (l.faceup) n.classList.add("faceup-legend"); if (l.known_only) n.style.opacity = .7; }

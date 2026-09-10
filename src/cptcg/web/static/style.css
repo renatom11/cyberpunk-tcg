@@ -209,11 +209,10 @@ table.rep th { color: var(--cyan); }
   .p-opp-legends { grid-area: oleg; } .p-opp-field { grid-area: ofield; } .p-banner { grid-area: banner; }
   .p-my-legends { grid-area: mleg; } .p-my-field { grid-area: mfield; } .p-my-fixer { grid-area: mfix; }
   .fieldwrap { flex-direction: column; gap: 3px; min-height: 0; }
-  .fieldwrap .field { flex: 1 1 auto; }
-  .eddies { width: auto; flex: 0 0 auto; padding-bottom: 2px; }
+  .fieldwrap .field { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+  .eddies { width: auto; flex: 0 0 auto; }
   .eddies .list { min-height: 0; gap: 2px; flex-wrap: nowrap; overflow-x: auto; }
-  .eddies .list .card { width: 24px; height: 34px; } .eddies .list .card.spent { margin: 0 2px; }
-  .eddies .badge { position: absolute; right: 4px; top: 1px; }
+  .eddies .list .card { width: 20px; height: 28px; } .eddies .list .card.spent { margin: 0 2px; }
   .p-my-gig { grid-area: mgig; } .p-my-hand { grid-area: mhand; } .p-prompt { grid-area: prompt; }
   .logbtn { display: inline-block; }
   .p-log { display: none; position: fixed; inset: 36px 0 0 0; z-index: 40; background: #050810f2; padding: 12px; overflow-y: auto; font-size: 13px; }
@@ -229,9 +228,14 @@ table.rep th { color: var(--cyan); }
   .card.spent { margin: 0 3px; }
   .field { gap: 3px; flex-wrap: nowrap; overflow-x: auto; min-height: 0; align-items: flex-start; align-content: flex-start; }
   .slot { width: 30px; height: 42px; border-radius: 4px; }
-  .legends { gap: 3px; flex-wrap: wrap; align-content: flex-start; }
-  .legends .counts { margin-left: 0; width: 100%; gap: 3px; justify-content: flex-start; }
-  .legends .counts .badge { min-width: 0; flex: 1; }
+  .panel { overflow: hidden; }                                  /* never draw outside the box */
+  .legends { gap: 3px; flex-wrap: nowrap; align-items: flex-start; }
+  .legends .counts { display: none; }                            /* counts live in the label instead */
+  .legends .lbl::after { content: " · " attr(data-counts); color: var(--yellow); }
+  .eddies { flex-direction: row; align-items: center; gap: 4px; padding: 12px 4px 3px; }
+  .eddies .list { flex: 1; min-height: 20px; }
+  .eddies .badge { position: absolute; right: 4px; top: 1px; padding: 0 4px; }
+  .eddies .waiting { font-size: 10px; }
   .badge { padding: 1px 3px; font-size: 7px; border-radius: 4px; } .badge b { font-size: 10px; }
   .die { width: 24px; height: 24px; font-size: 7px; border-radius: 4px; } .die.gig { font-size: 10px; }
   .gigs { min-height: 0; gap: 3px; } .gigs .list { gap: 2px; }
@@ -267,3 +271,15 @@ table.rep th { color: var(--cyan); }
 #engineLoading .bar i { display: block; height: 100%; width: 40%; background: var(--cyan); animation: slide 1.2s infinite; }
 @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
 #engineLoading .n { color: var(--dim); font-size: 12px; margin-top: 12px; }
+
+@media (max-width: 700px) and (max-height: 720px) {
+  .board { --card-w: 40px; --card-h: 56px; gap: 2px; padding: 2px; }
+  .card.sm { width: 34px; height: 48px; }
+  .hand.mine .card { width: 50px; height: 70px; }
+  .hand.opp .card { width: 28px; height: 39px; } .hand.opp .card.back + .card.back { margin-left: -19px; }
+  .die { width: 22px; height: 22px; font-size: 7px; } .die.gig { font-size: 9px; }
+  .badge { padding: 0 3px; } .badge b { font-size: 9px; }
+  .phase .title { font-size: 10px; padding: 1px; } .phase .sub { font-size: 8px; }
+  .prompt { max-height: 22vh; } .prompt .desc { display: none; }
+  .p-controls button { padding: 2px 5px; font-size: 8px; }
+}
