@@ -372,3 +372,6 @@ class EffectCtx:
             return
         self.choose([i for i in self.legends(faceup=False)], lambda c, i: c.call_free(i),
                     prompt=prompt, optional=True)
+
+
+ops._EffectCtx = EffectCtx   # see ops._ctx: bind once instead of importing on every cache miss

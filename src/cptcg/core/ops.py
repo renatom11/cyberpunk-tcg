@@ -114,11 +114,19 @@ def active_cards(s: GameState, first: int | None = None) -> list[int]:
     return list(a[p0]) + list(a[1 - p0])
 
 
+# Bound by effects.py when it is imported (effects imports ops, so ops cannot import it at module
+# level without a cycle). _ctx falls back to a local import if a bare registry uses ops before
+# effects was ever imported; that import binds this global too, so the fallback runs at most once.
+_EffectCtx = None
+
+
 def _ctx(s: GameState, inst: int):
     c = s._ctxs.get(inst)
     if c is None:
-        from cptcg.core.effects import EffectCtx
-        c = s._ctxs[inst] = EffectCtx(s, inst)
+        cls = _EffectCtx
+        if cls is None:
+            from cptcg.core.effects import EffectCtx as cls   # also binds ops._EffectCtx
+        c = s._ctxs[inst] = cls(s, inst)
     return c
 
 
