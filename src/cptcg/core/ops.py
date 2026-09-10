@@ -22,41 +22,77 @@ VS_LEGEND = 8
 
 
 # ------------------------------------------------------------- scripts in play
+_FIELD = Zone.FIELD
+_LEGENDS = Zone.LEGENDS
+
+
 def _rebuild_active(s: GameState) -> tuple:
-    """(per-player active instances, power_mod hooks, cost_mod hooks, event hooks), cached on
-    the state and invalidated by any zone or face-up change."""
+    """Index of the cards whose text is active, cached on the state (``s._active``) and
+    invalidated by any zone or face-up change. Slots:
+
+      0, 1  per-player active instances (Units and Gear in play, face-up Legends), zone order
+      2     ((inst, power_mod), ...)          3  ((inst, cost_mod), ...)
+      4     ((inst, on_event), ...)           5  {host: (gear, ...)}
+      6     slot 4 in both delivery orders, indexed by the active player (that player's cards first)
+      7     per-player ((inst, would_steal), ...)    8  per-player ((inst, would_defeat), ...)
+      9     per-player ((inst, script), ...) for scripts with abilities
+      10    per-player suppress_new_units flag
+
+    Per-player slots list player p's cards in slot-p order. Slots 2-4 and 6 list player 0's cards
+    then player 1's, which is also ownership order: an instance only ever sits in its owner's
+    zones.
+    """
     per = ([], [])
-    pm, cm, ev = [], [], []
+    pm, cm = [], []
+    evs, ws, wd, ab = ([], []), ([], []), ([], []), ([], [])
+    sup = [False, False]
     gear_of: dict[int, tuple] = {}
-    defs = s.reg.defs
+    hooks = s.reg.hooks
     i_host = s.i_host
+    i_faceup = s.i_faceup
+    i_card = s.i_card
+    z = s.z
     for p in (0, 1):
         base = p * NZONE
         lst = per[p]
-        lst += s.z[base + Zone.FIELD]
-        for i in s.z[base + Zone.LEGENDS]:
-            if s.i_faceup[i] or (i_host[i] != NO_INST and s.i_faceup[i_host[i]]):
+        field = z[base + _FIELD]
+        legs = z[base + _LEGENDS]
+        lst += field
+        for i in legs:
+            if i_faceup[i] or (i_host[i] != NO_INST and i_faceup[i_host[i]]):
                 lst.append(i)
-        for zone in (Zone.FIELD, Zone.LEGENDS):
-            for g in s.z[base + zone]:
-                h = i_host[g]
-                if h != NO_INST:
-                    gear_of[h] = gear_of.get(h, ()) + (g,)
+        for g in field:                          # gear_of insertion order: FIELD then LEGENDS, zone order
+            h = i_host[g]
+            if h != NO_INST:
+                gear_of[h] = gear_of.get(h, ()) + (g,)
+        for g in legs:
+            h = i_host[g]
+            if h != NO_INST:
+                gear_of[h] = gear_of.get(h, ()) + (g,)
+        ev_p, ws_p, wd_p, ab_p = evs[p], ws[p], wd[p], ab[p]
         for i in lst:
-            sc = defs[s.i_card[i]].script
-            if sc is None:
+            hk = hooks[i_card[i]]
+            if hk is None:
                 continue
-            if sc.power_mod is not None:
-                pm.append((i, sc.power_mod))
-            if sc.cost_mod is not None:
-                cm.append((i, sc.cost_mod))
-            if sc.on_event is not None:
-                ev.append((i, sc.on_event))
-    ev = tuple(ev)
-    owner = s.i_owner
-    # event hooks in both delivery orders (active player's cards first), precomputed once
-    ev1 = tuple(h for h in ev if owner[h[0]] == 1) + tuple(h for h in ev if owner[h[0]] == 0)
-    cache = (tuple(per[0]), tuple(per[1]), tuple(pm), tuple(cm), ev, gear_of, (ev, ev1))
+            if hk[0] is not None:
+                pm.append((i, hk[0]))
+            if hk[1] is not None:
+                cm.append((i, hk[1]))
+            if hk[2] is not None:
+                ev_p.append((i, hk[2]))
+            if hk[4] is not None:
+                ws_p.append((i, hk[4]))
+            if hk[5] is not None:
+                wd_p.append((i, hk[5]))
+            if hk[6] is not None:
+                ab_p.append((i, hk[6]))
+            if hk[7]:
+                sup[p] = True
+    ev0, ev1 = tuple(evs[0]), tuple(evs[1])
+    ev = ev0 + ev1
+    cache = (tuple(per[0]), tuple(per[1]), tuple(pm), tuple(cm), ev, gear_of, (ev, ev1 + ev0),
+             (tuple(ws[0]), tuple(ws[1])), (tuple(wd[0]), tuple(wd[1])), (tuple(ab[0]), tuple(ab[1])),
+             (sup[0], sup[1]))
     s._active = cache
     return cache
 
@@ -325,15 +361,20 @@ def defeat(s: GameState, inst: int, *, allow_replace: bool = True) -> bool:
     Returns False if a replacement effect took over."""
     if s.i_zone[inst] not in (Zone.FIELD, Zone.LEGENDS):
         return False
+    owner = s.i_owner[inst]
     if allow_replace:
-        for i in active_cards(s, first=s.i_owner[inst]):
-            sc = s.card(i).script
-            if sc is not None and sc.would_defeat is not None and sc.would_defeat(_ctx(s, i), inst):
+        act = s._active
+        if act is None:
+            act = _rebuild_active(s)
+        wd = act[8]
+        # The owner's replacement effects first; the tuples are a snapshot, so a hook that moves
+        # cards can't disturb the walk (same as the old active_cards() list).
+        for i, h in wd[owner] + wd[1 - owner]:
+            if h(_ctx(s, i), inst):
                 return False
-    d = s.card(inst)
+    d = s.reg.defs[s.i_card[inst]]
     dest = Zone.REMOVED if s.i_flags[inst] & F_GO_SOLO else Zone.TRASH
     s.emit("defeated", inst)
-    owner = s.i_owner[inst]
     gear = s.gear_on(inst)
     move(s, inst, dest)
     if d.type is CardType.UNIT or d.type is CardType.LEGEND:

@@ -14,9 +14,9 @@ from cptcg.core.actions import Choice, ChoiceKind, Mulligan, Pick, TakeGigDie, T
 from cptcg.core.enums import (F_NO_READY_NEXT, NO_INST, NZONE, TARGET_GIG, TARGET_UNIT, CardType,
                               EndReason, Trigger, Zone)
 from cptcg.core.legal import attack_targets, gig_die_options, main_menu, reaction_menu
-from cptcg.core.ops import (ATTACKING, FIGHTING, VS_LEGEND, VS_UNIT, _ctx, active_cards, ask,
-                            defeat, dispatch, draw, end_game, gain_gig, power, push_trigger, spend,
-                            steal_count, steal_gig)
+from cptcg.core.ops import (ATTACKING, FIGHTING, VS_LEGEND, VS_UNIT, _ctx, _rebuild_active,
+                            active_cards, ask, defeat, dispatch, draw, end_game, gain_gig, power,
+                            push_trigger, spend, steal_count, steal_gig)
 from cptcg.core.state import GameState
 
 
@@ -269,10 +269,13 @@ class StealOneStep(Step):
         victim = 1 - self.thief
         if self.index >= len(s.gig[victim]) or s.over:
             return
-        for i in active_cards(s, first=victim):
-            sc = s.card(i).script
-            if sc is not None and sc.would_steal is not None and \
-                    sc.would_steal(_ctx(s, i), self.unit, victim, self.index):
+        act = s._active
+        if act is None:
+            act = _rebuild_active(s)
+        ws = act[7]
+        # The victim's replacement effects first; the tuples are a snapshot of the index.
+        for i, h in ws[victim] + ws[1 - victim]:
+            if h(_ctx(s, i), self.unit, victim, self.index):
                 return
         do_steal(s, self.unit, self.thief, self.index)
 

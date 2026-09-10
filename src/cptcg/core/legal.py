@@ -5,7 +5,7 @@ from __future__ import annotations
 from cptcg.core.actions import (Activate, Attack, Block, CallLegend, EndTurn, GoSolo, Pass, Play,
                                 Sell, Target)
 from cptcg.core.enums import (NO_INST, NZONE, TARGET_GIG, TARGET_UNIT, CardType, Keyword, Zone)
-from cptcg.core.ops import _ctx, active_cards, available, has_keyword, play_cost
+from cptcg.core.ops import _ctx, _rebuild_active, active_cards, available, has_keyword, payable_sources, play_cost
 from cptcg.core.state import ONCE_CALLED, ONCE_SOLD, GameState
 
 
@@ -33,9 +33,10 @@ def attack_permission(s: GameState, unit: int) -> tuple[bool, bool]:
     if s.i_lag[unit]:
         rival = 1 - s.i_owner[unit]
         # MaxTac Suppression Team: rival Units can't attack the turn they're played, full stop.
-        suppressed = any(s.card(i).script is not None and s.card(i).script.extra.get("suppress_new_units")
-                         for i in active_cards(s, first=rival) if s.i_owner[i] == rival)
-        if suppressed:
+        act = s._active
+        if act is None:
+            act = _rebuild_active(s)
+        if act[10][rival]:
             return False, False
         if not (has_keyword(s, unit, Keyword.ADRENALINE) or has_keyword(s, unit, Keyword.GO_SOLO)):
             units_ok = s.has_mod("attack_units_now", unit)
@@ -71,25 +72,37 @@ def can_attack(s: GameState, inst: int) -> bool:
 
 # ------------------------------------------------------------------ abilities
 def ability_options(s: GameState, player: int, quick_only: bool) -> list[Activate]:
+    act = s._active
+    if act is None:
+        act = _rebuild_active(s)
+    abl = act[9][player]                          # this player's active cards that have abilities
+    if not abl:
+        return []
     out = []
-    for inst in active_cards(s, first=player):
-        if s.i_owner[inst] != player:
-            continue
-        sc = s.card(inst).script
-        if sc is None or not sc.abilities:
-            continue
-        d = s.card(inst)
+    defs = s.reg.defs
+    i_card = s.i_card
+    i_spent = s.i_spent
+    i_lag = s.i_lag
+    # payable_sources(s, player) is a pure read and nothing below mutates the state (ability
+    # cost/legal callables only inspect the board), so it is computed at most once per call.
+    srcs = None
+    for inst, sc in abl:
+        d = defs[i_card[inst]]
         for k, ab in enumerate(sc.abilities):
             if quick_only and not ab.quick:
                 continue
             if ab.self_spend:
-                if s.i_spent[inst]:
+                if i_spent[inst]:
                     continue
-                if d.type is CardType.UNIT and s.i_lag[inst]:
+                if d.type is CardType.UNIT and i_lag[inst]:
                     continue                     # Lag: no self-spend effects
             excl = inst if (ab.self_spend and d.type is CardType.LEGEND) else NO_INST
             cost = ab.cost(_ctx(s, inst)) if callable(ab.cost) else ab.cost
-            if available(s, player, exclude=excl) < cost:
+            if srcs is None:
+                srcs = payable_sources(s, player)
+            # == available(s, player, exclude=excl): excluding a Legend drops it from the sources
+            # exactly when it was one of them
+            if len(srcs) - (1 if excl != NO_INST and excl in srcs else 0) < cost:
                 continue
             if ab.legal is not None and not ab.legal(_ctx(s, inst)):
                 continue

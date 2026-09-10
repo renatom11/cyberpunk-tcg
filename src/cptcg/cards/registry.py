@@ -103,6 +103,9 @@ class CardScript:
     unblockable: Callable | None = None   # unblockable(ctx) -> bool, for this attacking Unit
     abilities: tuple = ()
     extra: dict = field(default_factory=dict)
+    # Event kinds ``on_event`` reacts to (``events=frozenset({"steal", "end_turn"})``); None
+    # delivers every event. Only ever an optimisation: the hook must still test ``ev[0]`` itself.
+    events: frozenset | None = None
 
 
 SCRIPTS: dict[str, CardScript] = {}
@@ -154,10 +157,25 @@ def parse_card(raw: dict[str, Any], idx: int) -> CardDef:
     )
 
 
+def _hook_row(d: CardDef) -> tuple | None:
+    """Per-CardDef hook tuple for ops._rebuild_active, or None when the card has no in-play hook.
+
+    (power_mod, cost_mod, on_event, events, would_steal, would_defeat,
+     script-if-it-has-abilities, suppress_new_units)
+    """
+    sc = d.script
+    if sc is None or (sc.power_mod is None and sc.cost_mod is None and sc.on_event is None
+                      and sc.would_steal is None and sc.would_defeat is None and not sc.abilities
+                      and not sc.extra.get("suppress_new_units")):
+        return None
+    return (sc.power_mod, sc.cost_mod, sc.on_event, sc.events, sc.would_steal, sc.would_defeat,
+            sc if sc.abilities else None, bool(sc.extra.get("suppress_new_units")))
+
+
 class Registry:
     """The card pool in use. Built once per process; the engine indexes ``defs`` by CardIdx."""
 
-    __slots__ = ("defs", "by_id", "by_name")
+    __slots__ = ("defs", "by_id", "by_name", "hooks")
 
     def __init__(self, raws: list[dict[str, Any]]) -> None:
         self.defs: list[CardDef] = []
@@ -170,6 +188,8 @@ class Registry:
             self.defs.append(d)
             self.by_id[d.id] = d
             self.by_name.setdefault(d.name.lower(), []).append(d)
+        # hooks[idx]: what the active-card index needs from defs[idx], or None (see _hook_row)
+        self.hooks: list[tuple | None] = [_hook_row(d) for d in self.defs]
 
     def __len__(self) -> int:
         return len(self.defs)
