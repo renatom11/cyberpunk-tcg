@@ -28,11 +28,11 @@ class Pcg32:
     __slots__ = ("state", "inc")
 
     def __init__(self, seed: int = 0, seq: int = 54) -> None:
-        self.state = 0
-        self.inc = ((seq << 1) | 1) & _MASK64
-        self.next_u32()
-        self.state = (self.state + _splitmix64(seed)) & _MASK64
-        self.next_u32()
+        inc = self.inc = ((seq << 1) | 1) & _MASK64
+        # Closed form of the reference construction (state = 0; next_u32(); state += splitmix64(seed);
+        # next_u32()): the first step from state 0 leaves state == inc, the second only advances the
+        # state; both outputs were discarded. Search agents build one of these per preview.
+        self.state = (((inc + _splitmix64(seed)) & _MASK64) * _MULT + inc) & _MASK64
 
     def copy(self) -> "Pcg32":
         r = Pcg32.__new__(Pcg32)

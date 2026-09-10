@@ -128,11 +128,17 @@ class StartTurnEventsStep(Step):
         dispatch(s, ("start_turn", s.active))
 
 
+# Choice is a frozen dataclass and legal_actions() always replaces the lazy one with a materialised
+# Choice, so the two main-menu placeholders can be shared by every turn and preview.
+_MAIN_CHOICE = (Choice(ChoiceKind.MAIN, 0, (), prompt="Main phase", lazy=True),
+                Choice(ChoiceKind.MAIN, 1, (), prompt="Main phase", lazy=True))
+
+
 class MainPhaseStep(Step):
     __slots__ = ()
 
     def run(self, s: GameState) -> None:
-        s.pending = Choice(ChoiceKind.MAIN, s.active, (), prompt="Main phase", lazy=True)
+        s.pending = _MAIN_CHOICE[s.active]
 
 
 class EndTurnStep(Step):

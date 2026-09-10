@@ -108,15 +108,18 @@ def _overtime_check(s: GameState) -> bool:
 
 def apply(s: GameState, index: int) -> None:
     """Apply the ``index``-th legal action of the pending choice, then advance."""
-    if s.pending is None:
-        raise RuntimeError("no pending choice")
-    legal_actions(s)
     ch = s.pending
+    if ch is None:
+        raise RuntimeError("no pending choice")
+    if ch.lazy:                                    # legal_actions() is a no-op on a materialised choice
+        legal_actions(s)
+        ch = s.pending
     action = ch.options[index]
     s.pending = None
     if s.actions is not None:
         s.actions.append(index)
-    s.emit("action", ch.kind, ch.player, action)
+    if s.log is not None:                          # s.emit("action", ...), inlined
+        s.log.append(("action", ch.kind, ch.player, action))
     kind = ch.kind
     if kind is ChoiceKind.MAIN:
         if not isinstance(action, EndTurn):
