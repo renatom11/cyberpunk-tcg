@@ -13,7 +13,7 @@ from cptcg.deck.decklist import Decklist
 from cptcg.deck.validate import validate
 from cptcg.sim.record import Replay
 from cptcg.sim.runner import run_match
-from cptcg.sim.stats import fmt_rate, games_for_half_width, wilson
+from cptcg.sim.stats import SPRT, fmt_rate, games_for_half_width, wilson
 
 
 def _load_deck(reg, path: str, allow_unverified: bool, allow_unscripted: bool) -> Decklist:
@@ -99,6 +99,73 @@ def cmd_cards(args) -> None:
         print(f"{d.id:<44} {d.type.name.title():<8} {d.color.name.title():<7} RAM {d.ram}  cost {d.cost}  pwr {d.power}{flag}")
 
 
+def cmd_tourney(args) -> None:
+    from cptcg.sim.report import render_report
+    from cptcg.sim.tournament import run_tournament
+    reg = load_default()
+    decks = [_load_deck(reg, p, args.allow_unverified, args.allow_unscripted) for p in args.decks]
+    if len(decks) < 2:
+        sys.exit("need at least two decks")
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    t0 = time.perf_counter()
+
+    def progress(a, b, k, n, verdict):
+        print(f"  {a} vs {b}: {k}/{n} {'' if verdict == 'continue' else '[' + verdict + ']'}", file=sys.stderr)
+
+    t = run_tournament(decks, args.agent, args.games, seed=args.seed, workers=args.jobs,
+                       sprt=None if args.no_sprt else SPRT(args.delta), batch=args.batch, progress=progress)
+    t.save(out / "tournament.json")
+    report = render_report(t, args.title or f"Tournament: {len(decks)} decks")
+    (out / "report.md").write_text(report, encoding="utf-8")
+    print(report)
+    print(f"({time.perf_counter() - t0:.0f}s; written to {out}/)")
+
+
+def cmd_build(args) -> None:
+    from cptcg.core.rng import Pcg32
+    from cptcg.deck.builder import heuristic_deck, hill_climb
+    reg = load_default()
+    rng = Pcg32(args.seed, seq=9)
+    legends = args.legends.split(",") if args.legends else None
+    deck = heuristic_deck(reg, legends, rng, name=args.name)
+    print(f"start: {deck.name}  legends {list(deck.legends)}")
+    for cid, n in sorted(deck.counts().items()):
+        print(f"  {n}x {cid}")
+    field = [_load_deck(reg, p, True, True) for p in args.field] if args.field else         [Decklist.load(p) for p in sorted((Path(__file__).resolve().parents[3] / "data/decks").glob("sample_*.json"))[:4]]
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    log = open(out.with_suffix(".build.jsonl"), "w", encoding="utf-8")
+
+    def progress(rec):
+        mark = "ACCEPT" if rec.accepted else "reject"
+        print(f"  step {rec.step}: {rec.proposal}: {rec.challenger_wins}/{rec.discordant} discordant "
+              f"({rec.games} games) -> {mark}   champion vs field {100 * rec.champion_rate:.0f}%", file=sys.stderr)
+
+    best, hist = hill_climb(reg, deck, field, steps=args.steps, seed=args.seed, agent=args.agent,
+                            workers=args.jobs, seeds_per_batch=args.seeds, max_batches=args.batches,
+                            sprt=SPRT(args.delta), log=log, progress=progress)
+    best.save(out)
+    acc = sum(1 for h in hist if h.accepted)
+    print(f"\n{acc} of {len(hist)} proposals accepted. Saved {out}")
+    for cid, n in sorted(best.counts().items()):
+        print(f"  {n}x {cid}")
+
+
+def cmd_league(args) -> None:
+    from cptcg.deck.builder import league
+    reg = load_default()
+    t0 = time.perf_counter()
+    for gen, t, decks in league(reg, args.builders, args.generations, args.steps, seed=args.seed,
+                                agent=args.agent, workers=args.jobs, games_per_pair=args.games,
+                                out_dir=args.out, progress=lambda m: print("  " + m, file=sys.stderr)):
+        order = t.standings()
+        bt = t.bt()
+        print(f"generation {gen} ({time.perf_counter() - t0:.0f}s): " +
+              ", ".join(f"{decks[i].name} {bt[i]:.2f}" for i in order))
+    print(f"reports in {args.out}/genN/report.md")
+
+
 def main(argv=None) -> None:
     ap = argparse.ArgumentParser(prog="cptcg", description="Cyberpunk TCG simulator")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -125,6 +192,46 @@ def main(argv=None) -> None:
     p.add_argument("--step", action="store_true", help="pause after each action")
     p.add_argument("--perspective", type=int, default=None, help="hide the other player's hidden info")
     p.set_defaults(fn=cmd_replay)
+
+    p = sub.add_parser("tourney", help="round-robin tournament with ratings and a report")
+    p.add_argument("decks", nargs="+")
+    p.add_argument("-n", "--games", type=int, default=200, help="cap per pair")
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--agent", default="heuristic")
+    p.add_argument("-j", "--jobs", type=int, default=None)
+    p.add_argument("--out", default="out/tourney")
+    p.add_argument("--title")
+    p.add_argument("--no-sprt", action="store_true")
+    p.add_argument("--delta", type=float, default=0.05, help="SPRT effect size")
+    p.add_argument("--batch", type=int, default=40)
+    p.add_argument("--allow-unverified", action="store_true")
+    p.add_argument("--allow-unscripted", action="store_true")
+    p.set_defaults(fn=cmd_tourney)
+
+    p = sub.add_parser("build", help="AI-build a deck and improve it by measured play")
+    p.add_argument("--legends", help="comma-separated Legend ids (default: random)")
+    p.add_argument("--name", default="built")
+    p.add_argument("--field", nargs="*", help="reference decks to optimise against (default: 4 samples)")
+    p.add_argument("--steps", type=int, default=20)
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--agent", default="heuristic")
+    p.add_argument("-j", "--jobs", type=int, default=None)
+    p.add_argument("--seeds", type=int, default=10, help="seeds per batch (x2 games x field size)")
+    p.add_argument("--batches", type=int, default=3)
+    p.add_argument("--delta", type=float, default=0.1)
+    p.add_argument("--out", default="out/built.json")
+    p.set_defaults(fn=cmd_build)
+
+    p = sub.add_parser("league", help="N AI builders evolve decks against each other")
+    p.add_argument("--builders", type=int, default=6)
+    p.add_argument("--generations", type=int, default=3)
+    p.add_argument("--steps", type=int, default=5)
+    p.add_argument("-n", "--games", type=int, default=60, help="cap per pair in each generation's tournament")
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--agent", default="heuristic")
+    p.add_argument("-j", "--jobs", type=int, default=None)
+    p.add_argument("--out", default="out/league")
+    p.set_defaults(fn=cmd_league)
 
     p = sub.add_parser("cards", help="list the card pool")
     p.add_argument("--unimplemented", action="store_true")

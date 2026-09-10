@@ -28,6 +28,8 @@ class GameResult:
     turns: int
     first_deck: str           # which deck went first
     replay: Replay | None = None
+    drawn_a: frozenset = frozenset()   # card ids deck A drew this game
+    drawn_b: frozenset = frozenset()
 
 
 @dataclass
@@ -101,7 +103,11 @@ def _run_chunk(args) -> list[GameResult]:
             winner_deck = "A" if s.winner == a_seat else "B"
             first_deck = "A" if s.first_player == a_seat else "B"
             rep = Replay.from_game(s, decks, names) if record else None
-            out.append(GameResult(seed, a_seat, winner_deck, s.end_reason.name, s.turn, first_deck, rep))
+            drawn = ([], [])
+            for inst in s.drawn:
+                drawn[s.i_owner[inst]].append(s.card(inst).id)
+            out.append(GameResult(seed, a_seat, winner_deck, s.end_reason.name, s.turn, first_deck, rep,
+                                  frozenset(drawn[a_seat]), frozenset(drawn[1 - a_seat])))
     return out
 
 

@@ -44,6 +44,16 @@ python -m cptcg sim ... --replays out/replays    # one ~1 KB replay per game
 python -m cptcg replay out/replays/g000042_0.json --step   # watch a game back
 python -m cptcg validate data/decks/*.json       # deck legality + RAM
 python -m cptcg cards --unimplemented            # cards still needing a script
+
+# the lab: round robin with Bradley-Terry ratings, Nash support, FDR-corrected matrix, card IWD
+python -m cptcg tourney data/decks/sample_*.json -n 300 -j 4 --out out/league1
+
+# AI deck-building: construct a plausible RAM-legal deck, then improve it by measured play
+python -m cptcg build --steps 30 --out out/built.json          # random Legends
+python -m cptcg build --legends v-streetkid,dexter-deshawn-off-the-grid,rogue-amendiares-preem-solo --steps 30
+
+# AI builders evolving against each other, with a tournament report every generation
+python -m cptcg league --builders 6 --generations 3 --steps 5 --out out/league
 ```
 
 Agents: `random`, `heuristic` (greedy one-ply lookahead). The heuristic beats random ~95% of

@@ -70,6 +70,8 @@ class GameState:
         "mods",
         # per-turn bookkeeping: keys used for "the first time ... each turn"; cards played this turn
         "used", "played",
+        # every instance drawn this game (card analytics: "win rate when drawn")
+        "drawn",
         # recording (None in rollouts)
         "log", "actions",
         # cache of active_cards() and its hook indexes; None = dirty
@@ -111,6 +113,7 @@ class GameState:
         self.mods: list[tuple] = []
         self.used: set = set()
         self.played: list[int] = []
+        self.drawn: list[int] = []
         self.log: list | None = None
         self.actions: list[int] | None = None
         self._active = None
@@ -154,6 +157,7 @@ class GameState:
         s.mods = self.mods[:]
         s.used = set(self.used)
         s.played = self.played[:]
+        s.drawn = self.drawn[:]
         s.log = None
         s.actions = None
         s._active = self._active                       # immutable tuple-of-tuples, shareable

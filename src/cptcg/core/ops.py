@@ -130,7 +130,9 @@ def draw(s: GameState, player: int, n: int = 1) -> int:
         if not deck:
             end_game(s, winner=1 - player, reason=EndReason.DECKOUT)
             return drawn
-        move(s, deck[-1], Zone.HAND)
+        inst = deck[-1]
+        move(s, inst, Zone.HAND)
+        s.drawn.append(inst)
         drawn += 1
     s.emit("draw", player, drawn)
     return drawn
