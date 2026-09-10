@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>cptcg — Cyberpunk TCG Simulator</title>
-<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="static/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23ffe600'/%3E%3Cpath d='M4 3h8v2H6v6h6v2H4z' fill='%23000'/%3E%3C/svg%3E">
 </head>
 <body>
 <header class="top">
@@ -84,7 +85,7 @@
     </ul>
 
     <h3>Running it yourself</h3>
-    <p>The client is a small web server that runs the rules engine on your own computer; nothing is hosted online. A published snapshot of this page can only show recorded games — to actually play, run it:</p>
+    <p><b>The easiest way is the hosted site: <a href="https://renatom11.github.io/cyberpunk-tcg/">renatom11.github.io/cyberpunk-tcg</a>.</b> It is the same client with the rules engine running inside your browser (Python via WebAssembly), so it plays for real on any device — nothing to install. Decks you save and reports you produce stay in that browser. Lab jobs run on your device's single thread, so keep tournaments small there (a few hundred games); for big leagues run it locally:</p>
     <ol>
       <li>Install Python 3.11 or newer, then in a terminal: <code>git clone https://github.com/renatom11/cyberpunk-tcg</code>, <code>cd cyberpunk-tcg</code>, <code>pip install -e .</code></li>
       <li>Start it with <code>python -m cptcg serve</code> and open <code>http://127.0.0.1:8000/</code> in a browser. Every tab is live: games are played against the engine, decks save to disk, and lab jobs run on your cores.</li>
@@ -298,6 +299,7 @@
 </main>
 
 <div id="popover" class="popover hidden"></div>
-<script src="/static/app.js"></script>
+<!-- STATIC_BOOT -->
+<script src="static/app.js"></script>
 </body>
 </html>

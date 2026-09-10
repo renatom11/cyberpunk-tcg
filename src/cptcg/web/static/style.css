@@ -244,3 +244,13 @@ table.rep th { color: var(--cyan); }
 .guide ol, .guide ul { padding-left: 22px; } .guide li { margin: 5px 0; }
 .guide table.rep td { vertical-align: top; }
 @media (max-width: 700px) { .how { font-size: 12px; } .how.wide { margin: 4px; } }
+
+/* ---------------------------------------------------------------- static build: engine loading */
+#engineLoading { position: fixed; inset: 0; z-index: 100; background: #050810; display: grid; place-items: center; color: var(--text); }
+#engineLoading .box { width: min(90vw, 460px); text-align: center; }
+#engineLoading .t { color: var(--yellow); font-weight: 800; letter-spacing: .12em; margin-bottom: 8px; }
+#engineLoading .s { color: var(--cyan); margin-bottom: 12px; }
+#engineLoading .bar { height: 4px; background: #121a26; border-radius: 2px; overflow: hidden; }
+#engineLoading .bar i { display: block; height: 100%; width: 40%; background: var(--cyan); animation: slide 1.2s infinite; }
+@keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+#engineLoading .n { color: var(--dim); font-size: 12px; margin-top: 12px; }

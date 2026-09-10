@@ -2,6 +2,7 @@
 const $ = (s, el = document) => el.querySelector(s);
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const api = async (path, body) => {
+  if (window.CPTCG_BRIDGE) return window.CPTCG_BRIDGE.api(path, body);        // static build: engine in the browser
   const r = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
   const j = await r.json();
   if (j.error) throw new Error(j.error);
@@ -19,13 +20,13 @@ function cardNode(c, opts = {}) {
   const d = el("div", "card " + (c.color || ""));
   if (opts.back) {
     d.className = "card back" + (opts.small ? " sm" : "");
-    if (HAS_BACK) { const img = el("img"); img.src = opts.legend ? "/images/_back_legend.jpg" : "/images/_back.jpg"; img.alt = "card back"; img.onerror = () => { HAS_BACK = false; img.remove(); }; d.append(img); }
+    if (HAS_BACK) { const img = el("img"); img.src = opts.legend ? "images/_back_legend.jpg" : "images/_back.jpg"; img.alt = "card back"; img.onerror = () => { HAS_BACK = false; img.remove(); }; d.append(img); }
     return d;
   }
   if (opts.small) d.classList.add("sm");
   const def = CARDS[c.id] || {};
   if (def.image) {
-    const img = el("img"); img.src = `/images/${c.id}.jpg`; img.alt = c.name;
+    const img = el("img"); img.src = `images/${c.id}.jpg`; img.alt = c.name;
     if (!TOUCH) { d.onmouseenter = () => showPreview(img.src, c); d.onmouseleave = hidePreview; }
     else {
       // Touch: a tap on a card with nothing to do opens the full-size face (decorate() replaces
@@ -151,7 +152,10 @@ function renderBoard(root, v, { interactive, onAct } = {}) {
     const undo = el("button", "", "UNDO"); undo.onclick = () => act("undo");
     const concede = el("button", "", "CONCEDE"); concede.onclick = () => { if (confirm("Concede?")) act("concede"); };
     const leave = el("button", "", "NEW GAME"); leave.onclick = () => { GAME = null; $("#board").classList.add("hidden"); $("#setup").classList.remove("hidden"); };
-    const dl = el("button", "", "EXPORT"); dl.onclick = () => window.open(`/api/games/${GAME.id}/replay`);
+    const dl = el("button", "", "EXPORT"); dl.onclick = async () => {
+      if (window.CPTCG_BRIDGE) window.CPTCG_BRIDGE.download(`cptcg-game-${GAME.id}.json`, await api(`/api/games/${GAME.id}/replay`));
+      else window.open(`/api/games/${GAME.id}/replay`);
+    };
     controls.append(undo, concede, leave, dl);
   }
   right.append(controls);
@@ -533,6 +537,7 @@ async function initBuilder(decks) {
 
 // ---------------------------------------------------------------- init
 async function init() {
+  if (window.CPTCG_BRIDGE) await window.CPTCG_BRIDGE.ready;
   const cards = await api("/api/cards");
   cards.forEach(c => { CARDS[c.id] = c; });
   const decks = await api("/api/decks");

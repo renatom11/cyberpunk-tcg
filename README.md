@@ -30,6 +30,13 @@ the rules leave open and what this engine does about them.
 - Games are fully deterministic given `(ruleset hash, decklists, seed, action indices)`, so any
   result is exactly reproducible and any replay is a few hundred bytes.
 
+## Play it now
+
+**https://renatom11.github.io/cyberpunk-tcg/** — the web client with the rules engine running in
+the browser (Pyodide). Play against the AI with the real cards, watch replays, build decks and run
+small tournaments, on desktop or phone, nothing to install. Built from this repo by
+`tools/build_site.py` and deployed by `.github/workflows/pages.yml` on every push.
+
 ## Usage
 
 ```bash

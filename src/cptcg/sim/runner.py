@@ -8,7 +8,6 @@ regardless of how many worker processes ran them.
 from __future__ import annotations
 
 import os
-from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
 
 from cptcg.agents.base import make_agent
@@ -129,6 +128,7 @@ def run_match(deck_a: Decklist, deck_b: Decklist, agent_a: str, agent_b: str, n_
             if progress:
                 progress(summary.n)
     else:
+        from concurrent.futures import ProcessPoolExecutor   # lazily: the browser build has no processes
         with ProcessPoolExecutor(max_workers=workers, initializer=_worker_init) as ex:
             for res in ex.map(_run_chunk, jobs):
                 summary.results += res

@@ -8,3 +8,4 @@ venv/
 out/
 *.jsonl.gz
 data/decks/generated/
+site/

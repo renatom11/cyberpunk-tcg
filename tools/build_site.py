@@ -1,0 +1,79 @@
+"""Build the static site: the web client with the rules engine running in the browser.
+
+    python tools/build_site.py --out site [--pyodide-url URL]
+
+The result is plain files (HTML, JS, the ``cptcg`` package zipped, card data, decks, art) that
+any static host serves — GitHub Pages deploys it from .github/workflows/pages.yml. In the
+browser, static/boot.js loads Pyodide and runs cptcg.web.backend in a Web Worker.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import shutil
+import zipfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+PYODIDE = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/"
+
+
+def build(out: Path, pyodide_url: str = PYODIDE) -> dict:
+    static = ROOT / "src/cptcg/web/static"
+    if out.exists():
+        shutil.rmtree(out)
+    (out / "static").mkdir(parents=True)
+    for f in static.iterdir():
+        if f.suffix in (".js", ".css"):
+            shutil.copy(f, out / "static" / f.name)
+    html = (static / "index.html").read_text(encoding="utf-8")
+    boot = (f'<script>window.CPTCG_STATIC = {json.dumps({"pyodide": pyodide_url})};</script>\n'
+            '<script src="static/boot.js"></script>')
+    (out / "index.html").write_text(html.replace("<!-- STATIC_BOOT -->", boot), encoding="utf-8")
+    (out / ".nojekyll").write_text("")
+
+    # the engine
+    with zipfile.ZipFile(out / "cptcg.zip", "w", zipfile.ZIP_DEFLATED) as z:
+        for p in sorted((ROOT / "src/cptcg").rglob("*")):
+            if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc":
+                z.write(p, p.relative_to(ROOT / "src"))
+
+    # data: cards, decks, replays, art
+    manifest = {"decks": [], "images": [], "replays": []}
+    (out / "data/cards").mkdir(parents=True)
+    shutil.copy(ROOT / "data/cards/wnc.json", out / "data/cards/wnc.json")
+    for p in sorted((ROOT / "data/decks").rglob("*.json")):
+        rel = p.relative_to(ROOT)
+        (out / rel).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(p, out / rel)
+        manifest["decks"].append(str(rel))
+    demo = ROOT / "out/replays"
+    if demo.exists():
+        for p in sorted(demo.glob("demo_*.json")):
+            rel = p.relative_to(ROOT)
+            (out / rel).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(p, out / rel)
+            manifest["replays"].append(str(rel))
+    imgs = ROOT / "data/images"
+    if imgs.exists():
+        (out / "images").mkdir()
+        for p in sorted(imgs.glob("*.jpg")):
+            shutil.copy(p, out / "images" / p.name)
+            if not p.stem.startswith("_"):
+                manifest["images"].append(p.stem)
+    (out / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    return manifest
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("--out", default="site")
+    ap.add_argument("--pyodide-url", default=PYODIDE)
+    a = ap.parse_args()
+    m = build(Path(a.out), a.pyodide_url)
+    print(f"site written to {a.out}/: {len(m['decks'])} decks, {len(m['images'])} card images, {len(m['replays'])} replays")
+
+
+if __name__ == "__main__":
+    main()
