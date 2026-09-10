@@ -206,6 +206,45 @@ def list_reports() -> list[str]:
     return sorted(str(p.relative_to(ROOT)) for p in out_dir.rglob("tournament.json")) if out_dir.exists() else []
 
 
+def report_json(path_: Path) -> dict:
+    """A saved tournament with everything the web report needs. Files written before version 2
+    are upgraded on read: the summary sentences, deck profiles and ratings are recomputed from
+    the loaded tournament, and each deck's meta (archetype, generation, ...) comes from the
+    sibling ``<name>.json`` a league writes next to it. The league series (``league.json`` in
+    the run's directory) is attached as ``league_series`` when there is one."""
+    from cptcg.sim.tournament import Tournament
+    data = json.loads(path_.read_text(encoding="utf-8"))
+    if int(data.get("version", 1)) < Tournament.JSON_VERSION or "summary" not in data:
+        t = Tournament.from_json(data)
+        decks, paths = [], []
+        for d in t.decks:
+            sibling = path_.with_name(f"{d.name}.json")
+            if sibling.is_file():
+                try:
+                    saved = Decklist.load(sibling)
+                    d = Decklist(d.name, d.legends, d.main, {**saved.meta, **d.meta})
+                    paths.append(rel(sibling))
+                except (OSError, ValueError, KeyError):
+                    paths.append(None)
+            else:
+                paths.append(None)
+            decks.append(d)
+        t.decks, t.paths = decks, paths
+        data = t.to_json(reg())
+    md = path_.with_name("report.md")
+    data["markdown"] = md.read_text(encoding="utf-8") if md.exists() else ""
+    data["file"] = rel(path_)
+    for parent in (path_.parent, path_.parent.parent):
+        series = parent / "league.json"
+        if series.is_file():
+            try:
+                data["league_series"] = json.loads(series.read_text(encoding="utf-8"))
+            except ValueError:
+                pass
+            break
+    return data
+
+
 # ---------------------------------------------------------------- lab jobs
 # A tournament or league runs in a thread of the server process; the games themselves fan out
 # over the runner's process pool exactly as the CLI does. The client polls for progress lines.
@@ -282,8 +321,11 @@ def _run_tourney(job: Job) -> None:
 
     t = run_tournament(decks, agent, games, seed=seed, workers=body.get("jobs") or DEFAULT_WORKERS,
                        sprt=None if body.get("no_sprt") else SPRT(float(body.get("delta", 0.05))), progress=progress)
-    t.save(out / "tournament.json")
-    (out / "report.md").write_text(render_report(t, body.get("name") or f"Tournament: {len(decks)} decks"), encoding="utf-8")
+    title = body.get("name") or f"Tournament: {len(decks)} decks"
+    t.info["title"] = title
+    t.paths = [rel(x) for x in paths]
+    t.save(out / "tournament.json", reg())
+    (out / "report.md").write_text(render_report(t, title, reg()), encoding="utf-8")
     job.reports.append(rel(out / "tournament.json"))
     order = t.standings()
     job.log("standings: " + ", ".join(decks[i].name for i in order))
@@ -462,11 +504,7 @@ def dispatch(method: str, path: str, query: dict, body: dict) -> tuple[int, obje
             path_ = (ROOT / q["file"]).resolve()
             if not path_.is_relative_to((ROOT / "out").resolve()) or path_.name != "tournament.json":
                 return 404, {"error": "no such report"}
-            data = json.loads(path_.read_text())
-            md = path_.with_name("report.md")
-            data["markdown"] = md.read_text(encoding="utf-8") if md.exists() else ""
-            data["file"] = rel(path_)
-            return 200, data
+            return 200, report_json(path_)
         if p == "/api/jobs":
             with LOCK:
                 return 200, [j.to_json() for j in sorted(JOBS.values(), key=lambda j: j.started, reverse=True)]

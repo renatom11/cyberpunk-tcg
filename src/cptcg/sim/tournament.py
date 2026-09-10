@@ -8,7 +8,9 @@ dozen games) so the budget goes to the close ones; the stopping n is recorded pe
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 
 from cptcg.core.config import DEFAULT_CONFIG, RulesConfig
@@ -74,6 +76,10 @@ class Tournament:
     seed: int
     cells: dict[tuple[int, int], Cell]
     card_stats: list[dict[str, CardStat]]      # per deck: card id -> stats
+    info: dict = field(default_factory=dict)   # how the run was made: caps, test, time, league context
+    paths: list = field(default_factory=list)  # per deck: where its file was saved (None = unknown)
+
+    JSON_VERSION = 2
 
     # ---------------------------------------------------------- derived
     def n(self) -> int:
@@ -140,29 +146,68 @@ class Tournament:
         bt = self.bt()
         return sorted(range(self.n()), key=lambda i: -bt[i])
 
-    def to_json(self) -> dict:
+    def deck_path(self, i: int):
+        return self.paths[i] if i < len(self.paths) else None
+
+    def to_json(self, reg=None) -> dict:
+        """Everything a report needs, computed once. ``reg`` (default: the standard registry)
+        resolves card names for the summary sentences and the deck profiles."""
+        from cptcg.sim.report import deck_profile_json, registry, summarize
+        reg = registry(reg)
         n = self.n()
         bt = self.bt()
+        nash = self.nash()
         q = self.qvalues()
         return {
+            "version": self.JSON_VERSION,
             "agent": self.agent, "seed": self.seed, "rules": DEFAULT_CONFIG.digest(),
-            "decks": [{"name": d.name, "legends": list(d.legends), "main": d.counts()} for d in self.decks],
+            "info": dict(self.info),
+            "decks": [{"name": d.name, "legends": list(d.legends), "main": d.counts(),
+                       "meta": dict(d.meta), "profile": deck_profile_json(d, reg), "path": self.deck_path(i)}
+                      for i, d in enumerate(self.decks)],
             "cells": [{"i": c.i, "j": c.j, "wins_i": c.wins_i, "n": c.n, "verdict": c.verdict,
-                       "wilson": wilson(c.wins_i, c.n), "q": q[(c.i, c.j)],
+                       "wilson": list(wilson(c.wins_i, c.n)), "q": q[(c.i, c.j)],
                        "i_first": [c.i_first_wins, c.i_first_n], "avg_turns": c.turns / max(1, c.n)}
                       for c in self.cells.values()],
             "field": [{"wins": k, "games": g} for k, g in self.field_rates()],
-            "bradley_terry": bt, "residuals": self.residuals(), "nash": self.nash(),
+            "bradley_terry": bt, "residuals": self.residuals(), "nash": nash,
             "standings": self.standings(),
+            "summary": summarize(self, reg, bt=bt, nash=nash, q=q),
             "cards": [{cid: {"drawn_games": s.drawn_games, "drawn_wins": s.drawn_wins,
                              "other_games": s.other_games, "other_wins": s.other_wins}
                        for cid, s in stats.items()} for stats in self.card_stats],
         }
 
-    def save(self, path: str | Path) -> None:
+    def save(self, path: str | Path, reg=None) -> None:
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         with open(path, "w", encoding="utf-8") as f:
-            json.dump(self.to_json(), f, indent=1)
+            json.dump(self.to_json(reg), f, indent=1)
+
+    @classmethod
+    def from_json(cls, data: dict) -> "Tournament":
+        """Rebuild a tournament from a saved file (version 1 or 2). The per-game results are not
+        stored, so ``cells[...].results`` is empty; every rating is recomputed from the counts."""
+        decks = [Decklist.from_counts(d["name"], d["legends"], d["main"], **dict(d.get("meta") or {}))
+                 for d in data["decks"]]
+        cells: dict[tuple[int, int], Cell] = {}
+        for c in data["cells"]:
+            cell = Cell(c["i"], c["j"], c["wins_i"], c["n"], c.get("verdict", "continue"))
+            first = c.get("i_first") or [0, 0]
+            cell.i_first_wins, cell.i_first_n = int(first[0]), int(first[1])
+            cell.turns = int(round(float(c.get("avg_turns", 0.0)) * cell.n))
+            cells[(cell.i, cell.j)] = cell
+        card_stats = [{cid: CardStat(s["drawn_games"], s["drawn_wins"], s["other_games"], s["other_wins"])
+                       for cid, s in stats.items()} for stats in data.get("cards", [])]
+        while len(card_stats) < len(decks):
+            card_stats.append({})
+        info = dict(data.get("info") or {})
+        paths = [d.get("path") for d in data["decks"]]
+        return cls(decks, data.get("agent", "heuristic"), int(data.get("seed", 0)), cells, card_stats, info, paths)
+
+    @classmethod
+    def load(cls, path: str | Path) -> "Tournament":
+        with open(path, encoding="utf-8") as f:
+            return cls.from_json(json.load(f))
 
 
 def _update_card_stats(stats: dict[str, CardStat], deck: Decklist, drawn: frozenset, won: bool) -> None:
@@ -187,6 +232,7 @@ def run_tournament(decks: list[Decklist], agent: str = "heuristic", games_per_pa
     card_stats = [dict() for _ in range(n)]
     active = list(cells)
     offset = 0
+    t0 = time.perf_counter()
     while active:
         still = []
         for key in active:
@@ -208,4 +254,10 @@ def run_tournament(decks: list[Decklist], agent: str = "heuristic", games_per_pa
                 still.append(key)
         active = still
         offset += batch
-    return Tournament(decks, agent, seed, cells, card_stats)
+    info = {"games_per_pair": games_per_pair, "batch": batch,
+            "sprt": None if sprt is None else {"delta": sprt.delta, "alpha": sprt.alpha, "beta": sprt.beta},
+            "total_games": sum(c.n for c in cells.values()),
+            "elapsed_s": round(time.perf_counter() - t0, 3),
+            "finished_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "title": None}
+    return Tournament(decks, agent, seed, cells, card_stats, info)

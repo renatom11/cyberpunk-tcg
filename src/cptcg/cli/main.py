@@ -115,11 +115,29 @@ def cmd_tourney(args) -> None:
 
     t = run_tournament(decks, args.agent, args.games, seed=args.seed, workers=args.jobs,
                        sprt=None if args.no_sprt else SPRT(args.delta), batch=args.batch, progress=progress)
-    t.save(out / "tournament.json")
-    report = render_report(t, args.title or f"Tournament: {len(decks)} decks")
+    title = args.title or f"Tournament: {len(decks)} decks"
+    t.info["title"] = title
+    t.paths = list(args.decks)
+    t.save(out / "tournament.json", reg)
+    report = render_report(t, title, reg)
     (out / "report.md").write_text(report, encoding="utf-8")
     print(report)
     print(f"({time.perf_counter() - t0:.0f}s; written to {out}/)")
+
+
+def cmd_report(args) -> None:
+    """Re-render the Markdown report of a saved tournament (any file version)."""
+    from cptcg.sim.report import render_report
+    from cptcg.sim.tournament import Tournament
+    reg = load_default()
+    t = Tournament.load(args.file)
+    report = render_report(t, args.title, reg)
+    if args.write:
+        out = Path(args.file).with_name("report.md")
+        out.write_text(report, encoding="utf-8")
+        print(f"written to {out}", file=sys.stderr)
+    else:
+        print(report)
 
 
 def cmd_build(args) -> None:
@@ -267,6 +285,12 @@ def main(argv=None) -> None:
     p.add_argument("--allow-unverified", action="store_true")
     p.add_argument("--allow-unscripted", action="store_true")
     p.set_defaults(fn=cmd_tourney)
+
+    p = sub.add_parser("report", help="re-render the Markdown report of a saved tournament.json")
+    p.add_argument("file", help="path of a tournament.json (any version)")
+    p.add_argument("--title", help="report title (default: the one saved in the file)")
+    p.add_argument("--write", action="store_true", help="write report.md next to the file instead of printing")
+    p.set_defaults(fn=cmd_report)
 
     p = sub.add_parser("build", help="AI-build a deck and improve it by measured play")
     p.add_argument("--legends", help="comma-separated Legend ids (default: random)")

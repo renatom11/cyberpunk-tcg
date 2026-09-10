@@ -120,6 +120,8 @@ def test_lab_jobs(base):
     assert len(j["reports"]) == 1 and j["reports"][0].startswith("out/lab/smoke-")
     rep = get(base, f"/api/report?file={j['reports'][0]}")
     assert len(rep["decks"]) == 2 and rep["markdown"].startswith("#")
+    assert rep["version"] == 2 and rep["summary"] and rep["info"]["games_per_pair"] == 4
+    assert rep["decks"][0]["path"] == decks[0] and rep["decks"][0]["profile"]["cards"] >= 40
     assert any(x["id"] == job["id"] for x in get(base, "/api/jobs"))
     # Bad input fails the job rather than the server.
     bad = post(base, "/api/jobs", {"kind": "tourney", "decks": decks[:1]})

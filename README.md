@@ -54,6 +54,7 @@ python -m cptcg cards --unimplemented            # cards still needing a script
 
 # the lab: round robin with Bradley-Terry ratings, Nash support, FDR-corrected matrix, card IWD
 python -m cptcg tourney data/decks/sample_*.json -n 300 -j 4 --out out/league1
+python -m cptcg report out/league1/tournament.json     # re-render the plain-English Markdown report of any saved run
 
 # AI deck-building: a builder personality constructs a RAM-legal deck, then improves it by measured play
 python -m cptcg strategies                                      # aggro, control, economy, gig, synergy, balanced, legacy

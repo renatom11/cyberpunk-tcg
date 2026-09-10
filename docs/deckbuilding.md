@@ -132,20 +132,25 @@ these arguments are the main tree's job; the API is the contract.
 
 ## Reading a league report
 
-Each generation writes `report.md`. When decks carry `meta["strategy"]`:
+Each generation writes `tournament.json` (everything the report needs: the run's settings, every
+deck's list, meta and shape numbers, each builder's hill-climb history, the summary sentences) and
+`report.md`, the plain-English Markdown rendered from it; `python -m cptcg report <file>` renders
+it again, and a cumulative `league.json` holds the standings of every generation. When decks
+carry a kind label (`meta["strategy"]`, or `meta["archetype"]` once archetypes are learned from play):
 
-- **Standings** gain a *Strategy* column, so the BT strength, field win rate and Nash weight of
+- **Standings** gain an *Archetype* column, so the strength, win rate and "bring it?" share of
   each deck are labelled with the thesis that built it.
-- **Philosophies** groups decks by strategy: mean BT, pooled field win rate, and the best deck.
-  This is the table to watch across generations. A thesis that keeps a mean BT above 1 while its
-  decks are replaced and re-improved is winning *as a philosophy*; one that produced a single
-  lucky deck shows a high "Best deck" but a mean near or below 1.
+- **Archetypes in this run** groups decks by kind: mean strength, pooled win rate, and the best
+  deck. This is the table to watch across generations. A thesis that keeps a mean strength above 1
+  while its decks are replaced and re-improved is winning *as a philosophy*; one that produced a
+  single lucky deck shows a high "Best deck" but a mean near or below 1.
 - **Nash support** says what a rational field would bring. If one philosophy's decks carry all
   the Nash weight, the others are strictly dominated in this pool; if support is split, the
   personalities form a rock-paper-scissors triangle worth reading off the head-to-head matrix
   (Aggro beating Economy, Control beating Aggro, is the classic shape).
-- **Cards that move the needle** is per-deck IWD — the same numbers the knowledge store
-  accumulates, before shrinkage. `Knowledge.top(n, context)` gives the shrunk, cross-league view.
+- **Cards that helped and hurt** is per-deck IWD (win rate when drawn minus when not drawn) —
+  the same numbers the knowledge store accumulates, before shrinkage. `Knowledge.top(n, context)`
+  gives the shrunk, cross-league view.
 
 The hall of fame entries record the strategy too (`HallOfFame.by_strategy()`), so the long-run
 question — which philosophy keeps producing champions? — has a one-line answer.

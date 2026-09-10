@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from cptcg.cards.registry import load_default
@@ -147,15 +149,26 @@ def test_league_uses_strategies_knowledge_and_hall_of_fame(reg, tmp_path):
     assert kn.tournaments == 2 and kn.games == 2 * sum(2 * c.n for c in t.cells.values())
     hof = HallOfFame.load(tmp_path / "hof.json")
     assert hof.entries and all(e.strategy in {"aggro", "control", "gig"} for e in hof.entries)
-    rep = render_report(t, "League")
-    assert "| Strategy |" in rep and "## Philosophies" in rep and "aggro" in rep
+    rep = render_report(t, "League", reg)
+    assert "| Archetype |" in rep and "## Archetypes in this run" in rep and "aggro" in rep
     assert (tmp_path / "league" / "gen2" / "report.md").exists()
     saved = Decklist.load(tmp_path / "league" / "gen2" / "builder1.json")
     assert saved.meta["strategy"] == "aggro"
+    # the league context travels with the tournament and the cumulative series
+    assert t.info["generation"] == 2 and t.info["generations"] == 2 and t.info["replaced"] is None
+    assert len(t.info["climb"]) == 3 and all(isinstance(h, list) for h in t.info["climb"])
+    gen1 = json.loads((tmp_path / "league" / "gen1" / "tournament.json").read_text())
+    assert gen1["version"] == 2 and gen1["info"]["replaced"] in {d.name for d in decks}
+    assert gen1["decks"][0]["meta"]["strategy"] == "aggro" and gen1["decks"][0]["path"].endswith("builder1.json")
+    series = json.loads((tmp_path / "league" / "league.json").read_text())
+    assert [g["gen"] for g in series["generations"]] == [1, 2]
+    assert all(row["fresh"] for row in series["generations"][0]["standings"])
+    assert sum(row["fresh"] for row in series["generations"][1]["standings"]) == 1
+    assert {row["archetype"] for row in series["generations"][1]["standings"]} == {"aggro", "control", "gig"}
 
 
 def test_legacy_league_still_builds_unopinionated_decks(reg):
     gen, t, decks = next(league(reg, n_builders=2, generations=1, steps=0, seed=3, agent="random",
                                 workers=1, games_per_pair=2, strategies="legacy"))
     assert all("strategy" not in d.meta for d in decks)
-    assert "| Strategy |" not in render_report(t)
+    assert "| Archetype |" not in render_report(t, reg=reg)

@@ -47,6 +47,7 @@ class SPRT:
 
     def __init__(self, delta: float = 0.05, alpha: float = 0.05, beta: float = 0.05, p0: float = 0.5) -> None:
         self.p0, self.delta = p0, delta
+        self.alpha, self.beta = alpha, beta
         self.upper = math.log((1 - beta) / alpha)
         self.lower = math.log(beta / (1 - alpha))
 

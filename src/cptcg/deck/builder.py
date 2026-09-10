@@ -383,6 +383,10 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
     robin; the worst is replaced by a fresh build each generation. Yields (generation, Tournament,
     decks) so callers can report as it runs.
 
+    With ``out_dir`` every generation writes ``genK/tournament.json`` (with the hill-climb history
+    of each deck in ``info["climb"]``), ``genK/report.md``, one deck file per builder, and a
+    cumulative ``league.json`` series (standings per generation) for charts.
+
     Each builder carries a personality from deck/strategies.py (``strategies``: a list of names
     or BuilderStrategy objects, cycled; None = all personalities in turn; ``"legacy"`` = the
     original unopinionated ``heuristic_deck``) and records it in ``deck.meta["strategy"]``.
@@ -417,21 +421,33 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
         return strat.build(reg, None, rng, knowledge=knowledge, name=name)
 
     decks = [fresh(i) for i in range(n_builders)]
+    fresh_idx = set(range(n_builders))                       # builders rebuilt for this generation
+    series: list[dict] = []
     for gen in range(1, generations + 1):
         extra = []
         if hof is not None:
             extra = hof.opponents(hof_opponents, exclude={deck_signature(d) for d in decks})
         improved = []
+        climb: list[list[dict]] = []
         for i, d in enumerate(decks):
             field_decks = [o for j, o in enumerate(decks) if j != i] + extra
             if progress:
                 progress(f"gen {gen}: improving {d.name}" + (f" [{d.meta['strategy']}]" if "strategy" in d.meta else ""))
-            best, _hist = hill_climb(reg, d, field_decks, steps=steps, seed=seed * 100 + gen * 10 + i,
-                                     agent=agent, workers=workers, seeds_per_batch=seeds_per_batch,
-                                     max_batches=max_batches)
+            best, hist = hill_climb(reg, d, field_decks, steps=steps, seed=seed * 100 + gen * 10 + i,
+                                    agent=agent, workers=workers, seeds_per_batch=seeds_per_batch,
+                                    max_batches=max_batches)
             improved.append(best)
+            climb.append([step_json(h) for h in hist])
         decks = improved
         t = run_tournament(decks, agent, games_per_pair, seed=seed * 1000 + gen, workers=workers, sprt=SPRT(0.08))
+        worst = t.standings()[-1]
+        t.info.update(title=f"League generation {gen}", generation=gen, generations=generations, steps=steps,
+                      league_seed=seed, replaced=decks[worst].name if gen < generations else None, climb=climb)
+        bt = t.bt()
+        series.append({"gen": gen, "standings": [
+            {"name": d.name, "archetype": d.meta.get("archetype") or d.meta.get("strategy"), "bt": bt[i],
+             "wins": k, "games": g, "fresh": i in fresh_idx, "replaced": i == worst and gen < generations}
+            for i, (d, (k, g)) in enumerate(zip(decks, t.field_rates()))]})
         if knowledge is not None:
             knowledge.update_from_tournament(t)
             if knowledge.path:
@@ -442,10 +458,40 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
                 hof.save()
         if out:
             (out / f"gen{gen}").mkdir(parents=True, exist_ok=True)
-            t.save(out / f"gen{gen}" / "tournament.json")
-            (out / f"gen{gen}" / "report.md").write_text(render_report(t, f"League generation {gen}"), encoding="utf-8")
+            t.paths = []
             for d in decks:
-                d.save(out / f"gen{gen}" / f"{d.name}.json")
+                path = out / f"gen{gen}" / f"{d.name}.json"
+                d.save(path)
+                t.paths.append(_display_path(path))
+            t.save(out / f"gen{gen}" / "tournament.json", reg)
+            (out / f"gen{gen}" / "report.md").write_text(render_report(t, f"League generation {gen}", reg), encoding="utf-8")
+            with open(out / "league.json", "w", encoding="utf-8") as f:
+                json.dump({"generations": series}, f, indent=1)
         yield gen, t, decks
-        worst = t.standings()[-1]
         decks[worst] = fresh(worst)
+        fresh_idx = {worst}
+
+
+def parse_proposal(desc: str) -> dict:
+    """``mutate()``'s swap text as ``{"out", "in", "kind"}`` (kind: ``card`` or ``legend``)."""
+    kind = "card"
+    if desc.startswith("legend "):
+        kind, desc = "legend", desc[len("legend "):]
+    a, _, b = desc.partition(" -> ")
+    return {"out": a.strip(), "in": b.strip(), "kind": kind}
+
+
+def step_json(h: Step) -> dict:
+    """One hill-climb step as the report stores it."""
+    return {"step": h.step, "proposal": parse_proposal(h.proposal), "games": h.games, "discordant": h.discordant,
+            "challenger_wins": h.challenger_wins, "verdict": h.verdict, "accepted": h.accepted,
+            "champion_rate": h.champion_rate}
+
+
+def _display_path(path: Path) -> str:
+    """A deck path as the web client and the report show it: relative to the working directory
+    when it lies under it (``out/league/gen2/builder1.json``), else absolute."""
+    try:
+        return str(path.resolve().relative_to(Path.cwd().resolve()))
+    except ValueError:
+        return str(path)
