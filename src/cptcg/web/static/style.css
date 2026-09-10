@@ -30,8 +30,9 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .panel.hand .lbl, .panel.field .lbl, .panel.legends .lbl { width: 100%; }
 .hand { display: flex; gap: 4px; overflow-x: auto; min-height: calc(var(--card-h) * .78 + 26px); align-items: flex-start; flex-wrap: wrap; }
 .hand.mine { min-height: calc(var(--card-h) + 26px); }
-.hand.opp { overflow: hidden; gap: 0; }
-.hand.opp .card + .card { margin-left: -58px; }
+.hand.opp { overflow: hidden; }
+.hand.opp:has(.card.back) { gap: 0; }
+.hand.opp .card.back + .card.back { margin-left: -58px; }
 .dice { display: flex; gap: 8px; justify-content: center; padding: 6px; }
 .die { width: 44px; height: 44px; border: 1px solid var(--line2); border-radius: 8px; display: grid; place-items: center; color: var(--dim); font-size: 12px; font-weight: 700; }
 .die.gig { color: var(--yellow); border-color: var(--yellow); font-size: 16px; }
