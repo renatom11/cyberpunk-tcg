@@ -395,7 +395,7 @@ def _run_tourney(job: Job) -> None:
 
     def progress(a, b, k, n, verdict):
         settled = tracker.cell(a, b, n, verdict)
-        tracker.phase = f"{a} vs {b} ({n} of {games} games{', settled' if settled else ''})"
+        tracker.phase = f"{a} vs {b} ({n} of {games} games{cell_note(settled, n, games)})"
         job.set_progress(f"{a} vs {b}: {k}/{n}" + ("" if verdict == "continue" else f" [{verdict}]"), **tracker.to_json())
 
     t = run_tournament(decks, agent, games, seed=seed, workers=body.get("jobs") or DEFAULT_WORKERS,
@@ -466,6 +466,15 @@ def estimate(body: dict) -> dict:
     raise ValueError("kind must be tourney, league or generate")
 
 
+def cell_note(settled: bool, n: int, cap: int) -> str:
+    """What the job card says about a matchup: a cell that played every game it was allowed
+    reached the cap — it never had the chance to stop early, so calling it "settled" would
+    claim the early-stop test decided something."""
+    if not settled:
+        return ""
+    return ", reached the cap" if n >= cap else ", settled early"
+
+
 def _run_league(job: Job) -> None:
     from cptcg.deck.archetypes import DEFAULT_PATH as ARCHETYPES_PATH
     from cptcg.deck.builder import league
@@ -498,7 +507,8 @@ def _run_league(job: Job) -> None:
             tracker.climb_done(e["builder"], gen=gen)
         elif kind == "tourney_cell":
             settled = tracker.cell(e["a"], e["b"], e["n"], e["verdict"], e["cap"], gen=gen)
-            tracker.phase = f"{head} · round robin · {e['a']} vs {e['b']} ({e['n']} of {e['cap']} games{', settled' if settled else ''})"
+            tracker.phase = (f"{head} · round robin · {e['a']} vs {e['b']} "
+                             f"({e['n']} of {e['cap']} games{cell_note(settled, e['n'], e['cap'])})")
         elif kind == "gen_done":
             tracker.gen_done(gen)
             tracker.phase = f"{head} · done" + (f" · {e['replaced']} is replaced" if e.get("replaced") else "")

@@ -65,10 +65,42 @@ def test_summary_sentences_on_a_synthetic_tournament(reg):
     text = "\n".join(lines)
     assert f"{names[1]} (85% of 40 games)" in text and "statistically very solid" in text
     assert f"{names[2]} (70% of 20 games)" in text and "could" in text            # 14/20 is not settled
+    # one thin result in the group: singular, and joined with a semicolon rather than a second dash
+    assert "; it rests on fewer than 30 games, so keep some doubt" in text and "some of these rest" not in text
     assert "bring" in text and names[0] in text.split("bring")[1]
     assert "small run (100 games in all, under 40 per matchup)" in text
     # the same sentences are what the JSON stores
     assert t.to_json(reg)["summary"] == lines
+
+
+def test_summary_flags_a_thin_count_once_and_never_twice(reg):
+    """A count is printed once: "of only 20 games" replaces the separate "(only 20 games)" aside,
+    and a one-result group says "it rests", not "some rest"."""
+    a, b, c = _decks(3)
+    cells = {(0, 1): _cell(0, 1, 12, 20), (0, 2): _cell(0, 2, 18, 20), (1, 2): _cell(1, 2, 11, 20)}
+    text = "\n".join(summarize(Tournament([a, b, c], "random", 7, cells, [{}, {}, {}]), reg))
+    assert "is not established (60% of only 20 games), so the top two could swap places" in text
+    assert "(90% of 20 games) is statistically very solid — unlikely to be luck, though it rests on fewer than 30 games" in text
+    assert "only 20 games)" not in text.replace("of only 20 games)", "")      # never a second aside
+    # a loss names its own count, with the thin flag folded in
+    text = "\n".join(summarize(Tournament([a, b, c], "random", 7, {(0, 1): Cell(0, 1, 8, 20, "low", 4, 10, 240),
+                                                                   (0, 2): _cell(0, 2, 18, 20),
+                                                                   (1, 2): _cell(1, 2, 4, 20)}, [{}, {}, {}]), reg))
+    assert "of only 20 games) — a loss" in text
+
+
+def test_league_header_labels_both_seeds_and_the_round_robin_time(reg):
+    t = synthetic(reg)
+    t.info.update(generation=2, generations=3, steps=2, league_seed=0, elapsed_s=2.4)
+    head = render_report(t, reg=reg).split("## Summary")[0]
+    assert "round-robin seed 7" in head and "(league seed 0, 2 improvement steps per builder)" in head
+    assert "round robin 2 s" in head and "run time" not in head
+    t.info["gen_elapsed_s"] = 75.2
+    assert "round robin 2 s of 75 s for this generation" in render_report(t, reg=reg)
+    # a plain tournament keeps the unlabelled seed and the whole run time
+    t.info.pop("generation")
+    head = render_report(t, reg=reg).split("## Summary")[0]
+    assert "· seed 7 ·" in head and "run time 2 s" in head
 
 
 def test_report_uses_card_names_not_ids_and_has_every_section(reg):

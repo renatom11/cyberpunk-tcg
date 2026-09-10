@@ -46,9 +46,10 @@ const Report = (() => {
   function sigText(q, n) {
     const word = q < 0.01 ? "statistically very solid — unlikely to be luck" : q < 0.05 ? "statistically solid — unlikely to be luck"
       : q < 0.2 ? "suggestive but not settled" : "not established — it could be noise";
-    return word + (n < 30 ? ` (only ${n} games)` : "");
+    return word + (n < 30 ? ` on ${n} games` : "");
   }
-  const qText = (q) => q < 1 ? ` (adjusted p-value q = ${q < 0.001 ? "< 0.001" : q.toFixed(3)})` : "";
+  // The q follows after a semicolon, not in a second bracket right after the first one.
+  const qText = (q) => q < 1 ? `; adjusted p-value q = ${q < 0.001 ? "< 0.001" : q < 0.01 ? q.toFixed(3) : q.toFixed(2)}` : "";
   const kindOf = (deck) => { const m = (deck && deck.meta) || {}; return m.archetype || m.strategy || null; };
   // What the tables print for a deck's archetype (the same rule as report.deck_label in Python):
   // the kind it was built toward, plus the nearest current archetype for a deck that was not built
@@ -67,10 +68,25 @@ const Report = (() => {
     return bt.map((b, i) => bt.reduce((a, o, j) => j === i ? a : a + b / (b + o), 0) / (n - 1));
   }
   // Title attributes never show on a touch screen, so anything a tooltip says is also shown in a
-  // note line under the table when the cell is tapped (or clicked).
+  // note line when the cell is tapped (or clicked). A note under the table works while the table
+  // is a table; on a phone the standings become a stack of tall cards and a note pinned under all
+  // of them lands a screen below the tapped row. So a caller may name the row a cell belongs to:
+  // on a narrow screen the note moves into that row, and wherever it ends up it is scrolled into
+  // view when it is not already on screen.
   function tapNote(section) {
     const note = h("p", "tapnote"); note.hidden = true;
-    const fn = (cell, text) => { cell.title = text; cell.classList.add("tap"); cell.onclick = () => { note.textContent = text; note.hidden = false; }; };
+    const fn = (cell, text, row) => {
+      cell.title = text;
+      cell.classList.add("tap");
+      cell.onclick = () => {
+        note.textContent = text; note.hidden = false;
+        if (!fn.home) fn.home = note.parentNode;
+        const host = (row && window.innerWidth <= 700) ? (row.lastElementChild || row) : fn.home;
+        if (host && note.parentNode !== host) host.append(note);
+        const box = note.getBoundingClientRect();
+        if (box.bottom > window.innerHeight || box.top < 0) note.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      };
+    };
     fn.node = note;
     return fn;
   }
@@ -148,15 +164,22 @@ const Report = (() => {
     if (m.info.games_per_pair) facts.push(`up to ${num(m.info.games_per_pair)} games per pair`);
     facts.push(`${num(m.total)} games played`);
     if (t.agent) facts.push(`${t.agent} agents on both sides`);
-    if (t.seed != null) facts.push(`seed ${t.seed}`);
-    if (m.info.elapsed_s != null) facts.push(`run time ${fmtSecs(m.info.elapsed_s)}`);
+    // A league generation has two seeds in play and its run time is the round robin alone, not the
+    // generation: both are labelled for what they are.
+    const gen = !!m.info.generation;
+    if (t.seed != null) facts.push(`${gen ? "round-robin seed" : "seed"} ${t.seed}`);
+    if (m.info.elapsed_s != null) {
+      const rr = fmtSecs(m.info.elapsed_s);
+      facts.push(gen && m.info.gen_elapsed_s != null ? `round robin ${rr} of ${fmtSecs(m.info.gen_elapsed_s)} for this generation`
+        : gen ? `round robin ${rr}` : `run time ${rr}`);
+    }
     if (m.info.finished_at) facts.push(`finished ${fmtWhen(m.info.finished_at)}`);
     root.append(h("p", "facts", facts.join(" · ")));
     if (m.info.generation) {
       const g = m.info;
       const swaps = (g.climb || []).reduce((a, hist) => a + (hist || []).reduce((b, x) => b + (x.games || 0), 0), 0);
       root.append(h("p", "lede", `Generation ${g.generation}${g.generations ? ` of ${g.generations}` : ""} of a league` +
-        `${g.league_seed != null ? ` (seed ${g.league_seed}${g.steps != null ? `, ${g.steps} improvement steps per builder` : ""})` : ""}: ` +
+        `${g.league_seed != null ? ` (league seed ${g.league_seed}${g.steps != null ? `, ${g.steps} improvement steps per builder` : ""})` : ""}: ` +
         "each builder improved its deck by measured card swaps, then everyone played a round robin" +
         (swaps ? ` — the ${num(m.total)} games above are the round robin; the card-swap tests played another ${num(swaps)} challenger games (the champion played the same seeds).` : ".")));
     }
@@ -212,10 +235,10 @@ const Report = (() => {
       td("legends", "Legends", legs);
       const [lo, hi] = wilson(f.wins, f.games);
       const wr = td("wr", "Win rate", winBar(f.wins, f.games));
-      note(wr, f.games ? `${d.name} won ${f.wins} of ${f.games} games (${pct(f.wins, f.games)}); the true win rate plausibly lies between ${pctOf(lo)} and ${pctOf(hi)} (95% interval).` : `${d.name} played no games.`);
+      note(wr, f.games ? `${d.name} won ${f.wins} of ${f.games} games (${pct(f.wins, f.games)}); the true win rate plausibly lies between ${pctOf(lo)} and ${pctOf(hi)} (95% interval).` : `${d.name} played no games.`, tr);
       const exp = m.expected[i];
       const st = td("bt", "Strength", pctOf(exp), h("small", "", " expected vs this field "), h("small", "dim", `(rating ${m.bt[i].toFixed(2)})`));
-      note(st, `${d.name}: Bradley–Terry rating ${m.bt[i].toFixed(2)}, where 1.0 is the mean rating of this field; against these opponents that rating predicts a ${pctOf(exp)} win rate. The plain win rate is ${pct(f.wins, f.games)}: when the two disagree, the win rate is the fact and the rating is the model's view.`);
+      note(st, `${d.name}: Bradley–Terry rating ${m.bt[i].toFixed(2)}, where 1.0 is the mean rating of this field; against these opponents that rating predicts a ${pctOf(exp)} win rate. The plain win rate is ${pct(f.wins, f.games)}: when the two disagree, the win rate is the fact and the rating is the model's view.`, tr);
       td("nash", "Bring it?", pctOf(m.nash[i] || 0));
       const acts = h("div", "acts");
       const dl = h("button", "", "Decklist"); dl.onclick = () => openDeck(ctx.target, i);
@@ -283,7 +306,7 @@ const Report = (() => {
         if (solid) td.append(h("span", "sig", "✓"));
         td.append(" ", h("small", "", `(${g})`));
         if (solid) td.classList.add("solid");
-        note(td, `${m.names[i]} beat ${m.names[j]} in ${w} of ${g} games (${pct(w, g)}) — ${sigText(q, g)}${qText(q)}.`);
+        note(td, `${m.names[i]} beat ${m.names[j]} in ${w} of ${g} games (${pct(w, g)}): ${sigText(q, g)}${qText(q)}.`);
         tr.append(td);
       });
       table.append(tr);
@@ -384,7 +407,7 @@ const Report = (() => {
     const s = section("Cards that helped and hurt",
       "Per deck: the difference in percentage points between the win rate in games where the card was drawn at least once and the win rate in games where it stayed in the deck, with the games behind each side. " +
       `Only cards drawn in at least ${MIN_CARD_GAMES} games and left in the deck in at least ${MIN_CARD_GAMES} are listed — the five that helped most and the three that hurt most (every card when a deck has eight or fewer); the … row stands for the cards in between. ` +
-      `Three-of cards are drawn in most games, so the not-drawn side is often a handful of games: a difference marked thin rests on fewer than ${THIN_GAMES} games on one side and is noise until the swap test confirms it. ` +
+      `Three-of cards are drawn in most games, so the not-drawn side is often a handful of games: a difference marked thin — ⚠ beside the counts on a narrow screen — rests on fewer than ${THIN_GAMES} games on one side and is noise until the swap test confirms it. ` +
       "All of it is correlation, not proof: the card was drawn in particular games, next to particular cards, against particular opponents. " +
       "The hill-climb's swap test, which plays the same games with and without a card, is the causal check.");
     let any = false;
@@ -394,15 +417,22 @@ const Report = (() => {
       any = true;
       const table = h("table", "rep small helped");
       const head = h("tr");
-      [["Card", ""], ["Diff.", "difference in percentage points: won when drawn minus won when not drawn"], ["Won when drawn", ""], ["Won when not drawn", ""], ["Games drawn / not drawn", ""]]
-        .forEach(([x, tip]) => { const th = h("th", "", x); if (tip) th.title = tip; head.append(th); });
+      // Each header carries a full and a short form; the phone stylesheet shows the short one, so
+      // the last column — the games the "thin" caveat rests on — stays on screen.
+      [["Card", "Card", ""], ["Diff.", "Diff.", "difference in percentage points: won when drawn minus won when not drawn"],
+       ["Won when drawn", "Drawn", ""], ["Won when not drawn", "Not drawn", ""], ["Games drawn / not drawn", "Games", "how many games each side rests on: drawn / not drawn"]]
+        .forEach(([x, short, tip]) => { const th = h("th", "", h("span", "full", x), h("span", "short", short)); if (tip) th.title = tip; head.append(th); });
       table.append(head);
       rows.forEach(r => {
         if (!r) { table.append(h("tr", "gap", h("td", "", "…"), h("td"), h("td"), h("td"), h("td"))); return; }
         const diff = round0(100 * r.iwd);
-        const dtd = h("td", (diff > 0 ? "pos" : diff < 0 ? "neg" : "") + (r.thin ? " thin" : ""), `${diff > 0 ? "+" : ""}${diff}`, r.thin ? h("small", "", " thin") : null);
-        if (r.thin) dtd.title = `one side rests on only ${Math.min(r.games, r.other)} games: noise until the swap test confirms it`;
-        table.append(h("tr", "", h("td", "", cardChip(cardOf(ctx.cards, r.id), ctx)), dtd, h("td", "", pctOf(r.gih)), h("td", "", pctOf(r.gnd)), h("td", "", `${num(r.games)} / ${num(r.other)}`)));
+        const dtd = h("td", (diff > 0 ? "pos" : diff < 0 ? "neg" : "") + (r.thin ? " thin" : ""), `${diff > 0 ? "+" : ""}${diff}`, r.thin ? h("small", "thinword", " thin") : null);
+        const why = `one side rests on only ${Math.min(r.games, r.other)} games: noise until the swap test confirms it`;
+        // The flag also rides next to the counts it is about, as a symbol: that column is what a
+        // narrow screen shows, and the word is too small to read there.
+        const gtd = h("td", "", `${num(r.games)} / ${num(r.other)}`, r.thin ? h("span", "thinflag", " ⚠") : null);
+        if (r.thin) { dtd.title = why; gtd.title = why; }
+        table.append(h("tr", "", h("td", "", cardChip(cardOf(ctx.cards, r.id), ctx)), dtd, h("td", "", pctOf(r.gih)), h("td", "", pctOf(r.gnd)), gtd));
       });
       s.append(h("h4", "", m.names[i], " ", kindBadge(m.kinds[i])), scrollX(table));
     });
@@ -416,6 +446,12 @@ const Report = (() => {
   // A row's strength as the win rate it predicts against its own generation's field (league.json
   // stores it as "expected"; older series fall back to rating ÷ (rating + 1)).
   const rowValue = (r) => r.expected != null ? Number(r.expected) : (Number(r.bt || 0) / (Number(r.bt || 0) + 1));
+  // Every archetype that actually appears in the series, in the order it first appears.
+  function seriesKinds(series) {
+    const out = [];
+    series.generations.forEach(g => (g.standings || []).forEach(r => { const a = r.archetype || NO_ARCH; if (!out.includes(a)) out.push(a); }));
+    return out;
+  }
   function colourMap(series) {
     const map = { exploring: "#7f95a3" }; let k = 0;
     series.generations.forEach(g => (g.standings || []).forEach(r => { const a = r.archetype || NO_ARCH; if (!(a in map)) map[a] = PALETTE[k++ % PALETTE.length]; }));
@@ -452,10 +488,19 @@ const Report = (() => {
       }
       pts.forEach(p => {
         const c = colours[p.r.archetype || NO_ARCH];
-        const dot = svg("circle", { cx: x(p.k), cy: y(v(p.r)), r: 4.5, stroke: c, fill: p.r.fresh ? "#0d1420" : c, "stroke-width": 2 });
-        const title = svg("title"); title.textContent = `${name} · gen ${gens[p.k].gen} · ${p.r.archetype || NO_ARCH} · ${pctOf(v(p.r))} expected vs that generation's field (rating ${Number(p.r.bt || 0).toFixed(2)}) · won ${p.r.wins} of ${p.r.games}${p.r.fresh ? " · built fresh this generation" : ""}${p.r.replaced ? " · replaced after this generation" : ""}`;
+        // Every deck of the first generation is new, so a hollow point would say nothing there:
+        // "fresh" is drawn, and named in the tooltip, only from generation 2 on.
+        const fresh = !!p.r.fresh && gens[p.k].gen > 1;
+        const dot = svg("circle", { cx: x(p.k), cy: y(v(p.r)), r: 4.5, stroke: c, fill: fresh ? "#0d1420" : c, "stroke-width": 2 });
+        const title = svg("title"); title.textContent = `${name} · gen ${gens[p.k].gen} · ${p.r.archetype || NO_ARCH} · ${pctOf(v(p.r))} expected vs that generation's field (rating ${Number(p.r.bt || 0).toFixed(2)}) · won ${p.r.wins} of ${p.r.games}${fresh ? " · built fresh this generation" : ""}${p.r.replaced ? " · replaced after this generation" : ""}`;
         dot.append(title); root.append(dot);
-        if (p.r.replaced) { const t = svg("text", { x: x(p.k), y: y(v(p.r)) - 8, class: "cross", "text-anchor": "middle" }); t.textContent = "✕"; root.append(t); }
+        // The ✕ sits on the point it marks — above it, it reads as a stray second point.
+        if (p.r.replaced) {
+          const t = svg("text", { x: x(p.k), y: y(v(p.r)), dy: "0.36em", class: "cross", "text-anchor": "middle" });
+          t.textContent = "✕";
+          const tt = svg("title"); tt.textContent = `${name} finished last in generation ${gens[p.k].gen} and was replaced by a fresh deck`;
+          t.append(tt); root.append(t);
+        }
       });
       const last = pts[pts.length - 1];
       ends.push({ name, y: y(v(last.r)), x: x(last.k), c: colours[last.r.archetype || NO_ARCH] });
@@ -490,10 +535,21 @@ const Report = (() => {
     const width = (ctx.target.clientWidth || window.innerWidth) - 40;
     const { node, colours } = chart(series, width);
     sec.append(node);
+    const kinds = seriesKinds(series);
     const leg = h("div", "evolegend");
-    Object.entries(colours).forEach(([a, c]) => { const sw = h("i"); sw.style.background = c; leg.append(h("span", "", sw, a === "exploring" ? "exploring (Explorer builder)" : a)); });
-    leg.append(h("span", "dim", "hollow point = built fresh that generation · ✕ = replaced after that generation · a dashed segment joins a replaced deck to the new list that took its slot"));
+    // Only the archetypes that are actually drawn: a colour nobody used is not a legend entry.
+    kinds.forEach(a => { const sw = h("i"); sw.style.background = colours[a]; leg.append(h("span", "", sw, a === "exploring" ? "exploring (Explorer builder)" : a)); });
+    leg.append(h("span", "dim", "hollow point = built fresh that generation (every generation-1 deck is new, so those are solid) · ✕ = replaced after that generation · a dashed segment joins a replaced deck to the new list that took its slot"));
     sec.append(leg);
+    if (kinds.length < 2) {
+      // The same guard as kindsTable(): pooling one archetype over a round robin always gives 50%,
+      // so a table would print a fake interval around a number that means nothing.
+      if (kinds.length) {
+        const only = kinds[0];
+        sec.append(h("p", "lede", `Every deck of every generation of this league ${only === NO_ARCH ? "was built before archetypes were recorded" : only === "exploring" ? "was an Explorer build" : `was built toward ${only}`}, so there is no second archetype to compare it with — a pooled win rate over a round robin is always 50%.`));
+      }
+      return;
+    }
     sec.append(h("h4", "", "Archetype win rate across all generations of this league"),
       h("p", "lede", "Every deck of every generation, pooled by the archetype it was built toward. A deck-generation is one deck playing one round robin. The range is the 95% interval of plausible values for the pooled win rate; strength is relative to each deck's own generation. A group that only ever fielded one or two decks is thin evidence however good the number looks."),
       scrollX(seriesTable(series)));

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import math
+import time
 from collections import Counter
 from dataclasses import dataclass, field
 from itertools import combinations
@@ -489,6 +490,7 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
     fresh_idx = set(range(n_builders))                       # builders rebuilt for this generation
     series: list[dict] = []
     for gen in range(1, generations + 1):
+        gen_t0 = time.perf_counter()
         extra = []
         if hof is not None:
             extra = hof.opponents(hof_opponents, exclude={deck_signature(d) for d in decks})
@@ -529,7 +531,10 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
                      replaced=decks[worst].name if gen < generations else None)
         t.info.update(title=f"League generation {gen}", generation=gen, generations=generations, steps=steps,
                       league_seed=seed, replaced=decks[worst].name if gen < generations else None, climb=climb,
-                      fresh=[decks[i].name for i in sorted(fresh_idx)])
+                      fresh=[decks[i].name for i in sorted(fresh_idx)],
+                      # the round robin's own elapsed_s is a fraction of this: the card-swap tests
+                      # played most of the generation's games
+                      gen_elapsed_s=round(time.perf_counter() - gen_t0, 3))
         bt = t.bt()
         expected = t.expected_rates()
         series.append({"gen": gen, "standings": [

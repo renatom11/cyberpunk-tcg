@@ -427,13 +427,15 @@ function jobBody(kind) {
   if (kind === "league") return { kind, name: $("#lName").value, archetypes: picked("#lArchetypes"), builders: +$("#lBuilders").value, generations: +$("#lGens").value, steps: +$("#lSteps").value, games: +$("#lGames").value, seed: +$("#lSeed").value, knowledge: $("#lKnowledge").checked, hof: $("#lHof").checked };
   return { kind: "generate", name: $("#gName").value, archetypes: picked("#gArchetypes"), count: +$("#gCount").value, seed: +$("#gSeed").value, screen: +$("#gScreen").value, keep: +$("#gKeep").value };
 }
-function fmtDuration(secs) { return secs < 90 ? `${Math.round(secs)} s` : secs < 5400 ? `${Math.round(secs / 60)} min` : `${(secs / 3600).toFixed(1)} h`; }
+// Under two minutes the answer is seconds: "about 100 s left" is a number a reader can act on,
+// "about 2 min left" rounds away most of what is left.
+function fmtDuration(secs) { return secs <= 120 ? `${Math.round(secs)} s` : secs < 5400 ? `${Math.round(secs / 60)} min` : `${(secs / 3600).toFixed(1)} h`; }
 // A range collapses to one value when the ends are within 25% of each other.
 function fmtRange(lo, hi, fmt = x => x.toLocaleString()) { return hi <= 0 || hi / Math.max(lo, 1e-9) < 1.25 ? fmt(hi) : `${fmt(lo)}–${fmt(hi)}`; }
 // A time range in one unit ("3–20 min"), collapsing like fmtRange.
 function fmtSpan(lo, hi) {
   if (hi <= 0 || hi / Math.max(lo, 1e-9) < 1.25) return fmtDuration(hi);
-  if (hi < 90) return `${Math.round(lo)}–${Math.round(hi)} s`;
+  if (hi <= 120) return `${Math.round(lo)}–${Math.round(hi)} s`;
   if (hi < 5400) return `${Math.max(1, Math.round(lo / 60))}–${Math.round(hi / 60)} min`;
   if (lo >= 5400) return `${(lo / 3600).toFixed(1)}–${(hi / 3600).toFixed(1)} h`;
   return `${fmtDuration(lo)} to ${fmtDuration(hi)}`;
@@ -446,7 +448,7 @@ async function estimate(kind) {
   const lo = est.games_min / rate + extra, hi = est.games_max / rate + extra;
   const b = window.CPTCG_BRIDGE;
   const where = b ? (b.measured() ? " on this device (speed measured on an earlier job)" : ` on this device (${b.pool >= 2 ? b.pool + " engines" : "1 engine"}, a rough speed until a job has run)`) : " on this machine";
-  const why = est.games_max > est.games_min ? " — the low end if every comparison settles at its first batch, the high end if none does; the job card narrows the range as it runs" : "";
+  const why = est.games_max > est.games_min ? " — the low end if every comparison settles at its first batch, the high end if none does; most runs land near the low end, and the job card narrows the range as it runs" : "";
   const warn = hi > 1200 ? " — that is long; consider fewer games, steps or builders" : "";
   const games = est.games_max > 0 ? `≈ ${fmtRange(est.games_min, est.games_max)} games` : `no games (${body.count || est.steps} decks to build, nothing to screen)`;
   return { text: `${games} · about ${fmtSpan(lo, hi)}${where}${why}${warn}`, warn: !!warn };

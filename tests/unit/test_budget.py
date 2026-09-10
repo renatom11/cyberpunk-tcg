@@ -61,6 +61,29 @@ def test_tracker_tourney_shrinks_max_as_cells_settle():
     assert (t.remaining_min, t.remaining_max, t.step, t.done) == (0, 0, 3, 320)
 
 
+def test_a_cap_of_one_batch_leaves_no_range_to_narrow():
+    """A cap of one batch or less gives a cell no chance to stop early, so the games left are one
+    number and not a range: the job card must not offer "1-2 min" where only one answer exists."""
+    t = Tracker.for_tourney(4, 20)
+    assert (t.remaining_min, t.remaining_max) == (6 * 20, 6 * 20)
+    for a, b in (("a", "b"), ("a", "c"), ("a", "d"), ("b", "c"), ("b", "d"), ("c", "d")):
+        t.cell(a, b, 20, "continue")                      # one batch is the whole cap: settled
+        assert t.remaining_min == t.remaining_max
+    assert (t.remaining_max, t.step) == (0, 6)
+    # the same for a league's round robin once the climbs are done (no improvement steps here)
+    lg = Tracker.for_league(3, 1, 0, 20)
+    assert lg.remaining_min == lg.remaining_max == 3 * 20
+    lg.cell("a", "b", 20, "continue", 20, gen=1)
+    assert lg.remaining_min == lg.remaining_max == 2 * 20
+
+
+def test_the_job_card_says_reached_the_cap_when_a_cell_could_not_stop_early():
+    from cptcg.web.backend import cell_note
+    assert cell_note(True, 20, 20) == ", reached the cap"
+    assert cell_note(True, 80, 200) == ", settled early"
+    assert cell_note(False, 40, 200) == ""
+
+
 def test_tracker_max_never_grows_over_a_simulated_tournament():
     t = Tracker.for_tourney(4, 120)
     maxes = [t.remaining_max]

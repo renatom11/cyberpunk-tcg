@@ -123,6 +123,12 @@ def _pct(k: int, n: int) -> str:
     return f"{100 * k / n:.0f}%" if n else "—"
 
 
+def _count(k: int, n: int) -> str:
+    """``70% of 20 games``, or ``70% of only 20 games`` when the count is thin (under 30). The
+    "only" replaces the separate ``(only N games)`` aside so no sentence prints the count twice."""
+    return f"{_pct(k, n)} of {'only ' if 0 < n < 30 else ''}{n} games"
+
+
 def _sig_parts(q: float, n: int) -> tuple[str, str]:
     if q < 0.01:
         word = "very solid"
@@ -288,8 +294,8 @@ def summarize(t: Tournament, reg=None, *, bt=None, nash=None, q=None) -> list[st
     out.append(s)
     covered: set[int] = set()          # the next-rated deck, when the lead sentence already covers it
     if second is not None and not established and m2 > 0:
-        word, note = _sig_parts(cell_q(top, second), m2)
-        detail = f"{_pct(w2, m2)} of {m2} games" + (f", {word}" if word != "not established" else "") + (f", {note}" if note else "")
+        word = _sig_parts(cell_q(top, second), m2)[0]
+        detail = _count(w2, m2) + (f", {word}" if word != "not established" else "")
         if 2 * w2 > m2:
             covered.add(second)
             out.append(f"Its lead over {names[second]}, rated next, is not established ({detail}), so the top two "
@@ -308,14 +314,18 @@ def summarize(t: Tournament, reg=None, *, bt=None, nash=None, q=None) -> list[st
             groups[_sig_parts(cell_q(top, j), t.rate(top, j)[1])[0]].append(j)
 
     def small_note(js):
-        return " — some of these rest on fewer than 30 games, so keep some doubt" if any(t.rate(top, j)[1] < 30 for j in js) else ""
+        if not any(t.rate(top, j)[1] < 30 for j in js):
+            return ""
+        return ("; it rests on fewer than 30 games, so keep some doubt" if len(js) == 1
+                else "; some of these rest on fewer than 30 games, so keep some doubt")
 
     solid = groups["very solid"] + groups["solid"]
     if solid:
         strength = "very solid" if not groups["solid"] else "solid"
         out.append(f"Its {'win' if len(solid) == 1 else 'wins'} over {_join([result(j) for j in solid])} "
                    f"{'is' if len(solid) == 1 else 'are'} statistically {strength} — unlikely to be luck"
-                   + (", though some rest on fewer than 30 games, so keep some doubt." if small_note(solid) else "."))
+                   + ((", though it rests" if len(solid) == 1 else ", though some rest")
+                      + " on fewer than 30 games, so keep some doubt." if small_note(solid) else "."))
     if groups["suggestive"]:
         js = groups["suggestive"]
         out.append(f"Its edge over {_join([result(j) for j in js])} is suggestive but not settled — "
@@ -326,14 +336,14 @@ def summarize(t: Tournament, reg=None, *, bt=None, nash=None, q=None) -> list[st
                    f"{'is' if len(js) == 1 else 'are'} not established — {'it' if len(js) == 1 else 'they'} could easily be noise"
                    + small_note(js) + ".")
     for j in lost:
-        word, note = _sig_parts(cell_q(top, j), t.rate(top, j)[1])
+        word = _sig_parts(cell_q(top, j), t.rate(top, j)[1])[0]
         if word in ("very solid", "solid"):
             tail = f"a statistically {word} loss"
         elif word == "suggestive":
             tail = "a suggestive but unsettled loss"
         else:
             tail = "a loss that is not established and may be noise"
-        out.append(f"It lost to {result(j)} — {tail}" + (f" ({note})." if note else "."))
+        out.append(f"It lost to {names[j]} ({_count(*t.rate(top, j))}) — {tail}.")
     for j in even:
         w, m = t.rate(top, j)
         out.append(f"It split its games evenly with {names[j]} ({w} of {m}).")
@@ -372,12 +382,11 @@ def summarize(t: Tournament, reg=None, *, bt=None, nash=None, q=None) -> list[st
                  ": no other deck does better against this field as a whole."
         else:
             w, m = t.rate(i, top)
-            word, note = _sig_parts(cell_q(i, top), m)
+            word = _sig_parts(cell_q(i, top), m)[0]
             s += (f" — {names[top]} is rated higher, but {names[i]} is the only deck that held at least even against "
-                  f"every other deck here, {names[top]} included ({_pct(w, m)} of {m} games, {word}"
-                  f"{', ' + note if note else ''})." if holds else
+                  f"every other deck here, {names[top]} included ({_count(w, m)}, {word})." if holds else
                   f" — {names[top]} is rated higher, but {names[i]} does better against this field as a whole "
-                  f"({_pct(w, m)} of {m} games against {names[top]}, {word}{', ' + note if note else ''}).")
+                  f"({_count(w, m)} against {names[top]}, {word}).")
         out.append(s)
 
     if t.cells and total < 40 * len(t.cells):
@@ -455,9 +464,16 @@ def render_report(t: Tournament, title: str | None = None, reg=None) -> str:
     facts = [f"{n} decks"]
     if cap:
         facts.append(f"up to {cap} games per pair")
-    facts += [f"{total} games played", f"`{t.agent}` agents on both sides", f"seed {t.seed}"]
+    gen_of_league = bool(info.get("generation"))
+    # In a league two seeds are in play — this round robin's and the league's — and the run time
+    # below is the round robin alone, so both are labelled for what they are.
+    facts += [f"{total} games played", f"`{t.agent}` agents on both sides",
+              f"round-robin seed {t.seed}" if gen_of_league else f"seed {t.seed}"]
     if info.get("elapsed_s") is not None:
-        facts.append(f"run time {_fmt_seconds(info['elapsed_s'])}")
+        rr = _fmt_seconds(info["elapsed_s"])
+        gen_s = info.get("gen_elapsed_s")
+        facts.append(f"round robin {rr} of {_fmt_seconds(gen_s)} for this generation" if gen_of_league and gen_s is not None
+                     else f"round robin {rr}" if gen_of_league else f"run time {rr}")
     if info.get("finished_at"):
         facts.append(f"finished {fmt_when(info['finished_at'])}")
     out = [f"# {title}", "", "## What was run", "", " · ".join(facts), ""]
@@ -465,7 +481,7 @@ def render_report(t: Tournament, title: str | None = None, reg=None) -> str:
         gens = info.get("generations")
         swaps = swap_games(info)
         out.append(f"Generation {info['generation']}" + (f" of {gens}" if gens else "") + " of a league"
-                   + (f" (seed {info['league_seed']}" if info.get("league_seed") is not None else "(")
+                   + (f" (league seed {info['league_seed']}" if info.get("league_seed") is not None else "(")
                    + (f", {info['steps']} improvement steps per builder)" if info.get("steps") is not None else ")")
                    + ": each builder improved its deck by measured card swaps, then everyone played a round robin"
                    + (f" — the {total} games above are the round robin; the card-swap tests played another "

@@ -225,7 +225,9 @@ table.rep th { color: var(--cyan); }
   .p-log { display: none; position: fixed; inset: 36px 0 0 0; z-index: 40; background: #050810f2; padding: 12px; overflow-y: auto; font-size: 13px; }
   .p-log.open { display: block; }
   .panel { padding: 12px 4px 3px; border-radius: 6px; min-height: 0; }
-  .panel .lbl { position: absolute; top: 2px; left: 5px; right: 5px; width: auto; font-size: 8px; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+  /* only the play board pins its labels into the panel corner: the BUILD deck sheet is a .panel
+     too, and pinning LEGENDS and COST CURVE to the same corner drew them on top of each other */
+  .board .panel .lbl { position: absolute; top: 2px; left: 5px; right: 5px; width: auto; font-size: 8px; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
   .hand { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; min-height: 0; gap: 2px; align-items: flex-start; }
   .hand.opp { gap: 0; } .hand.opp .card.back + .card.back { margin-left: -22px; }
   .hand.mine .card { width: 58px; height: 81px; }
@@ -341,11 +343,20 @@ table.rep th { color: var(--cyan); }
 .report .fresh { color: var(--cyan); font-size: 12.5px; margin: 4px 0; }
 .report table { border-collapse: collapse; font-size: 13px; }
 .report table.rep.small { font-size: 12px; margin: 6px 0; }
-.report table.rep.small th, .report table.rep.small td { white-space: nowrap; }
+.report table.rep.small td { white-space: nowrap; }
+/* a long column name takes a second line instead of pushing the table off the right of the page */
+.report table.rep.small th { white-space: normal; vertical-align: bottom; min-width: 4.5em; }
+.report table th { overflow-wrap: normal; }              /* a header breaks between words, never inside one */
+/* a cell breaks a word only when the word cannot fit at all: "builder3" stays one word */
+.report table.rep td { overflow-wrap: break-word; }
+.report table.rep .short { display: none; }              /* the phone rules swap in the short header */
+.report table.helped .thinflag { display: none; }        /* the word "thin" says it in the Diff. column */
+/* no line of the report is smaller than 10.5 px: below that a phone screen stops being readable */
+.report small { font-size: max(10.5px, 0.85em); }
 .report .kind { display: inline-block; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--cyan); color: var(--cyan); font-size: 11px; font-weight: 600; white-space: nowrap; vertical-align: middle; }
 .report .kind.exploring { border-color: var(--dim); color: var(--dim); }
 .report .cardchip { color: var(--text); cursor: default; }
-.report .cardchip.pic { display: inline-flex; flex-direction: column; align-items: center; width: 64px; text-align: center; font-size: 10px; line-height: 1.15; color: var(--dim); overflow-wrap: normal; hyphens: auto; }
+.report .cardchip.pic { display: inline-flex; flex-direction: column; align-items: center; width: 64px; text-align: center; font-size: 10.5px; line-height: 1.15; color: var(--dim); overflow-wrap: normal; hyphens: auto; }
 .report .cardchip.pic img { width: 60px; height: 84px; object-fit: cover; border-radius: 4px; border: 1px solid var(--line2); display: block; margin-bottom: 2px; }
 .report .legs { display: flex; gap: 6px; flex-wrap: wrap; }
 .report .legs.big .cardchip.pic { width: 92px; font-size: 11px; }
@@ -386,7 +397,7 @@ table.rep th { color: var(--cyan); }
 .report details.deck .body { padding: 6px 0 2px; }
 .report .shape { font-size: 12.5px; margin: 4px 0 8px; color: var(--text); } .report .shape b { color: var(--cyan); }
 .report details.deck .row { align-items: flex-start; }
-.report details.deck .lbl { font-size: 10px; color: var(--dim); letter-spacing: .1em; flex-basis: 100%; }
+.report details.deck .lbl { font-size: 10.5px; color: var(--dim); letter-spacing: .1em; flex-basis: 100%; }
 .report .deckgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 4px 14px; margin: 6px 0; }
 .report .deckgrid .line { font-size: 12px; padding: 1px 0; border-bottom: 1px solid #0f1620; }
 .report .deckgrid .line .n { color: var(--yellow); font-weight: 800; margin-right: 5px; }
@@ -416,7 +427,7 @@ table.rep th { color: var(--cyan); }
   .report table.stand thead { display: none; }
   .report table.stand tr { border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; margin: 6px 0; background: #0a1018; }
   .report table.stand td { border: 0; padding: 3px 0; }
-  .report table.stand td[data-l]:not(.rank):not(.deck):not(.act)::before { content: attr(data-l); display: block; font-size: 10px; color: var(--dim); letter-spacing: .08em; text-transform: uppercase; }
+  .report table.stand td[data-l]:not(.rank):not(.deck):not(.act)::before { content: attr(data-l); display: block; font-size: 10.5px; color: var(--dim); letter-spacing: .08em; text-transform: uppercase; }
   .report table.stand td.rank { float: left; width: auto; margin-right: 8px; font-size: 18px; }
   .report table.stand td.deck { font-size: 14px; }
   .report table.stand td.bt, .report table.stand td.nash { display: inline-block; width: 48%; }
@@ -424,12 +435,16 @@ table.rep th { color: var(--cyan); }
   .report table.matrix .full { display: none; } .report table.matrix .short { display: inline; }
   /* four to six columns fit a phone when the games count drops to a second line */
   .report table.matrix th, .report table.matrix td { padding: 4px 3px; font-size: 11px; }
-  .report table.matrix td small { display: block; font-size: 9.5px; }
-  /* the small tables wrap their headers instead of running off the screen; a long archetype
-     label wraps inside its badge rather than squeezing the number columns to one letter */
+  .report table.matrix td small { display: block; font-size: 10.5px; }
+  /* the small tables swap in the short header report.js gives every column and wrap what is left,
+     so the whole table fits; a long archetype label wraps inside its badge rather than squeezing
+     the number columns to one letter */
   .report table.rep.small th, .report table.rep.small td { white-space: normal; padding: 4px 5px; font-size: 11px; }
-  .report table.rep.small th { white-space: nowrap; }
-  .report table.rep.small td:first-child { min-width: 120px; }
+  .report table.rep.small th { min-width: 0; }
+  .report table.rep .full { display: none; } .report table.rep .short { display: inline; }
+  .report table.helped .thinword { display: none; }      /* too small to read; the ⚠ carries it */
+  .report table.helped .thinflag { display: inline; color: var(--yellow); }
+  .report table.rep.small td:first-child { min-width: 98px; }    /* the small tables fit a 390 px screen whole */
   .report .kind { white-space: normal; line-height: 1.25; }
   .report table.rep.small td .cardchip { white-space: normal; }
   .report .deckgrid { grid-template-columns: 1fr; }
