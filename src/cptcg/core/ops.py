@@ -159,33 +159,54 @@ def ask(s: GameState, choice) -> None:
 
 
 # ------------------------------------------------------------------- zones
+_PLAY = (Zone.FIELD, Zone.LEGENDS)
+
+
 def move(s: GameState, inst: int, zone: Zone, *, bottom: bool = False, host: int = NO_INST) -> None:
-    """Move an instance (and any Gear equipped to it) to ``zone`` of its owner."""
+    """Move an instance (and any Gear equipped to it) to ``zone`` of its owner.
+
+    The active-card cache (see _rebuild_active) depends only on the FIELD and LEGENDS lists and on
+    i_host/i_faceup of the cards in them, so a move between two other zones (a draw, a discard, a
+    sell, a mulligan) leaves it valid. Anything that sets i_host/i_faceup or edits a play-zone list
+    without going through move() must set ``s._active = None`` itself (call_legend and go_solo do).
+    """
     owner = s.i_owner[inst]
     old = s.i_zone[inst]
     gear_zone = zone
-    if (s.cfg.legends_removed_when_leaving and zone not in (Zone.FIELD, Zone.LEGENDS, Zone.REMOVED)
-            and s.card(inst).type is CardType.LEGEND):
+    new_play = zone in _PLAY                         # unchanged by the Legend redirect below (REMOVED is not in play)
+    if (not new_play and zone != Zone.REMOVED and s.cfg.legends_removed_when_leaving
+            and s.reg.defs[s.i_card[inst]].type is CardType.LEGEND):
         zone = Zone.REMOVED                          # CR 4.4.1; its Gear still goes where it was sent (4.12.2)
-    s.z[owner * NZONE + old].remove(inst)
-    dst = s.z[owner * NZONE + zone]
+    z = s.z
+    base = owner * NZONE
+    src = z[base + old]
+    if src[-1] == inst:                              # top card (every draw); ids are unique per list, so pop() is exact
+        src.pop()
+    else:
+        src.remove(inst)
+    dst = z[base + zone]
     if bottom:
         dst.insert(0, inst)
     else:
         dst.append(inst)
     s.i_zone[inst] = zone
     s.i_host[inst] = host
-    s._active = None
-    if zone is not Zone.FIELD and zone is not Zone.LEGENDS:
+    old_play = old in _PLAY
+    if old_play or new_play:
+        s._active = None
+    if not new_play:
         s.i_spent[inst] = 0
         s.i_lag[inst] = 0
         s.i_faceup[inst] = 0
         s.i_flags[inst] = 0
         if s.temp_power:
             s.temp_power = [t for t in s.temp_power if t[0] != inst]   # CR 5.3.2.2
-    for g in [i for i in s.z[owner * NZONE + old] if s.i_host[i] == inst]:
-        move(s, g, gear_zone, bottom=bottom, host=inst if gear_zone in (Zone.FIELD, Zone.LEGENDS) else NO_INST)
-    s.emit("move", inst, old, zone)
+    if old_play:                                     # Gear is only ever attached while in play (invariants.check)
+        i_host = s.i_host
+        for g in [i for i in src if i_host[i] == inst]:
+            move(s, g, gear_zone, bottom=bottom, host=inst if gear_zone in _PLAY else NO_INST)
+    if s.log is not None:                            # s.emit("move", inst, old, zone), inlined
+        s.log.append(("move", inst, old, zone))
 
 
 def draw(s: GameState, player: int, n: int = 1) -> int:
