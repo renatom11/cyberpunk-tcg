@@ -209,6 +209,10 @@ def list_reports() -> list[str]:
 # ---------------------------------------------------------------- lab jobs
 # A tournament or league runs in a thread of the server process; the games themselves fan out
 # over the runner's process pool exactly as the CLI does. The client polls for progress lines.
+class JobCancelled(Exception):
+    """Raised from Job.log once a cancel was requested; jobs log often enough to stop promptly."""
+
+
 class Job:
     def __init__(self, kind: str, params: dict) -> None:
         self.id = str(params.get("job_id") or uuid.uuid4().hex[:8])
@@ -221,11 +225,14 @@ class Job:
         self.error: str | None = None
         self.started = time.time()
         self.finished: float | None = None
+        self.cancel_requested = False
 
     def log(self, msg: str) -> None:
         self.lines.append(msg)
         if PROGRESS_HOOK is not None:
             PROGRESS_HOOK(self.to_json())
+        if self.cancel_requested:
+            raise JobCancelled()
 
     def to_json(self) -> dict:
         return {"id": self.id, "kind": self.kind, "params": self.params, "status": self.status,
@@ -339,10 +346,13 @@ def start_job(body: dict) -> Job:
         try:
             {"tourney": _run_tourney, "league": _run_league, "generate": _run_generate}[kind](job)
             job.status = "done"
+        except JobCancelled:
+            job.status = "cancelled"
+            job.lines.append("cancelled")
         except Exception as e:  # noqa: BLE001
             job.status = "failed"
             job.error = f"{type(e).__name__}: {e}"
-            job.log("failed: " + job.error)
+            job.lines.append("failed: " + job.error)
         job.finished = time.time()
 
     with LOCK:
@@ -472,6 +482,13 @@ def dispatch(method: str, path: str, query: dict, body: dict) -> tuple[int, obje
             return 200, {"id": gid, "view": g.view()}
         if p == "/api/jobs":
             return 200, start_job(body).to_json()
+        if p.startswith("/api/jobs/") and p.endswith("/cancel"):
+            with LOCK:
+                j = JOBS.get(p.split("/")[3])
+            if j is None:
+                return 404, {"error": "no such job"}
+            j.cancel_requested = True
+            return 200, j.to_json()
         if p == "/api/validate":
             return 200, deck_json(deck_from_body(body))
         if p == "/api/build":

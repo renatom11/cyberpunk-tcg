@@ -167,7 +167,7 @@ table.rep th { color: var(--cyan); }
 .jobs .job pre { margin: 6px 0 0; max-height: 140px; overflow: auto; font-size: 11px; color: var(--dim); white-space: pre-wrap; }
 .jobs .job .reps a { margin-right: 8px; color: var(--cyan); cursor: pointer; text-decoration: underline; }
 #report pre.md { white-space: pre-wrap; font-size: 11px; color: var(--dim); max-height: 60vh; overflow: auto; }
-@media (max-width: 1100px) { .lab { grid-template-columns: 1fr; } }
+@media (max-width: 1100px) { .lab { grid-template-columns: minmax(0, 1fr); } .labcol { min-width: 0; } .how { max-width: 100%; box-sizing: border-box; } }
 
 /* ---------------------------------------------------------------- hover preview */
 .preview { position: fixed; z-index: 50; width: 423px; height: 590px; border-radius: 14px; overflow: hidden; border: 2px solid var(--line2); box-shadow: 0 12px 40px #000c; background: #000; display: none; pointer-events: none; }
@@ -284,3 +284,21 @@ table.rep th { color: var(--cyan); }
   .p-controls button { padding: 2px 5px; font-size: 8px; }
 }
 .brand .build { color: var(--dim); font-size: 10px; margin-left: 8px; letter-spacing: 0; font-weight: 400; }
+
+/* ---------------------------------------------------------------- lab: estimates, cancel, phone fit */
+.estimate { margin-top: 6px; font-size: 12px; color: var(--cyan); }
+.estimate.warn { color: var(--yellow); }
+.jobs .job .head { flex-wrap: wrap; }
+.jobs .job button.cancel { padding: 1px 8px; font-size: 10px; border-color: #ff5d5d; color: #ff5d5d; }
+.jobs .job .st.cancelled { color: var(--dim); }
+@media (max-width: 700px) {
+  .checklist { grid-template-columns: 1fr; max-height: 180px; }
+  .checklist label small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .jobs .job pre { max-height: 90px; }
+  .lab .row label { flex-wrap: wrap; }
+}
+@media (max-width: 700px) {
+  .setup select, .setup input[type=text], .setup input:not([type]) { max-width: 100%; min-width: 0; }
+  .setup .row label { max-width: 100%; min-width: 0; }
+  .setup .row select { flex: 1 1 120px; }
+}

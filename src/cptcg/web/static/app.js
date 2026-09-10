@@ -318,6 +318,7 @@ function renderJobs(jobs) {
     const d = el("div", "job");
     const head = el("div", "head");
     head.append(el("b", "", j.kind.toUpperCase()), el("span", "", j.params.name || j.id), el("span", "dim", `${j.elapsed}s`), el("span", "st " + j.status, j.status));
+    if (j.status === "running") { const c = el("button", "cancel", "CANCEL"); c.onclick = async () => { c.disabled = true; try { await api(`/api/jobs/${j.id}/cancel`, {}); } catch (e) { alert(e.message); } pollJobs(); }; head.append(c); }
     d.append(head);
     if (j.decks && j.decks.length) d.append(el("div", "dim", `${j.decks.length} decks saved under ${j.decks[0].split("/").slice(0, -1).join("/")}/ — they are now in the deck lists.`));
     if (j.reports.length) { const r = el("div", "reps"); j.reports.forEach((f, i) => { const a = el("a", "", j.kind === "league" ? `gen ${i + 1}` : "report"); a.onclick = () => openReport(f); r.append(a); }); d.append(r); }
@@ -340,8 +341,9 @@ async function refreshReports() {
   if (cur) sel.value = cur;
 }
 function fillDeckChecklist(decks) {
-  const tl = $("#tDecks"); const was = new Set([...tl.querySelectorAll("input:checked")].map(c => c.value)); tl.innerHTML = "";
-  decks.forEach(d => { const l = el("label"); const c = el("input"); c.type = "checkbox"; c.value = d.path; c.checked = was.size ? was.has(d.path) : d.path.startsWith("data/decks/sample_"); l.append(c, `${d.name} `, el("small", "", `(${d.size}) ${d.legends.map(x => CARDS[x]?.name || x).join(" / ")}`)); tl.append(l); });
+  const tl = $("#tDecks");   // change events bubble to #tDecks, where the estimate listens
+  const was = new Set([...tl.querySelectorAll("input:checked")].map(c => c.value)); tl.innerHTML = "";
+  decks.forEach(d => { const l = el("label"); const c = el("input"); c.type = "checkbox"; c.value = d.path; c.checked = was.size ? was.has(d.path) : (window.CPTCG_BRIDGE ? /the_heist|embracing_power/.test(d.path) : d.path.startsWith("data/decks/sample_")); l.append(c, `${d.name} `, el("small", "", `(${d.size}) ${d.legends.map(x => CARDS[x]?.name || x).join(" / ")}`)); tl.append(l); });
 }
 async function refreshDecks() {
   const decks = (await api("/api/decks")).filter(d => d.ok);
@@ -354,7 +356,40 @@ async function refreshDecks() {
 function strategyChecklist(root, strategies) {
   strategies.filter(s => s.name !== "random").forEach(s => { const l = el("label"); const c = el("input"); c.type = "checkbox"; c.value = s.name; c.checked = s.name !== "legacy"; l.title = s.description; l.append(c, s.name, el("small", "", s.description.split(". ")[0])); root.append(l); });
 }
+// Rough job sizes, so nobody starts an hours-long run by accident. Games per second: a phone's
+// single browser thread manages ~1.5 heuristic games/s; the local server uses every core.
+const GAMES_PER_S = window.CPTCG_BRIDGE ? 1.5 : 15;
+function estimate(kind) {
+  let games = 0;
+  if (kind === "tourney") {
+    const n = document.querySelectorAll("#tDecks input:checked").length, g = +$("#tGames").value || 0;
+    games = n * (n - 1) / 2 * g * 0.7;                                   // SPRT stops lopsided pairs early
+  } else if (kind === "league") {
+    const b = +$("#lBuilders").value || 0, gens = +$("#lGens").value || 0, steps = +$("#lSteps").value || 0, g = +$("#lGames").value || 0;
+    const field = b - 1 + ($("#lHof").checked ? 2 : 0);
+    games = gens * (b * steps * 20 * 2 * field * 1.6 + b * (b - 1) / 2 * g * 0.7);
+  } else if (kind === "generate") {
+    const c = +$("#gCount").value || 0, s = +$("#gScreen").value || 0;
+    games = c * 4 * s;
+  }
+  const secs = games / GAMES_PER_S + (kind === "generate" ? (+$("#gCount").value || 0) * 0.4 : 0);
+  const t = secs < 90 ? `${Math.round(secs)} s` : secs < 5400 ? `${Math.round(secs / 60)} min` : `${(secs / 3600).toFixed(1)} h`;
+  const slow = window.CPTCG_BRIDGE ? " on this device" : " on this machine";
+  const warn = secs > 1200 ? " — that is long; consider fewer games, steps or builders" : "";
+  return `≈ ${Math.round(games).toLocaleString()} games, about ${t}${slow}${warn}`;
+}
+function wireEstimate(kind, form, inputs) {
+  const note = el("div", "estimate"); form.append(note);
+  const upd = () => { note.textContent = estimate(kind); note.classList.toggle("warn", estimate(kind).includes("long")); };
+  inputs.forEach(sel => document.querySelectorAll(sel).forEach(i => { i.addEventListener("input", upd); i.addEventListener("change", upd); }));
+  upd();
+  return upd;
+}
+
 async function initLab(decks, strategies) {
+  if (window.CPTCG_BRIDGE) {                    // browser build: one thread — start small
+    $("#tGames").value = 40; $("#lBuilders").value = 3; $("#lGens").value = 1; $("#lSteps").value = 1; $("#lGames").value = 20; $("#gCount").value = 12;
+  }
   fillDeckChecklist(decks);
   const gl = $("#gStrategies"); strategyChecklist(gl, strategies);
   $("#gRun").onclick = async () => {
@@ -373,6 +408,10 @@ async function initLab(decks, strategies) {
     catch (e) { alert(e.message); return; }
     pollJobs();
   };
+  const updT = wireEstimate("tourney", $("#tRun").closest(".setup"), ["#tDecks input", "#tGames"]);
+  wireEstimate("league", $("#lRun").closest(".setup"), ["#lBuilders", "#lGens", "#lSteps", "#lGames", "#lHof"]);
+  wireEstimate("generate", $("#gRun").closest(".setup"), ["#gCount", "#gScreen"]);
+  $("#tDecks").addEventListener("change", updT);
   $("#lRun").onclick = async () => {
     const picked = [...sl.querySelectorAll("input:checked")].map(c => c.value);
     if (!picked.length) { alert("pick at least one builder personality"); return; }

@@ -75,6 +75,14 @@
     // lab jobs: run in their own engine, stream progress, then copy the results into the main one
     if (p === "/api/jobs" && method === "GET") return Object.values(JOBS).sort((a, b) => b.started - a.started).map(j => ({ ...j, elapsed: Math.round(((j.finished || Date.now()) - j.started) / 100) / 10 }));
     if (p.startsWith("/api/jobs/") && method === "GET") { const j = JOBS[p.split("/")[3]]; if (!j) throw new Error("no such job"); return j; }
+    if (p.startsWith("/api/jobs/") && p.endsWith("/cancel") && method === "POST") {
+      const j = JOBS[p.split("/")[3]];
+      if (j && j.status === "running") {
+        if (jobs) { try { (await jobs.ready).terminate(); } catch (e) {} jobs = null; }   // kills the job outright
+        j.status = "cancelled"; j.lines.push("cancelled"); j.finished = Date.now();
+      }
+      return j;
+    }
     if (p === "/api/jobs" && method === "POST") {
       const id = Math.random().toString(16).slice(2, 10);
       const job = { id, kind: body.kind, params: { ...body, job_id: id }, status: "running", lines: ["starting the lab engine…"], reports: [], decks: [], error: null, started: Date.now(), finished: null };

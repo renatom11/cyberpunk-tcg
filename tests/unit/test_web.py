@@ -135,3 +135,18 @@ def test_lab_jobs(base):
 
 def bad_dir(job_id: str) -> str:
     return f"tourney-{job_id}"
+
+
+def test_job_cancel(base):
+    """A running job stops at its next progress line once cancel is requested."""
+    decks = [d["path"] for d in get(base, "/api/decks") if d["name"].startswith("Sample")][:3]
+    job = post(base, "/api/jobs", {"kind": "tourney", "name": "Cancel me", "decks": decks, "games": 400, "agent": "random", "seed": 2, "jobs": 1})
+    time.sleep(0.3)
+    post(base, f"/api/jobs/{job['id']}/cancel", {})
+    for _ in range(300):
+        j = get(base, f"/api/jobs/{job['id']}")
+        if j["status"] != "running":
+            break
+        time.sleep(0.1)
+    assert j["status"] == "cancelled", j["status"]
+    shutil.rmtree(web.ROOT / "out" / "lab" / f"cancel-me-{job['id']}", ignore_errors=True)
