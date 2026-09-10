@@ -10,6 +10,7 @@ const api = async (path, body) => {
 
 let CARDS = {};            // id -> card def (+ image flag)
 let HAS_BACK = true;       // data/images/_back.jpg exists (cleared on first failed load)
+const TOUCH = window.matchMedia("(hover: none)").matches || navigator.maxTouchPoints > 0;
 let GAME = null;           // {id, view, log[]}
 let LOG = [];
 
@@ -25,11 +26,17 @@ function cardNode(c, opts = {}) {
   const def = CARDS[c.id] || {};
   if (def.image) {
     const img = el("img"); img.src = `/images/${c.id}.jpg`; img.alt = c.name;
-    d.onmouseenter = (e) => showPreview(img.src, c); d.onmouseleave = hidePreview;
-    let press = null;
-    d.addEventListener("touchstart", () => { press = setTimeout(() => { press = null; showPreview(img.src, c, true); }, 420); }, { passive: true });
-    const cancel = () => { if (press) { clearTimeout(press); press = null; } };
-    d.addEventListener("touchend", cancel); d.addEventListener("touchmove", cancel, { passive: true }); d.addEventListener("touchcancel", cancel);
+    if (!TOUCH) { d.onmouseenter = () => showPreview(img.src, c); d.onmouseleave = hidePreview; }
+    else {
+      // Touch: a tap on a card with nothing to do opens the full-size face (decorate() replaces
+      // onclick for cards that can act); a long-press previews any card without acting.
+      d.onclick = () => showPreview(img.src, c, true);
+      let press = null, fired = false;
+      d.addEventListener("touchstart", () => { fired = false; press = setTimeout(() => { press = null; fired = true; showPreview(img.src, c, true); }, 450); }, { passive: true });
+      const cancel = () => { if (press) { clearTimeout(press); press = null; } };
+      d.addEventListener("touchend", cancel); d.addEventListener("touchmove", cancel, { passive: true }); d.addEventListener("touchcancel", cancel);
+      d.addEventListener("click", (e) => { if (fired) { fired = false; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+    }
     img.onerror = () => { img.remove(); d.append(...textFace(c)); };
     d.append(img);
   } else {
@@ -366,10 +373,10 @@ function renderCardGrid(q) {
 // The board draws cards small; hovering any card shows its face at full resolution, like the sim.
 let PREVIEW = null;
 function showPreview(src, c, touch) {
-  if (!PREVIEW) { PREVIEW = el("div", "preview"); PREVIEW.append(el("img")); document.body.append(PREVIEW); PREVIEW.onclick = hidePreview; }
+  if (!PREVIEW) { PREVIEW = el("div", "preview"); PREVIEW.append(el("img")); document.body.append(PREVIEW); PREVIEW.onclick = (e) => { e.stopPropagation(); hidePreview(); }; }
   const img = PREVIEW.querySelector("img"); img.src = src; img.alt = c.name;
   PREVIEW.classList.add("show"); PREVIEW.classList.toggle("touch", !!touch);
-  if (touch) return;
+  if (touch) { PREVIEW.style.left = ""; PREVIEW.style.top = ""; return; }
   document.onmousemove = (e) => {
     const w = PREVIEW.offsetWidth, h = PREVIEW.offsetHeight;
     const left = e.clientX + 24 + w > window.innerWidth ? e.clientX - 24 - w : e.clientX + 24;

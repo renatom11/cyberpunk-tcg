@@ -226,5 +226,6 @@ table.rep th { color: var(--cyan); }
   .prompt { min-height: 0; max-height: 24vh; overflow-y: auto; }
   .prompt .q { font-size: 12px; margin-bottom: 2px; } .prompt .desc { font-size: 10px; margin-bottom: 4px; }
   .prompt .opts { gap: 4px; } .prompt .opts button { padding: 5px 8px; font-size: 11px; }
-  .preview.touch { left: 50% !important; top: 50% !important; transform: translate(-50%, -50%); width: min(84vw, 380px); height: calc(min(84vw, 380px) * 1.395); pointer-events: auto; }
 }
+/* touch preview: centred, any size screen */
+.preview.touch { left: 50% !important; top: 50% !important; transform: translate(-50%, -50%); width: min(84vw, 423px); height: calc(min(84vw, 423px) * 1.395); pointer-events: auto; box-shadow: 0 0 0 100vmax #000a, 0 12px 40px #000c; }
