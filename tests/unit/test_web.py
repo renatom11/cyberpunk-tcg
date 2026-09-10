@@ -1,6 +1,7 @@
 """In-process tests of the web API: play a game via HTTP, undo, replay, reports."""
 import json
 import threading
+import urllib.error
 import urllib.request
 from http.server import ThreadingHTTPServer
 
@@ -57,3 +58,43 @@ def test_play_undo_and_hidden_information(base):
     assert rep["actions"] and rep["seed"] == 3
     with pytest.raises(urllib.error.HTTPError):
         post(base, f"/api/games/{gid}/act", {"index": 999})
+
+
+def test_deck_builder_endpoints(base, tmp_path):
+    sample = get(base, "/api/deck?path=data/decks/sample_corpos.json")
+    assert sample["ok"] and sample["size"] == 40 and len(sample["legends"]) == 3
+    assert sum(sample["ram"].values()) > 0
+
+    # Validation reports RAM limits and errors without touching disk.
+    v = post(base, "/api/validate", {"name": "x", "legends": sample["legends"][:2], "main": sample["main"]})
+    assert not v["ok"] and any("3 Legends" in e for e in v["errors"])
+
+    # AI builds are legal decks; keeping the Legends keeps them.
+    built = post(base, "/api/build", {"mode": "heuristic", "legends": sample["legends"], "seed": 3})
+    assert built["ok"] and built["legends"] == sample["legends"] and 40 <= built["size"] <= 50
+    rnd = post(base, "/api/build", {"mode": "random", "seed": 4})
+    assert rnd["ok"] and len(rnd["legends"]) == 3
+
+    # Saving writes a loadable file; a second save without overwrite is refused.
+    orig = web.DECK_DIRS[0]
+    web.DECK_DIRS[0] = tmp_path
+    try:
+        _check_save(base, tmp_path, built)
+    finally:
+        web.DECK_DIRS[0] = orig
+
+
+def _check_save(base, tmp_path, built):
+    saved = post(base, "/api/decks", dict(built, name="My Build!"))
+    assert saved["path"].endswith("my-build.json") and (tmp_path / "my-build.json").exists()
+    assert get(base, f"/api/deck?path={saved['path']}")["main"] == built["main"]
+    req = urllib.request.Request(base + "/api/decks", data=json.dumps(dict(built, name="My Build!")).encode(),
+                                 headers={"Content-Type": "application/json"})
+    with pytest.raises(urllib.error.HTTPError) as ex:
+        urllib.request.urlopen(req)
+    assert ex.value.code == 409
+    illegal = urllib.request.Request(base + "/api/decks", data=json.dumps({"name": "bad", "legends": [], "main": {}}).encode(),
+                                     headers={"Content-Type": "application/json"})
+    with pytest.raises(urllib.error.HTTPError) as ex:
+        urllib.request.urlopen(illegal)
+    assert ex.value.code == 400

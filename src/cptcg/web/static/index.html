@@ -13,6 +13,7 @@
     <button data-mode="play" class="active">PLAY</button>
     <button data-mode="watch">WATCH</button>
     <button data-mode="lab">LAB</button>
+    <button data-mode="build">BUILD</button>
     <button data-mode="cards">CARDS</button>
   </nav>
 </header>
@@ -55,6 +56,46 @@
     <div class="row"><label>Tournament <select id="reportFile"></select></label>
       <button id="loadReport" class="primary">OPEN</button></div>
     <div id="report"></div>
+  </div>
+</main>
+
+<main id="build" class="mode hidden">
+  <div class="builder">
+    <section class="library panel">
+      <div class="row">
+        <input id="bSearch" placeholder="search name, text, tag…">
+        <select id="bType"><option value="">any type</option><option>Legend</option><option>Unit</option><option>Program</option><option>Gear</option></select>
+        <select id="bColor"><option value="">any colour</option><option>Red</option><option>Green</option><option>Blue</option><option>Yellow</option><option>Purple</option><option>Grey</option></select>
+        <select id="bCost"><option value="">any cost</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6+</option></select>
+        <label><input id="bLegal" type="checkbox" checked> legal for these Legends</label>
+        <span id="bCount" class="dim"></span>
+      </div>
+      <div id="bGrid" class="card-grid"></div>
+    </section>
+    <section class="decksheet panel">
+      <div class="row">
+        <input id="bName" placeholder="deck name" value="New deck">
+        <select id="bLoad"><option value="">load…</option></select>
+        <button id="bSave" class="primary">SAVE</button>
+        <button id="bExport">EXPORT</button>
+        <button id="bClear">CLEAR</button>
+      </div>
+      <div class="row">
+        <span class="dim">AI build:</span>
+        <button id="bBuildH">HEURISTIC</button>
+        <button id="bBuildR">RANDOM</button>
+        <label class="dim"><input id="bKeepLegends" type="checkbox" checked> keep my Legends</label>
+      </div>
+      <div class="legend-area">
+        <span class="lbl">LEGENDS</span>
+        <div id="bLegends" class="legend-slots"></div>
+        <div id="bRam" class="ram"></div>
+      </div>
+      <div class="row curve-row"><span class="lbl">COST CURVE</span><div id="bCurve" class="curve"></div><span id="bSize" class="size"></span></div>
+      <div id="bStatus" class="status"></div>
+      <div id="bList" class="decklist"></div>
+      <textarea id="bText" class="hidden" rows="12" readonly></textarea>
+    </section>
   </div>
 </main>
 

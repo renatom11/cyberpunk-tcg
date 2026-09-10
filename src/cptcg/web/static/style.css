@@ -103,3 +103,39 @@ table.rep th { color: var(--cyan); }
 .over div { background: var(--panel); border: 1px solid var(--yellow); padding: 20px 30px; border-radius: 10px; text-align: center; }
 .over h3 { color: var(--yellow); margin: 0 0 8px; letter-spacing: .1em; }
 @media (max-width: 1100px) { .board { grid-template-columns: 1fr; height: auto; } }
+
+/* ---------------------------------------------------------------- deck builder */
+.builder { display: grid; grid-template-columns: 1fr 400px; gap: 8px; padding: 8px; height: calc(100vh - 52px); }
+.builder .panel { overflow: auto; }
+.builder .library .card-grid { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
+.builder .library .card { width: 118px; height: 166px; font-size: 10px; cursor: pointer; }
+.builder .library .card .txt { font-size: 8.5px; max-height: 70px; }
+.builder .library .card.illegal { opacity: .35; filter: grayscale(.6); }
+.builder .library .card.maxed { outline: 2px solid var(--yellow); }
+.builder .library .card .have { position: absolute; top: 4px; right: 4px; background: var(--yellow); color: #000; font-weight: 800; border-radius: 10px; padding: 0 6px; font-size: 10px; }
+.builder .library .card.legend-pick { outline: 2px solid var(--cyan); }
+.decksheet input, .decksheet select { min-width: 0; }
+#bName { flex: 1; }
+.legend-area { margin: 8px 0; padding: 8px; border: 1px solid var(--line); border-radius: 8px; }
+.legend-slots { display: flex; gap: 6px; margin: 6px 0; }
+.legend-slots .card, .legend-slots .slot { width: calc(var(--card-w) * .78); height: calc(var(--card-h) * .78); cursor: pointer; }
+.ram { display: flex; gap: 6px; flex-wrap: wrap; }
+.ram span { padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line2); font-size: 11px; }
+.ram span b { margin-left: 4px; }
+.ram .Red { color: #ff5d5d; } .ram .Green { color: #4ef08a; } .ram .Blue { color: #5aa8ff; } .ram .Yellow { color: #ffe600; } .ram .Purple { color: #c98bff; } .ram .Grey { color: #b8c0cc; }
+.curve-row { align-items: flex-end; }
+.curve { display: flex; gap: 3px; align-items: flex-end; height: 48px; }
+.curve div { width: 22px; background: var(--cyan); position: relative; min-height: 1px; }
+.curve div::after { content: attr(data-n); position: absolute; top: -14px; left: 0; right: 0; text-align: center; font-size: 10px; color: var(--dim); }
+.curve div::before { content: attr(data-c); position: absolute; bottom: -14px; left: 0; right: 0; text-align: center; font-size: 10px; color: var(--dim); }
+.size { margin-left: auto; font-weight: 800; color: var(--yellow); font-size: 16px; }
+.size.bad { color: #ff5d5d; }
+.status { font-size: 12px; margin: 14px 0 6px; }
+.status .err { color: #ff5d5d; } .status .warn { color: var(--dim); } .status .ok { color: var(--green); }
+.decklist h4 { margin: 10px 0 4px; color: var(--cyan); font-size: 11px; letter-spacing: .08em; }
+.decklist .line { display: grid; grid-template-columns: 24px 1fr 28px 52px; gap: 6px; align-items: center; padding: 2px 0; border-bottom: 1px solid #0f1620; font-size: 12px; }
+.decklist .line .n { color: var(--yellow); font-weight: 800; }
+.decklist .line .cost { color: var(--dim); text-align: right; }
+.decklist .line button { padding: 0 6px; font-size: 11px; line-height: 16px; }
+.decklist .line.bad { color: #ff5d5d; }
+@media (max-width: 1100px) { .builder { grid-template-columns: 1fr; height: auto; } }

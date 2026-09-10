@@ -261,6 +261,144 @@ function renderCardGrid(q) {
     .slice(0, 200).forEach(c => grid.append(cardNode(c)));
 }
 
+// ---------------------------------------------------------------- deck builder
+// The page holds the deck being edited; legality, RAM limits and the saved file all come from
+// the server so the rules live in exactly one place (deck/validate.py).
+let B = { name: "New deck", legends: [], main: {}, note: "", v: null, path: null };
+const COLORS = ["Red", "Green", "Blue", "Yellow", "Purple", "Grey"];
+
+function bRam() { const r = {}; COLORS.forEach(c => r[c] = 0); B.legends.forEach(id => { const c = CARDS[id]; if (c) r[c.color] += c.ram; }); return r; }
+function bLegal(c) { return c.type !== "Legend" && c.ram <= (bRam()[c.color] || 0); }
+function bSize() { return Object.values(B.main).reduce((a, n) => a + n, 0); }
+
+async function bRefresh() {
+  try { B.v = await api("/api/validate", { name: B.name, legends: B.legends, main: B.main, note: B.note }); }
+  catch (e) { B.v = { ok: false, errors: [e.message], warnings: [], ram: bRam() }; }
+  renderDeckSheet(); renderLibrary();
+}
+function bAdd(id) {
+  const c = CARDS[id]; if (!c) return;
+  if (c.type === "Legend") {
+    if (B.legends.includes(id)) B.legends = B.legends.filter(x => x !== id);
+    else if (B.legends.length < 3) B.legends.push(id);
+    else { B.legends[2] = id; }
+    return bRefresh();
+  }
+  if ((B.main[id] || 0) >= 3) return;
+  B.main[id] = (B.main[id] || 0) + 1; bRefresh();
+}
+function bRemove(id) { if (!B.main[id]) return; B.main[id] -= 1; if (!B.main[id]) delete B.main[id]; bRefresh(); }
+
+function renderLibrary() {
+  const grid = $("#bGrid"); grid.innerHTML = "";
+  const s = $("#bSearch").value.toLowerCase(), t = $("#bType").value, col = $("#bColor").value, cost = $("#bCost").value, legalOnly = $("#bLegal").checked;
+  const list = Object.values(CARDS).filter(c => {
+    if (t && c.type !== t) return false;
+    if (col && c.color !== col) return false;
+    if (cost) { const k = c.cost == null ? -1 : c.cost; if (cost === "6+" ? k < 6 : k !== +cost) return false; }
+    if (legalOnly && c.type !== "Legend" && !bLegal(c)) return false;
+    if (s && !`${c.name} ${c.subtitle || ""} ${c.text} ${c.tags.join(" ")} ${c.keywords.join(" ")} ${c.type} ${c.color}`.toLowerCase().includes(s)) return false;
+    return true;
+  }).sort((a, b) => (a.type === "Legend") - (b.type === "Legend") || (a.cost ?? 99) - (b.cost ?? 99) || a.name.localeCompare(b.name));
+  $("#bCount").textContent = `${list.length} cards`;
+  list.forEach(c => {
+    const n = cardNode(c);
+    const have = B.main[c.id] || 0;
+    if (c.type === "Legend") { if (B.legends.includes(c.id)) n.classList.add("legend-pick"); }
+    else { if (!bLegal(c)) n.classList.add("illegal"); if (have >= 3) n.classList.add("maxed"); if (have) n.append(el("span", "have", `×${have}`)); }
+    n.title = c.type === "Legend" ? "click to add / remove as a Legend" : "click to add a copy · right-click to remove one";
+    n.onclick = () => bAdd(c.id);
+    n.oncontextmenu = (e) => { e.preventDefault(); bRemove(c.id); };
+    grid.append(n);
+  });
+}
+
+function renderDeckSheet() {
+  $("#bName").value = B.name;
+  const slots = $("#bLegends"); slots.innerHTML = "";
+  for (let i = 0; i < 3; i++) {
+    const id = B.legends[i];
+    if (id) { const n = cardNode(CARDS[id], { small: true }); n.title = "click to remove"; n.onclick = () => { B.legends.splice(i, 1); bRefresh(); }; slots.append(n); }
+    else slots.append(el("div", "slot"));
+  }
+  const ram = $("#bRam"); ram.innerHTML = "";
+  const limits = B.v ? B.v.ram : bRam();
+  COLORS.forEach(c => { if (limits[c]) ram.append(el("span", c, `${c}<b>${limits[c]}</b>`)); });
+  if (!ram.children.length) ram.append(el("span", "dim", "pick 3 Legends to unlock RAM"));
+  // curve
+  const curve = $("#bCurve"); curve.innerHTML = "";
+  const buckets = [0, 0, 0, 0, 0, 0, 0];
+  Object.entries(B.main).forEach(([id, n]) => { const c = CARDS[id]; if (!c) return; buckets[Math.min(6, c.cost ?? 0)] += n; });
+  const mx = Math.max(1, ...buckets);
+  buckets.forEach((n, i) => { const d = el("div"); d.style.height = `${Math.round(44 * n / mx)}px`; d.dataset.n = n || ""; d.dataset.c = i === 6 ? "6+" : i; curve.append(d); });
+  const size = bSize(); const sz = $("#bSize"); sz.textContent = `${size} / 40–50`; sz.classList.toggle("bad", size < 40 || size > 50);
+  // status
+  const st = $("#bStatus"); st.innerHTML = "";
+  if (B.v) {
+    if (B.v.ok) st.append(el("div", "ok", "✔ legal deck"));
+    B.v.errors.forEach(e => st.append(el("div", "err", "✖ " + e)));
+    B.v.warnings.forEach(w => st.append(el("div", "warn", "· " + w)));
+  }
+  // list grouped by type
+  const list = $("#bList"); list.innerHTML = "";
+  const groups = { Unit: [], Program: [], Gear: [] };
+  Object.entries(B.main).forEach(([id, n]) => { const c = CARDS[id]; if (c) (groups[c.type] || (groups[c.type] = [])).push([c, n]); });
+  Object.entries(groups).forEach(([type, rows]) => {
+    if (!rows.length) return;
+    rows.sort((a, b) => (a[0].cost ?? 99) - (b[0].cost ?? 99) || a[0].name.localeCompare(b[0].name));
+    list.append(el("h4", "", `${type.toUpperCase()}S · ${rows.reduce((a, r) => a + r[1], 0)}`));
+    rows.forEach(([c, n]) => {
+      const line = el("div", "line" + (bLegal(c) ? "" : " bad"));
+      line.append(el("span", "n", `${n}×`), el("span", "", `${c.name}${c.subtitle ? " <small class=dim>— " + c.subtitle + "</small>" : ""}`), el("span", "cost", c.cost ?? "—"));
+      const ctl = el("span"); const minus = el("button", "", "−"), plus = el("button", "", "+");
+      minus.onclick = () => bRemove(c.id); plus.onclick = () => bAdd(c.id); ctl.append(minus, plus); line.append(ctl);
+      list.append(line);
+    });
+  });
+  // text export
+  const lines = [`# ${B.name}`, "", "## Legends", ...B.legends.map(id => `- ${CARDS[id]?.name || id}`), "", "## Main deck"];
+  Object.entries(groups).forEach(([type, rows]) => { if (rows.length) { lines.push(`### ${type}s`); rows.forEach(([c, n]) => lines.push(`${n} ${c.name}${c.subtitle ? " — " + c.subtitle : ""}`)); } });
+  $("#bText").value = lines.join("\n");
+}
+
+function bLoadDeck(d) {
+  B = { name: d.name, legends: d.legends.slice(), main: { ...d.main }, note: d.note || "", v: d, path: d.path || null };
+  renderDeckSheet(); renderLibrary();
+}
+
+async function initBuilder(decks) {
+  const sel = $("#bLoad");
+  decks.forEach(d => { const o = el("option", "", `${d.name} (${d.size})`); o.value = d.path; sel.append(o); });
+  sel.onchange = async () => { if (!sel.value) return; bLoadDeck(await api(`/api/deck?path=${encodeURIComponent(sel.value)}`)); };
+  ["#bSearch", "#bType", "#bColor", "#bCost", "#bLegal"].forEach(id => { $(id).oninput = renderLibrary; $(id).onchange = renderLibrary; });
+  $("#bName").onchange = (e) => { B.name = e.target.value; renderDeckSheet(); };
+  $("#bClear").onclick = () => { B = { name: "New deck", legends: [], main: {}, note: "", v: null, path: null }; renderDeckSheet(); renderLibrary(); };
+  $("#bExport").onclick = () => { const t = $("#bText"); t.classList.toggle("hidden"); if (!t.classList.contains("hidden")) { t.select(); } };
+  $("#bSave").onclick = async () => {
+    B.name = $("#bName").value || "untitled";
+    const body = { name: B.name, legends: B.legends, main: B.main, note: B.note };
+    let r;
+    try { r = await api("/api/decks", body); }
+    catch (e) {
+      if (e.message !== "exists") { alert(e.message); return; }
+      if (!confirm(`A deck file with this name already exists. Overwrite it?`)) return;
+      try { r = await api("/api/decks", { ...body, overwrite: true }); } catch (e2) { alert(e2.message); return; }
+    }
+    B.path = r.path; B.v = r; renderDeckSheet();
+    if (![...$("#bLoad").options].some(o => o.value === r.path)) { const o = el("option", "", `${r.name} (${r.size})`); o.value = r.path; $("#bLoad").append(o); }
+    for (const s of [$("#deckMe"), $("#deckAi")]) if (![...s.options].some(o => o.value === r.path)) { const o = el("option", "", `${r.name} (${r.size}) — ${r.path}`); o.value = r.path; s.append(o); }
+    alert(`saved ${r.path}`);
+  };
+  const build = (mode) => async () => {
+    const keep = $("#bKeepLegends").checked && B.legends.length === 3;
+    try { bLoadDeck(await api("/api/build", { mode, legends: keep ? B.legends : null, name: $("#bName").value })); }
+    catch (e) { alert(e.message); }
+  };
+  $("#bBuildH").onclick = build("heuristic");
+  $("#bBuildR").onclick = build("random");
+  renderDeckSheet(); renderLibrary();
+}
+
 // ---------------------------------------------------------------- init
 async function init() {
   const cards = await api("/api/cards");
@@ -285,6 +423,7 @@ async function init() {
   $("#loadReport").onclick = async () => renderReport(await api(`/api/report?file=${encodeURIComponent($("#reportFile").value)}`));
   $("#cardSearch").oninput = (e) => renderCardGrid(e.target.value);
   renderCardGrid("");
+  await initBuilder(decks);
   document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
     document.querySelectorAll("nav button").forEach(x => x.classList.toggle("active", x === b));
     document.querySelectorAll("main.mode").forEach(m => m.classList.toggle("hidden", m.id !== b.dataset.mode));

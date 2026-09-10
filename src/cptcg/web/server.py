@@ -18,6 +18,8 @@ from urllib.parse import parse_qs, urlparse
 from cptcg.agents.base import make_agent
 from cptcg.cards.registry import load_default
 from cptcg.core.engine import apply, legal_actions, new_game
+from cptcg.core.rng import Pcg32
+from cptcg.deck.builder import heuristic_deck, random_deck
 from cptcg.deck.decklist import Decklist
 from cptcg.deck.validate import validate
 from cptcg.sim.narrate import narrate
@@ -109,6 +111,22 @@ class Game:
         return v
 
 
+def rel(path: Path) -> str:
+    """Path as the client sees it: relative to the repo when inside it, absolute otherwise."""
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
+def abs_deck_path(rel_or_abs: str) -> Path | None:
+    path = Path(rel_or_abs)
+    path = (path if path.is_absolute() else ROOT / path).resolve()
+    if not any(path.is_relative_to(d.resolve()) for d in DECK_DIRS) or not path.is_file():
+        return None
+    return path
+
+
 def list_decks() -> list[dict]:
     out = []
     for d in DECK_DIRS:
@@ -119,11 +137,42 @@ def list_decks() -> list[dict]:
                     continue
                 deck = Decklist.load(p)
                 v = validate(deck, reg())
-                out.append({"path": str(p.relative_to(ROOT)), "name": deck.name, "legends": list(deck.legends),
+                out.append({"path": rel(p), "name": deck.name, "legends": list(deck.legends),
                             "size": len(deck.main), "ok": v.ok, "errors": v.errors[:3]})
             except Exception:  # noqa: BLE001
                 continue
     return out
+
+
+def deck_json(deck: Decklist) -> dict:
+    """A decklist plus its validation, the shape the deck-builder page edits."""
+    v = validate(deck, reg())
+    return {"name": deck.name, "legends": list(deck.legends), "main": deck.counts(),
+            "note": deck.meta.get("note", ""), "ok": v.ok, "errors": v.errors, "warnings": v.warnings,
+            "ram": {c.name.title(): n for c, n in v.ram_limits.items()}, "size": len(deck.main)}
+
+
+def deck_from_body(body: dict) -> Decklist:
+    counts = {str(k): int(n) for k, n in (body.get("main") or {}).items() if int(n) > 0}
+    meta = {"note": body["note"]} if body.get("note") else {}
+    return Decklist.from_counts(str(body.get("name") or "untitled"), [str(x) for x in body.get("legends") or []],
+                                counts, **meta)
+
+
+def deck_slug(name: str) -> str:
+    slug = "".join(ch if ch.isalnum() else "-" for ch in name.strip().lower()).strip("-")
+    while "--" in slug:
+        slug = slug.replace("--", "-")
+    return slug or "untitled"
+
+
+def build_deck(body: dict) -> Decklist:
+    legends = [str(x) for x in body.get("legends") or []] or None
+    seed = int(body.get("seed", int(time.time()) % 1_000_000))
+    rng = Pcg32(seed, seq=9)
+    if body.get("mode") == "random":
+        return random_deck(reg(), rng, legends, name=body.get("name") or f"random {seed}")
+    return heuristic_deck(reg(), legends, rng, name=body.get("name") or f"built {seed}")
 
 
 def list_replays() -> list[str]:
@@ -199,6 +248,11 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._file(IMAGES / p[len("/images/"):])
             if p == "/api/decks":
                 return self._json(list_decks())
+            if p == "/api/deck":
+                path = abs_deck_path(q.get("path", ""))
+                if path is None:
+                    return self._json({"error": "no such deck"}, 404)
+                return self._json(dict(deck_json(Decklist.load(path)), path=rel(path)))
             if p == "/api/cards":
                 r = reg()
                 return self._json([dict(card_json_static(d), image=(IMAGES / f"{d.id}.png").exists()) for d in r.defs])
@@ -242,6 +296,21 @@ class Handler(SimpleHTTPRequestHandler):
                 with LOCK:
                     GAMES[gid] = g
                 return self._json({"id": gid, "view": g.view()})
+            if p == "/api/validate":
+                return self._json(deck_json(deck_from_body(body)))
+            if p == "/api/build":
+                return self._json(deck_json(build_deck(body)))
+            if p == "/api/decks":
+                deck = deck_from_body(body)
+                v = validate(deck, reg())
+                if not v.ok:
+                    return self._json({"error": "deck is not legal: " + "; ".join(v.errors[:3])}, 400)
+                path = DECK_DIRS[0] / f"{deck_slug(deck.name)}.json"
+                if path.exists() and not body.get("overwrite"):
+                    return self._json({"error": "exists", "path": rel(path)}, 409)
+                DECK_DIRS[0].mkdir(parents=True, exist_ok=True)
+                deck.save(path)
+                return self._json(dict(deck_json(deck), path=rel(path)))
             if p.startswith("/api/games/"):
                 parts = p.split("/")
                 gid, verb = parts[3], parts[4] if len(parts) > 4 else ""
