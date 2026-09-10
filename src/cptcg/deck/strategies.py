@@ -240,6 +240,11 @@ def theme_tags(ctx: BuildCtx) -> dict[str, float]:
     for t in list(theme):
         depth = ctx.tag_depth.get(t, 0)
         theme[t] *= 0.4 + 0.6 * min(1.0, depth / 8)
+    # Normalise so the strongest theme weighs 2.0: three ARASAKA Legends should build a tighter
+    # deck than one, not a deck whose scores dwarf the learned values blended in later.
+    top = max(theme.values(), default=0.0)
+    if top > 0:
+        theme = {t: 2.0 * w / top for t, w in theme.items()}
     return theme
 
 
