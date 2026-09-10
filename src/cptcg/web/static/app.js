@@ -587,7 +587,8 @@ async function init() {
   });
 }
 document.querySelectorAll("details.how").forEach(d => {
-  try { if (localStorage.getItem("how:" + d.id) === "closed") d.open = false; } catch (e) {}
+  let pref = null; try { pref = localStorage.getItem("how:" + d.id); } catch (e) {}
+  if (pref === "closed" || (pref === null && window.innerWidth < 700)) d.open = false;   // phones: collapsed until asked
   d.addEventListener("toggle", () => { try { localStorage.setItem("how:" + d.id, d.open ? "open" : "closed"); } catch (e) {} });
 });
 init().catch(e => alert("init failed: " + e.message));
