@@ -54,7 +54,16 @@ python -m cptcg build --legends v-streetkid,dexter-deshawn-off-the-grid,rogue-am
 
 # AI builders evolving against each other, with a tournament report every generation
 python -m cptcg league --builders 6 --generations 3 --steps 5 --out out/league
+
+# the web client: play against the AI, watch any replay back, browse lab reports and the card pool
+python -m cptcg serve            # then open http://127.0.0.1:8000/
 ```
+
+The web client's board follows the layout of the popular online sim: hand, fixer dice tray and
+Gig area on the left; Legends and field in the centre; log and a prompt panel with one button per
+legal action on the right. Click a glowing card to act on it. UNDO and EXPORT (a replay file) are
+free because games are deterministic. It holds no game logic — it renders the engine's view and
+posts back an option index — so anything the engine can do, it can show.
 
 Agents: `random`, `heuristic` (greedy one-ply lookahead). The heuristic beats random ~95% of
 the time. Speed is roughly 5 ms/game for random bots and ~220 ms/game for heuristic-vs-heuristic

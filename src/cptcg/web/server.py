@@ -1,0 +1,283 @@
+"""A small stdlib HTTP server: play vs AI, watch replays, browse decks and lab reports.
+
+No framework on purpose — `python -m cptcg serve` works anywhere the engine runs. The UI holds no
+game logic: it renders the view JSON and posts back an option index.
+"""
+
+from __future__ import annotations
+
+import json
+import mimetypes
+import threading
+import time
+import uuid
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import parse_qs, urlparse
+
+from cptcg.agents.base import make_agent
+from cptcg.cards.registry import load_default
+from cptcg.core.engine import apply, legal_actions, new_game
+from cptcg.deck.decklist import Decklist
+from cptcg.deck.validate import validate
+from cptcg.sim.narrate import narrate
+from cptcg.sim.record import Replay
+from cptcg.web.view import card_json, view_state
+
+ROOT = Path(__file__).resolve().parents[3]
+STATIC = Path(__file__).resolve().parent / "static"
+IMAGES = ROOT / "data" / "images"
+DECK_DIRS = [ROOT / "data" / "decks", ROOT / "out"]
+REG = None
+LOCK = threading.Lock()
+GAMES: dict[str, "Game"] = {}
+
+
+def reg():
+    global REG
+    if REG is None:
+        REG = load_default()
+    return REG
+
+
+class Game:
+    def __init__(self, decks, agent_name: str, human_seat: int, seed: int) -> None:
+        self.decks = decks
+        self.agent_name = agent_name
+        self.human = human_seat
+        self.seed = seed
+        self.names = ("You" if human_seat == 0 else f"AI ({decks[0].name})",
+                      "You" if human_seat == 1 else f"AI ({decks[1].name})")
+        self.reset()
+
+    def reset(self, actions: list[int] | None = None) -> None:
+        self.s = new_game(reg(), self.decks, self.seed, record=True)
+        self.agent = make_agent(self.agent_name, self.seed)
+        self.agent.new_game(self.seed, 1 - self.human)
+        self.lines: list[str] = []
+        self.cursor = 0
+        self.human_marks: list[int] = []            # action counts at each human decision
+        for idx in actions or []:
+            self._note_human()
+            apply(self.s, idx)
+        self._narrate()
+        self.run_ai()
+
+    def _note_human(self) -> None:
+        if self.s.pending is not None and self.s.pending.player == self.human:
+            self.human_marks.append(len(self.s.actions))
+
+    def _narrate(self) -> None:
+        new = self.s.log[self.cursor:]
+        self.cursor = len(self.s.log)
+        self.lines += narrate(self.s, new, self.names)
+
+    def run_ai(self) -> None:
+        """Let the AI act until it's the human's decision or the game is over."""
+        guard = 0
+        while not self.s.over and self.s.pending is not None and self.s.pending.player != self.human and guard < 500:
+            legal_actions(self.s)
+            apply(self.s, self.agent.act(self.s, self.s.pending))
+            guard += 1
+        self._narrate()
+
+    def act(self, index: int) -> None:
+        legal_actions(self.s)
+        if self.s.pending is None or self.s.pending.player != self.human:
+            raise ValueError("not your decision")
+        if not 0 <= index < len(self.s.pending.options):
+            raise ValueError("bad option")
+        self.human_marks.append(len(self.s.actions))
+        apply(self.s, index)
+        self._narrate()
+        self.run_ai()
+
+    def undo(self) -> None:
+        if len(self.human_marks) < 1:
+            return
+        # go back to the state before the human's last decision
+        target = self.human_marks[-1]
+        actions = list(self.s.actions[:target])
+        self.human_marks = []
+        self.reset(actions)
+        self.human_marks = self.human_marks[:-1] if self.human_marks else []
+
+    def view(self, since: int = 0) -> dict:
+        v = view_state(self.s, self.human, self.names, self.lines[since:])
+        v["log_total"] = len(self.lines)
+        v["human"] = self.human
+        return v
+
+
+def list_decks() -> list[dict]:
+    out = []
+    for d in DECK_DIRS:
+        for p in sorted(d.rglob("*.json")) if d.exists() else []:
+            try:
+                raw = json.loads(p.read_text())
+                if not (isinstance(raw, dict) and "legends" in raw and "main" in raw):
+                    continue
+                deck = Decklist.load(p)
+                v = validate(deck, reg())
+                out.append({"path": str(p.relative_to(ROOT)), "name": deck.name, "legends": list(deck.legends),
+                            "size": len(deck.main), "ok": v.ok, "errors": v.errors[:3]})
+            except Exception:  # noqa: BLE001
+                continue
+    return out
+
+
+def list_replays() -> list[str]:
+    out_dir = ROOT / "out"
+    return sorted(str(p.relative_to(ROOT)) for p in out_dir.rglob("*.json") if "replays" in p.parts) if out_dir.exists() else []
+
+
+def list_reports() -> list[str]:
+    out_dir = ROOT / "out"
+    return sorted(str(p.relative_to(ROOT)) for p in out_dir.rglob("tournament.json")) if out_dir.exists() else []
+
+
+REPLAY_CACHE: dict[str, list[dict]] = {}
+
+
+def replay_views(rel: str) -> list[dict]:
+    if rel in REPLAY_CACHE:
+        return REPLAY_CACHE[rel]
+    rep = Replay.load(ROOT / rel)
+    names = (rep.decks[0]["name"], rep.decks[1]["name"])
+    views = []
+    lines: list[str] = []
+    cursor = 0
+    for s, idx in rep.steps(reg()):
+        new = s.log[cursor:]
+        cursor = len(s.log)
+        lines = lines + narrate(s, new, names)
+        v = view_state(s, None, names, lines)
+        if idx is not None and s.pending is not None:
+            v["next_action"] = v["pending"]["options"][idx]["label"] if v["pending"] else None
+        views.append(v)
+    REPLAY_CACHE[rel] = views
+    return views
+
+
+class Handler(SimpleHTTPRequestHandler):
+    def log_message(self, fmt, *args):  # quiet
+        pass
+
+    def _json(self, obj, status: int = 200) -> None:
+        body = json.dumps(obj).encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _file(self, path: Path) -> None:
+        if not path.exists() or not path.is_file():
+            self.send_error(404)
+            return
+        data = path.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", mimetypes.guess_type(str(path))[0] or "application/octet-stream")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def do_GET(self) -> None:
+        u = urlparse(self.path)
+        q = {k: v[0] for k, v in parse_qs(u.query).items()}
+        p = u.path
+        try:
+            if p == "/" or p == "/index.html":
+                return self._file(STATIC / "index.html")
+            if p == "/favicon.ico":
+                self.send_response(204)
+                self.end_headers()
+                return
+            if p.startswith("/static/"):
+                return self._file(STATIC / p[len("/static/"):])
+            if p.startswith("/images/"):
+                return self._file(IMAGES / p[len("/images/"):])
+            if p == "/api/decks":
+                return self._json(list_decks())
+            if p == "/api/cards":
+                r = reg()
+                return self._json([dict(card_json_static(d), image=(IMAGES / f"{d.id}.png").exists()) for d in r.defs])
+            if p.startswith("/api/games/"):
+                gid = p.split("/")[3]
+                with LOCK:
+                    g = GAMES.get(gid)
+                    if g is None:
+                        return self._json({"error": "no such game"}, 404)
+                    if p.endswith("/replay"):
+                        return self._json(Replay.from_game(g.s, g.decks, ("human", g.agent_name)).__dict__ | {"decks": list(Replay.from_game(g.s, g.decks).decks)})
+                    return self._json(g.view(int(q.get("since", 0))))
+            if p == "/api/replays":
+                return self._json(list_replays())
+            if p == "/api/replay":
+                views = replay_views(q["file"])
+                step = max(0, min(len(views) - 1, int(q.get("step", 0))))
+                return self._json({"step": step, "steps": len(views), "view": views[step]})
+            if p == "/api/reports":
+                return self._json(list_reports())
+            if p == "/api/report":
+                return self._json(json.loads((ROOT / q["file"]).read_text()))
+            self.send_error(404)
+        except Exception as e:  # noqa: BLE001
+            self._json({"error": f"{type(e).__name__}: {e}"}, 500)
+
+    def do_POST(self) -> None:
+        u = urlparse(self.path)
+        p = u.path
+        n = int(self.headers.get("Content-Length", 0))
+        body = json.loads(self.rfile.read(n) or b"{}")
+        try:
+            if p == "/api/games":
+                a = Decklist.load(ROOT / body["deck_me"])
+                b = Decklist.load(ROOT / body["deck_ai"])
+                seat = int(body.get("seat", 0))
+                decks = (a, b) if seat == 0 else (b, a)
+                seed = int(body.get("seed", int(time.time()) % 1_000_000))
+                g = Game(decks, body.get("agent", "heuristic"), seat, seed)
+                gid = uuid.uuid4().hex[:8]
+                with LOCK:
+                    GAMES[gid] = g
+                return self._json({"id": gid, "view": g.view()})
+            if p.startswith("/api/games/"):
+                parts = p.split("/")
+                gid, verb = parts[3], parts[4] if len(parts) > 4 else ""
+                with LOCK:
+                    g = GAMES.get(gid)
+                    if g is None:
+                        return self._json({"error": "no such game"}, 404)
+                    if verb == "act":
+                        g.act(int(body["index"]))
+                    elif verb == "undo":
+                        g.undo()
+                    elif verb == "concede":
+                        from cptcg.core.enums import EndReason
+                        from cptcg.core.ops import end_game
+                        end_game(g.s, 1 - g.human, EndReason.CONCEDE)
+                        g._narrate()
+                    else:
+                        return self._json({"error": "unknown verb"}, 404)
+                    return self._json(g.view(int(body.get("since", 0))))
+            self.send_error(404)
+        except Exception as e:  # noqa: BLE001
+            self._json({"error": f"{type(e).__name__}: {e}"}, 400)
+
+
+def card_json_static(d) -> dict:
+    return {"id": d.id, "name": d.name, "subtitle": d.subtitle, "type": d.type.name.title(), "color": d.color.name.title(),
+            "cost": d.cost, "power": (f"{d.power}+" if d.power_variable else d.power), "ram": d.ram,
+            "sell_tag": d.sell_tag, "tags": sorted(d.tags), "keywords": [k.name.replace("_", " ") for k in d.keywords],
+            "text": d.text, "verified": d.verified}
+
+
+def serve(host: str = "127.0.0.1", port: int = 8000) -> None:
+    reg()
+    httpd = ThreadingHTTPServer((host, port), Handler)
+    print(f"cptcg web client: http://{host}:{port}/   (Ctrl-C to stop)")
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        pass

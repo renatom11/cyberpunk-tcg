@@ -166,6 +166,11 @@ def cmd_league(args) -> None:
     print(f"reports in {args.out}/genN/report.md")
 
 
+def cmd_serve(args) -> None:
+    from cptcg.web.server import serve
+    serve(args.host, args.port)
+
+
 def main(argv=None) -> None:
     ap = argparse.ArgumentParser(prog="cptcg", description="Cyberpunk TCG simulator")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -232,6 +237,11 @@ def main(argv=None) -> None:
     p.add_argument("-j", "--jobs", type=int, default=None)
     p.add_argument("--out", default="out/league")
     p.set_defaults(fn=cmd_league)
+
+    p = sub.add_parser("serve", help="web client: play vs AI, watch replays, browse the lab")
+    p.add_argument("--host", default="127.0.0.1")
+    p.add_argument("--port", type=int, default=8000)
+    p.set_defaults(fn=cmd_serve)
 
     p = sub.add_parser("cards", help="list the card pool")
     p.add_argument("--unimplemented", action="store_true")

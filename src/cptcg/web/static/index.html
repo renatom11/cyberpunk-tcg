@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cptcg — Cyberpunk TCG Simulator</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">CYBERPUNK TCG <span>sim lab</span></div>
+  <nav>
+    <button data-mode="play" class="active">PLAY</button>
+    <button data-mode="watch">WATCH</button>
+    <button data-mode="lab">LAB</button>
+    <button data-mode="cards">CARDS</button>
+  </nav>
+</header>
+
+<main id="play" class="mode">
+  <div id="setup" class="setup">
+    <h2>New game</h2>
+    <div class="row"><label>Your deck <select id="deckMe"></select></label></div>
+    <div class="row"><label>AI deck <select id="deckAi"></select></label></div>
+    <div class="row">
+      <label>AI <select id="agent"><option value="heuristic">heuristic</option><option value="random">random</option></select></label>
+      <label>You sit <select id="seat"><option value="0">seat 0</option><option value="1">seat 1</option></select></label>
+      <label>Seed <input id="seed" type="number" placeholder="random"></label>
+    </div>
+    <button id="newGame" class="primary">START</button>
+    <p class="hint">Cards render as images when <code>data/images/&lt;id&gt;.png</code> exists, otherwise as text cards.</p>
+  </div>
+  <div id="board" class="board hidden"></div>
+</main>
+
+<main id="watch" class="mode hidden">
+  <div class="setup">
+    <h2>Watch a replay</h2>
+    <div class="row"><label>Replay <select id="replayFile"></select></label>
+      <button id="loadReplay" class="primary">LOAD</button></div>
+    <div class="row replay-controls hidden" id="replayControls">
+      <button id="rpStart">⏮</button><button id="rpPrev">◀</button>
+      <input id="rpSlider" type="range" min="0" max="0" value="0">
+      <button id="rpNext">▶</button><button id="rpEnd">⏭</button>
+      <button id="rpAuto">AUTO</button>
+      <span id="rpPos"></span>
+    </div>
+  </div>
+  <div id="rpBoard" class="board hidden"></div>
+</main>
+
+<main id="lab" class="mode hidden">
+  <div class="setup">
+    <h2>Lab reports</h2>
+    <div class="row"><label>Tournament <select id="reportFile"></select></label>
+      <button id="loadReport" class="primary">OPEN</button></div>
+    <div id="report"></div>
+  </div>
+</main>
+
+<main id="cards" class="mode hidden">
+  <div class="setup">
+    <h2>Card pool</h2>
+    <div class="row"><input id="cardSearch" placeholder="search name, text, tag…"></div>
+    <div id="cardGrid" class="card-grid"></div>
+  </div>
+</main>
+
+<div id="popover" class="popover hidden"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
