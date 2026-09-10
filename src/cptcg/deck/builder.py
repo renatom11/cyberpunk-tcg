@@ -378,10 +378,17 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
            agent: str = "heuristic", workers: int | None = None, games_per_pair: int = 60,
            out_dir: str | Path | None = None, progress=None, strategies=None,
            knowledge_path: str | Path | None = None, hall_of_fame_path: str | Path | None = None,
-           hof_opponents: int = 2, seeds_per_batch: int = 20, max_batches: int = 3):
+           hof_opponents: int = 2, seeds_per_batch: int = 20, max_batches: int = 3, on_event=None):
     """N builders invent decks, improve them against the current population, then play a round
     robin; the worst is replaced by a fresh build each generation. Yields (generation, Tournament,
     decks) so callers can report as it runs.
+
+    ``progress`` receives one text line per stage; ``on_event(kind, **fields)`` receives the
+    structured version for progress tracking: ``climb_start`` (gen, generations, builder, index,
+    field, steps), ``climb_step`` (gen, builder, step, steps, games, discordant, challenger_wins,
+    verdict, accepted, proposal, champion_rate), ``climb_done`` (gen, builder, steps_done,
+    accepted), ``tourney_cell`` (gen, a, b, wins, n, verdict, cap) after every batch of a
+    round-robin cell, and ``gen_done`` (gen, generations, standings, replaced).
 
     With ``out_dir`` every generation writes ``genK/tournament.json`` (with the hill-climb history
     of each deck in ``info["climb"]``), ``genK/report.md``, one deck file per builder, and a
@@ -433,14 +440,35 @@ def league(reg: Registry, n_builders: int = 6, generations: int = 3, steps: int 
             field_decks = [o for j, o in enumerate(decks) if j != i] + extra
             if progress:
                 progress(f"gen {gen}: improving {d.name}" + (f" [{d.meta['strategy']}]" if "strategy" in d.meta else ""))
+            step_cb = None
+            if on_event:
+                on_event("climb_start", gen=gen, generations=generations, builder=d.name, index=i,
+                         field=len(field_decks), steps=steps)
+
+                def step_cb(rec, name=d.name, gen=gen):
+                    on_event("climb_step", gen=gen, builder=name, step=rec.step, steps=steps, games=rec.games,
+                             discordant=rec.discordant, challenger_wins=rec.challenger_wins, verdict=rec.verdict,
+                             accepted=rec.accepted, proposal=parse_proposal(rec.proposal),
+                             champion_rate=rec.champion_rate)
             best, hist = hill_climb(reg, d, field_decks, steps=steps, seed=seed * 100 + gen * 10 + i,
                                     agent=agent, workers=workers, seeds_per_batch=seeds_per_batch,
-                                    max_batches=max_batches)
+                                    max_batches=max_batches, progress=step_cb)
+            if on_event:
+                on_event("climb_done", gen=gen, builder=d.name, steps_done=len(hist),
+                         accepted=sum(1 for h in hist if h.accepted))
             improved.append(best)
             climb.append([step_json(h) for h in hist])
         decks = improved
-        t = run_tournament(decks, agent, games_per_pair, seed=seed * 1000 + gen, workers=workers, sprt=SPRT(0.08))
+        cell_cb = None
+        if on_event:
+            def cell_cb(a, b, k, n, verdict, gen=gen):
+                on_event("tourney_cell", gen=gen, a=a, b=b, wins=k, n=n, verdict=verdict, cap=games_per_pair)
+        t = run_tournament(decks, agent, games_per_pair, seed=seed * 1000 + gen, workers=workers, sprt=SPRT(0.08),
+                           progress=cell_cb)
         worst = t.standings()[-1]
+        if on_event:
+            on_event("gen_done", gen=gen, generations=generations, standings=[decks[i].name for i in t.standings()],
+                     replaced=decks[worst].name if gen < generations else None)
         t.info.update(title=f"League generation {gen}", generation=gen, generations=generations, steps=steps,
                       league_seed=seed, replaced=decks[worst].name if gen < generations else None, climb=climb)
         bt = t.bt()

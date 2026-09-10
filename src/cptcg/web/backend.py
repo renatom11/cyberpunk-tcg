@@ -19,6 +19,7 @@ from cptcg.core.rng import Pcg32
 from cptcg.deck.builder import heuristic_deck, random_deck
 from cptcg.deck.decklist import Decklist
 from cptcg.deck.validate import validate
+from cptcg.sim.budget import Tracker
 from cptcg.sim.narrate import narrate
 from cptcg.sim.record import Replay
 from cptcg.web.view import card_json, view_state
@@ -265,6 +266,7 @@ class Job:
         self.started = time.time()
         self.finished: float | None = None
         self.cancel_requested = False
+        self.progress: dict | None = None          # budget.Tracker.to_json(): phase, step/steps, remaining range
         from cptcg.sim import runner
         self._games0 = runner.GAMES_PLAYED
 
@@ -274,17 +276,29 @@ class Job:
         from cptcg.sim import runner
         return runner.GAMES_PLAYED - self._games0
 
-    def log(self, msg: str) -> None:
-        self.lines.append(msg)
+    def _emit(self) -> None:
         if PROGRESS_HOOK is not None:
             PROGRESS_HOOK(self.to_json())
         if self.cancel_requested:
             raise JobCancelled()
 
+    def log(self, msg: str) -> None:
+        self.lines.append(msg)
+        self._emit()
+
+    def set_progress(self, line: str | None = None, **fields) -> None:
+        """Replace the job's progress object (``phase``, ``step``, ``steps``, ``unit``, ``done``,
+        ``remaining_min``, ``remaining_max`` — a Tracker's ``to_json()``), optionally logging a
+        line with it. Like ``log`` it is a cancel point."""
+        if line is not None:
+            self.lines.append(line)
+        self.progress = dict(fields)
+        self._emit()
+
     def to_json(self) -> dict:
         return {"id": self.id, "kind": self.kind, "params": self.params, "status": self.status,
                 "lines": self.lines[-60:], "n_lines": len(self.lines), "reports": self.reports, "decks": self.decks,
-                "error": self.error, "games": self.games,
+                "error": self.error, "games": self.games, "progress": self.progress,
                 "elapsed": round((self.finished or time.time()) - self.started, 1)}
 
 
@@ -314,10 +328,14 @@ def _run_tourney(job: Job) -> None:
     seed = int(body.get("seed", 0))
     agent = body.get("agent") or "heuristic"
     out = _job_dir(job)
-    job.log(f"{len(decks)} decks, up to {games} games per pair, {agent} agents, seed {seed}")
+    tracker = Tracker.for_tourney(len(decks), games, sprt=not body.get("no_sprt"))
+    tracker.phase = f"starting: {len(decks)} decks, {tracker.steps} matchups"
+    job.set_progress(f"{len(decks)} decks, up to {games} games per pair, {agent} agents, seed {seed}", **tracker.to_json())
 
     def progress(a, b, k, n, verdict):
-        job.log(f"{a} vs {b}: {k}/{n}" + ("" if verdict == "continue" else f" [{verdict}]"))
+        settled = tracker.cell(a, b, n, verdict)
+        tracker.phase = f"{a} vs {b} ({n} of {games} games{', settled' if settled else ''})"
+        job.set_progress(f"{a} vs {b}: {k}/{n}" + ("" if verdict == "continue" else f" [{verdict}]"), **tracker.to_json())
 
     t = run_tournament(decks, agent, games, seed=seed, workers=body.get("jobs") or DEFAULT_WORKERS,
                        sprt=None if body.get("no_sprt") else SPRT(float(body.get("delta", 0.05))), progress=progress)
@@ -328,7 +346,61 @@ def _run_tourney(job: Job) -> None:
     (out / "report.md").write_text(render_report(t, title, reg()), encoding="utf-8")
     job.reports.append(rel(out / "tournament.json"))
     order = t.standings()
-    job.log("standings: " + ", ".join(decks[i].name for i in order))
+    tracker.finish(f"finished: {t.info['total_games']} games")
+    job.set_progress("standings: " + ", ".join(decks[i].name for i in order), **tracker.to_json())
+
+
+def hof_extra(body: dict, n: int = 2) -> int:
+    """How many hall-of-fame champions a league with these settings would add to every
+    builder's climb field (0 without the option or without a store)."""
+    if not body.get("hof", True):
+        return 0
+    from cptcg.deck.hall_of_fame import DEFAULT_PATH as HOF_PATH, HallOfFame
+    path = ROOT / HOF_PATH
+    if not path.exists():
+        return 0
+    try:
+        return len(HallOfFame.load(path).opponents(n))
+    except (OSError, ValueError, KeyError):
+        return 0
+
+
+def screen_panel(body: dict) -> list[Decklist]:
+    """The decks a generate job screens against: the strongest hall-of-fame champions (when
+    the option is on and a store exists) plus the first sample decks."""
+    from cptcg.deck.hall_of_fame import DEFAULT_PATH as HOF_PATH, HallOfFame
+    panel = [Decklist.load(p) for p in sorted(DECK_DIRS[0].glob("sample_*.json"))[:4]]
+    hof_path = ROOT / HOF_PATH
+    if body.get("hof_panel", True) and hof_path.exists():
+        panel = (HallOfFame.load(hof_path).opponents(4) or []) + panel[:2]
+    return panel
+
+
+def estimate(body: dict) -> dict:
+    """The game budget of a job described like a POST /api/jobs body, before it runs:
+    ``games_min`` if every comparison settles at its first batch, ``games_max`` if none does,
+    plus ``steps`` (the structural units the job card counts) and their ``unit`` name. The same
+    formulas feed the job's own progress, so the form and the job card agree."""
+    from cptcg.sim import budget
+    kind = body.get("kind")
+    if kind == "tourney":
+        n = len(body.get("decks") or [])
+        cap = int(body.get("games", 200))
+        lo, hi = budget.tourney_budget(n, cap, sprt=not body.get("no_sprt"))
+        return {"games_min": lo, "games_max": hi, "steps": budget.pairs(n), "unit": "matchups"}
+    if kind == "league":
+        b, gens, steps = int(body.get("builders", 6)), int(body.get("generations", 3)), int(body.get("steps", 5))
+        cap = int(body.get("games", 60))
+        field = max(0, b - 1) + hof_extra(body)
+        lo, hi = budget.league_budget(b, gens, steps, cap, field)
+        return {"games_min": lo, "games_max": hi, "steps": gens * (b * steps + budget.pairs(b)), "unit": "steps"}
+    if kind == "generate":
+        count = max(1, min(500, int(body.get("count", 20))))
+        screen = int(body.get("screen", 0))
+        panel = len(screen_panel(body)) if screen else 0
+        lo, hi = budget.generate_budget(count, screen, panel)
+        return {"games_min": lo, "games_max": hi, "steps": count + (count if screen and panel else 0), "unit": "decks"}
+    raise ValueError("kind must be tourney, league or generate")
 
 
 def _run_league(job: Job) -> None:
@@ -341,40 +413,100 @@ def _run_league(job: Job) -> None:
     if strategies == ["legacy"]:
         strategies = "legacy"
     seed = int(body.get("seed", 0))
-    for gen, t, decks in league(reg(), int(body.get("builders", 6)), int(body.get("generations", 3)),
-                                int(body.get("steps", 5)), seed=seed, agent=body.get("agent") or "heuristic",
-                                workers=body.get("jobs") or DEFAULT_WORKERS, games_per_pair=int(body.get("games", 60)), out_dir=out,
-                                progress=job.log, strategies=strategies,
+    n_builders, gens = int(body.get("builders", 6)), int(body.get("generations", 3))
+    steps, cap = int(body.get("steps", 5)), int(body.get("games", 60))
+    tracker = Tracker.for_league(n_builders, gens, steps, cap, field=max(0, n_builders - 1) + hof_extra(body))
+    tracker.phase = f"starting: {n_builders} builders, {gens} generations"
+    job.set_progress(**tracker.to_json())
+
+    def on_event(kind, **e):
+        gen = e.get("gen", 0)
+        head = f"gen {gen} of {gens}"
+        line = None
+        if kind == "climb_start":
+            tracker.climb_start(e["builder"], e["field"], e["steps"], gen=gen)
+            tracker.phase = f"{head} · improving {e['builder']} against {e['field']} decks"
+        elif kind == "climb_step":
+            tracker.climb_step(e["builder"], e["step"], e["games"], gen=gen)
+            tracker.phase = f"{head} · improving {e['builder']} (swap {e['step']} of {e['steps']})"
+            line = climb_line(e)
+        elif kind == "climb_done":
+            tracker.climb_done(e["builder"], gen=gen)
+        elif kind == "tourney_cell":
+            settled = tracker.cell(e["a"], e["b"], e["n"], e["verdict"], e["cap"], gen=gen)
+            tracker.phase = f"{head} · round robin · {e['a']} vs {e['b']} ({e['n']} of {e['cap']} games{', settled' if settled else ''})"
+        elif kind == "gen_done":
+            tracker.gen_done(gen)
+            tracker.phase = f"{head} · done" + (f" · {e['replaced']} is replaced" if e.get("replaced") else "")
+        job.set_progress(line, **tracker.to_json())
+
+    for gen, t, decks in league(reg(), n_builders, gens, steps, seed=seed, agent=body.get("agent") or "heuristic",
+                                workers=body.get("jobs") or DEFAULT_WORKERS, games_per_pair=cap, out_dir=out,
+                                progress=job.log, strategies=strategies, on_event=on_event,
                                 knowledge_path=ROOT / KNOWLEDGE_PATH if body.get("knowledge", True) else None,
                                 hall_of_fame_path=ROOT / HOF_PATH if body.get("hof", True) else None):
         job.reports.append(rel(out / f"gen{gen}" / "tournament.json"))
         order = t.standings()
         bt = t.bt()
         job.log(f"generation {gen}: " + ", ".join(f"{decks[i].name} {bt[i]:.2f}" for i in order))
+    tracker.finish(f"finished: {gens} generations")
+    job.set_progress(**tracker.to_json())
+
+
+def climb_line(e: dict) -> str:
+    """A hill-climb step as one log line, card names instead of ids."""
+    from cptcg.sim.report import card_name
+    p = e.get("proposal") or {}
+    swap = f"{card_name(reg(), p.get('out', '?'))} → {card_name(reg(), p.get('in', '?'))}"
+    if p.get("kind") == "legend":
+        swap = "Legend " + swap
+    what = "accepted" if e.get("accepted") else "rejected"
+    disc, played = e.get("discordant", 0), e.get("games", 0)
+    detail = (f"challenger won {e.get('challenger_wins', 0)} of {disc} games that came out differently, {played} played"
+              if disc else f"no game came out differently in {played} played")
+    return f"  {e['builder']} swap {e['step']}: {swap} — {what} ({detail})"
 
 
 def _run_generate(job: Job) -> None:
     from cptcg.deck.generate import generate_decks, save_batch, screen_decks
-    from cptcg.deck.hall_of_fame import DEFAULT_PATH as HOF_PATH, HallOfFame
     body = job.params
     count = max(1, min(500, int(body.get("count", 20))))
     strategies = body.get("strategies") or None
     legends = body.get("legends") or None
     seed = int(body.get("seed", 0))
+    screen = int(body.get("screen", 0))
+    panel = screen_panel(body) if screen else []
+    tracker = Tracker.for_generate(count, screen, len(panel))
+    tracker.phase = f"building deck 1 of {count}"
+    job.set_progress(**tracker.to_json())
+    built = 0
+
+    def on_built(msg):
+        nonlocal built
+        built += 1
+        tracker.built(built)
+        tracker.phase = f"building deck {min(count, built + 1)} of {count}" if built < count else f"built {count} decks"
+        job.set_progress(msg, **tracker.to_json())
+
     batch = generate_decks(reg(), count, strategies, seed=seed, knowledge=knowledge(), legends=legends,
                            max_similarity=float(body.get("max_similarity", 0.7)),
-                           prefix=deck_slug(body.get("name") or "gen") + "-", progress=job.log)
+                           prefix=deck_slug(body.get("name") or "gen") + "-", progress=on_built)
     decks = batch.decks
     job.log(f"{len(decks)} decks on {len(batch.triples)} Legend triples; {batch.rejected_similar} near-duplicates rejected")
     out = DECK_DIRS[0] / "generated" / f"{deck_slug(body.get('name') or 'batch')}-{job.id}"
-    screen = int(body.get("screen", 0))
-    if screen:
-        panel = [Decklist.load(p) for p in sorted(DECK_DIRS[0].glob("sample_*.json"))[:4]]
-        hof_path = ROOT / HOF_PATH
-        if body.get("hof_panel", True) and hof_path.exists():
-            panel = (HallOfFame.load(hof_path).opponents(4) or []) + panel[:2]
+    if screen and panel:
+        screened = 0
+
+        def on_screened(msg):
+            nonlocal screened
+            screened += 1
+            tracker.screened(screened)
+            tracker.phase = (f"screening deck {screened + 1} of {len(decks)} against {len(panel)} panel decks"
+                             if screened < len(decks) else f"screened {len(decks)} decks against {len(panel)} panel decks")
+            job.set_progress(msg, **tracker.to_json())
+
         ranked = screen_decks(reg(), decks, panel, screen, agent=body.get("agent") or "heuristic", seed=seed,
-                              workers=body.get("jobs") or DEFAULT_WORKERS, progress=job.log)
+                              workers=body.get("jobs") or DEFAULT_WORKERS, progress=on_screened)
         keep = int(body.get("keep", 0))
         decks = [r.deck for r in (ranked[:keep] if keep else ranked)]
         job.log("ranking: " + ", ".join(f"{r.deck.name} {100 * r.rate:.0f}%" for r in ranked[:10]))
@@ -383,7 +515,8 @@ def _run_generate(job: Job) -> None:
                                                      for r in ranked], indent=1), encoding="utf-8")
     paths = save_batch(decks, out)
     job.decks = [rel(p) for p in paths]
-    job.log(f"saved {len(paths)} decks to {rel(out)}/")
+    tracker.finish(f"finished: {len(paths)} decks saved")
+    job.set_progress(f"saved {len(paths)} decks to {rel(out)}/", **tracker.to_json())
 
 
 def start_job(body: dict) -> Job:
@@ -403,6 +536,10 @@ def start_job(body: dict) -> Job:
             job.status = "failed"
             job.error = f"{type(e).__name__}: {e}"
             job.lines.append("failed: " + job.error)
+        if job.progress is not None:               # nothing remains once a job has stopped, however it stopped
+            job.progress.update(remaining_min=0, remaining_max=0)
+            if job.status != "done":
+                job.progress["phase"] = job.status
         job.finished = time.time()
 
     with LOCK:
@@ -450,7 +587,7 @@ def card_json_static(d) -> dict:
 INLINE_JOBS = False          # run a job to completion inside start_job() instead of a thread
 DEFAULT_WORKERS = None       # process count for simulations (None = all cores; 1 in the browser)
 IMAGE_IDS: set | None = None # card ids with art, when the images are not on the local filesystem
-PROGRESS_HOOK = None         # callable(job_json) invoked on every job log line (browser: postMessage)
+PROGRESS_HOOK = None         # callable(job_json) invoked on every job log line or progress update (browser: postMessage)
 
 
 def _has_image(cid: str) -> bool:
@@ -528,6 +665,8 @@ def dispatch(method: str, path: str, query: dict, body: dict) -> tuple[int, obje
             return 200, {"id": gid, "view": g.view()}
         if p == "/api/jobs":
             return 200, start_job(body).to_json()
+        if p == "/api/estimate":
+            return 200, estimate(body)
         if p.startswith("/api/jobs/") and p.endswith("/cancel"):
             with LOCK:
                 j = JOBS.get(p.split("/")[3])

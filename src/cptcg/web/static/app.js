@@ -318,18 +318,37 @@ function renderJobs(jobs) {
     const d = el("div", "job");
     if (j.est_games == null && j.params) j.est_games = j.params.est_games;
     const head = el("div", "head");
-    head.append(el("b", "", j.kind.toUpperCase()), el("span", "", j.params.name || j.id), el("span", "dim", `${j.elapsed}s`), el("span", "st " + j.status, j.status));
-    if (j.games != null && (j.status === "running" || j.games > 0)) {
+    head.append(el("b", "", j.kind.toUpperCase()), el("span", "", j.params.name || j.id), el("span", "dim", `${fmtDuration(j.elapsed)}`), el("span", "st " + j.status, j.status));
+    if (j.status === "running") { const c = el("button", "cancel", "CANCEL"); c.onclick = async () => { c.disabled = true; try { await api(`/api/jobs/${j.id}/cancel`, {}); } catch (e) { alert(e.message); } pollJobs(); }; head.append(c); }
+    d.append(head);
+    const p = j.progress;
+    if (p && p.phase) {
+      // Structural progress from the job itself: what it is doing, how many of its comparisons are
+      // settled, and the games it can still play at best and at worst. The time left applies the
+      // job's own measured speed to that range; the games counter is information, not a target.
+      const parts = [p.phase];
+      if (p.steps) parts.push(`${p.step} of ${p.steps} ${p.unit || "steps"} done`);
+      if (j.status === "running") {
+        const own = j.games >= 40 && j.elapsed >= 3;
+        const rate = own ? j.games / j.elapsed : gamesPerSecond();
+        if (p.remaining_max > 0) parts.push(`about ${fmtSpan(p.remaining_min / rate, p.remaining_max / rate)} left${own ? "" : " (rough until the job has run a while)"}`);
+        else parts.push("finishing");
+        if (j.games > 0) parts.push(`${j.games.toLocaleString()} games so far` + (own ? ` (${rate.toFixed(1)} per second)` : ""));
+      } else if (j.games > 0) parts.push(`${j.games.toLocaleString()} games`);
+      d.append(el("div", "dim prog-text", parts.join(" · ")));
+      const bar = el("div", "prog"); const fill = el("i");
+      fill.style.width = `${p.steps ? Math.min(100, Math.round(100 * p.step / p.steps)) : (j.status === "running" ? 0 : 100)}%`;
+      bar.append(fill); d.append(bar);
+    } else if (j.games != null && (j.status === "running" || j.games > 0)) {
+      // A job without a progress object (started by an older engine): games and the old rough guess.
       let txt = `${j.games.toLocaleString()} games played`;
       if (j.status === "running" && j.est_games && j.games > 0) {
         const rate = j.games / Math.max(1, j.elapsed);
         const left = Math.max(0, j.est_games - j.games) / rate;
-        txt += ` · ~${fmtDuration(left)} left (${rate.toFixed(1)} games/s)`;
-      } else if (j.status === "running" && j.est_games) txt += ` of ≈ ${j.est_games.toLocaleString()}`;
-      head.append(el("span", "dim", txt));
+        txt += ` · roughly ${fmtDuration(left)} left (${rate.toFixed(1)} games/s)`;
+      } else if (j.status === "running" && j.est_games) txt += ` of roughly ${j.est_games.toLocaleString()}`;
+      d.append(el("div", "dim prog-text", txt));
     }
-    if (j.status === "running") { const c = el("button", "cancel", "CANCEL"); c.onclick = async () => { c.disabled = true; try { await api(`/api/jobs/${j.id}/cancel`, {}); } catch (e) { alert(e.message); } pollJobs(); }; head.append(c); }
-    d.append(head);
     if (j.decks && j.decks.length) d.append(el("div", "dim", `${j.decks.length} decks saved under ${j.decks[0].split("/").slice(0, -1).join("/")}/ — they are now in the deck lists.`));
     if (j.reports.length) { const r = el("div", "reps"); j.reports.forEach((f, i) => { const a = el("a", "", j.kind === "league" ? `gen ${i + 1}` : "report"); a.onclick = () => openReport(f); r.append(a); }); d.append(r); }
     const pre = el("pre", "", j.lines.slice(-12).join("\n")); d.append(pre);
@@ -366,38 +385,52 @@ async function refreshDecks() {
 function strategyChecklist(root, strategies) {
   strategies.filter(s => s.name !== "random").forEach(s => { const l = el("label"); const c = el("input"); c.type = "checkbox"; c.value = s.name; c.checked = s.name !== "legacy"; l.title = s.description; l.append(c, s.name, el("small", "", s.description.split(". ")[0])); root.append(l); });
 }
-// Rough job sizes, so nobody starts an hours-long run by accident. Games per second: a browser
-// engine plays ~2-3 heuristic games/s per core and the LAB pools one engine per core; the local
-// server uses every core. The bridge reports the rate measured on this device once a job has run.
+// Job sizes, so nobody starts an hours-long run by accident. The games come from POST
+// /api/estimate — the same budget formulas the running job reports against — as a range: the low
+// end if every comparison settles at its first batch, the high end if none does. Games per second:
+// a browser engine plays ~2-3 heuristic games/s per core and the LAB pools one engine per core; the
+// local server uses every core. The bridge reports the rate measured on this device once a job has run.
 function gamesPerSecond() { return window.CPTCG_BRIDGE ? window.CPTCG_BRIDGE.rate() : 15; }
-function estimateGames(kind) {
-  let games = 0;
-  if (kind === "tourney") {
-    const n = document.querySelectorAll("#tDecks input:checked").length, g = +$("#tGames").value || 0;
-    games = n * (n - 1) / 2 * g * 0.7;                                   // SPRT stops lopsided pairs early
-  } else if (kind === "league") {
-    const b = +$("#lBuilders").value || 0, gens = +$("#lGens").value || 0, steps = +$("#lSteps").value || 0, g = +$("#lGames").value || 0;
-    const field = b - 1 + ($("#lHof").checked ? 2 : 0);
-    games = gens * (b * steps * 20 * 2 * field * 1.6 + b * (b - 1) / 2 * g * 0.7);
-  } else if (kind === "generate") {
-    const c = +$("#gCount").value || 0, s = +$("#gScreen").value || 0;
-    games = c * 4 * s;
-  }
-  return Math.round(games);
+function picked(sel) { return [...document.querySelectorAll(`${sel} input:checked`)].map(c => c.value); }
+// The body a START button posts to /api/jobs; the estimate sends the same one to /api/estimate.
+function jobBody(kind) {
+  if (kind === "tourney") return { kind, name: $("#tName").value, decks: picked("#tDecks"), games: +$("#tGames").value, agent: $("#tAgent").value, seed: +$("#tSeed").value };
+  if (kind === "league") return { kind, name: $("#lName").value, strategies: picked("#lStrategies"), builders: +$("#lBuilders").value, generations: +$("#lGens").value, steps: +$("#lSteps").value, games: +$("#lGames").value, seed: +$("#lSeed").value, knowledge: $("#lKnowledge").checked, hof: $("#lHof").checked };
+  return { kind: "generate", name: $("#gName").value, strategies: picked("#gStrategies"), count: +$("#gCount").value, seed: +$("#gSeed").value, screen: +$("#gScreen").value, keep: +$("#gKeep").value };
 }
 function fmtDuration(secs) { return secs < 90 ? `${Math.round(secs)} s` : secs < 5400 ? `${Math.round(secs / 60)} min` : `${(secs / 3600).toFixed(1)} h`; }
-function estimate(kind) {
-  const games = estimateGames(kind);
-  const secs = games / gamesPerSecond() + (kind === "generate" ? (+$("#gCount").value || 0) * 0.4 : 0);
+// A range collapses to one value when the ends are within 25% of each other.
+function fmtRange(lo, hi, fmt = x => x.toLocaleString()) { return hi <= 0 || hi / Math.max(lo, 1e-9) < 1.25 ? fmt(hi) : `${fmt(lo)}–${fmt(hi)}`; }
+// A time range in one unit ("3–20 min"), collapsing like fmtRange.
+function fmtSpan(lo, hi) {
+  if (hi <= 0 || hi / Math.max(lo, 1e-9) < 1.25) return fmtDuration(hi);
+  if (hi < 90) return `${Math.round(lo)}–${Math.round(hi)} s`;
+  if (hi < 5400) return `${Math.max(1, Math.round(lo / 60))}–${Math.round(hi / 60)} min`;
+  if (lo >= 5400) return `${(lo / 3600).toFixed(1)}–${(hi / 3600).toFixed(1)} h`;
+  return `${fmtDuration(lo)} to ${fmtDuration(hi)}`;
+}
+async function estimate(kind) {
+  const body = jobBody(kind);
+  const est = await api("/api/estimate", body);
+  const rate = gamesPerSecond();
+  const extra = kind === "generate" ? (body.count || 0) * 0.4 : 0;       // building a deck takes a moment even without games
+  const lo = est.games_min / rate + extra, hi = est.games_max / rate + extra;
   const b = window.CPTCG_BRIDGE;
-  const where = b ? (b.measured() ? " on this device (measured)" : ` on this device (${b.pool >= 2 ? b.pool + " engines" : "1 engine"}, rough guess until a job has run)`) : " on this machine";
-  const warn = secs > 1200 ? " — that is long; consider fewer games, steps or builders" : "";
-  return `≈ ${games.toLocaleString()} games, about ${fmtDuration(secs)}${where}${warn}`;
+  const where = b ? (b.measured() ? " on this device (speed measured on an earlier job)" : ` on this device (${b.pool >= 2 ? b.pool + " engines" : "1 engine"}, a rough speed until a job has run)`) : " on this machine";
+  const why = est.games_max > est.games_min ? " — the low end if every comparison settles at its first batch, the high end if none does; the job card narrows the range as it runs" : "";
+  const warn = hi > 1200 ? " — that is long; consider fewer games, steps or builders" : "";
+  return { text: `≈ ${fmtRange(est.games_min, est.games_max)} games · about ${fmtSpan(lo, hi)}${where}${why}${warn}`, warn: !!warn };
 }
 const ESTIMATES = [];       // refreshed when a job finishes (the measured speed changes the numbers)
 function wireEstimate(kind, form, inputs) {
   const note = el("div", "estimate"); form.append(note);
-  const upd = () => { const t = estimate(kind); note.textContent = t; note.classList.toggle("warn", t.includes("long")); };
+  let timer = null, seq = 0;
+  const run = async () => {
+    const mine = ++seq;
+    try { const r = await estimate(kind); if (mine !== seq) return; note.textContent = r.text; note.classList.toggle("warn", r.warn); }
+    catch (e) { if (mine === seq) { note.textContent = "estimate unavailable: " + e.message; note.classList.remove("warn"); } }
+  };
+  const upd = () => { clearTimeout(timer); timer = setTimeout(run, 250); };   // debounced: one request per pause in typing
   ESTIMATES.push(upd);
   inputs.forEach(sel => document.querySelectorAll(sel).forEach(i => { i.addEventListener("input", upd); i.addEventListener("change", upd); }));
   upd();
@@ -411,18 +444,18 @@ async function initLab(decks, strategies) {
   fillDeckChecklist(decks);
   const gl = $("#gStrategies"); strategyChecklist(gl, strategies);
   $("#gRun").onclick = async () => {
-    const picked = [...gl.querySelectorAll("input:checked")].map(c => c.value);
-    if (!picked.length) { alert("pick at least one builder personality"); return; }
-    try { await api("/api/jobs", { kind: "generate", name: $("#gName").value, strategies: picked, count: +$("#gCount").value, seed: +$("#gSeed").value, screen: +$("#gScreen").value, keep: +$("#gKeep").value, est_games: estimateGames("generate") }); }
+    const body = jobBody("generate");
+    if (!body.strategies.length) { alert("pick at least one builder personality"); return; }
+    try { await api("/api/jobs", body); }
     catch (e) { alert(e.message); return; }
     pollJobs();
   };
   const tl = $("#tDecks");
   const sl = $("#lStrategies"); strategyChecklist(sl, strategies);
   $("#tRun").onclick = async () => {
-    const picked = [...tl.querySelectorAll("input:checked")].map(c => c.value);
-    if (picked.length < 2) { alert("pick at least two decks"); return; }
-    try { await api("/api/jobs", { kind: "tourney", name: $("#tName").value, decks: picked, games: +$("#tGames").value, agent: $("#tAgent").value, seed: +$("#tSeed").value, est_games: estimateGames("tourney") }); }
+    const body = jobBody("tourney");
+    if (body.decks.length < 2) { alert("pick at least two decks"); return; }
+    try { await api("/api/jobs", body); }
     catch (e) { alert(e.message); return; }
     pollJobs();
   };
@@ -431,9 +464,9 @@ async function initLab(decks, strategies) {
   wireEstimate("generate", $("#gRun").closest(".setup"), ["#gCount", "#gScreen"]);
   $("#tDecks").addEventListener("change", updT);
   $("#lRun").onclick = async () => {
-    const picked = [...sl.querySelectorAll("input:checked")].map(c => c.value);
-    if (!picked.length) { alert("pick at least one builder personality"); return; }
-    try { await api("/api/jobs", { kind: "league", name: $("#lName").value, strategies: picked, builders: +$("#lBuilders").value, generations: +$("#lGens").value, steps: +$("#lSteps").value, games: +$("#lGames").value, seed: +$("#lSeed").value, knowledge: $("#lKnowledge").checked, hof: $("#lHof").checked, est_games: estimateGames("league") }); }
+    const body = jobBody("league");
+    if (!body.strategies.length) { alert("pick at least one builder personality"); return; }
+    try { await api("/api/jobs", body); }
     catch (e) { alert(e.message); return; }
     pollJobs();
   };

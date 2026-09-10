@@ -302,3 +302,8 @@ table.rep th { color: var(--cyan); }
   .setup .row label { max-width: 100%; min-width: 0; }
   .setup .row select { flex: 1 1 120px; }
 }
+
+/* ---------------------------------------------------------------- lab: job progress */
+.jobs .job .prog-text { margin-top: 4px; line-height: 1.4; }
+.jobs .job .prog { height: 3px; background: #121a26; border-radius: 2px; overflow: hidden; margin: 5px 0 2px; }
+.jobs .job .prog i { display: block; height: 100%; width: 0; background: var(--cyan); transition: width .5s ease; }

@@ -123,6 +123,10 @@ def test_lab_jobs(base):
     assert rep["version"] == 2 and rep["summary"] and rep["info"]["games_per_pair"] == 4
     assert rep["decks"][0]["path"] == decks[0] and rep["decks"][0]["profile"]["cards"] >= 40
     assert any(x["id"] == job["id"] for x in get(base, "/api/jobs"))
+    # A finished job carries structural progress: a phase sentence, every matchup counted, nothing left.
+    p = j["progress"]
+    assert p["phase"] and p["step"] == p["steps"] == 1 and p["unit"] == "matchups"
+    assert p["remaining_min"] == p["remaining_max"] == 0 and p["done"] == 4 == j["games"]
     # Bad input fails the job rather than the server.
     bad = post(base, "/api/jobs", {"kind": "tourney", "decks": decks[:1]})
     for _ in range(50):
@@ -137,6 +141,23 @@ def test_lab_jobs(base):
 
 def bad_dir(job_id: str) -> str:
     return f"tourney-{job_id}"
+
+
+def test_estimate_is_a_range_from_the_job_body(base):
+    """POST /api/estimate takes the same body a job does and answers with the games it plays if
+    every comparison settles at its first batch (min) and if none does (max)."""
+    decks = [d["path"] for d in get(base, "/api/decks") if d["ok"]][:4]
+    t = post(base, "/api/estimate", {"kind": "tourney", "decks": decks, "games": 200})
+    assert t["games_min"] == 6 * 40 and t["games_max"] == 6 * 200 and t["steps"] == 6 and t["unit"] == "matchups"
+    assert post(base, "/api/estimate", {"kind": "tourney", "decks": decks, "games": 200, "no_sprt": True})["games_min"] == 6 * 200
+    lg = post(base, "/api/estimate", {"kind": "league", "builders": 4, "generations": 2, "steps": 3, "games": 60, "hof": False})
+    assert 0 < lg["games_min"] <= lg["games_max"] and lg["steps"] == 2 * (4 * 3 + 6) and lg["unit"] == "steps"
+    assert post(base, "/api/estimate", {"kind": "league", "builders": 4, "generations": 2, "steps": 3, "games": 60})["games_max"] >= lg["games_max"]
+    g = post(base, "/api/estimate", {"kind": "generate", "count": 5, "screen": 3, "hof_panel": False})
+    assert g["games_min"] == g["games_max"] == 5 * 3 * 4 and g["steps"] == 10 and g["unit"] == "decks"
+    assert post(base, "/api/estimate", {"kind": "generate", "count": 5, "screen": 0})["games_max"] == 0
+    with pytest.raises(urllib.error.HTTPError):
+        post(base, "/api/estimate", {"kind": "nope"})
 
 
 def test_job_cancel(base):
