@@ -34,7 +34,11 @@ RANDOM_GAMES = 40
 
 
 def _deck(name: str) -> Decklist:
-    return Decklist.load(ROOT / "data" / "decks" / f"{name}.json")
+    """Decks live in data/decks; the two benchmark-only decks moved to tests/fixtures/decks."""
+    for folder in (ROOT / "data" / "decks", ROOT / "tests" / "fixtures" / "decks"):
+        if (folder / f"{name}.json").exists():
+            return Decklist.load(folder / f"{name}.json")
+    raise FileNotFoundError(name)
 
 
 def play_all() -> dict:

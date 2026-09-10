@@ -28,20 +28,20 @@ def test_ram_limits_follow_the_rulebook_example(pool):
 
 def test_sample_decks_are_legal(pool):
     for fn in ("sample_arasaka.json", "sample_mercs.json"):
-        deck = Decklist.load(ROOT / "data/decks" / fn)
+        deck = Decklist.load(ROOT / "tests/fixtures/decks" / fn)
         v = validate(deck, pool, allow_unscripted=True)
         assert v.ok, v
 
 
 def test_ram_violation_is_rejected(pool):
-    deck = Decklist.load(ROOT / "data/decks/sample_arasaka.json")
+    deck = Decklist.load(ROOT / "tests/fixtures/decks/sample_arasaka.json")
     bad = Decklist.from_counts("bad", list(deck.legends), {**deck.counts(), "towerfall": 1})  # Blue 4
     v = validate(bad, pool, allow_unscripted=True)
     assert any("towerfall" in e and "Blue RAM 4 exceeds limit 0" in e for e in v.errors)
 
 
 def test_copy_limit_size_and_legend_rules(pool):
-    deck = Decklist.load(ROOT / "data/decks/sample_mercs.json")
+    deck = Decklist.load(ROOT / "tests/fixtures/decks/sample_mercs.json")
     counts = deck.counts()
     first = next(iter(counts))
     too_many = Decklist.from_counts("x", list(deck.legends), {**counts, first: 4})
@@ -53,12 +53,12 @@ def test_copy_limit_size_and_legend_rules(pool):
 
 
 def test_sample_decks_validate_cleanly_now_that_the_pool_is_scripted(pool):
-    deck = Decklist.load(ROOT / "data/decks/sample_mercs.json")
+    deck = Decklist.load(ROOT / "tests/fixtures/decks/sample_mercs.json")
     assert validate(deck, pool).ok
 
 
 def test_unverified_and_unscripted_cards_are_refused_by_default(pool):
-    deck = Decklist.load(ROOT / "data/decks/sample_mercs.json")
+    deck = Decklist.load(ROOT / "tests/fixtures/decks/sample_mercs.json")
     with_placeholder = Decklist.from_counts("x", list(deck.legends), {**deck.counts(), "6th-street-recruits": 1})
     v = validate(with_placeholder, pool)
     assert any("not verified" in e for e in v.errors) and any("no script" in e for e in v.errors)

@@ -36,7 +36,7 @@ def test_static_and_lists(base):
     with urllib.request.urlopen(base + "/") as r:
         assert b"CYBERPUNK TCG" in r.read()
     decks = get(base, "/api/decks")
-    assert any(d["name"] == "Sample Arasaka" for d in decks)
+    assert any(d["name"] == "Sample Corpos" for d in decks)
     assert len(get(base, "/api/cards")) == 151
 
 

@@ -62,5 +62,6 @@ DECKS = {
 }
 for name, (legs, tags) in DECKS.items():
     d = build(name.replace("_", " ").title(), legs, tags)
-    d.save(ROOT / "data" / "decks" / f"{name}.json")
+    folder = "tests/fixtures/decks" if name in ("sample_arasaka", "sample_mercs") else "data/decks"   # two are benchmark-only
+    d.save(ROOT / folder / f"{name}.json")
     print(name, len(d.main), "cards;", {c.name: v for c, v in ram_limits([reg.get(l) for l in d.legends]).items() if v})

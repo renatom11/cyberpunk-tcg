@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
-DECKS = ["data/decks/sample_arasaka.json", "data/decks/sample_corpos.json", "data/decks/sample_gangers.json"]
+DECKS = ["data/decks/sample_fixers.json", "data/decks/sample_corpos.json", "data/decks/sample_gangers.json"]
 
 
 class CoiHandler(http.server.SimpleHTTPRequestHandler):

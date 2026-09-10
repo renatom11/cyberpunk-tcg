@@ -151,6 +151,14 @@ def test_menus_match_reference_in_random_games_on_test_set(reg):
     assert stats["CallLegend"] and stats["GoSolo"] and stats["Block"]
 
 
+
+def _deck_path(name):
+    """Sample decks live in data/decks; the two benchmark-only ones in tests/fixtures/decks."""
+    for folder in (ROOT / "data" / "decks", ROOT / "tests" / "fixtures" / "decks"):
+        if (folder / f"{name}.json").exists():
+            return folder / f"{name}.json"
+    raise FileNotFoundError(name)
+
 POOL_MATCHUPS = [("sample_corpos", "sample_mercs"), ("sample_gangers", "sample_nomads"),
                  ("the_heist", "embracing_power"), ("sample_arasaka", "sample_ripperdocs")]
 
@@ -161,8 +169,7 @@ def test_menus_match_reference_in_random_games_on_pool(pool):
     stats = Counter()
     for k, (a, b) in enumerate(POOL_MATCHUPS):
         seed = 3000 + k
-        decks = (Decklist.load(ROOT / "data" / "decks" / f"{a}.json"),
-                 Decklist.load(ROOT / "data" / "decks" / f"{b}.json"))
+        decks = (Decklist.load(_deck_path(a)), Decklist.load(_deck_path(b)))
         agents = [make_agent("random", seed * 2 + i) for i in range(2)]
         s = new_game(pool, decks, seed)
         for p, ag in enumerate(agents):

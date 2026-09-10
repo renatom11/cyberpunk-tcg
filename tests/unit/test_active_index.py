@@ -150,6 +150,14 @@ def test_play_random_smoke_still_runs():
     _check_state(s)
 
 
+
+def _deck_path(name):
+    """Sample decks live in data/decks; the two benchmark-only ones in tests/fixtures/decks."""
+    for folder in (ROOT / "data" / "decks", ROOT / "tests" / "fixtures" / "decks"):
+        if (folder / f"{name}.json").exists():
+            return folder / f"{name}.json"
+    raise FileNotFoundError(name)
+
 _POOL_MATCHUPS = [("the_heist", "embracing_power"), ("sample_arasaka", "sample_fixers"),
                   ("sample_corpos", "sample_nomads"), ("sample_gangers", "sample_netrunners"),
                   ("sample_mercs", "sample_ripperdocs")]
@@ -158,8 +166,7 @@ _POOL_MATCHUPS = [("the_heist", "embracing_power"), ("sample_arasaka", "sample_f
 @pytest.mark.parametrize("seed", range(len(_POOL_MATCHUPS)))
 def test_index_matches_reference_on_the_pool(pool, seed):
     a, b = _POOL_MATCHUPS[seed]
-    decks = (Decklist.load(ROOT / "data" / "decks" / f"{a}.json"),
-             Decklist.load(ROOT / "data" / "decks" / f"{b}.json"))
+    decks = (Decklist.load(_deck_path(a)), Decklist.load(_deck_path(b)))
     s = new_game(pool, decks, seed)
     r = Pcg32(seed * 7 + 1)
     steps = 0

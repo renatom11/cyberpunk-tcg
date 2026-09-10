@@ -7,8 +7,8 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def _decks():
-    return (Decklist.load(ROOT / "data/decks/sample_arasaka.json"),
-            Decklist.load(ROOT / "data/decks/sample_mercs.json"))
+    return (Decklist.load(ROOT / "tests/fixtures/decks/sample_arasaka.json"),
+            Decklist.load(ROOT / "tests/fixtures/decks/sample_mercs.json"))
 
 
 def test_match_is_mirrored_and_reproducible():

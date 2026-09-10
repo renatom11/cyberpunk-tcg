@@ -44,8 +44,8 @@ pip install -e '.[dev]'
 pytest                                   # ~330 tests: rules, properties, one scenario per card
 
 # play 1000 mirrored games between two decks and report win rates with 95% intervals
-python -m cptcg sim --deck-a data/decks/sample_arasaka.json \
-                    --deck-b data/decks/sample_mercs.json -n 1000 --seed 42 -j 4
+python -m cptcg sim --deck-a data/decks/the_heist.json \
+                    --deck-b data/decks/embracing_power.json -n 1000 --seed 42 -j 4
 
 python -m cptcg sim ... --replays out/replays    # one ~1 KB replay per game
 python -m cptcg replay out/replays/g000042_0.json --step   # watch a game back
