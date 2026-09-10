@@ -141,3 +141,20 @@ table.rep th { color: var(--cyan); }
 @media (max-width: 1100px) { .builder { grid-template-columns: 1fr; height: auto; } }
 .dim.small { font-size: 11px; flex-basis: 100%; }
 .builder .library .card .have { top: 18px; }
+
+/* ---------------------------------------------------------------- lab */
+.lab { display: grid; grid-template-columns: 520px 1fr; gap: 8px; padding: 8px; align-items: start; }
+.lab .setup { max-width: none; margin: 0 0 8px; }
+.hint { color: var(--dim); font-size: 12px; margin: 0 0 8px; }
+.checklist { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 2px 10px; margin: 6px 0; max-height: 220px; overflow: auto; }
+.checklist label { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--fg); cursor: pointer; }
+.checklist label small { color: var(--dim); }
+.jobs .job { border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; margin: 6px 0; font-size: 12px; }
+.jobs .job .head { display: flex; gap: 10px; align-items: center; }
+.jobs .job .head b { color: var(--cyan); }
+.jobs .job .st { margin-left: auto; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--line2); }
+.jobs .job .st.running { color: var(--yellow); } .jobs .job .st.done { color: var(--green); } .jobs .job .st.failed { color: #ff5d5d; }
+.jobs .job pre { margin: 6px 0 0; max-height: 140px; overflow: auto; font-size: 11px; color: var(--dim); white-space: pre-wrap; }
+.jobs .job .reps a { margin-right: 8px; color: var(--cyan); cursor: pointer; text-decoration: underline; }
+#report pre.md { white-space: pre-wrap; font-size: 11px; color: var(--dim); max-height: 60vh; overflow: auto; }
+@media (max-width: 1100px) { .lab { grid-template-columns: 1fr; } }

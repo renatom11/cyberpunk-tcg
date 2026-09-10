@@ -205,6 +205,114 @@ def list_reports() -> list[str]:
     return sorted(str(p.relative_to(ROOT)) for p in out_dir.rglob("tournament.json")) if out_dir.exists() else []
 
 
+# ---------------------------------------------------------------- lab jobs
+# A tournament or league runs in a thread of the server process; the games themselves fan out
+# over the runner's process pool exactly as the CLI does. The client polls for progress lines.
+class Job:
+    def __init__(self, kind: str, params: dict) -> None:
+        self.id = uuid.uuid4().hex[:8]
+        self.kind = kind
+        self.params = params
+        self.status = "running"
+        self.lines: list[str] = []
+        self.reports: list[str] = []
+        self.error: str | None = None
+        self.started = time.time()
+        self.finished: float | None = None
+
+    def log(self, msg: str) -> None:
+        self.lines.append(msg)
+
+    def to_json(self) -> dict:
+        return {"id": self.id, "kind": self.kind, "params": self.params, "status": self.status,
+                "lines": self.lines[-60:], "n_lines": len(self.lines), "reports": self.reports, "error": self.error,
+                "elapsed": round((self.finished or time.time()) - self.started, 1)}
+
+
+JOBS: dict[str, Job] = {}
+
+
+def _job_dir(job: Job) -> Path:
+    out = ROOT / "out" / "lab" / f"{deck_slug(job.params.get('name') or job.kind)}-{job.id}"
+    out.mkdir(parents=True, exist_ok=True)
+    return out
+
+
+def _run_tourney(job: Job) -> None:
+    from cptcg.sim.report import render_report
+    from cptcg.sim.stats import SPRT
+    from cptcg.sim.tournament import run_tournament
+    body = job.params
+    paths = [abs_deck_path(x) for x in body.get("decks") or []]
+    if any(x is None for x in paths) or len(paths) < 2:
+        raise ValueError("pick at least two existing decks")
+    decks = [Decklist.load(x) for x in paths]
+    for d in decks:
+        v = validate(d, reg())
+        if not v.ok:
+            raise ValueError(f"{d.name}: {v.errors[0]}")
+    games = int(body.get("games", 200))
+    seed = int(body.get("seed", 0))
+    agent = body.get("agent") or "heuristic"
+    out = _job_dir(job)
+    job.log(f"{len(decks)} decks, up to {games} games per pair, {agent} agents, seed {seed}")
+
+    def progress(a, b, k, n, verdict):
+        job.log(f"{a} vs {b}: {k}/{n}" + ("" if verdict == "continue" else f" [{verdict}]"))
+
+    t = run_tournament(decks, agent, games, seed=seed, workers=body.get("jobs"),
+                       sprt=None if body.get("no_sprt") else SPRT(float(body.get("delta", 0.05))), progress=progress)
+    t.save(out / "tournament.json")
+    (out / "report.md").write_text(render_report(t, body.get("name") or f"Tournament: {len(decks)} decks"), encoding="utf-8")
+    job.reports.append(rel(out / "tournament.json"))
+    order = t.standings()
+    job.log("standings: " + ", ".join(decks[i].name for i in order))
+
+
+def _run_league(job: Job) -> None:
+    from cptcg.deck.builder import league
+    from cptcg.deck.knowledge import DEFAULT_PATH as KNOWLEDGE_PATH
+    from cptcg.deck.hall_of_fame import DEFAULT_PATH as HOF_PATH
+    body = job.params
+    out = _job_dir(job)
+    strategies = body.get("strategies") or None
+    if strategies == ["legacy"]:
+        strategies = "legacy"
+    seed = int(body.get("seed", 0))
+    for gen, t, decks in league(reg(), int(body.get("builders", 6)), int(body.get("generations", 3)),
+                                int(body.get("steps", 5)), seed=seed, agent=body.get("agent") or "heuristic",
+                                workers=body.get("jobs"), games_per_pair=int(body.get("games", 60)), out_dir=out,
+                                progress=job.log, strategies=strategies,
+                                knowledge_path=ROOT / KNOWLEDGE_PATH if body.get("knowledge", True) else None,
+                                hall_of_fame_path=ROOT / HOF_PATH if body.get("hof", True) else None):
+        job.reports.append(rel(out / f"gen{gen}" / "tournament.json"))
+        order = t.standings()
+        bt = t.bt()
+        job.log(f"generation {gen}: " + ", ".join(f"{decks[i].name} {bt[i]:.2f}" for i in order))
+
+
+def start_job(body: dict) -> Job:
+    kind = body.get("kind")
+    if kind not in ("tourney", "league"):
+        raise ValueError("kind must be tourney or league")
+    job = Job(kind, body)
+
+    def run():
+        try:
+            (_run_tourney if kind == "tourney" else _run_league)(job)
+            job.status = "done"
+        except Exception as e:  # noqa: BLE001
+            job.status = "failed"
+            job.error = f"{type(e).__name__}: {e}"
+            job.log("failed: " + job.error)
+        job.finished = time.time()
+
+    with LOCK:
+        JOBS[job.id] = job
+    threading.Thread(target=run, daemon=True, name=f"job-{job.id}").start()
+    return job
+
+
 REPLAY_CACHE: dict[str, list[dict]] = {}
 
 
@@ -296,7 +404,21 @@ class Handler(SimpleHTTPRequestHandler):
             if p == "/api/reports":
                 return self._json(list_reports())
             if p == "/api/report":
-                return self._json(json.loads((ROOT / q["file"]).read_text()))
+                path = (ROOT / q["file"]).resolve()
+                if not path.is_relative_to(ROOT / "out") or path.name != "tournament.json":
+                    return self._json({"error": "no such report"}, 404)
+                data = json.loads(path.read_text())
+                md = path.with_name("report.md")
+                data["markdown"] = md.read_text(encoding="utf-8") if md.exists() else ""
+                data["file"] = rel(path)
+                return self._json(data)
+            if p == "/api/jobs":
+                with LOCK:
+                    return self._json([j.to_json() for j in sorted(JOBS.values(), key=lambda j: j.started, reverse=True)])
+            if p.startswith("/api/jobs/"):
+                with LOCK:
+                    j = JOBS.get(p.split("/")[3])
+                return self._json(j.to_json()) if j else self._json({"error": "no such job"}, 404)
             self.send_error(404)
         except Exception as e:  # noqa: BLE001
             self._json({"error": f"{type(e).__name__}: {e}"}, 500)
@@ -318,6 +440,8 @@ class Handler(SimpleHTTPRequestHandler):
                 with LOCK:
                     GAMES[gid] = g
                 return self._json({"id": gid, "view": g.view()})
+            if p == "/api/jobs":
+                return self._json(start_job(body).to_json())
             if p == "/api/validate":
                 return self._json(deck_json(deck_from_body(body)))
             if p == "/api/build":

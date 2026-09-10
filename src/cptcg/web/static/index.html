@@ -51,11 +51,51 @@
 </main>
 
 <main id="lab" class="mode hidden">
-  <div class="setup">
-    <h2>Lab reports</h2>
-    <div class="row"><label>Tournament <select id="reportFile"></select></label>
-      <button id="loadReport" class="primary">OPEN</button></div>
-    <div id="report"></div>
+  <div class="lab">
+    <div class="labcol">
+      <div class="setup">
+        <h2>Run a tournament</h2>
+        <p class="hint">Every pair plays mirrored games until the cap or until the SPRT is sure. Reports rank decks by Bradley–Terry rating, field win rate and Nash weight.</p>
+        <div id="tDecks" class="checklist"></div>
+        <div class="row">
+          <label>Name <input id="tName" placeholder="my tournament" size="14"></label>
+          <label>Games/pair <input id="tGames" type="number" value="200" min="2" style="width:70px"></label>
+          <label>Agents <select id="tAgent"><option value="heuristic">heuristic</option><option value="random">random</option></select></label>
+          <label>Seed <input id="tSeed" type="number" value="0" style="width:70px"></label>
+          <button id="tRun" class="primary">START</button>
+        </div>
+      </div>
+      <div class="setup">
+        <h2>Run a league</h2>
+        <p class="hint">AI builders with different philosophies invent decks, improve them against each other, then play a round robin. Each generation replaces the worst deck, feeds the knowledge store (learned card values) and the hall of fame.</p>
+        <div id="lStrategies" class="checklist"></div>
+        <div class="row">
+          <label>Name <input id="lName" placeholder="my league" size="12"></label>
+          <label>Builders <input id="lBuilders" type="number" value="6" min="2" max="12" style="width:52px"></label>
+          <label>Generations <input id="lGens" type="number" value="3" min="1" style="width:52px"></label>
+          <label>Climb steps <input id="lSteps" type="number" value="5" min="0" style="width:52px"></label>
+          <label>Games/pair <input id="lGames" type="number" value="60" min="2" style="width:60px"></label>
+          <label>Seed <input id="lSeed" type="number" value="0" style="width:60px"></label>
+        </div>
+        <div class="row">
+          <label><input id="lKnowledge" type="checkbox" checked> learn card values</label>
+          <label><input id="lHof" type="checkbox" checked> hall of fame opponents</label>
+          <button id="lRun" class="primary">START</button>
+        </div>
+      </div>
+      <div class="setup">
+        <h2>Jobs</h2>
+        <div id="jobs" class="jobs"></div>
+      </div>
+    </div>
+    <div class="labcol">
+      <div class="setup">
+        <h2>Reports</h2>
+        <div class="row"><label>Tournament <select id="reportFile"></select></label>
+          <button id="loadReport" class="primary">OPEN</button></div>
+        <div id="report"></div>
+      </div>
+    </div>
   </div>
 </main>
 

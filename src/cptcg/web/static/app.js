@@ -250,7 +250,65 @@ function renderReport(t) {
     h += "</tr>";
   });
   h += "</table>";
+  if (t.markdown) h += `<details><summary>Full report (${t.file || ""})</summary><pre class="md">${t.markdown.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}</pre></details>`;
   $("#report").innerHTML = h;
+}
+
+// ---------------------------------------------------------------- lab jobs
+let JOBTIMER = null;
+async function openReport(file) {
+  const sel = $("#reportFile");
+  if (![...sel.options].some(o => o.value === file)) { const o = el("option", "", file); o.value = file; sel.prepend(o); }
+  sel.value = file;
+  renderReport(await api(`/api/report?file=${encodeURIComponent(file)}`));
+}
+function renderJobs(jobs) {
+  const root = $("#jobs"); root.innerHTML = "";
+  if (!jobs.length) { root.append(el("div", "hint", "No jobs yet. Start a tournament or a league above; results land in out/lab/.")); return; }
+  jobs.forEach(j => {
+    const d = el("div", "job");
+    const head = el("div", "head");
+    head.append(el("b", "", j.kind.toUpperCase()), el("span", "", j.params.name || j.id), el("span", "dim", `${j.elapsed}s`), el("span", "st " + j.status, j.status));
+    d.append(head);
+    if (j.reports.length) { const r = el("div", "reps"); j.reports.forEach((f, i) => { const a = el("a", "", j.kind === "league" ? `gen ${i + 1}` : "report"); a.onclick = () => openReport(f); r.append(a); }); d.append(r); }
+    const pre = el("pre", "", j.lines.slice(-12).join("\n")); d.append(pre);
+    root.append(d);
+  });
+}
+async function pollJobs() {
+  const jobs = await api("/api/jobs");
+  renderJobs(jobs);
+  const running = jobs.some(j => j.status === "running");
+  if (running && !JOBTIMER) JOBTIMER = setInterval(async () => {
+    const js = await api("/api/jobs"); renderJobs(js);
+    if (!js.some(j => j.status === "running")) { clearInterval(JOBTIMER); JOBTIMER = null; refreshReports(); }
+  }, 1500);
+}
+async function refreshReports() {
+  const sel = $("#reportFile"); const cur = sel.value; sel.innerHTML = "";
+  (await api("/api/reports")).forEach(f => { const o = el("option", "", f); o.value = f; sel.append(o); });
+  if (cur) sel.value = cur;
+}
+async function initLab(decks, strategies) {
+  const tl = $("#tDecks");
+  decks.forEach(d => { const l = el("label"); const c = el("input"); c.type = "checkbox"; c.value = d.path; c.checked = d.path.startsWith("data/decks/sample_"); l.append(c, `${d.name} `, el("small", "", `(${d.size}) ${d.legends.map(x => CARDS[x]?.name || x).join(" / ")}`)); tl.append(l); });
+  const sl = $("#lStrategies");
+  strategies.filter(s => s.name !== "random").forEach(s => { const l = el("label"); const c = el("input"); c.type = "checkbox"; c.value = s.name; c.checked = s.name !== "legacy"; l.title = s.description; l.append(c, s.name, el("small", "", s.description.split(". ")[0])); sl.append(l); });
+  $("#tRun").onclick = async () => {
+    const picked = [...tl.querySelectorAll("input:checked")].map(c => c.value);
+    if (picked.length < 2) { alert("pick at least two decks"); return; }
+    try { await api("/api/jobs", { kind: "tourney", name: $("#tName").value, decks: picked, games: +$("#tGames").value, agent: $("#tAgent").value, seed: +$("#tSeed").value }); }
+    catch (e) { alert(e.message); return; }
+    pollJobs();
+  };
+  $("#lRun").onclick = async () => {
+    const picked = [...sl.querySelectorAll("input:checked")].map(c => c.value);
+    if (!picked.length) { alert("pick at least one builder personality"); return; }
+    try { await api("/api/jobs", { kind: "league", name: $("#lName").value, strategies: picked, builders: +$("#lBuilders").value, generations: +$("#lGens").value, steps: +$("#lSteps").value, games: +$("#lGames").value, seed: +$("#lSeed").value, knowledge: $("#lKnowledge").checked, hof: $("#lHof").checked }); }
+    catch (e) { alert(e.message); return; }
+    pollJobs();
+  };
+  pollJobs();
 }
 
 // ---------------------------------------------------------------- cards
@@ -427,6 +485,7 @@ async function init() {
   $("#cardSearch").oninput = (e) => renderCardGrid(e.target.value);
   renderCardGrid("");
   await initBuilder(decks);
+  await initLab(decks.filter(d => d.ok), await api("/api/strategies"));
   document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
     document.querySelectorAll("nav button").forEach(x => x.classList.toggle("active", x === b));
     document.querySelectorAll("main.mode").forEach(m => m.classList.toggle("hidden", m.id !== b.dataset.mode));

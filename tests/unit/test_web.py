@@ -1,6 +1,8 @@
 """In-process tests of the web API: play a game via HTTP, undo, replay, reports."""
 import json
+import shutil
 import threading
+import time
 import urllib.error
 import urllib.request
 from http.server import ThreadingHTTPServer
@@ -102,3 +104,34 @@ def _check_save(base, tmp_path, built):
     with pytest.raises(urllib.error.HTTPError) as ex:
         urllib.request.urlopen(illegal)
     assert ex.value.code == 400
+
+
+def test_lab_jobs(base):
+    # A tiny tournament between two sample decks with random bots finishes in seconds.
+    decks = [d["path"] for d in get(base, "/api/decks") if d["name"].startswith("Sample")][:2]
+    job = post(base, "/api/jobs", {"kind": "tourney", "name": "Smoke", "decks": decks, "games": 4, "agent": "random", "seed": 1, "jobs": 1})
+    assert job["status"] == "running" and job["kind"] == "tourney"
+    for _ in range(600):
+        j = get(base, f"/api/jobs/{job['id']}")
+        if j["status"] != "running":
+            break
+        time.sleep(0.1)
+    assert j["status"] == "done", j
+    assert len(j["reports"]) == 1 and j["reports"][0].startswith("out/lab/smoke-")
+    rep = get(base, f"/api/report?file={j['reports'][0]}")
+    assert len(rep["decks"]) == 2 and rep["markdown"].startswith("#")
+    assert any(x["id"] == job["id"] for x in get(base, "/api/jobs"))
+    # Bad input fails the job rather than the server.
+    bad = post(base, "/api/jobs", {"kind": "tourney", "decks": decks[:1]})
+    for _ in range(50):
+        j = get(base, f"/api/jobs/{bad['id']}")
+        if j["status"] != "running":
+            break
+        time.sleep(0.1)
+    assert j["status"] == "failed" and "two" in j["error"]
+    shutil.rmtree((web.ROOT / rep["file"]).parent, ignore_errors=True)  # the job's directory under out/lab
+    shutil.rmtree(web.ROOT / "out" / "lab" / bad_dir(bad["id"]), ignore_errors=True)
+
+
+def bad_dir(job_id: str) -> str:
+    return f"tourney-{job_id}"
