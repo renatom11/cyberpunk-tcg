@@ -34,17 +34,42 @@ wants and the paired count is not a win rate.
 Decks come from ``learn.decks.sample_pair``, so a match is measured over many freshly sampled
 decks rather than one matchup — an agent that is only good with one list has nowhere to hide.
 
+The two error bars, and which one the gate uses
+-----------------------------------------------
+
+The games of one deck pairing share decks and shuffles, so they are **not** independent Bernoulli
+trials and a binomial interval over all of them is an interval for the wrong question. Every report
+therefore prints two:
+
+===================  ==========================================================================
+95% Wilson           over the games, **conditional on the deck pairings actually played**. The
+                     right number for "how much more would more games on these decks tell me",
+                     and the right number for the frozen panel, whose decks never change.
+between-pairing      the mean of the per-pairing rates ± t(k-1)·s/√k over the k pairings. The
+                     right number for "would this hold on another sample of decks", which is
+                     what a claim about an *agent* means.
+===================  ==========================================================================
+
+The between-pairing term is the dominant one and it is not small: heuristic vs random over 360
+games moves 88.3%–95.0% across five deck seeds while its Wilson intervals are ~5 points wide and
+do not all overlap. **A generation-over-generation claim must clear the between-pairing interval**,
+not the Wilson one; the renderers say so in the report rather than leaving it to be remembered.
+
 The four instruments
 --------------------
 
 ``a-vs-b``          two agents, paired seeds, mirrored seats, swapped decks, SPRT stopping.
-``panel``           the frozen benchmark: fixed opponents, fixed decks, fixed seeds, no early
-                    stopping, so a win rate is comparable across every future generation.
+``panel``           the frozen benchmark: fixed opponents, **decklists stored in the panel file**,
+                    fixed seeds, no early stopping, so a win rate is comparable across every
+                    future generation.
 ``exploit``         the same agent honest against itself cheating (determinization replaced by the
                     true state). The gap is the cost of hidden information — **a ceiling for that
                     agent at that budget, not an upper bound on play quality in general.**
 ``generalisation``  the same agent on training-distribution decks, on the held-out retail starters
-                    and on fresh unseen random decks. A growing gap means memorised matchups.
+                    and on fresh random decks. A growing gap means memorised matchups. The holdout
+                    is **one** matchup — the game has exactly two retail starters — so it is
+                    reported as a single matchup beside the training row's pairing-to-pairing
+                    scatter, and never as a proportion test against a deck population.
 
 The delayed-reward suite, the fifth instrument, is in :mod:`cptcg.learn.delayed`.
 
@@ -68,7 +93,7 @@ from cptcg.core.rng import Pcg32
 from cptcg.deck.decklist import Decklist
 from cptcg.learn.decks import holdout_pairs, sample_pair
 from cptcg.sim.runner import run_match
-from cptcg.sim.stats import SPRT, two_proportion_z, wilson
+from cptcg.sim.stats import SPRT, cluster_interval, welch_interval, wilson
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -118,8 +143,13 @@ def sampled_pairings(reg: Registry, n: int, *, deck_seed: int, mix: dict | None 
                      label: str = "sampled") -> list[Pairing]:
     """``n`` fresh deck pairs from the training sampler.
 
-    A pure function of ``deck_seed``: the same seed gives the same decks forever, which is what
-    lets the frozen panel pin its decks in a data file rather than in a directory of saved lists.
+    A pure function of ``deck_seed`` **and of the sampler**: the same seed gives the same decks
+    only for as long as ``learn.decks`` and ``deck.builder`` are unchanged. Retuning
+    ``DEFAULT_MIX``, the size or curve constants, either builder, or even adding one
+    ``data/decks/sample_*.json`` file changes what every seed draws. That is fine for an ad-hoc
+    comparison, where both sides are drawn in the same process, and it is fatal for a benchmark
+    that must stay comparable for years — which is why the frozen panel stores its decklists
+    rather than a seed to redraw them from; see :func:`panel_pairings`.
     """
     rng = Pcg32(deck_seed, seq=101)
     out = []
@@ -190,6 +220,26 @@ class HeadToHead:
         return self.pair_wins / self.discordant if self.discordant else 0.5
 
     @property
+    def pairing_rates(self) -> list[float]:
+        """Agent A's win rate within each deck pairing — the cluster-level observations."""
+        return [r.a_wins / r.games for r in self.per_pairing if r.games]
+
+    @property
+    def cluster(self) -> tuple[float, float, float] | None:
+        """(mean, low, high): the 95% interval over the *deck pairings*, or ``None`` below two.
+
+        This is the honest error bar for a claim about the agent, because the unit that was
+        randomly sampled is the deck pairing and not the game. ``interval`` (Wilson) is the right
+        number only conditional on the pairings that were actually played.
+
+        Clamped to [0, 1] the way ``wilson`` is: a win rate cannot be 110%, and a report that
+        prints one has stopped being read. Clamping is for *rates* only — a gap between two rates
+        is unbounded and its interval is left alone.
+        """
+        c = cluster_interval(self.pairing_rates)
+        return None if c is None else (c[0], max(0.0, c[1]), min(1.0, c[2]))
+
+    @property
     def avg_turns(self) -> float:
         return self.turns / self.games if self.games else 0.0
 
@@ -197,7 +247,11 @@ class HeadToHead:
         lo, hi = self.interval
         d = asdict(self)
         d.update(rate=self.rate, wilson_low=lo, wilson_high=hi, pair_rate=self.pair_rate,
-                 avg_turns=self.avg_turns)
+                 avg_turns=self.avg_turns, pairings=len(self.per_pairing),
+                 pairing_rates=self.pairing_rates)
+        c = self.cluster
+        d.update(cluster_mean=c[0] if c else None, cluster_low=c[1] if c else None,
+                 cluster_high=c[2] if c else None)
         return d
 
 
@@ -296,8 +350,69 @@ def panel_digest(panel: dict) -> str:
     return hashlib.sha256(json.dumps(body, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:16]
 
 
+def _deck_from_json(d: dict) -> Decklist:
+    return Decklist.from_counts(d["name"], list(d["legends"]), dict(d["main"]),
+                                **dict(d.get("meta", {})))
+
+
+def decks_digest(panel: dict) -> str:
+    """A digest of the panel's stored decklists alone, by contents rather than by file layout.
+
+    Over ``(name, legends, sorted(main))`` for every deck in pairing order, so it is blind to how
+    the JSON happens to be formatted, to the order copies are written in and to any editing of the
+    surrounding prose — and sensitive to a single card changing in a single list. ``panel_digest``
+    covers the decks too, being a digest of the whole body; this one exists so that the *decks*
+    can be quoted in a report and checked in one line, which is what makes the freezing auditable
+    rather than merely asserted.
+    """
+    body = []
+    for pr in panel["decks"]:
+        row = [pr["label"]]
+        for side in ("a", "b"):
+            d = _deck_from_json(pr[side])
+            row.append([d.name, list(d.legends), sorted(d.main)])
+        body.append(row)
+    return hashlib.sha256(json.dumps(body, separators=(",", ":")).encode()).hexdigest()[:16]
+
+
+def panel_pairings(reg: Registry, panel: dict) -> list[Pairing]:
+    """The panel's deck pairings, read from the file — never redrawn from the sampler.
+
+    This is the whole difference between a benchmark and a moving target. The decklists are stored
+    in ``data/arena/panel.json`` verbatim, so retuning ``learn.decks`` or ``deck.builder``, or
+    adding a hand-built sample list, cannot silently re-base the benchmark: the panel plays the
+    same twelve decks in 2027 that it played the day it was frozen, whatever the sampler has since
+    become.
+
+    Every card is looked up in ``reg`` here, so a card that leaves the pool fails loudly at load
+    time with the deck and the id named, rather than confusingly in the middle of a game.
+    """
+    out = []
+    for pr in panel["decks"]:
+        sides = []
+        for side in ("a", "b"):
+            d = _deck_from_json(pr[side])
+            for cid in d.legends + d.main:
+                try:
+                    reg.get(cid)
+                except KeyError:
+                    raise ValueError(
+                        f"the frozen panel's deck {d.name!r} in pairing {pr['label']!r} plays "
+                        f"{cid!r}, which this build's card pool does not have. The panel cannot be "
+                        f"played as frozen, and a score from a repaired panel is not comparable "
+                        f"with the ones already in docs/learning.md.") from None
+            sides.append(d)
+        out.append(Pairing(pr["label"], sides[0], sides[1]))
+    return out
+
+
 def load_panel(path: str | Path = PANEL_PATH) -> dict:
-    """Read the frozen panel and refuse it if its digest does not match its contents."""
+    """Read the frozen panel and refuse it unless it matches both of its digests.
+
+    Two checks, because they fail on different mistakes: ``panel_digest`` catches any edit at all
+    to the file, and ``decks_digest`` catches an edit to the decklists specifically, in a form that
+    survives reformatting and can be quoted in a report.
+    """
     panel = json.loads(Path(path).read_text(encoding="utf-8"))
     want = panel.get("digest")
     got = panel_digest(panel)
@@ -306,6 +421,24 @@ def load_panel(path: str | Path = PANEL_PATH) -> dict:
             f"{path}: the panel definition does not match its digest ({want} on file, {got} now). "
             f"The panel is frozen: if this change is deliberate, update 'digest' to {got} and say "
             f"in docs/learning.md that panel scores before and after are not comparable.")
+    if "decks" not in panel:
+        raise ValueError(
+            f"{path}: this panel has no 'decks' block, so its opponents' decklists would have "
+            f"to be redrawn from the sampler and would change whenever the sampler does. A panel "
+            f"without "
+            f"its decks written down is not frozen; see arena.panel_pairings.")
+    want = panel.get("decks_digest")
+    got = decks_digest(panel)
+    if want != got:
+        raise ValueError(
+            f"{path}: the panel's decklists do not match their digest ({want} on file, {got} now). "
+            f"The decks are the benchmark: scores before and after this edit are not comparable. "
+            f"If it is deliberate, update 'decks_digest' to {got}, update 'digest' too, and say in "
+            f"docs/learning.md.")
+    if len(panel["decks"]) != panel["protocol"]["deck_pairs"]:
+        raise ValueError(
+            f"{path}: the protocol says {panel['protocol']['deck_pairs']} deck pairings but "
+            f"{len(panel['decks'])} are stored.")
     return panel
 
 
@@ -318,10 +451,10 @@ def run_panel(reg: Registry, agent: str, panel: dict | None = None, *, workers: 
     """
     panel = panel or load_panel()
     proto = panel["protocol"]
-    pairings = sampled_pairings(reg, proto["deck_pairs"], deck_seed=proto["deck_seed"], label="panel")
+    pairings = panel_pairings(reg, panel)
     out = {"agent": agent, "panel_version": panel["version"], "panel_digest": panel["digest"],
-           "frozen_on": panel["frozen_on"], "protocol": proto, "rules": cfg.digest(),
-           "when": _now(), "members": []}
+           "decks_digest": decks_digest(panel), "frozen_on": panel["frozen_on"], "protocol": proto,
+           "rules": cfg.digest(), "when": _now(), "members": []}
     for m in panel["members"]:
         if not agent_exists(m["agent"]):
             out["members"].append({"id": m["id"], "agent": m["agent"], "label": m["label"],
@@ -330,8 +463,7 @@ def run_panel(reg: Registry, agent: str, panel: dict | None = None, *, workers: 
                 progress(m["id"], None)
             continue
         res = head_to_head(reg, agent, m["agent"], pairings, games_per_pairing=proto["games_per_pair"],
-                           seed=proto["seed"], workers=workers, sprt=None, cfg=cfg,
-                           deck_seed=proto["deck_seed"])
+                           seed=proto["seed"], workers=workers, sprt=None, cfg=cfg)
         row = {"id": m["id"], "agent": m["agent"], "label": m["label"], "available": True,
                "result": res.to_json()}
         out["members"].append(row)
@@ -373,9 +505,14 @@ def run_exploit(reg: Registry, agent: str, *, deck_pairs: int = 6, games_per_pai
                          seed=seed + 1, workers=workers, sprt=None, cfg=cfg, deck_seed=deck_seed)
         c = head_to_head(reg, cheat, reference, pairings, games_per_pairing=games_per_pairing,
                          seed=seed + 1, workers=workers, sprt=None, cfg=cfg, deck_seed=deck_seed)
+        # Both rows were played on the *same* pairings, so the comparison is paired: the interval
+        # goes over the per-pairing differences, which cancels the deck term instead of ignoring
+        # it. A two-proportion z over the pooled games would treat clustered games as independent
+        # trials and overstate its own precision.
+        diffs = [x - y for x, y in zip(c.pairing_rates, h.pairing_rates)]
         out["reference"] = {"agent": reference, "honest": h.to_json(), "cheating": c.to_json(),
-                            "gap": c.rate - h.rate,
-                            "z": two_proportion_z(c.a_wins, c.games, h.a_wins, h.games)}
+                            "gap": c.rate - h.rate, "pairing_gaps": diffs,
+                            "gap_interval": cluster_interval(diffs)}
     return out
 
 
@@ -383,8 +520,12 @@ def run_exploit(reg: Registry, agent: str, *, deck_pairs: int = 6, games_per_pai
 #: The deck populations a generalisation run measures over. ``mix=None`` is the training mix.
 POPULATIONS = (
     ("training", "the training mix (learn.decks.DEFAULT_MIX), the distribution self-play draws from"),
-    ("holdout", "the two retail starters, held out of training entirely"),
-    ("unseen-random", "fresh RAM-legal random decks from a deck seed training never used"),
+    ("holdout", "the two retail starters, held out of training entirely — **one** matchup, because "
+                "the game has exactly two of them"),
+    ("unseen-random", "fresh RAM-legal random decks on a deck seed training never used. **Not** "
+                      "out of distribution: `random` is the 0.30 slice of the training mix, so "
+                      "this row is a fresh draw from a source the model does train on, and it "
+                      "isolates the unstructured end of that mix rather than testing transfer"),
 )
 
 
@@ -400,6 +541,13 @@ def run_generalisation(reg: Registry, agent: str, *, baseline: str = "heuristic"
 
     A gap that grows generation over generation means the model is memorising matchups instead of
     learning the game. It is reported every generation whether or not it flatters the run.
+
+    The rows are not statistically alike, and the report says so rather than papering over it. The
+    training and unseen rows are ``deck_pairs`` pairings each, so their difference gets an interval
+    over the pairings. The holdout row is **one** matchup — ``the_heist`` against
+    ``embracing_power``, the only two retail starters that exist — so it has no deck-level variance
+    to estimate and gets no test statistic; it is reported as the single matchup it is, next to the
+    training row's pairing-to-pairing scatter, which is the only honest thing to read it against.
     """
     require_agent(agent)
     require_agent(baseline)
@@ -421,12 +569,22 @@ def run_generalisation(reg: Registry, agent: str, *, baseline: str = "heuristic"
         if progress:
             progress(name, res)
     by = {p["name"]: p["result"] for p in out["populations"]}
-    tr, ho = by["training"], by["holdout"]
-    un = by["unseen-random"]
+    tr, ho, un = by["training"], by["holdout"], by["unseen-random"]
     out["gap_holdout"] = tr["rate"] - ho["rate"]
     out["gap_unseen"] = tr["rate"] - un["rate"]
-    out["z_holdout"] = two_proportion_z(tr["a_wins"], tr["games"], ho["a_wins"], ho["games"])
-    out["z_unseen"] = two_proportion_z(tr["a_wins"], tr["games"], un["a_wins"], un["games"])
+    # No test statistic against the holdout. It is ONE matchup, so its games are not a sample of a
+    # deck population and any two-proportion z over them would be answering a question the data
+    # cannot answer — and answering it far too confidently, since the pairing-to-pairing scatter in
+    # the training row alone is worth several points, more than the gap being reported. What a
+    # reader needs instead is that scatter, so the holdout gap can be read against it.
+    out["training_pairing_rates"] = tr["pairing_rates"]
+    out["training_cluster"] = [tr["cluster_mean"], tr["cluster_low"], tr["cluster_high"]]
+    out["holdout_pairings"] = len(ho["per_pairing"])
+    out["holdout_inside_training_spread"] = bool(
+        tr["pairing_rates"] and min(tr["pairing_rates"]) <= ho["rate"] <= max(tr["pairing_rates"]))
+    # Training vs unseen-random are two independent samples of six pairings each, so the difference
+    # of their pairing means gets a Welch interval on the cluster-level observations.
+    out["gap_unseen_interval"] = welch_interval(tr["pairing_rates"], un["pairing_rates"])
     return out
 
 
@@ -444,6 +602,44 @@ def rate_cell(k: int, n: int) -> str:
         return "n/a"
     lo, hi = wilson(k, n)
     return f"{100 * k / n:.1f}% [{100 * lo:.1f}–{100 * hi:.1f}]"
+
+
+def band(iv: tuple[float, float, float] | None, *, signed: bool = False) -> str:
+    """A (mean, low, high) triple as percentage points, or the reason there is no interval."""
+    if iv is None:
+        return "no interval (one deck pairing: nothing to estimate deck-level spread from)"
+    m, lo, hi = iv
+    if signed:      # "+2.5–-9.1" would be unreadable, so signed bands spell the range out
+        return f"{100 * m:+.1f} [{100 * lo:+.1f} to {100 * hi:+.1f}]"
+    return f"{100 * m:.1f} [{100 * lo:.1f}–{100 * hi:.1f}]"
+
+
+def between_pairing_line(res: "HeadToHead", *, subject: str) -> str:
+    """The paragraph that says which of the two error bars answers which question.
+
+    Printed under every head-to-head table, because the Wilson interval above it is the one a
+    reader will otherwise quote, and it is the interval for a question nobody is asking.
+    """
+    rates = res.pairing_rates
+    if not rates:
+        return ""
+    spread = (f"{100 * min(rates):.1f}–{100 * max(rates):.1f}%" if len(rates) > 1
+              else f"{100 * rates[0]:.1f}%")
+    c = res.cluster
+    if c is None:
+        return (f"Measured on **one** deck pairing ({spread}), so the Wilson interval above is the "
+                f"whole story for that matchup and there is no deck-level spread to estimate. It "
+                f"is not an estimate of {subject} on decks in general.")
+    return (f"The Wilson interval above is **conditional on these {len(rates)} deck pairings**: it "
+            f"says what more games on these decks would tell you, and nothing about other decks. "
+            f"Per-pairing rates run {spread}; over the deck population the mean is {band(c)}% "
+            f"(t{len(rates) - 1} on {len(rates)} pairings). **That second band is the error bar "
+            f"for {subject}**, and a generation-over-generation claim has to clear it rather "
+            f"than the Wilson one — the same protocol on five different deck samples moves "
+            f"several points while nothing about the agents changes. It is estimated from only "
+            f"{len(rates)} "
+            f"pairings, so it is itself noisy and can land either side of the Wilson bracket: "
+            f"narrower when the pairings happened to agree, much wider when one of them did not.")
 
 
 _VERDICT = {
@@ -469,11 +665,13 @@ def render_head_to_head(res: HeadToHead, *, title: str | None = None, note: str 
            "game, so deck strength is inside this number")
         + f". Ruleset `{res.rules}`, {res.seconds:.1f}s.",
         "",
-        "| | games | win rate | 95% Wilson |",
+        "| | games | win rate | 95% Wilson (these decks) |",
         "|---|---:|---:|---|",
         f"| **{res.agent_a}** | {res.games} | {pct(res.rate)} | {100 * lo:.1f}–{100 * hi:.1f}% |",
         f"| {res.agent_b} | {res.games} | {pct(1 - res.rate)} | "
         f"{100 * (1 - hi):.1f}–{100 * (1 - lo):.1f}% |",
+        "",
+        between_pairing_line(res, subject=f"{res.agent_a}'s strength"),
         "",
         (f"Paired test: {res.pair_wins} of {res.discordant} decisive pairs "
          f"({pct(res.pair_rate)})" if res.balanced else
@@ -498,23 +696,36 @@ def render_head_to_head(res: HeadToHead, *, title: str | None = None, note: str 
 
 
 def render_panel(out: dict) -> str:
+    proto = out["protocol"]
     lines = [f"### Frozen panel: {out['agent']} — {out['when']}", "",
-             f"Panel `{out['panel_digest']}`, frozen {out['frozen_on']}: "
-             f"{out['protocol']['deck_pairs']} deck pairings from deck seed "
-             f"{out['protocol']['deck_seed']}, {out['protocol']['games_per_pair']} games each, no "
-             f"early stopping. The protocol never changes, so these numbers are comparable across "
-             f"every generation.", "",
-             "| opponent | games | win rate | 95% Wilson | decisive pairs |",
-             "|---|---:|---:|---|---|"]
+             f"Panel `{out['panel_digest']}`, decks `{out['decks_digest']}`, frozen "
+             f"{out['frozen_on']}: {proto['deck_pairs']} deck pairings whose **decklists are "
+             f"stored verbatim in `data/arena/panel.json`** and are never redrawn from the "
+             f"sampler, {proto['games_per_pair']} games each, no early stopping. Both digests "
+             f"are checked on load, so these numbers are comparable across every generation as "
+             f"long as "
+             f"they read `{out['panel_digest']}` / `{out['decks_digest']}`.", "",
+             "| opponent | games | win rate | 95% Wilson (these decks) | per-pairing spread | "
+             "decisive pairs |",
+             "|---|---:|---:|---|---|---|"]
     for m in out["members"]:
         if not m["available"]:
-            lines.append(f"| {m['label']} (`{m['agent']}`) | — | not available yet | — | "
+            lines.append(f"| {m['label']} (`{m['agent']}`) | — | not available yet | — | — | "
                          f"{m.get('note', '')} |")
             continue
         r = m["result"]
+        rates = r.get("pairing_rates") or []
+        spread = (f"{100 * min(rates):.1f}–{100 * max(rates):.1f}%" if len(rates) > 1 else "—")
         lines.append(f"| {m['label']} (`{m['agent']}`) | {r['games']} | {pct(r['rate'])} | "
-                     f"{100 * r['wilson_low']:.1f}–{100 * r['wilson_high']:.1f}% | "
+                     f"{100 * r['wilson_low']:.1f}–{100 * r['wilson_high']:.1f}% | {spread} | "
                      f"{r['pair_wins']}/{r['discordant']} |")
+    lines += ["", "Here the Wilson interval is the right one and the *only* one that changes "
+                  "between generations: the decks are fixed by the panel, so nothing but more "
+                  "games is being sampled. The per-pairing spread is printed beside it as a "
+                  "reminder of what the panel is not — a panel score is a score on these twelve "
+                  "decklists, and generalises no further than they do. For a claim about play in "
+                  "general, use the "
+                  "between-pairing interval from `a-vs-b` or `generalisation`."]
     return "\n".join(lines) + "\n"
 
 
@@ -525,14 +736,24 @@ def render_exploit(out: dict) -> str:
              f"true state: same budget, same evaluation, same policy, perfect information.", "",
              f"Cheating beats honest **{pct(d['rate'])}** "
              f"[{100 * d['wilson_low']:.1f}–{100 * d['wilson_high']:.1f}] over {d['games']} games "
-             f"({d['pair_wins']}/{d['discordant']} decisive pairs).", "",
-             f"*{out['caveat']}*"]
+             f"({d['pair_wins']}/{d['discordant']} decisive pairs), the bracket conditional on "
+             f"{d.get('pairings', 0)} deck pairings; over the deck population "
+             + (f"{band((d['cluster_mean'], d['cluster_low'], d['cluster_high']))}%."
+                if d.get("cluster_mean") is not None else
+                "there is only one pairing, so no deck-level band can be estimated."),
+             "", f"*{out['caveat']}*"]
     ref = out.get("reference")
     if ref:
         h, c = ref["honest"], ref["cheating"]
         lines += ["", f"Against `{ref['agent']}`: honest {rate_cell(h['a_wins'], h['games'])}, "
                       f"cheating {rate_cell(c['a_wins'], c['games'])} — a gap of "
-                      f"{100 * ref['gap']:+.1f} points (z = {ref['z']:.2f})."]
+                      f"{100 * ref['gap']:+.1f} points"
+                      + (f", 95% paired interval over the deck pairings "
+                         f"{band(ref['gap_interval'], signed=True)} points."
+                         if ref.get("gap_interval") else
+                         " (one deck pairing, so no interval).")
+                      + " Both variants played the same pairings, so the comparison is paired and "
+                        "the deck term cancels rather than being assumed away."]
     return "\n".join(lines) + "\n"
 
 
@@ -541,15 +762,39 @@ def render_generalisation(out: dict) -> str:
              "The same agent against the same baseline on three deck populations. Both seats draw "
              "from the same population in each row, so the number measures play, not deck strength; "
              "what matters is the difference between the rows.", "",
-             "| deck population | games | win rate | 95% Wilson |", "|---|---:|---:|---|"]
+             "| deck population | pairings | games | win rate | 95% Wilson (these decks) | "
+             "per-pairing spread |", "|---|---:|---:|---:|---|---|"]
     for p in out["populations"]:
         r = p["result"]
-        lines.append(f"| {p['name']} — {p['note']} | {r['games']} | {pct(r['rate'])} | "
-                     f"{100 * r['wilson_low']:.1f}–{100 * r['wilson_high']:.1f}% |")
-    lines += ["", f"Gap to the held-out starters: {100 * out['gap_holdout']:+.1f} points "
-                  f"(z = {out['z_holdout']:.2f}). Gap to fresh random decks: "
-                  f"{100 * out['gap_unseen']:+.1f} points (z = {out['z_unseen']:.2f}). "
-                  "A gap that grows generation over generation means memorised matchups."]
+        rates = r.get("pairing_rates") or []
+        spread = (f"{100 * min(rates):.1f}–{100 * max(rates):.1f}%" if len(rates) > 1
+                  else "one matchup")
+        lines.append(f"| {p['name']} — {p['note']} | {r.get('pairings', len(rates))} | "
+                     f"{r['games']} | {pct(r['rate'])} | "
+                     f"{100 * r['wilson_low']:.1f}–{100 * r['wilson_high']:.1f}% | {spread} |")
+    tr = out["training_pairing_rates"]
+    spread = f"{100 * min(tr):.1f}–{100 * max(tr):.1f}%" if tr else "n/a"
+    inside = ("inside" if out["holdout_inside_training_spread"] else "outside")
+    lines += [
+        "",
+        f"**Gap to the held-out starters: {100 * out['gap_holdout']:+.1f} points, and no test "
+        f"statistic.** The holdout is {out['holdout_pairings']} matchup, so those games are not a "
+        f"sample of a deck population and a two-proportion z over them would claim a precision the "
+        f"design cannot support. Read it against the training row's own scatter instead: its "
+        f"{len(tr)} pairings run {spread}, which puts the holdout rate {inside} the range the "
+        f"training decks themselves cover.",
+        "",
+        f"Gap to fresh random decks: {100 * out['gap_unseen']:+.1f} points, "
+        + (f"95% interval over the pairings {band(out['gap_unseen_interval'], signed=True)} points "
+           f"(Welch, two independent samples of deck pairings)."
+           if out["gap_unseen_interval"] else "with too few pairings for an interval.")
+        + " Both rows have deck pairings to spare, so this comparison is between deck *populations*"
+          " and not between two piles of games.",
+        "",
+        "A gap that grows generation over generation means memorised matchups. Watch the change in "
+        "these numbers, and only trust a change that is large against the per-pairing spread "
+        "beside it.",
+    ]
     return "\n".join(lines) + "\n"
 
 

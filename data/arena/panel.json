@@ -1,15 +1,451 @@
 {
- "version": 1,
+ "version": 2,
  "frozen_on": "2026-09-10",
- "note": "The frozen benchmark panel. Its opponents, its decks, its seeds and its game count never change, so a win rate against it is comparable across every future generation. Any edit to this file changes the digest and invalidates that comparison; say so in docs/learning.md when you make one.",
+ "note": "The frozen benchmark panel. Its opponents, its DECKLISTS, its seeds and its game count never change, so a win rate against it is comparable across every future generation. Version 1 stored only the deck sampler's seed and redrew the lists at run time, which meant any later edit to learn.decks, deck.builder or data/decks/ silently changed all six matchups while the digest still matched; the lists below are that redraw, written down, and v1 and v2 scores ARE comparable because they are the same decks. Any edit to this file changes 'digest', an edit to the lists changes 'decks_digest' as well, and either one invalidates the comparison; say so in docs/learning.md when you make one.",
  "protocol": {
   "deck_pairs": 6,
   "games_per_pair": 60,
-  "deck_seed": 20260910,
   "seed": 4242,
   "sprt": false,
-  "note": "60 games per pairing is 15 seeds, each played from both seats and with the deck assignments swapped. No early stopping: a fixed sample is what makes two generations comparable."
+  "note": "60 games per pairing is 15 seeds, each played from both seats and with the deck assignments swapped. No early stopping: a fixed sample is what makes two generations comparable. The reported 95% Wilson interval is conditional on these six pairings, which is the right interval here precisely because the pairings never change; the per-pairing spread is printed beside it because a panel score is a score on THESE decks and generalises no further than they do."
  },
+ "decks_provenance": {
+  "sampler": "cptcg.learn.decks.sample_pair via arena.sampled_pairings",
+  "deck_seed": 20260910,
+  "deck_pairs": 6,
+  "drawn_on": "2026-09-10",
+  "note": "How these twelve lists were first drawn. Provenance only: they are NOT re-derived at run time. Re-running the sampler with this seed reproduces them only on a build whose learn.decks and deck.builder are unchanged, and the panel must outlive that."
+ },
+ "decks": [
+  {
+   "label": "panel-0",
+   "a": {
+    "name": "built",
+    "legends": [
+     "jackie-welles-pour-one-out-for-me",
+     "judy-alvarez-braindance-maestro",
+     "evelyn-parker-beautiful-enigma"
+    ],
+    "main": {
+     "rita-wheeler-no-stupid-questions": 3,
+     "judy-alvarez-nothing-to-doubt": 3,
+     "mox-inciters": 3,
+     "floor-it": 3,
+     "dying-night-vs-pistol": 3,
+     "mtod12-flathead": 3,
+     "modded-kusanagi": 3,
+     "unlikely-bond": 3,
+     "placide-voodoo-sentinel": 3,
+     "three-mouths-one-desire": 3,
+     "tetratronic-rippler": 3,
+     "rogue-amendiares-queen-of-the-afterlife": 2,
+     "netwatch-netdriver": 3,
+     "reboot-optics": 2
+    },
+    "meta": {
+     "generated": "heuristic"
+    }
+   },
+   "b": {
+    "name": "built-b",
+    "legends": [
+     "adam-smasher-ender-of-legends",
+     "johnny-silverhand-rocking-renegade",
+     "v-streetkid"
+    ],
+    "main": {
+     "johnny-silverhand-never-stop-fighting": 3,
+     "kerry-eurodyne-the-last-rockerboy": 3,
+     "ruthless-lowlife": 3,
+     "meredith-stout-stone-cold-corpo": 3,
+     "satori-sword-of-saburo": 3,
+     "yorinobu-arasaka-steel-dragon": 3,
+     "minotaur": 2,
+     "mantis-blades": 3,
+     "industrial-assembly": 3,
+     "over-the-edge": 3,
+     "bonnie-and-clyde": 3,
+     "appetite-for-destruction": 3,
+     "carnage-at-the-colosseum": 2,
+     "arasaka-emergency-radioport": 3
+    },
+    "meta": {
+     "generated": "heuristic"
+    }
+   }
+  },
+  {
+   "label": "panel-1",
+   "a": {
+    "name": "built",
+    "legends": [
+     "sasha-yakovleva-wont-let-you-down",
+     "evelyn-parker-beautiful-enigma",
+     "adam-smasher-ender-of-legends"
+    ],
+    "main": {
+     "arasaka-emergency-radioport": 3,
+     "rita-wheeler-no-stupid-questions": 3,
+     "meredith-stout-stone-cold-corpo": 3,
+     "floor-it": 3,
+     "v-roamer-of-the-badlands": 3,
+     "chrome-fang": 3,
+     "ruthless-lowlife": 3,
+     "la-llorona-ghost-of-the-past": 2,
+     "nocturne-op55n1": 3,
+     "over-the-edge": 3,
+     "towerfall": 3,
+     "les-elemens": 1,
+     "dying-night-vs-pistol": 3,
+     "satori-sword-of-saburo": 3,
+     "mtod12-flathead": 1
+    },
+    "meta": {
+     "generated": "heuristic"
+    }
+   },
+   "b": {
+    "name": "explorer",
+    "legends": [
+     "evelyn-parker-beautiful-enigma",
+     "jackie-welles-mamas-favorite",
+     "judy-alvarez-braindance-maestro"
+    ],
+    "main": {
+     "les-elemens": 2,
+     "lizzy-wizzy-delicate-weapon": 1,
+     "chrome-reverie": 3,
+     "rita-wheeler-no-stupid-questions": 3,
+     "three-mouths-one-desire": 3,
+     "valentino-street-racer": 2,
+     "we-gotta-live-together": 3,
+     "memory-relapse": 3,
+     "rogue-amendiares-queen-of-the-afterlife": 3,
+     "floor-it": 1,
+     "towerfall": 1,
+     "sandayu-oda-hanakos-guardian": 2,
+     "zetatech-berserk": 1,
+     "mox-inciters": 3,
+     "corporate-surveillance": 2,
+     "nocturne-op55n1": 3,
+     "tygers-whisper": 1,
+     "trust-no-one": 1,
+     "dying-night-vs-pistol": 1,
+     "modded-kusanagi": 1
+    },
+    "meta": {
+     "generated": "explorer",
+     "archetype": "exploring",
+     "context": "BLUE|GREEN"
+    }
+   }
+  },
+  {
+   "label": "panel-2",
+   "a": {
+    "name": "Sample Gangers",
+    "legends": [
+     "royce-psycho-on-the-edge",
+     "johnny-silverhand-rocking-renegade",
+     "wakako-okada-peace-and-harmony"
+    ],
+    "main": {
+     "japantown-jonin": 3,
+     "ruthless-lowlife": 3,
+     "appetite-for-destruction": 3,
+     "la-llorona-ghost-of-the-past": 3,
+     "mox-inciters": 3,
+     "valentino-guerrera": 3,
+     "gunpoint-diplomacy": 3,
+     "rita-wheeler-no-stupid-questions": 3,
+     "unlikely-bond": 3,
+     "chrome-fang": 3,
+     "el-sombreron-la-venganza-lenta": 3,
+     "all-is-lost": 1,
+     "mantis-blades": 3,
+     "tetratronic-rippler": 3
+    },
+    "meta": {
+     "note": "Generated sample deck, not a retail starter list."
+    }
+   },
+   "b": {
+    "name": "random",
+    "legends": [
+     "v-corporate-exile",
+     "sasha-yakovleva-wont-let-you-down",
+     "alt-cunningham-soulkiller-architect"
+    ],
+    "main": {
+     "les-elemens": 3,
+     "netwatch-netdriver": 2,
+     "three-mouths-one-desire": 1,
+     "floor-it": 2,
+     "pyramid-song": 1,
+     "nocturne-op55n1": 1,
+     "trust-no-one": 2,
+     "hacked-corpo": 1,
+     "chrome-reverie": 3,
+     "placide-voodoo-sentinel": 2,
+     "westbrook-netrunner": 2,
+     "maman-brigitte-spirit-of-death": 2,
+     "modded-muramasa": 2,
+     "rita-wheeler-no-stupid-questions": 3,
+     "misty-olszewski-mender-of-broken-spirits": 2,
+     "delamain-rideshare-ai": 3,
+     "tetratronic-rippler": 1,
+     "mox-inciters": 2,
+     "rogue-amendiares-queen-of-the-afterlife": 1,
+     "jacked-in-voodoo-boy": 1,
+     "reboot-optics": 3,
+     "towerfall": 2,
+     "mtod12-flathead": 1,
+     "modded-kusanagi": 2
+    },
+    "meta": {
+     "generated": "random"
+    }
+   }
+  },
+  {
+   "label": "panel-3",
+   "a": {
+    "name": "random",
+    "legends": [
+     "viktor-vektor-sit-down-and-relax",
+     "muamar-reyes-el-capitan",
+     "yorinobu-arasaka-embracing-destruction"
+    ],
+    "main": {
+     "viktor-vektor-you-might-feel-a-little-pinch": 2,
+     "johnny-silverhand-never-stop-fighting": 1,
+     "v-roamer-of-the-badlands": 2,
+     "offduty-malfini": 3,
+     "augmented-negotiators": 3,
+     "viktor-vektor-drop-your-illusions": 3,
+     "swordwise-huscle": 2,
+     "kerry-eurodyne-the-last-rockerboy": 1,
+     "valentino-guerrera": 1,
+     "over-the-edge": 1,
+     "arasaka-emergency-radioport": 2,
+     "secondhand-bombus": 2,
+     "shattered-memories": 1,
+     "t-bug-amateur-philosopher": 1,
+     "industrial-assembly": 2,
+     "bootleg-black-sapphire-show": 2,
+     "cyberpsychosis": 1,
+     "zetatech-faceplate": 1,
+     "afterparty-at-lizzies": 2,
+     "kiroshi-optics": 1,
+     "6th-street-recruits": 1,
+     "gorilla-arms": 1,
+     "meredith-stout-stone-cold-corpo": 2,
+     "maxtac-suppression-team": 2,
+     "trauma-team-operatives": 1,
+     "hanako-arasaka-in-a-gilded-cage": 1,
+     "caliber-totentanzs-top-dog": 1,
+     "ruthless-lowlife": 2,
+     "jackie-welles-ride-or-die-choom": 1,
+     "satori-sword-of-saburo": 1,
+     "la-llorona-ghost-of-the-past": 1,
+     "dexter-deshawn-one-last-chance": 1,
+     "chrome-fang": 1
+    },
+    "meta": {
+     "generated": "random"
+    }
+   },
+   "b": {
+    "name": "random-b",
+    "legends": [
+     "yorinobu-arasaka-embracing-destruction",
+     "dexter-deshawn-off-the-grid",
+     "royce-psycho-on-the-edge"
+    ],
+    "main": {
+     "la-llorona-ghost-of-the-past": 3,
+     "valentino-guerrera": 3,
+     "screw-lovelorn-fool": 2,
+     "el-sombreron-la-venganza-lenta": 1,
+     "detonate": 2,
+     "industrial-assembly": 2,
+     "mantis-blades": 3,
+     "v-roamer-of-the-badlands": 1,
+     "kerry-eurodyne-the-last-rockerboy": 1,
+     "gunpoint-diplomacy": 1,
+     "octant": 3,
+     "swordwise-huscle": 1,
+     "ruthless-lowlife": 1,
+     "carnage-at-the-colosseum": 1,
+     "all-is-lost": 3,
+     "yorinobu-arasaka-steel-dragon": 3,
+     "satori-sword-of-saburo": 2,
+     "6th-street-recruits": 1,
+     "minotaur": 2,
+     "arasaka-emergency-radioport": 1,
+     "royce-dont-call-me-simon": 1,
+     "animals-wrecker": 1,
+     "johnny-silverhand-never-stop-fighting": 1
+    },
+    "meta": {
+     "generated": "random"
+    }
+   }
+  },
+  {
+   "label": "panel-4",
+   "a": {
+    "name": "random",
+    "legends": [
+     "saburo-arasaka-stubborn-patriarch",
+     "goro-takemura-hands-unclean",
+     "kerry-eurodyne-axe-attitude-audience"
+    ],
+    "main": {
+     "viktor-vektor-drop-your-illusions": 2,
+     "hanako-arasaka-in-a-gilded-cage": 2,
+     "trauma-team-operatives": 1,
+     "zetatech-berserk": 3,
+     "rockn-rockerboy": 1,
+     "memory-relapse": 1,
+     "we-gotta-live-together": 1,
+     "emergency-atlus": 2,
+     "dexter-deshawn-one-last-chance": 1,
+     "caliber-totentanzs-top-dog": 1,
+     "gilded-maton": 2,
+     "heywood-ripperdoc": 2,
+     "afterparty-at-lizzies": 1,
+     "nadia-fighting-through-grief": 1,
+     "sketchy-ripper": 1,
+     "secondhand-bombus": 2,
+     "synapse-burnout": 1,
+     "sandayu-oda-hanakos-guardian": 1,
+     "pepe-najarro-working-doubles": 1,
+     "corporate-surveillance": 1,
+     "fool-on-the-hill": 1,
+     "riding-nomad": 1,
+     "maelstrom-zealots": 2,
+     "pacifica-netrunner": 1,
+     "corpo-security": 1,
+     "maxtac-suppression-team": 1,
+     "maxtac-heavy": 1,
+     "tygers-whisper": 1,
+     "jackie-welles-ride-or-die-choom": 1,
+     "maxtac-av": 1,
+     "riot-shield": 1
+    },
+    "meta": {
+     "generated": "random"
+    }
+   },
+   "b": {
+    "name": "random-b",
+    "legends": [
+     "evelyn-parker-beautiful-enigma",
+     "jackie-welles-pour-one-out-for-me",
+     "alt-cunningham-soulkiller-architect"
+    ],
+    "main": {
+     "hacked-corpo": 3,
+     "mox-inciters": 3,
+     "netwatch-netdriver": 1,
+     "psycho-squad": 3,
+     "jacked-in-voodoo-boy": 2,
+     "chrome-reverie": 2,
+     "lizzy-wizzy-delicate-weapon": 3,
+     "three-mouths-one-desire": 3,
+     "westbrook-netrunner": 2,
+     "maman-brigitte-spirit-of-death": 3,
+     "delamain-cab": 1,
+     "modded-kusanagi": 3,
+     "towerfall": 2,
+     "modded-muramasa": 1,
+     "delamain-rideshare-ai": 1,
+     "trust-no-one": 1,
+     "unlikely-bond": 1,
+     "judy-alvarez-nothing-to-doubt": 1,
+     "rita-wheeler-no-stupid-questions": 3,
+     "misty-olszewski-mender-of-broken-spirits": 2,
+     "floor-it": 1,
+     "tetratronic-rippler": 1,
+     "rogue-amendiares-queen-of-the-afterlife": 2,
+     "reboot-optics": 1,
+     "les-elemens": 1,
+     "placide-voodoo-sentinel": 2,
+     "dying-night-vs-pistol": 1
+    },
+    "meta": {
+     "generated": "random"
+    }
+   }
+  },
+  {
+   "label": "panel-5",
+   "a": {
+    "name": "random",
+    "legends": [
+     "adam-smasher-ender-of-legends",
+     "royce-psycho-on-the-edge",
+     "v-streetkid"
+    ],
+    "main": {
+     "gunpoint-diplomacy": 3,
+     "mantis-blades": 1,
+     "johnny-silverhand-never-stop-fighting": 2,
+     "animals-wrecker": 3,
+     "satori-sword-of-saburo": 3,
+     "ruthless-lowlife": 2,
+     "v-roamer-of-the-badlands": 2,
+     "bonnie-and-clyde": 2,
+     "el-sombreron-la-venganza-lenta": 3,
+     "valentino-guerrera": 3,
+     "industrial-assembly": 3,
+     "swordwise-huscle": 1,
+     "screw-lovelorn-fool": 3,
+     "chrome-fang": 1,
+     "la-llorona-ghost-of-the-past": 1,
+     "over-the-edge": 2,
+     "deadman-transmitter": 1,
+     "meredith-stout-stone-cold-corpo": 1,
+     "all-is-lost": 2,
+     "6th-street-recruits": 1,
+     "arasaka-emergency-radioport": 1,
+     "yorinobu-arasaka-steel-dragon": 1
+    },
+    "meta": {
+     "generated": "random"
+    }
+   },
+   "b": {
+    "name": "built",
+    "legends": [
+     "kerry-eurodyne-axe-attitude-audience",
+     "viktor-vektor-sit-down-and-relax",
+     "muamar-reyes-el-capitan"
+    ],
+    "main": {
+     "adrenaline-converter": 3,
+     "dexter-deshawn-one-last-chance": 3,
+     "cyberpsychosis": 3,
+     "heywood-ripperdoc": 3,
+     "safety-override": 3,
+     "adam-smasher-metal-over-meat": 3,
+     "rockn-rockerboy": 3,
+     "offduty-malfini": 3,
+     "viktor-vektor-you-might-feel-a-little-pinch": 3,
+     "viktor-vektor-drop-your-illusions": 3,
+     "zetatech-faceplate": 3,
+     "jackie-welles-ride-or-die-choom": 3,
+     "maxtac-suppression-team": 1,
+     "kiroshi-optics": 2,
+     "bootleg-black-sapphire-show": 1
+    },
+    "meta": {
+     "generated": "heuristic"
+    }
+   }
+  }
+ ],
  "members": [
   {
    "id": "random",
@@ -31,5 +467,6 @@
    "frozen_note": "the first accepted weights, kept forever"
   }
  ],
- "digest": "17064172ad6626e2"
+ "decks_digest": "1b1799dbc029a6b7",
+ "digest": "a1832d477c27193f"
 }

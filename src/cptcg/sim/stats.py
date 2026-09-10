@@ -21,6 +21,64 @@ def games_for_half_width(half: float, p: float = 0.5, z: float = 1.959964) -> in
     return math.ceil(z * z * p * (1 - p) / (half * half))
 
 
+#: Two-sided 95% Student-t quantiles by degrees of freedom. A table rather than an incomplete-beta
+#: inversion because the callers here cluster over a handful of deck pairings, so df is small and
+#: known, and this stays stdlib-only for Pyodide. Beyond 30 the normal quantile is within 1%.
+_T95 = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447, 7: 2.365, 8: 2.306,
+        9: 2.262, 10: 2.228, 11: 2.201, 12: 2.179, 13: 2.160, 14: 2.145, 15: 2.131, 16: 2.120,
+        17: 2.110, 18: 2.101, 19: 2.093, 20: 2.086, 21: 2.080, 22: 2.074, 23: 2.069, 24: 2.064,
+        25: 2.060, 26: 2.056, 27: 2.052, 28: 2.048, 29: 2.045, 30: 2.042}
+
+
+def t95(df: float) -> float:
+    """The two-sided 95% t multiplier for ``df`` degrees of freedom (df is floored)."""
+    d = int(df)
+    if d < 1:
+        return float("inf")
+    return _T95.get(d, 1.959964)
+
+
+def cluster_interval(values) -> tuple[float, float, float] | None:
+    """Mean of ``values`` and its 95% t interval, treating each value as one independent draw.
+
+    The arena's clusters are *deck pairings*: the games inside one pairing share decks and shuffles,
+    so they are not independent trials and a binomial interval over them understates the spread. The
+    cluster mean's standard error is estimated from the scatter *between* pairings, which absorbs
+    the within-pairing noise as well, so this is the interval for "another sample of decks" while
+    a Wilson interval is the interval for "more games on these decks".
+
+    Returns ``None`` below two values: with one deck pairing there is no deck-level variance to
+    estimate, and inventing one would be the dishonesty this function exists to remove.
+    """
+    xs = list(values)
+    if len(xs) < 2:
+        return None
+    mean = sum(xs) / len(xs)
+    var = sum((x - mean) ** 2 for x in xs) / (len(xs) - 1)
+    half = t95(len(xs) - 1) * math.sqrt(var / len(xs))
+    return mean, mean - half, mean + half
+
+
+def welch_interval(a, b) -> tuple[float, float, float] | None:
+    """``mean(a) - mean(b)`` and its 95% Welch t interval, for two *independent* cluster samples.
+
+    Use it to compare two rows measured on different deck pairings. When the two rows were measured
+    on the *same* pairings the comparison is paired: feed the per-pairing differences to
+    ``cluster_interval`` instead, which is both correct and much tighter.
+    """
+    xs, ys = list(a), list(b)
+    if len(xs) < 2 or len(ys) < 2:
+        return None
+    ma, mb = sum(xs) / len(xs), sum(ys) / len(ys)
+    va = sum((x - ma) ** 2 for x in xs) / (len(xs) - 1) / len(xs)
+    vb = sum((y - mb) ** 2 for y in ys) / (len(ys) - 1) / len(ys)
+    if va + vb <= 0:
+        return ma - mb, ma - mb, ma - mb
+    df = (va + vb) ** 2 / (va * va / (len(xs) - 1) + vb * vb / (len(ys) - 1))
+    half = t95(df) * math.sqrt(va + vb)
+    return ma - mb, (ma - mb) - half, (ma - mb) + half
+
+
 def two_proportion_z(k1: int, n1: int, k2: int, n2: int) -> float:
     """z statistic for H0: p1 == p2."""
     if n1 == 0 or n2 == 0:

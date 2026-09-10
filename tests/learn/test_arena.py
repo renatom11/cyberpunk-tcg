@@ -15,13 +15,21 @@ from cptcg.agents.base import CHEAT_PREFIX, Agent, make_agent, register
 from cptcg.core.enums import NZONE, Zone
 from cptcg.core.view import determinize
 from cptcg.learn import arena
+from cptcg.learn import decks as D
 from cptcg.learn.decks import holdout_decks, is_holdout
-from cptcg.sim.stats import SPRT, wilson
+from cptcg.sim.stats import SPRT, cluster_interval, welch_interval, wilson
 
-# The frozen panel, pinned here as well as in its own file. Two locks, both of which a deliberate
-# edit must turn: the digest in data/arena/panel.json and this constant.
-PANEL_DIGEST = "17064172ad6626e2"
+# The frozen panel, pinned here as well as in its own file. Locks a deliberate edit must turn: the
+# two digests in data/arena/panel.json and these constants. The first pairing is pinned card for
+# card as well, because that is the assertion that fails loudly if the panel ever goes back to
+# redrawing its decks from the sampler — a retuned sampler would change it, and a stored decklist
+# cannot.
+PANEL_DIGEST = "a1832d477c27193f"
+PANEL_DECKS_DIGEST = "1b1799dbc029a6b7"
 PANEL_MEMBERS = [("random", "random"), ("heuristic", "heuristic"), ("gen0", "gen0")]
+PANEL_FIRST_DECK = ("built", ("jackie-welles-pour-one-out-for-me",
+                              "judy-alvarez-braindance-maestro",
+                              "evelyn-parker-beautiful-enigma"), 40)
 
 
 # ------------------------------------------------------------------ the statistics
@@ -56,6 +64,57 @@ def test_sprt_rarely_stops_on_a_coin_flip():
     wrong = [v for v, _ in stops if v in ("high", "low")]
     assert len(wrong) <= 30                          # alpha is 0.05 per direction
     assert sum(1 for v, _ in stops if v == "h0") >= 150   # it settles on "no difference" instead
+
+
+def clustered(rng: random.Random, k: int, n: int, p: float, sd: float) -> list[float]:
+    """k deck pairings of n games each, where the pairing shifts the win rate by N(0, sd).
+
+    This is the arena's actual sampling model: a deck pairing is drawn, then games are played on
+    it. The games inside a pairing are not independent draws from ``p``.
+    """
+    out = []
+    for _ in range(k):
+        q = min(0.99, max(0.01, p + rng.gauss(0, sd)))
+        out.append(sum(rng.random() < q for _ in range(n)) / n)
+    return out
+
+
+def test_wilson_misses_the_truth_under_clustering_and_the_cluster_interval_does_not():
+    """The finding, as a test: a binomial interval over clustered games is not a 95% interval.
+
+    Six pairings of sixty games with a modest deck effect is exactly the arena's design. The
+    Wilson interval over all 360 games covers the true rate far less than 95% of the time, because
+    the deck term is missing from it; the between-pairing interval covers it about right. If this
+    ever fails the other way — cluster coverage collapsing — the reports are lying again.
+    """
+    rng = random.Random(7)
+    p, wil, clu = 0.75, 0, 0
+    for _ in range(400):
+        rates = clustered(rng, 6, 60, p, 0.10)
+        k = round(sum(rates) * 60)
+        lo, hi = wilson(k, 360)
+        wil += lo <= p <= hi
+        m, clo, chi = cluster_interval(rates)
+        clu += clo <= p <= chi
+    assert wil / 400 < 0.80                      # nowhere near the 95% it advertises
+    assert clu / 400 >= 0.88                     # and the honest one is close to nominal
+
+
+def test_the_cluster_interval_refuses_a_single_observation():
+    assert cluster_interval([0.7]) is None and cluster_interval([]) is None
+    assert welch_interval([0.7], [0.5, 0.6]) is None
+    m, lo, hi = cluster_interval([0.5, 0.5, 0.5])
+    assert (m, lo, hi) == (0.5, 0.5, 0.5)        # no scatter, no width — and no crash
+
+
+def test_the_welch_interval_finds_a_real_difference_and_not_a_fake_one():
+    rng = random.Random(11)
+    d, lo, hi = welch_interval(clustered(rng, 6, 60, 0.80, 0.05),
+                               clustered(rng, 6, 60, 0.50, 0.05))
+    assert lo > 0 and d > 0.2
+    same = [welch_interval(clustered(rng, 6, 60, 0.6, 0.08), clustered(rng, 6, 60, 0.6, 0.08))
+            for _ in range(200)]
+    assert sum(lo <= 0 <= hi for _, lo, hi in same) >= 180      # ~95%, and not much worse
 
 
 def test_wilson_brackets_the_truth():
@@ -102,6 +161,37 @@ def test_seats_are_mirrored_exactly(pool):
     assert sum(r.a_wins for r in res.per_pairing) == res.a_wins
 
 
+def test_a_report_labels_the_wilson_interval_as_conditional_on_the_decks(pool):
+    """The headline bracket is not an error bar for the agent, and the report has to say so.
+
+    A reader quotes whatever number is printed next to the win rate. If that is a binomial interval
+    over clustered games with no qualifier, every future claim about the AI inherits an error bar
+    several points too narrow — the same protocol on five deck samples moves further than the
+    printed interval is wide.
+    """
+    pairings = arena.sampled_pairings(pool, 3, deck_seed=6)
+    res = arena.head_to_head(pool, "heuristic", "random", pairings, games_per_pairing=8, seed=11,
+                             workers=1, sprt=None)
+    assert len(res.pairing_rates) == 3
+    m, lo, hi = res.cluster
+    assert lo <= m <= hi and m == pytest.approx(sum(res.pairing_rates) / 3)
+    text = arena.render_head_to_head(res)
+    assert "95% Wilson (these decks)" in text
+    assert "conditional on these 3 deck pairings" in text
+    assert "generation-over-generation claim has to clear it" in text
+    d = res.to_json()
+    assert d["pairings"] == 3 and d["cluster_low"] == pytest.approx(lo)
+
+
+def test_one_pairing_gets_no_between_pairing_interval(pool):
+    """With one deck pairing there is no deck-level variance, so none is invented."""
+    one = arena.sampled_pairings(pool, 1, deck_seed=6)
+    res = arena.head_to_head(pool, "heuristic", "random", one, games_per_pairing=8, seed=11,
+                             workers=1, sprt=None)
+    assert res.cluster is None and res.to_json()["cluster_mean"] is None
+    assert "no deck-level spread to estimate" in arena.render_head_to_head(res)
+
+
 def test_an_unswapped_run_is_labelled_as_unbalanced(pool):
     pairings = arena.sampled_pairings(pool, 1, deck_seed=6)
     res = arena.head_to_head(pool, "heuristic", "random", pairings, games_per_pairing=8, seed=11,
@@ -134,9 +224,38 @@ def test_the_panel_is_frozen():
     """
     panel = arena.load_panel()
     assert arena.panel_digest(panel) == PANEL_DIGEST == panel["digest"]
+    assert arena.decks_digest(panel) == PANEL_DECKS_DIGEST == panel["decks_digest"]
     assert [(m["id"], m["agent"]) for m in panel["members"]] == PANEL_MEMBERS
-    assert panel["protocol"] == {"deck_pairs": 6, "games_per_pair": 60, "deck_seed": 20260910,
-                                 "seed": 4242, "sprt": False, "note": panel["protocol"]["note"]}
+    assert panel["protocol"] == {"deck_pairs": 6, "games_per_pair": 60, "seed": 4242,
+                                 "sprt": False, "note": panel["protocol"]["note"]}
+
+
+def test_the_panels_decks_are_stored_not_redrawn(pool):
+    """The decks are the benchmark, so they must live in the file and not in the sampler.
+
+    A panel that regenerates its decklists from ``learn.decks`` at run time is not frozen: retuning
+    ``DEFAULT_MIX``, either builder, or the set of ``data/decks/sample_*.json`` files would re-base
+    every future score while the panel's digest still matched. So this pins the first pairing card
+    for card, and then checks that the pairings really are read from the file by mutating the
+    sampler's mix and demanding that the panel does not move.
+    """
+    panel = arena.load_panel()
+    pairings = arena.panel_pairings(pool, panel)
+    assert len(pairings) == panel["protocol"]["deck_pairs"] == 6
+    d = pairings[0].deck_a
+    assert (d.name, d.legends, len(d.main)) == PANEL_FIRST_DECK
+
+    before = [(p.deck_a.name, p.deck_a.legends, p.deck_a.main) for p in pairings]
+    mix = dict(D.DEFAULT_MIX)
+    try:
+        D.DEFAULT_MIX.clear()
+        D.DEFAULT_MIX.update({"random": 1.0})
+        after = [(p.deck_a.name, p.deck_a.legends, p.deck_a.main)
+                 for p in arena.panel_pairings(pool, arena.load_panel())]
+    finally:
+        D.DEFAULT_MIX.clear()
+        D.DEFAULT_MIX.update(mix)
+    assert after == before
 
 
 def test_a_tampered_panel_is_refused(tmp_path):
@@ -148,10 +267,45 @@ def test_a_tampered_panel_is_refused(tmp_path):
         arena.load_panel(p)
 
 
+def test_a_swapped_panel_deck_is_refused(tmp_path):
+    """One card changed in one of the twelve stored lists must stop the run, not shift the score."""
+    panel = arena.load_panel()
+    main = dict(panel["decks"][0]["a"]["main"])
+    swap = sorted(main)[0]
+    main[swap] -= 1
+    main["floor-it"] = main.get("floor-it", 0) + 1
+    panel["decks"][0]["a"]["main"] = main
+    panel["digest"] = arena.panel_digest(panel)          # the outer lock turned, the inner one not
+    p = tmp_path / "panel.json"
+    p.write_text(json.dumps(panel), encoding="utf-8")
+    with pytest.raises(ValueError, match="decklists do not match"):
+        arena.load_panel(p)
+
+
+def test_a_panel_without_its_decks_is_refused(tmp_path):
+    """The old seed-only shape has to be rejected outright: it is a benchmark that can drift."""
+    panel = arena.load_panel()
+    del panel["decks"]
+    del panel["decks_digest"]
+    panel["digest"] = arena.panel_digest(panel)
+    p = tmp_path / "panel.json"
+    p.write_text(json.dumps(panel), encoding="utf-8")
+    with pytest.raises(ValueError, match="not frozen"):
+        arena.load_panel(p)
+
+
+def test_a_panel_deck_playing_an_unknown_card_is_refused(pool, tmp_path):
+    panel = arena.load_panel()
+    panel["decks"][0]["a"]["main"] = {"no-such-card": 40}
+    with pytest.raises(ValueError, match="card pool does not have"):
+        arena.panel_pairings(pool, panel)
+
+
 def test_the_panel_reports_a_missing_member_rather_than_skipping_it(pool):
     """Generation 0 does not exist yet; the row has to say so, not vanish."""
     panel = arena.load_panel()
-    small = dict(panel, protocol=dict(panel["protocol"], deck_pairs=1, games_per_pair=4))
+    small = dict(panel, decks=panel["decks"][:1],
+                 protocol=dict(panel["protocol"], deck_pairs=1, games_per_pair=4))
     out = arena.run_panel(pool, "random", small, workers=1)
     rows = {m["id"]: m for m in out["members"]}
     assert rows["gen0"]["available"] is False and rows["gen0"]["note"]
@@ -214,6 +368,34 @@ def test_generalisation_reports_three_populations_including_the_holdout(pool):
     assert out["gap_holdout"] == pytest.approx(
         out["populations"][0]["result"]["rate"] - holdout["result"]["rate"])
     assert "memorised matchups" in arena.render_generalisation(out)
+
+
+def test_the_holdout_gap_carries_no_test_statistic(pool):
+    """One matchup is not a sample of a deck population, and the report must not pretend it is.
+
+    The old report printed a two-proportion z here as though 360 games on ``the_heist`` vs
+    ``embracing_power`` were 360 draws from a deck distribution. There is exactly one holdout
+    matchup, so the honest reading is the gap beside the training row's own pairing-to-pairing
+    scatter — which is worth several points, more than the gap usually is.
+    """
+    out = arena.run_generalisation(pool, "random", baseline="random", deck_pairs=3,
+                                   games_per_pairing=4, workers=1)
+    assert "z_holdout" not in out and "z_unseen" not in out
+    assert out["holdout_pairings"] == 1
+    assert len(out["training_pairing_rates"]) == 3
+    text = arena.render_generalisation(out)
+    assert "no test statistic" in text and "z =" not in text
+    assert "not a sample of a deck population" in text
+    # training and unseen have pairings to spare, so that comparison does get an interval
+    lo, hi = out["gap_unseen_interval"][1], out["gap_unseen_interval"][2]
+    assert lo <= out["gap_unseen"] <= hi or lo <= 0 <= hi
+
+
+def test_the_unseen_row_does_not_claim_to_be_out_of_distribution():
+    """`random` is 30% of the training mix, so a fresh random draw is not held-out anything."""
+    note = dict(arena.POPULATIONS)["unseen-random"]
+    assert "Not** out of distribution" in note or "not** out of distribution" in note.lower()
+    assert "0.30" in note and D.DEFAULT_MIX["random"] == 0.30
 
 
 def test_a_training_sample_never_contains_a_holdout_deck(pool):

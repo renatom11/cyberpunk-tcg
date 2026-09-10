@@ -228,6 +228,39 @@ variance; a hopeless matchup settles in a few dozen games rather than a few hund
 rate and its Wilson interval are still reported over every game played, because that is the number
 a reader wants and a paired count is not a win rate.
 
+### The two error bars, and which one a claim has to clear
+
+The games of one deck pairing share decks and shuffles, so they are **not** independent Bernoulli
+trials, and the dominant variance in an arena number is *which deck pairings were drawn* rather
+than how the games inside them fell. Every report therefore prints two intervals:
+
+| | what it answers |
+|---|---|
+| **95% Wilson**, over the games | how much more would *more games on these decks* tell me — conditional on the pairings played, and the right and only interval for the frozen panel, whose decks never change |
+| **between-pairing**, mean of the per-pairing rates ± t(k−1)·s/√k | would this hold *on another sample of decks* — which is what a claim about an agent means |
+
+The difference is not cosmetic. Running the identical protocol (heuristic vs random, six pairings,
+360 games, same game seed) and changing **only** the deck seed:
+
+| deck seed | win rate | 95% Wilson | between-pairing |
+|---|---:|---|---|
+| 20260910 | 93.9% | 90.9–95.9 | 92.1–95.7 |
+| 1 | 88.3% | 84.6–91.3 | 82.1–94.6 |
+| 2 | 94.2% | 91.2–96.2 | 91.3–97.0 |
+| 3 | 95.0% | 92.2–96.8 | 91.3–98.7 |
+| 4 | 94.7% | 91.9–96.6 | 91.3–98.1 |
+
+Nothing about either agent changed across those five rows, yet the first two Wilson intervals **do
+not overlap** — an interval that excludes the truth in a case this ordinary is not a 95% interval.
+Every between-pairing interval in the same table does overlap the others. (Varying only the *game*
+seed on fixed decks gives 91.9–94.2%, inside binomial noise, which is what confirms the deck sample
+is the term the Wilson interval leaves out.)
+
+So: **a generation-over-generation claim must clear the between-pairing interval**, not the Wilson
+one. The between-pairing interval is itself estimated from only k pairings, so it is noisy and can
+come out either side of the Wilson bracket — narrower when six pairings happened to agree, much
+wider when one of them did not. Widen the sample of decks, not the number of games, to tighten it.
+
 The design is exact rather than merely unbiased, and that is a test rather than a claim: put the
 *same* agent name on both sides and the two swapped matches are the same games, so the headline
 rate is exactly 50%, there are no decisive pairs at all, and each agent sits in each seat in
@@ -272,13 +305,30 @@ arena prints from now on.
 
 `data/arena/panel.json` is **data, not code**, so freezing it is visible in a diff. It pins the
 opponents (`random`, the frozen `heuristic`, and a generation-0 snapshot that does not exist yet
-and is reported as "not available yet" rather than quietly skipped), *and* the protocol: six deck
-pairings from deck seed 20260910, 60 games each, no early stopping. A fixed sample is what makes
-two generations comparable, so the panel never uses the SPRT.
+and is reported as "not available yet" rather than quietly skipped), the protocol (six deck
+pairings, 60 games each, no early stopping — a fixed sample is what makes two generations
+comparable, so the panel never uses the SPRT), **and the twelve decklists themselves, written out
+card for card**.
 
-The file carries a digest of its own contents; loading it checks that digest, and
-`tests/learn/test_arena.py` pins the digest a second time in the test itself. Changing the panel is
-allowed — changing it silently is not, and a change makes scores before and after incomparable.
+That last part is version 2 of the file and it matters more than it sounds. Version 1 stored only
+the deck sampler's seed and redrew the lists at run time from `learn.decks.sample_pair`. Its digest
+covered the *recipe* and not the decks, so retuning `DEFAULT_MIX`, the deck sizes or curve
+constants, either builder in `deck/builder.py`, or merely adding or deleting one
+`data/decks/sample_*.json` file would have silently changed all six matchups while the digest still
+matched and the file still loaded — and the deck sample is worth several points of win rate (see
+the table above), so generation N and generation N+2 could have been scored on different opponents
+with nothing in the output saying so. The lists in v2 are exactly what that seed drew on the day
+the panel was frozen, byte for byte, so **v1 and v2 scores are directly comparable** — the
+heuristic scores 93.9% against `random` under both. From here the panel plays the same twelve decks
+in 2027 that it played in 2026, whatever the sampler has since become; the seed is kept in the file
+as provenance only and is never re-run.
+
+Two digests guard it, both checked on load: `digest` over the whole file, and `decks_digest` over
+just the decklists by contents — `(name, legends, sorted(main))` per deck — so it survives
+reformatting and fires on a single card moving in a single list. `tests/learn/test_arena.py` pins
+both a second time, pins the first pairing card for card, and mutates `DEFAULT_MIX` mid-test to
+prove the panel does not move when the sampler does. Changing the panel is allowed — changing it
+silently is not, and a change makes scores before and after incomparable.
 
 ### The cheating upper bound
 
@@ -396,12 +446,34 @@ between the rows. A gap that grows generation over generation means the model is
 matchups instead of learning the game, and it is reported every generation whether or not it
 flatters the run.
 
+The three rows are not statistically alike, and the report says so instead of averaging over the
+difference:
+
+* **training** and **unseen-random** are six deck pairings each, so the gap between them gets an
+  interval over the pairings (Welch, two independent samples of pairings).
+* **holdout** is **one** matchup — `the_heist` against `embracing_power`, the only two retail
+  starters the game has. Its 360 games are 360 games on one pair of decks, not 360 draws from a
+  deck population, so it carries **no test statistic at all**. It is reported as the single matchup
+  it is, beside the training row's own pairing-to-pairing scatter, which is the only honest thing
+  to read it against.
+* **unseen-random** is not out-of-distribution and the report no longer lets it be read that way:
+  `random` is the 0.30 slice of `DEFAULT_MIX`, so that row is a fresh draw from a source training
+  does use. It isolates the unstructured end of the training mix; it does not test transfer.
+
 The frozen heuristic's baseline, measured below, is **negative**: against random it wins 91.1% on
 the training mix, 95.8% on the held-out starters and 94.4% on fresh random decks, a gap of −4.7
-points to the holdout (z = −2.56). That is the expected sign for an agent that cannot memorise
-anything — a hand-built retail deck rewards competent play more than a random list does, so the
-held-out row is the *easier* one. The number to watch is the change: a model that has learned the
-game keeps this gap where it is, and one that has learned six deck pairings drives it positive.
+points to the holdout. An earlier version of this section called that gap significant (z = −2.56).
+It is not, and the z has been withdrawn: it treated one matchup as a sample of a deck population.
+The training row's six pairings run **86.7–96.7%** on their own, so 95.8% on the holdout sits
+comfortably inside the scatter the training decks already show, and −4.7 points is smaller than the
+deck-to-deck term rather than larger. The gap to fresh random decks is −3.3 points with a 95%
+interval over the pairings of −9.1 to +2.5, which likewise includes zero.
+
+The sign is still the one to expect from an agent that cannot memorise anything — a hand-built
+retail deck rewards competent play more than a random list does, so the held-out row is the
+*easier* one — but the honest reading today is "no gap detectable above deck-to-deck noise". The
+number to watch is the change: a model that has learned the game keeps this gap where it is, and
+one that has learned six deck pairings drives it positive by more than that scatter.
 
 ## Honest caveats
 
@@ -420,6 +492,15 @@ game keeps this gap where it is, and one that has learned six deck pairings driv
 
 Everything below this line is appended by `tools/arena.py`, newest last. A run's machine-readable
 twin is in `out/arena/`.
+
+Runs dated 2026-09-10 19:58–20:00 UTC predate two corrections and are kept rather than edited, so
+that what changed is visible. They print a single 95% Wilson interval with no qualifier, which is
+an interval conditional on the deck pairings played and not an error bar for the agent; the
+generalisation run among them prints a two-proportion z against the one-matchup holdout, which has
+since been withdrawn as unsupportable. Their panel run cites panel digest `17064172ad6626e2`,
+version 1 of `data/arena/panel.json`. **Its win rates are still comparable with the v2 panel below**
+— v2 wrote down the very decklists v1 was redrawing, and the heuristic scores 93.9% against
+`random` under both.
 
 
 ### heuristic vs random — 2026-09-10 19:58 UTC
@@ -516,3 +597,60 @@ Gap to the held-out starters: -4.7 points (z = -2.56). Gap to fresh random decks
 **Floor** is uniform random play over the same turn, on the same seeds, stored when the position was qualified. Read the agent's column against it, not against the frozen heuristic's zero: the heuristic scores zero here by construction, because missing these positions on these seeds is how they were selected.
 
 The win is confirmed by playing the turn out and the rival's whole reply with the frozen heuristic in both seats, so a line that reaches seven Gigs and has them stolen back does not count. That reply is one competent defence and one sample of the rival's Gig die, not a proof against every defence.
+
+
+### heuristic vs random — 2026-09-10 21:48 UTC
+
+`arena a-vs-b heuristic random --no-sprt` over 6 deck pairings sampled from deck seed 20260910.
+
+360 games over 6 deck pairings, 180 paired comparisons — every seed played from both seats and with the deck assignments swapped. Ruleset `149b39c8f55e9d41`, 2.7s.
+
+| | games | win rate | 95% Wilson (these decks) |
+|---|---:|---:|---|
+| **heuristic** | 360 | 93.9% | 90.9–95.9% |
+| random | 360 | 6.1% | 4.1–9.1% |
+
+The Wilson interval above is **conditional on these 6 deck pairings**: it says what more games on these decks would tell you, and nothing about other decks. Per-pairing rates run 91.7–95.0%; over the deck population the mean is 93.9 [92.1–95.7]% (t5 on 6 pairings). **That second band is the error bar for heuristic's strength**, and a generation-over-generation claim has to clear it rather than the Wilson one — the same protocol on five different deck samples moves several points while nothing about the agents changes. It is estimated from only 6 pairings, so it is itself noisy and can land either side of the Wilson bracket: narrower when the pairings happened to agree, much wider when one of them did not.
+
+Paired test: 159 of 160 decisive pairs (99.4%) — no sequential test was run (fixed sample).
+
+heuristic sat in seat 0 in 180 of 360 games — exactly half, by construction. heuristic on the play: 98.9% [94.0–99.8] (who goes first is the d20 winner's *choice*, so this is description, not balance). Average game length 11.4 turns. End reasons: OVERTIME 15, SEVEN_GIGS 345.
+
+| deck pairing | games | heuristic win rate |
+|---|---:|---|
+| `sampled-0` built vs built-b | 60 | 95.0% [86.3–98.3] |
+| `sampled-1` built vs explorer | 60 | 91.7% [81.9–96.4] |
+| `sampled-2` Sample Gangers vs random | 60 | 91.7% [81.9–96.4] |
+| `sampled-3` random vs random-b | 60 | 95.0% [86.3–98.3] |
+| `sampled-4` random vs random-b | 60 | 95.0% [86.3–98.3] |
+| `sampled-5` random vs built | 60 | 95.0% [86.3–98.3] |
+
+
+### Frozen panel: heuristic — 2026-09-10 21:48 UTC
+
+Panel `a1832d477c27193f`, decks `1b1799dbc029a6b7`, frozen 2026-09-10: 6 deck pairings whose **decklists are stored verbatim in `data/arena/panel.json`** and are never redrawn from the sampler, 60 games each, no early stopping. Both digests are checked on load, so these numbers are comparable across every generation as long as they read `a1832d477c27193f` / `1b1799dbc029a6b7`.
+
+| opponent | games | win rate | 95% Wilson (these decks) | per-pairing spread | decisive pairs |
+|---|---:|---:|---|---|---|
+| uniform random legal play (`random`) | 360 | 93.9% | 90.9–95.9% | 91.7–95.0% | 159/160 |
+| the frozen one-ply heuristic (`heuristic`) | 360 | 50.0% | 44.9–55.1% | 50.0–50.0% | 0/0 |
+| the generation-0 snapshot (`gen0`) | — | not available yet | — | — | lands with the first trained model; until then this row reads "not available yet" and the panel is two members |
+
+Here the Wilson interval is the right one and the *only* one that changes between generations: the decks are fixed by the panel, so nothing but more games is being sampled. The per-pairing spread is printed beside it as a reminder of what the panel is not — a panel score is a score on these twelve decklists, and generalises no further than they do. For a claim about play in general, use the between-pairing interval from `a-vs-b` or `generalisation`.
+
+
+### Generalisation gap: heuristic vs random — 2026-09-10 21:48 UTC
+
+The same agent against the same baseline on three deck populations. Both seats draw from the same population in each row, so the number measures play, not deck strength; what matters is the difference between the rows.
+
+| deck population | pairings | games | win rate | 95% Wilson (these decks) | per-pairing spread |
+|---|---:|---:|---:|---|---|
+| training — the training mix (learn.decks.DEFAULT_MIX), the distribution self-play draws from | 6 | 360 | 91.1% | 87.7–93.6% | 86.7–96.7% |
+| holdout — the two retail starters, held out of training entirely — **one** matchup, because the game has exactly two of them | 1 | 360 | 95.8% | 93.2–97.5% | one matchup |
+| unseen-random — fresh RAM-legal random decks on a deck seed training never used. **Not** out of distribution: `random` is the 0.30 slice of the training mix, so this row is a fresh draw from a source the model does train on, and it isolates the unstructured end of that mix rather than testing transfer | 6 | 360 | 94.4% | 91.6–96.4% | 86.7–100.0% |
+
+**Gap to the held-out starters: -4.7 points, and no test statistic.** The holdout is 1 matchup, so those games are not a sample of a deck population and a two-proportion z over them would claim a precision the design cannot support. Read it against the training row's own scatter instead: its 6 pairings run 86.7–96.7%, which puts the holdout rate inside the range the training decks themselves cover.
+
+Gap to fresh random decks: -3.3 points, 95% interval over the pairings -3.3 [-9.1 to +2.5] points (Welch, two independent samples of deck pairings). Both rows have deck pairings to spare, so this comparison is between deck *populations* and not between two piles of games.
+
+A gap that grows generation over generation means memorised matchups. Watch the change in these numbers, and only trust a change that is large against the per-pairing spread beside it.
