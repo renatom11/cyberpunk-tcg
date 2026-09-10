@@ -8,6 +8,7 @@ from cptcg.core.engine import legal_actions
 from cptcg.core.enums import NO_INST, NZONE, TARGET_GIG, CardType, Keyword, Zone
 from cptcg.core.ops import ATTACKING, available, has_keyword, play_cost, power
 from cptcg.core.state import GameState
+from cptcg.core.view import hand_visible, legend_identity_known
 
 
 def card_json(s: GameState, inst: int) -> dict:
@@ -127,12 +128,11 @@ def view_state(s: GameState, perspective: int | None, names: tuple[str, str], lo
     players = []
     for p in (0, 1):
         base = p * NZONE
-        visible = perspective is None or perspective == p
+        # Redaction rules live in core/view.py; this module only renders them.
+        visible = hand_visible(s, perspective, p)
         legends = []
         for i in s.legends(p):
-            known = visible and bool(s.i_known[i] & (1 << p)) if not s.i_faceup[i] else True
-            if perspective is None:
-                known = True
+            known = legend_identity_known(s, perspective, i)
             j = {"inst": i, "faceup": bool(s.i_faceup[i]), "spent": bool(s.i_spent[i]),
                  "gear": [card_json(s, g) for g in s.gear_on(i)]}
             if s.i_faceup[i] or known:
