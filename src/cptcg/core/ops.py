@@ -333,6 +333,8 @@ def steal_gig(s: GameState, thief: int, index: int) -> tuple[int, int]:
 
 
 def adjust_gig(s: GameState, actor: int, owner: int, index: int, delta: int) -> None:
+    if index >= len(s.gig[owner]):
+        return                                          # the die moved before the choice resolved
     sides, value = s.gig[owner][index]
     nv = max(1, min(sides, value + delta))
     if nv == value:
@@ -343,6 +345,8 @@ def adjust_gig(s: GameState, actor: int, owner: int, index: int, delta: int) -> 
 
 
 def set_gig(s: GameState, actor: int, owner: int, index: int, value: int) -> None:
+    if index >= len(s.gig[owner]):
+        return
     sides, old = s.gig[owner][index]
     nv = max(1, min(sides, value))
     if nv == old:
@@ -353,6 +357,8 @@ def set_gig(s: GameState, actor: int, owner: int, index: int, value: int) -> Non
 
 
 def swap_gigs(s: GameState, actor: int, mine: int, theirs: int) -> None:
+    if mine >= len(s.gig[actor]) or theirs >= len(s.gig[1 - actor]):
+        return
     a, b = s.gig[actor][mine], s.gig[1 - actor][theirs]
     s.gig[actor][mine], s.gig[1 - actor][theirs] = b, a
     s.emit("swap", actor, mine, theirs)
@@ -360,6 +366,8 @@ def swap_gigs(s: GameState, actor: int, mine: int, theirs: int) -> None:
 
 
 def reroll_gig(s: GameState, player: int, index: int) -> int:
+    if index >= len(s.gig[player]):
+        return 0
     sides, _ = s.gig[player][index]
     v = s.rng.die(sides)
     s.gig[player][index] = (sides, v)

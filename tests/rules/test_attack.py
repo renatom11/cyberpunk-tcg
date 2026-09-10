@@ -112,3 +112,17 @@ def test_lagged_unit_cannot_attack_but_adrenaline_can(reg):
     s = board(reg, Side(field=[("T-U3", {"lag": True}), ("T-U5", {"lag": False})]), Side(gig=[(6, 3)]))
     attacks = {a.inst for a in s.pending.options if isinstance(a, Attack)}
     assert attacks == {find(s, "T-U5")}
+
+
+def test_spent_triggers_resolve_before_the_target_is_declared(pool):
+    """A 'when this Unit is spent' Gear effect (Zetatech Faceplate) fires as the attacker is
+    spent, i.e. before targeting — and must not crash if it references dice that later move."""
+    from cptcg.core.actions import ChoiceKind
+    s = board(pool, Side(field=[("psycho-squad", {"gear": ["zetatech-faceplate"]})], gig=[(4, 2)]),
+              Side(field=[("corpo-security", {"spent": True})], gig=[(6, 3)]))
+    do(s, Attack(find(s, "psycho-squad")))
+    assert s.pending.kind is ChoiceKind.PICK and "Adjust" in s.pending.prompt      # Faceplate first
+    do(s, Pick((len(s.pending.options) - 2,)))                                       # adjust the rival's die
+    assert s.pending.kind is ChoiceKind.TARGET                                       # then targeting
+    do(s, Target(TARGET_GIG))
+    assert len(s.gig[0]) == 2

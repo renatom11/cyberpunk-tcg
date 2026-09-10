@@ -188,7 +188,8 @@ def _assert_legal(deck: Decklist, reg: Registry) -> None:
 
 
 # ------------------------------------------------------------------ mutation
-def mutate(reg: Registry, deck: Decklist, rng: Pcg32, legend_swap_rate: float = 0.1) -> tuple[Decklist, str]:
+def mutate(reg: Registry, deck: Decklist, rng: Pcg32, legend_swap_rate: float = 0.1,
+           remove_bias: dict[str, float] | None = None) -> tuple[Decklist, str]:
     """One card swap for a legal alternative (biased to the same type and cost band); sometimes
     a Legend swap with RAM repair. The replacement takes the removed card's exact position in
     the list, so the shuffle maps identically and champion and challenger differ in one slot —
@@ -220,6 +221,15 @@ def mutate(reg: Registry, deck: Decklist, rng: Pcg32, legend_swap_rate: float = 
         return Decklist(deck.name, tuple(legends), tuple(main), dict(deck.meta)), f"legend {old} -> {new.id}"
     pool = legal_pool(reg, legends)
     idx = rng.below(len(main))
+    if remove_bias:
+        # Pick the removal from the worst-IWD cards most of the time: weight = rank from the bottom.
+        ranked = sorted(remove_bias, key=lambda c: remove_bias[c])
+        worst = ranked[: max(3, len(ranked) // 4)]
+        if worst and rng.below(4):
+            target = rng.choice(worst)
+            idxs = [i for i, c in enumerate(main) if c == target]
+            if idxs:
+                idx = rng.choice(idxs)
     out_id = main[idx]
     out = reg.get(out_id)
     cands = [d for d in pool if d.id != out_id and counts[d.id] < 3]
@@ -243,6 +253,7 @@ class FieldEvaluator:
     agent: str = "heuristic"
     workers: int | None = None
     _cache: dict = field(default_factory=dict)
+    _drawn: dict = field(default_factory=dict)
 
     def outcomes(self, deck: Decklist, seeds: list[int]) -> dict[tuple, bool]:
         sig = (tuple(deck.legends), tuple(sorted(deck.counts().items())))
@@ -260,6 +271,7 @@ class FieldEvaluator:
         """Same as outcomes() but runs all opponents' games as one batched match per opponent."""
         sig = (tuple(deck.legends), tuple(sorted(deck.counts().items())))
         cache = self._cache.setdefault(sig, {})
+        drawn = self._drawn.setdefault(sig, {})
         missing = [s for s in seeds if (0, s, 0) not in cache]
         if missing:
             lo, hi = min(missing), max(missing)
@@ -267,8 +279,30 @@ class FieldEvaluator:
                 m = run_match(deck, opp, self.agent, self.agent, 2 * (hi - lo + 1), seed=lo, workers=self.workers)
                 for r in m.results:
                     cache[(oi, r.seed, r.deck_a_seat)] = r.winner_deck == "A"
+                    drawn[(oi, r.seed, r.deck_a_seat)] = r.drawn_a
         want = set(seeds)
         return {k: v for k, v in cache.items() if k[1] in want}
+
+    def iwd(self, deck: Decklist, seeds: list[int]) -> dict[str, float]:
+        """Per-card IWD (win rate when drawn minus when not) over the cached games on ``seeds``."""
+        sig = (tuple(deck.legends), tuple(sorted(deck.counts().items())))
+        cache, drawn = self._cache.get(sig, {}), self._drawn.get(sig, {})
+        want = set(seeds)
+        out = {}
+        for cid in set(deck.main):
+            dw = dg = ow = og = 0
+            for k, won in cache.items():
+                if k[1] not in want:
+                    continue
+                if cid in drawn.get(k, ()):
+                    dg += 1
+                    dw += won
+                else:
+                    og += 1
+                    ow += won
+            if dg >= 5 and og >= 5:
+                out[cid] = dw / dg - ow / og
+        return out
 
 
 @dataclass
@@ -284,7 +318,7 @@ class Step:
 
 
 def hill_climb(reg: Registry, deck: Decklist, field_decks: list[Decklist], steps: int = 20, seed: int = 0,
-               agent: str = "heuristic", workers: int | None = None, seeds_per_batch: int = 10,
+               agent: str = "heuristic", workers: int | None = None, seeds_per_batch: int = 20,
                max_batches: int = 3, sprt: SPRT | None = None, log=None, progress=None) -> tuple[Decklist, list[Step]]:
     """Improve ``deck`` by single-card swaps. Each proposal is played against the same opponents
     on the same seeds as the champion; the paired SPRT runs on the discordant games (where exactly
@@ -295,7 +329,9 @@ def hill_climb(reg: Registry, deck: Decklist, field_decks: list[Decklist], steps
     champ = deck
     history: list[Step] = []
     for step in range(1, steps + 1):
-        cand, desc = mutate(reg, champ, rng)
+        base_seeds = [seed * 1000 + k for k in range(seeds_per_batch * max_batches)]
+        bias = ev.iwd(champ, base_seeds)
+        cand, desc = mutate(reg, champ, rng, remove_bias=bias or None)
         if desc == "no-op":
             continue
         wins = disc = games = 0

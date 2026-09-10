@@ -203,15 +203,14 @@ def activate(s: GameState, p: int, inst: int, k: int) -> None:
     ab = s.card(inst).script.abilities[k]
     excl = inst if (ab.self_spend and s.card(inst).type is CardType.LEGEND) else NO_INST
     cost = ab.cost(_ctx(s, inst)) if callable(ab.cost) else ab.cost
-    pay(s, p, cost, exclude=excl)
+    s.stack.append(HookStep(ab.effect, inst))
+    pay(s, p, cost, exclude=excl)                 # spend triggers queue above the effect
     if ab.self_spend:
         spend(s, inst)
     s.emit("activate", p, inst, k)
-    s.stack.append(HookStep(ab.effect, inst))
 
 
 def _attack(s: GameState, p: int, unit: int) -> None:
-    spend(s, unit)
     s.atk = AttackContext(unit, p)
     s.emit("attack", p, unit)
     # Stack is LIFO: pushed last runs first. Rulebook order is triggers -> target -> react -> resolve.
@@ -222,6 +221,8 @@ def _attack(s: GameState, p: int, unit: int) -> None:
     for g in s.gear_on(unit):
         push_trigger(s, Trigger.ATTACK, g)
     push_trigger(s, Trigger.ATTACK, unit)
+    # Spend last so "when this Unit is spent" effects land on top and resolve before targeting.
+    spend(s, unit)
     dispatch(s, ("attack", unit, p))
 
 

@@ -316,10 +316,15 @@ class EffectCtx:
     def choose_gig(self, owners: Iterable[int], cont: Callable[["EffectCtx", int, int], None], *,
                    pred: Callable[[int, int], bool] | None = None, prompt: str = "Choose a Gig",
                    optional: bool = False, player: int | None = None) -> None:
-        cands = [(o, i) for o in owners for i, (k, v) in enumerate(self.gigs(o))
+        cands = [(o, i, k, v) for o in owners for i, (k, v) in enumerate(self.gigs(o))
                  if pred is None or pred(k, v)]
-        self.choose(cands, lambda c, ov: cont(c, ov[0], ov[1]), prompt=prompt, optional=optional,
-                    player=player)
+
+        def _do(c: "EffectCtx", t: tuple) -> None:
+            o, i, k, v = t
+            gigs = c.gigs(o)
+            if i < len(gigs) and gigs[i] == (k, v):
+                cont(c, o, i)
+        self.choose(cands, _do, prompt=prompt, optional=optional, player=player)
 
     def adjust_up_to(self, owners: Iterable[int], lo: int, hi: int, *, cont: Callable | None = None,
                      prompt: str = "Adjust a Gig") -> None:
@@ -330,12 +335,16 @@ class EffectCtx:
             for i, (k, v) in enumerate(self.gigs(o)):
                 for a in range(lo, hi + 1):
                     if a != 0 and 1 <= v + a <= k:
-                        cands.append((o, i, a))
+                        cands.append((o, i, a, k, v))
 
         def _do(c: "EffectCtx", t: tuple) -> None:
-            c.adjust_gig(t[0], t[1], t[2])
+            o, i, a, k, v = t
+            gigs = c.gigs(o)
+            if i >= len(gigs) or gigs[i] != (k, v):
+                return                                   # that die moved before the answer arrived
+            c.adjust_gig(o, i, a)
             if cont is not None:
-                cont(c, t[0], t[1])
+                cont(c, o, i)
 
         self.choose(cands, _do, prompt=prompt, optional=True)
 

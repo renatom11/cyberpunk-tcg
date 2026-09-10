@@ -216,7 +216,7 @@ def main(argv=None) -> None:
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--agent", default="heuristic")
     p.add_argument("-j", "--jobs", type=int, default=None)
-    p.add_argument("--seeds", type=int, default=10, help="seeds per batch (x2 games x field size)")
+    p.add_argument("--seeds", type=int, default=20, help="seeds per batch (x2 games x field size)")
     p.add_argument("--batches", type=int, default=3)
     p.add_argument("--delta", type=float, default=0.1)
     p.add_argument("--out", default="out/built.json")
