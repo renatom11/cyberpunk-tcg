@@ -270,6 +270,7 @@ function renderJobs(jobs) {
     const head = el("div", "head");
     head.append(el("b", "", j.kind.toUpperCase()), el("span", "", j.params.name || j.id), el("span", "dim", `${j.elapsed}s`), el("span", "st " + j.status, j.status));
     d.append(head);
+    if (j.decks && j.decks.length) d.append(el("div", "dim", `${j.decks.length} decks saved under ${j.decks[0].split("/").slice(0, -1).join("/")}/ — they are now in the deck lists.`));
     if (j.reports.length) { const r = el("div", "reps"); j.reports.forEach((f, i) => { const a = el("a", "", j.kind === "league" ? `gen ${i + 1}` : "report"); a.onclick = () => openReport(f); r.append(a); }); d.append(r); }
     const pre = el("pre", "", j.lines.slice(-12).join("\n")); d.append(pre);
     root.append(d);
@@ -281,7 +282,7 @@ async function pollJobs() {
   const running = jobs.some(j => j.status === "running");
   if (running && !JOBTIMER) JOBTIMER = setInterval(async () => {
     const js = await api("/api/jobs"); renderJobs(js);
-    if (!js.some(j => j.status === "running")) { clearInterval(JOBTIMER); JOBTIMER = null; refreshReports(); }
+    if (!js.some(j => j.status === "running")) { clearInterval(JOBTIMER); JOBTIMER = null; refreshReports(); refreshDecks(); }
   }, 1500);
 }
 async function refreshReports() {
@@ -289,11 +290,33 @@ async function refreshReports() {
   (await api("/api/reports")).forEach(f => { const o = el("option", "", f); o.value = f; sel.append(o); });
   if (cur) sel.value = cur;
 }
+function fillDeckChecklist(decks) {
+  const tl = $("#tDecks"); const was = new Set([...tl.querySelectorAll("input:checked")].map(c => c.value)); tl.innerHTML = "";
+  decks.forEach(d => { const l = el("label"); const c = el("input"); c.type = "checkbox"; c.value = d.path; c.checked = was.size ? was.has(d.path) : d.path.startsWith("data/decks/sample_"); l.append(c, `${d.name} `, el("small", "", `(${d.size}) ${d.legends.map(x => CARDS[x]?.name || x).join(" / ")}`)); tl.append(l); });
+}
+async function refreshDecks() {
+  const decks = (await api("/api/decks")).filter(d => d.ok);
+  fillDeckChecklist(decks);
+  for (const sel of [$("#deckMe"), $("#deckAi"), $("#bLoad")]) {
+    const have = new Set([...sel.options].map(o => o.value));
+    decks.forEach(d => { if (!have.has(d.path)) { const o = el("option", "", sel.id === "bLoad" ? `${d.name} (${d.size})` : `${d.name} (${d.size}) — ${d.path}`); o.value = d.path; sel.append(o); } });
+  }
+}
+function strategyChecklist(root, strategies) {
+  strategies.filter(s => s.name !== "random").forEach(s => { const l = el("label"); const c = el("input"); c.type = "checkbox"; c.value = s.name; c.checked = s.name !== "legacy"; l.title = s.description; l.append(c, s.name, el("small", "", s.description.split(". ")[0])); root.append(l); });
+}
 async function initLab(decks, strategies) {
+  fillDeckChecklist(decks);
+  const gl = $("#gStrategies"); strategyChecklist(gl, strategies);
+  $("#gRun").onclick = async () => {
+    const picked = [...gl.querySelectorAll("input:checked")].map(c => c.value);
+    if (!picked.length) { alert("pick at least one builder personality"); return; }
+    try { await api("/api/jobs", { kind: "generate", name: $("#gName").value, strategies: picked, count: +$("#gCount").value, seed: +$("#gSeed").value, screen: +$("#gScreen").value, keep: +$("#gKeep").value }); }
+    catch (e) { alert(e.message); return; }
+    pollJobs();
+  };
   const tl = $("#tDecks");
-  decks.forEach(d => { const l = el("label"); const c = el("input"); c.type = "checkbox"; c.value = d.path; c.checked = d.path.startsWith("data/decks/sample_"); l.append(c, `${d.name} `, el("small", "", `(${d.size}) ${d.legends.map(x => CARDS[x]?.name || x).join(" / ")}`)); tl.append(l); });
-  const sl = $("#lStrategies");
-  strategies.filter(s => s.name !== "random").forEach(s => { const l = el("label"); const c = el("input"); c.type = "checkbox"; c.value = s.name; c.checked = s.name !== "legacy"; l.title = s.description; l.append(c, s.name, el("small", "", s.description.split(". ")[0])); sl.append(l); });
+  const sl = $("#lStrategies"); strategyChecklist(sl, strategies);
   $("#tRun").onclick = async () => {
     const picked = [...tl.querySelectorAll("input:checked")].map(c => c.value);
     if (picked.length < 2) { alert("pick at least two decks"); return; }

@@ -84,6 +84,19 @@
         </div>
       </div>
       <div class="setup">
+        <h2>Generate decks</h2>
+        <p class="hint">Build many different decks at once. Each comes from a personality that picks the Legends it likes best, with a novelty penalty so the batch spreads across the Legend space and a similarity floor so no two are near-copies. Optionally screen them against a panel and keep only the best.</p>
+        <div id="gStrategies" class="checklist"></div>
+        <div class="row">
+          <label>Name <input id="gName" placeholder="batch" size="10"></label>
+          <label>Count <input id="gCount" type="number" value="24" min="1" max="500" style="width:60px"></label>
+          <label>Seed <input id="gSeed" type="number" value="0" style="width:60px"></label>
+          <label>Screen games/opp. <input id="gScreen" type="number" value="0" min="0" style="width:52px"></label>
+          <label>Keep best <input id="gKeep" type="number" value="0" min="0" style="width:52px"></label>
+          <button id="gRun" class="primary">START</button>
+        </div>
+      </div>
+      <div class="setup">
         <h2>Jobs</h2>
         <div id="jobs" class="jobs"></div>
       </div>

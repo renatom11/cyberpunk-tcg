@@ -88,6 +88,32 @@ them. Future leagues add the top champions to the field the builders climb again
 thesis has to beat what has actually won before, not only this generation's neighbours. Duplicate
 decks (same Legends, same counts) keep their best record.
 
+## Generating a population
+
+`cptcg generate` (and the LAB page's *Generate decks* form) builds many different decks in one
+go, each one on purpose:
+
+1. The personalities take turns. Each picks its Legend triple by its own `legend_fit` plus the
+   quality of the pool that triple unlocks, sampling 30 candidates — with a **novelty penalty**
+   for triples and individual Legends the batch has already used, so deck 80 explores a corner of
+   the Legend space that deck 3 did not.
+2. The deck is filled by that personality's card scores plus the learned values in the knowledge
+   store, with the usual build noise.
+3. A candidate whose main deck is more than 70% similar (Jaccard over card copies) to an accepted
+   deck is thrown away and rebuilt, up to six times; only if the pool under those Legends is too
+   narrow to differ is a near-copy accepted.
+4. Optionally every deck is **screened**: mirrored games against a small panel (the sample decks,
+   or the hall of fame when one exists), ranked by pooled win rate, and `--keep N` saves only the
+   best. A screen is deliberately cheap (10 games per opponent is enough to discard the bottom
+   half); rank the survivors properly with `cptcg tourney`.
+
+The Legend space itself: 27 Legends are printed, 25 are usable today (Rebecca and Adam Smasher
+*Ender of Legends* have no verified text yet, so the builders never pick them). Three of the
+names appear twice (V, Goro Takemura, Jackie Welles) and a deck may not repeat a name, which cuts
+the 2,300 triples of usable Legends to **2,231 legal triples**, every one with at least 29 legal
+main-deck cards (median 53). Around 1,200 of them mix two colours, 935 three, and 95 are
+mono-colour — the only way to reach RAM 5–6 cards.
+
 ## Running a learning league
 
 ```python

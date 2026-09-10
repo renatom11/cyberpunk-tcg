@@ -216,6 +216,7 @@ class Job:
         self.status = "running"
         self.lines: list[str] = []
         self.reports: list[str] = []
+        self.decks: list[str] = []
         self.error: str | None = None
         self.started = time.time()
         self.finished: float | None = None
@@ -225,7 +226,8 @@ class Job:
 
     def to_json(self) -> dict:
         return {"id": self.id, "kind": self.kind, "params": self.params, "status": self.status,
-                "lines": self.lines[-60:], "n_lines": len(self.lines), "reports": self.reports, "error": self.error,
+                "lines": self.lines[-60:], "n_lines": len(self.lines), "reports": self.reports, "decks": self.decks,
+                "error": self.error,
                 "elapsed": round((self.finished or time.time()) - self.started, 1)}
 
 
@@ -291,15 +293,48 @@ def _run_league(job: Job) -> None:
         job.log(f"generation {gen}: " + ", ".join(f"{decks[i].name} {bt[i]:.2f}" for i in order))
 
 
+def _run_generate(job: Job) -> None:
+    from cptcg.deck.generate import generate_decks, save_batch, screen_decks
+    from cptcg.deck.hall_of_fame import DEFAULT_PATH as HOF_PATH, HallOfFame
+    body = job.params
+    count = max(1, min(500, int(body.get("count", 20))))
+    strategies = body.get("strategies") or None
+    legends = body.get("legends") or None
+    seed = int(body.get("seed", 0))
+    batch = generate_decks(reg(), count, strategies, seed=seed, knowledge=knowledge(), legends=legends,
+                           max_similarity=float(body.get("max_similarity", 0.7)),
+                           prefix=deck_slug(body.get("name") or "gen") + "-", progress=job.log)
+    decks = batch.decks
+    job.log(f"{len(decks)} decks on {len(batch.triples)} Legend triples; {batch.rejected_similar} near-duplicates rejected")
+    out = DECK_DIRS[0] / "generated" / f"{deck_slug(body.get('name') or 'batch')}-{job.id}"
+    screen = int(body.get("screen", 0))
+    if screen:
+        panel = [Decklist.load(p) for p in sorted(DECK_DIRS[0].glob("sample_*.json"))[:4]]
+        hof_path = ROOT / HOF_PATH
+        if body.get("hof_panel", True) and hof_path.exists():
+            panel = (HallOfFame.load(hof_path).opponents(4) or []) + panel[:2]
+        ranked = screen_decks(reg(), decks, panel, screen, agent=body.get("agent") or "heuristic", seed=seed,
+                              workers=body.get("jobs"), progress=job.log)
+        keep = int(body.get("keep", 0))
+        decks = [r.deck for r in (ranked[:keep] if keep else ranked)]
+        job.log("ranking: " + ", ".join(f"{r.deck.name} {100 * r.rate:.0f}%" for r in ranked[:10]))
+        out.mkdir(parents=True, exist_ok=True)
+        (out / "screen.json").write_text(json.dumps([{"name": r.deck.name, "wins": r.wins, "games": r.games}
+                                                     for r in ranked], indent=1), encoding="utf-8")
+    paths = save_batch(decks, out)
+    job.decks = [rel(p) for p in paths]
+    job.log(f"saved {len(paths)} decks to {rel(out)}/")
+
+
 def start_job(body: dict) -> Job:
     kind = body.get("kind")
-    if kind not in ("tourney", "league"):
-        raise ValueError("kind must be tourney or league")
+    if kind not in ("tourney", "league", "generate"):
+        raise ValueError("kind must be tourney, league or generate")
     job = Job(kind, body)
 
     def run():
         try:
-            (_run_tourney if kind == "tourney" else _run_league)(job)
+            {"tourney": _run_tourney, "league": _run_league, "generate": _run_generate}[kind](job)
             job.status = "done"
         except Exception as e:  # noqa: BLE001
             job.status = "failed"

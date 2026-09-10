@@ -54,6 +54,13 @@ python -m cptcg build --strategy aggro --steps 30 --out out/built.json          
 python -m cptcg build --legends v-streetkid,dexter-deshawn-off-the-grid,rogue-amendiares-preem-solo --steps 30
 python -m cptcg build --strategy control --knowledge out/knowledge.json         # build with learned card values
 
+# Build a ton of different decks at once: personalities pick their Legends with a novelty penalty,
+# near-duplicates are rejected, then (optionally) every deck is screened against a panel and only
+# the best are kept. 25 usable Legends with the unique-name rule give 2,231 legal triples.
+python -m cptcg generate --count 100 --seed 1 --out data/decks/generated/batch1
+python -m cptcg generate --count 200 --screen 10 --keep 20 --knowledge out/knowledge.json -j 4
+python -m cptcg generate --count 12 --strategies gig,aggro --legends v-streetkid,jackie-welles-mamas-favorite,padre-man-of-the-cross
+
 # AI builders evolving against each other, with a tournament report every generation.
 # Each builder has a personality; every generation feeds the knowledge store (per-card values
 # learned from play) and the hall of fame (past champions join the field). See docs/deckbuilding.md.

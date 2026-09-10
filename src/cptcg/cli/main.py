@@ -177,6 +177,39 @@ def cmd_league(args) -> None:
     print(f"reports in {args.out}/genN/report.md")
 
 
+def cmd_generate(args) -> None:
+    import json as _json
+    from cptcg.deck.generate import generate_decks, save_batch, screen_decks
+    reg = load_default()
+    knowledge = None
+    if args.knowledge:
+        from cptcg.deck.knowledge import Knowledge
+        knowledge = Knowledge.load(args.knowledge, reg)
+    strategies = args.strategies.split(",") if args.strategies else None
+    legends = args.legends.split(",") if args.legends else None
+    t0 = time.perf_counter()
+    batch = generate_decks(reg, args.count, strategies, seed=args.seed, knowledge=knowledge, legends=legends,
+                           max_similarity=args.max_similarity, prefix=args.prefix,
+                           progress=lambda m: print("  " + m, file=sys.stderr))
+    decks = batch.decks
+    print(f"{len(decks)} decks, {len(batch.triples)} Legend triples, {len(batch.legends)} Legends used, "
+          f"{batch.rejected_similar} near-duplicates rejected ({time.perf_counter() - t0:.0f}s)")
+    if args.screen:
+        panel = [_load_deck(reg, p, True, True) for p in args.panel] if args.panel else \
+            [Decklist.load(p) for p in sorted((Path(__file__).resolve().parents[3] / "data/decks").glob("sample_*.json"))[:4]]
+        ranked = screen_decks(reg, decks, panel, args.screen, agent=args.agent, seed=args.seed, workers=args.jobs,
+                              progress=lambda m: print("  " + m, file=sys.stderr))
+        for r in ranked:
+            print(f"  {100 * r.rate:5.1f}%  {r.deck.name}")
+        decks = [r.deck for r in ranked[:args.keep]] if args.keep else [r.deck for r in ranked]
+        Path(args.out).mkdir(parents=True, exist_ok=True)
+        with open(Path(args.out) / "screen.json", "w", encoding="utf-8") as f:
+            _json.dump([{"name": r.deck.name, "wins": r.wins, "games": r.games, "strategy": r.deck.meta.get("strategy")}
+                        for r in ranked], f, indent=1)
+    paths = save_batch(decks, args.out)
+    print(f"saved {len(paths)} decks to {args.out}/")
+
+
 def cmd_strategies(args) -> None:
     from cptcg.deck.strategies import all_strategies, blurb
     for st in all_strategies():
@@ -266,6 +299,22 @@ def main(argv=None) -> None:
     p.add_argument("--hof", help="path of the hall of fame; champions of past leagues join the field")
     p.add_argument("--hof-opponents", type=int, default=2)
     p.set_defaults(fn=cmd_league)
+
+    p = sub.add_parser("generate", help="build many different decks, optionally screen them and keep the best")
+    p.add_argument("--count", type=int, default=20)
+    p.add_argument("--strategies", help="comma-separated personalities to cycle (default: all six)")
+    p.add_argument("--legends", help="pin every deck to these three Legend ids")
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--knowledge", help="learned card values to build with")
+    p.add_argument("--max-similarity", type=float, default=0.7, help="reject a deck this similar to one already built")
+    p.add_argument("--prefix", default="gen")
+    p.add_argument("--screen", type=int, default=0, help="games per panel opponent; 0 = no screen")
+    p.add_argument("--panel", nargs="*", help="screening opponents (default: 4 sample decks)")
+    p.add_argument("--keep", type=int, default=0, help="after screening keep only the best N")
+    p.add_argument("--agent", default="heuristic")
+    p.add_argument("-j", "--jobs", type=int, default=None)
+    p.add_argument("--out", default="data/decks/generated")
+    p.set_defaults(fn=cmd_generate)
 
     p = sub.add_parser("strategies", help="list the deck-builder personalities")
     p.add_argument("--knowledge", help="also summarise a learned card-value store")
