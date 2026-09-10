@@ -183,7 +183,7 @@ table.rep th { color: var(--cyan); }
    becomes an overlay and the prompt bar sits at the bottom. */
 @media (max-width: 700px) {
   .top { padding: 3px 6px; height: 36px; box-sizing: border-box; flex-wrap: nowrap; }
-  .brand { font-size: 10px; white-space: nowrap; letter-spacing: 0; } .brand span { display: none; }
+  .brand { font-size: 10px; white-space: nowrap; letter-spacing: 0; } .brand span:not(.build) { display: none; }
   nav { display: flex; flex-wrap: nowrap; }
   nav button { padding: 3px 4px; font-size: 8.5px; margin-left: 2px; letter-spacing: 0; }
   .board {
@@ -283,3 +283,4 @@ table.rep th { color: var(--cyan); }
   .prompt { max-height: 22vh; } .prompt .desc { display: none; }
   .p-controls button { padding: 2px 5px; font-size: 8px; }
 }
+.brand .build { color: var(--dim); font-size: 10px; margin-left: 8px; letter-spacing: 0; font-weight: 400; }

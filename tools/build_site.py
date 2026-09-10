@@ -12,6 +12,8 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import subprocess
+import time
 import zipfile
 from pathlib import Path
 
@@ -19,8 +21,19 @@ ROOT = Path(__file__).resolve().parents[1]
 PYODIDE = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/"
 
 
+def build_id() -> str:
+    """Short git SHA (falls back to a timestamp): stamped into every asset URL so a new deploy is
+    never served from a browser's or GitHub Pages' cache of the previous one."""
+    try:
+        return subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True,
+                              text=True, check=True).stdout.strip()
+    except Exception:  # noqa: BLE001
+        return time.strftime("%Y%m%d%H%M%S", time.gmtime())
+
+
 def build(out: Path, pyodide_url: str = PYODIDE) -> dict:
     static = ROOT / "src/cptcg/web/static"
+    v = build_id()
     if out.exists():
         shutil.rmtree(out)
     (out / "static").mkdir(parents=True)
@@ -28,9 +41,12 @@ def build(out: Path, pyodide_url: str = PYODIDE) -> dict:
         if f.suffix in (".js", ".css"):
             shutil.copy(f, out / "static" / f.name)
     html = (static / "index.html").read_text(encoding="utf-8")
-    boot = (f'<script>window.CPTCG_STATIC = {json.dumps({"pyodide": pyodide_url})};</script>\n'
-            '<script src="static/boot.js"></script>')
-    (out / "index.html").write_text(html.replace("<!-- STATIC_BOOT -->", boot), encoding="utf-8")
+    boot = (f'<script>window.CPTCG_STATIC = {json.dumps({"pyodide": pyodide_url, "v": v})};</script>\n'
+            f'<script src="static/boot.js?v={v}"></script>')
+    html = html.replace("<!-- STATIC_BOOT -->", boot)
+    html = html.replace('href="static/style.css"', f'href="static/style.css?v={v}"')
+    html = html.replace('src="static/app.js"', f'src="static/app.js?v={v}"')
+    (out / "index.html").write_text(html, encoding="utf-8")
     (out / ".nojekyll").write_text("")
 
     # the engine
@@ -62,6 +78,7 @@ def build(out: Path, pyodide_url: str = PYODIDE) -> dict:
             shutil.copy(p, out / "images" / p.name)
             if not p.stem.startswith("_"):
                 manifest["images"].append(p.stem)
+    manifest["build"] = v
     (out / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
     return manifest
 
@@ -72,7 +89,7 @@ def main() -> None:
     ap.add_argument("--pyodide-url", default=PYODIDE)
     a = ap.parse_args()
     m = build(Path(a.out), a.pyodide_url)
-    print(f"site written to {a.out}/: {len(m['decks'])} decks, {len(m['images'])} card images, {len(m['replays'])} replays")
+    print(f"site written to {a.out}/ (build {m['build']}): {len(m['decks'])} decks, {len(m['images'])} card images, {len(m['replays'])} replays")
 
 
 if __name__ == "__main__":

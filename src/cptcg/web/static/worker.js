@@ -6,7 +6,7 @@ async function init(msg) {
   role = msg.role;
   importScripts(msg.pyodideUrl + "pyodide.js");
   pyodide = await loadPyodide({ indexURL: msg.pyodideUrl });
-  const zip = await (await fetch(msg.base + "cptcg.zip")).arrayBuffer();
+  const zip = await (await fetch(msg.base + "cptcg.zip" + (msg.v || ""))).arrayBuffer();
   pyodide.FS.mkdirTree("/cptcg/src");
   pyodide.unpackArchive(zip, "zip", { extractDir: "/cptcg/src" });
   for (const [path, text] of Object.entries(msg.files)) {

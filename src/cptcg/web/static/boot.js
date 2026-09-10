@@ -4,7 +4,10 @@
   const cfg = window.CPTCG_STATIC;
   if (!cfg) return;
   const base = document.baseURI.replace(/[^/]*$/, "");
+  const V = cfg.v ? "?v=" + encodeURIComponent(cfg.v) : "";      // cache-buster stamped at build time
   const STORE = "cptcg:files";
+  const brand = document.querySelector(".brand");
+  if (brand && cfg.v) { const b = document.createElement("span"); b.className = "build"; b.textContent = "v " + cfg.v; brand.append(b); }
   const $ = (s) => document.querySelector(s);
 
   // ---- loading overlay
@@ -28,7 +31,7 @@
   // ---- workers
   let seq = 0; const pending = {};
   function makeWorker(role, files, imageIds) {
-    const w = new Worker(base + "static/worker.js");
+    const w = new Worker(base + "static/worker.js" + V);
     const ready = new Promise((res, rej) => {
       w.onmessage = (e) => {
         const m = e.data;
@@ -39,7 +42,7 @@
       };
       w.onerror = (e) => rej(new Error("engine failed to start: " + e.message));
     });
-    w.postMessage({ type: "init", role, base, pyodideUrl: cfg.pyodide, files, imageIds });
+    w.postMessage({ type: "init", role, base, v: V, pyodideUrl: cfg.pyodide, files, imageIds });
     return { w, ready };
   }
   const send = (w, msg) => new Promise((res) => { msg.id = ++seq; pending[msg.id] = res; w.postMessage(msg); });
@@ -48,10 +51,10 @@
   const JOBS = {};
 
   async function boot() {
-    manifest = await (await fetch(base + "manifest.json")).json();
+    manifest = await (await fetch(base + "manifest.json" + V)).json();
     status("Loading cards and decks…");
     const fetches = [["data/cards/wnc.json", "data/cards/wnc.json"], ...manifest.decks.map(p => [p, p]), ...(manifest.replays || []).map(p => [p, p])];
-    await Promise.all(fetches.map(async ([path, url]) => { files[path] = await (await fetch(base + url)).text(); }));
+    await Promise.all(fetches.map(async ([path, url]) => { files[path] = await (await fetch(base + url + V)).text(); }));
     Object.assign(files, saved);                       // the user's own decks and reports come back
     status("Starting the engine…");
     main = makeWorker("main", files, manifest.images);
