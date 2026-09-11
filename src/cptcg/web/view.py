@@ -179,6 +179,32 @@ def _describe_value(s: GameState, v) -> str:
     return str(v)
 
 
+def gig_rows(s: GameState, p: int) -> list[list[int]]:
+    """Each Gig die as [size, face, owner], where owner is the seat that brought it to the game.
+
+    The engine does not record whose die a Gig die was, because the rules never ask: a stolen die
+    is the thief's to score. The board asks, though — a die in the rival's area still wearing your
+    colour is the clearest picture of the game there is — and the answer is recoverable, because
+    there are exactly two dice of each size, one per player, and a die in a fixer area has never
+    left its owner. So: if a size is still in one player's fixer, every Gig die of that size is the
+    other player's; otherwise both are out, and only a player holding two of a size is holding one
+    that is not theirs. Two dice of a size swapped between the areas are the one case this cannot
+    see, and it reads them as each player holding their own.
+    """
+    out = []
+    seen: dict[int, int] = {}
+    for k, v in s.gig[p]:
+        seen[k] = seen.get(k, 0) + 1
+        if k in s.fixer[p]:            # my own one of these has not been rolled yet
+            owner = 1 - p
+        elif seen[k] > 1:              # the second one of a size cannot also be mine
+            owner = 1 - p
+        else:
+            owner = p
+        out.append([k, v, owner])
+    return out
+
+
 def view_state(s: GameState, perspective: int | None, names: tuple[str, str], log: list[str]) -> dict:
     legal_actions(s)
     players = []
@@ -212,7 +238,7 @@ def view_state(s: GameState, perspective: int | None, names: tuple[str, str], lo
             "deck": len(s.z[base + Zone.DECK]),
             "trash": [card_json(s, i) for i in s.z[base + Zone.TRASH]],
             "removed": [card_json(s, i) for i in s.z[base + Zone.REMOVED]],
-            "gigs": [list(g) for g in s.gig[p]], "fixer": list(s.fixer[p]), "cred": s.street_cred(p),
+            "gigs": gig_rows(s, p), "fixer": list(s.fixer[p]), "cred": s.street_cred(p),
         }
         players.append(pj)
     pending = None

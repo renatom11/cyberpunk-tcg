@@ -56,12 +56,24 @@ function cardNode(c, opts = {}) {
   if (c.spent) d.classList.add("spent");
   if (c.lag_blocks) d.classList.add("lag");   // lagged AND stopped by it; a GO SOLO Legend is neither
   if (c.power_now != null && c.type !== "Program") {
-    const pn = el("div", "pnow", `⚔ ${c.power_now}`); d.append(pn);
+    const pn = el("div", "pnow", c.power_now); d.append(pn);
   }
-  if (c.gear && c.gear.length) {
-    const g = el("div", "gearlist"); c.gear.forEach(x => g.append(el("span", "", x.name))); d.append(g);
-  }
+  if (c.gear && c.gear.length) d.append(gearStack(c.gear));
   return d;
+}
+// Gear is equipped *under* the Unit it is on, the way it is laid on the table: the Unit covers all
+// but the top strip of each piece, and a second piece slides out sideways from the first, so you
+// can see how many are on there and read the top of each one. The Unit's power badge already shows
+// what they add up to.
+function gearStack(gear) {
+  const g = el("div", "gearstack");
+  gear.forEach((x, i) => {
+    const n = cardNode(x, { small: true });
+    n.classList.add("gearcard");
+    n.style.setProperty("--i", i);
+    g.append(n);
+  });
+  return g;
 }
 function textFace(c) {
   const nodes = [];
@@ -99,13 +111,17 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
   };
 
   // ----- left column
-  const left = el("div", "col");
-  const oppHand = el("div", "panel hand opp"); oppHand.append(el("span", "lbl", `${P[opp].name.toUpperCase()} · HAND ${P[opp].hand_count}`));
+  // Top to bottom the way the reference client lays it out: the rival's hand, their fixer and Gig
+  // area, the turn box, then mine mirrored back out to my hand. The two name plates sit outside
+  // the panels, at the very top and bottom of the column, so the board says whose end is whose
+  // without a label on every area.
+  const left = el("div", "col left");
+  left.append(el("div", "nameplate", P[opp].name.toUpperCase()));
+  const oppHand = el("div", "panel hand opp p-opp-hand");
   if (P[opp].hand) P[opp].hand.forEach(c => oppHand.append(cardNode(c, { small: true })));
   else for (let i = 0; i < P[opp].hand_count; i++) oppHand.append(cardNode({}, { back: true, small: true }));
-  oppHand.classList.add("p-opp-hand");
   const oppTray = diceTray(P[opp], false); oppTray.classList.add("p-opp-fixer");
-  const oppGig = gigPanel(P[opp]); oppGig.classList.add("p-opp-gig");
+  const oppGig = gigPanel(P[opp], me); oppGig.classList.add("p-opp-gig");
   left.append(oppHand, oppTray, oppGig);
 
   // The banner says what is being asked of you, not which phase the engine is in — "ROLL FIXER DIE"
@@ -118,7 +134,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
   const title = v.over ? "GAME OVER"
     : !pend ? "…"
     : mine ? (STATE[pend.kind] || pend.phase.toUpperCase())
-    : "WAIT FOR RIVAL";
+    : "RIVAL'S TURN";
   phase.classList.toggle("waiting", !v.over && !!pend && !mine);
   phase.classList.toggle("done", !!v.over);
   const sub = v.over ? `${P[v.winner].name} wins · ${v.end_reason}`
@@ -131,20 +147,20 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
     if (end) { const b = el("button", "endturn", "END TURN"); b.onclick = () => onAct(end.index); phase.append(b); }
   }
   phase.classList.add("p-banner");
-  const myGig = gigPanel(P[me]); myGig.classList.add("p-my-gig");
+  const myGig = gigPanel(P[me], me); myGig.classList.add("p-my-gig");
   const myTray = diceTray(P[me], myTurn && pend.kind === "GIG_DIE", pend, onAct); myTray.classList.add("p-my-fixer");
   left.append(phase, myGig, myTray);
-  const myHand = el("div", "panel hand mine p-my-hand"); myHand.append(el("span", "lbl", `${P[me].name.toUpperCase()} · HAND`));
+  const myHand = el("div", "panel hand mine p-my-hand");
   if (P[me].hand) P[me].hand.forEach(c => { const n = cardNode(c); decorate(n, c.inst); myHand.append(n); });
   else for (let i = 0; i < P[me].hand_count; i++) myHand.append(cardNode({}, { back: true }));
-  left.append(myHand);
+  left.append(myHand, el("div", "nameplate", P[me].name.toUpperCase()));
 
   // ----- centre column
   const center = el("div", "col center");
   // The official playmat (gameplay guide, "Playmat areas") puts LEGENDS and EDDIES side by side on
-  // one band, with FIELD above them and DECK/TRASH down the right edge. legRow builds that band.
+  // one band, with FIELD between the two bands and DECK/TRASH down the right edge of the fields.
   const eddiesPanel = (p) => {
-    const ed = el("div", "panel eddies"); ed.append(el("span", "lbl", "EDDIES AREA"));
+    const ed = el("div", "panel eddies"); 
     const list = el("div", "list");
     if (!p.eddies.list.length) list.append(el("span", "waiting", "No Eddies yet."));
     p.eddies.list.forEach(c => {
@@ -153,44 +169,58 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       if (c.image) { n.onmouseenter = () => showPreview(`images/${c.id}.jpg`, c); n.onmouseleave = hidePreview; if (TOUCH) n.onclick = () => showPreview(`images/${c.id}.jpg`, c, true); }
       list.append(n);
     });
-    ed.append(list, badge("EDDIES", `${p.eddies.ready}/${p.eddies.total}`));
+    ed.append(list, badge("Eddies", `${p.eddies.ready}/${p.eddies.total}`));
     return ed;
   };
   const legRow = (p, mine) => {
     const band = el("div", "legendrow");
     const row = el("div", "panel legends");
-    const lbl = el("span", "lbl", "LEGENDS"); lbl.dataset.counts = `DECK ${p.deck} · TRASH ${p.trash.length}`; row.append(lbl);
     p.legends.forEach(l => {
       let n;
       if (l.faceup || l.known_only) { n = cardNode(l, { small: true }); if (l.faceup) n.classList.add("faceup-legend"); if (l.known_only) n.style.opacity = .7; }
       else { n = cardNode({ inst: l.inst }, { back: true, small: true, legend: true }); }
       if (l.spent) n.classList.add("spent");
-      if (l.gear && l.gear.length) { const g = el("div", "gearlist"); l.gear.forEach(x => g.append(el("span", "", x.name))); n.append(g); }
+      if (l.gear && l.gear.length) n.append(gearStack(l.gear));
       decorate(n, l.inst);
       row.append(n);
     });
-    // Deck over Trash at the far right of the band, which is where the playmat keeps them.
-    const counts = el("div", "counts");
-    counts.append(badge("DECK", p.deck), badge("TRASH", p.trash.length));
     const ed = eddiesPanel(p);
     if (mine) ed.classList.add("p-my-eddies");
-    band.append(row, ed, counts);
+    band.append(row, ed);
     return band;
   };
   const fieldRow = (p) => {
-    const row = el("div", "panel field"); row.append(el("span", "lbl", `${p.name.toUpperCase()} · FIELD`));
+    const row = el("div", "panel field");
     if (!p.field.length) for (let i = 0; i < 4; i++) row.append(el("div", "slot"));
     p.field.forEach(u => { const n = cardNode(u); decorate(n, u.inst); row.append(n); });
     return row;
   };
+  // Deck and trash live in a strip down the right-hand edge of the two field rows, rival's pair
+  // above mine: trash on the outside, deck on the inside, so the four boxes mirror across the
+  // middle of the board like everything else does.
+  const stack = (p, kind) => {
+    const box = el("div", "stackbox " + kind);
+    if (kind === "trash") {
+      const top = p.trash.length ? p.trash[p.trash.length - 1] : null;
+      if (top) { const n = cardNode(top, { small: true }); n.classList.add("thumb"); box.append(n); }
+      box.append(el("span", "n", p.trash.length || ""));
+    } else {
+      box.append(el("span", "n big", p.deck));
+    }
+    return box;
+  };
+  const stacks = el("div", "stacks");
+  stacks.append(stack(P[opp], "trash"), stack(P[opp], "deck"), stack(P[me], "deck"), stack(P[me], "trash"));
   const oppLeg = legRow(P[opp], false), oppField = fieldRow(P[opp]), myField = fieldRow(P[me]), myLeg = legRow(P[me], true);
   oppLeg.classList.add("p-opp-legends"); oppField.classList.add("p-opp-field"); myField.classList.add("p-my-field"); myLeg.classList.add("p-my-legends");
-  center.append(oppLeg, oppField, myField, myLeg);
+  center.append(oppLeg, oppField, myField, myLeg, stacks);
 
   // ----- right column
   const right = el("div", "col");
   const controls = el("div", "panel controls p-controls");
+  controls.append(el("span", "lbl", "ROOM"));
   if (interactive) {
+    controls.append(el("div", "desc", "Take back the last move, concede the match, or leave for a new one."));
     const undo = el("button", "", "UNDO"); undo.onclick = () => act("undo");
     const concede = el("button", "", "CONCEDE"); concede.onclick = () => { if (confirm("Concede?")) act("concede"); };
     const leave = el("button", "", "NEW GAME"); leave.onclick = () => { GAME = null; $("#board").classList.add("hidden"); $("#setup").classList.remove("hidden"); };
@@ -215,9 +245,20 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
   const logBtn = el("button", "logbtn", "LOG"); logBtn.onclick = () => logp.classList.toggle("open"); controls.append(logBtn);
   logp.onclick = (e) => { if (e.target === logp) logp.classList.remove("open"); };
   const who = (v.players || []).map(x => x.name);
+  // Newest first, the way the reference client reads: the turn that just happened is at the top of
+  // the panel with its most recent line under the header, and older turns fall away below. Nothing
+  // worth reading is ever off the bottom of a scroll box you have to chase.
+  const blocks = [];
   (v.log || LOG).forEach(line => {
-    const p = el("p", line.startsWith("—") ? "turn" : line.startsWith("GAME OVER") ? "end" : "", markLog(line, who));
-    logp.append(p);
+    if (line.startsWith("—") || !blocks.length) blocks.push([]);
+    blocks[blocks.length - 1].push(line);
+  });
+  blocks.reverse().forEach(block => {
+    const head = block[0].startsWith("—") ? block.shift() : null;
+    if (head) logp.append(el("p", "turn", markLog(head.replace(/^—\s*|\s*—$/g, "").replace(":", " -").toUpperCase(), who.map(x => x.toUpperCase()))));
+    block.reverse().forEach(line => {
+      logp.append(el("p", line.startsWith("GAME OVER") ? "end" : "", markLog(line, who)));
+    });
   });
   right.append(logp);
   const prompt = el("div", "panel prompt p-prompt"); prompt.append(el("span", "lbl", "PROMPT"));
@@ -258,7 +299,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
     });
   }
   if (myTurn) wireDrag(root, pend, onAct);
-  root.querySelectorAll(".hand").forEach(fanHand);
+  root.querySelectorAll(".hand, .eddies .list").forEach(fanHand);
   root.querySelectorAll(".card[data-inst]").forEach(n => {
     n.addEventListener("click", (e) => {
       if (n.classList.contains("payable")) return;      // paying: the click means "spend this"
@@ -270,7 +311,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       n.classList.add("picked");
     });
   });
-  logp.scrollTop = logp.scrollHeight;
+  logp.scrollTop = 0;
 }
 
 // ---------------------------------------------------------------- drag to play
@@ -295,7 +336,7 @@ function wireDrag(root, pend, onAct) {
   const field = root.querySelector(".p-my-field");
   const eddies = root.querySelector(".p-my-eddies");
 
-  root.querySelectorAll(".hand.mine .card[data-inst], .p-my-legends .card[data-inst]").forEach(node => {
+  root.querySelectorAll(".hand.mine > .card[data-inst], .p-my-legends .card[data-inst]:not(.gearcard)").forEach(node => {
     const inst = +node.dataset.inst;
     const mine = { play: plays[inst], sell: sells[inst], gear: gear[inst] };
     if (!mine.play && !mine.sell && !mine.gear) return;
@@ -378,14 +419,15 @@ document.addEventListener("click", (e) => {
   e.stopPropagation(); e.preventDefault();
 }, true);
 
-// ---------------------------------------------------------------- the hand fans
+// ---------------------------------------------------------------- fanning a row of cards
 // Cards overlap by however much they have to, rather than the row scrolling: a hand is a fan you
 // hold, and a scroll bar hides the cards it is scrolling past. The overlap has to be measured
 // rather than fixed, because it depends on how many cards are in the hand and how wide the column
 // is, and both change. Hovering then reveals the card in full — see the CSS: only the cards *after*
 // the hovered one need to move, because those are the ones drawn on top of it.
 const HAND_MAX_OVERLAP = 0.8;        // never hide more than this much of a card
-function fanHand(hand) {
+function fanHand(row) {
+  const hand = row;                  // the hand, or an Eddies pile: same treatment
   const cards = hand.querySelectorAll(".card");
   const n = cards.length;
   if (!n) return;
@@ -401,7 +443,7 @@ function fanHand(hand) {
 let FAN_TIMER = null;
 window.addEventListener("resize", () => {
   clearTimeout(FAN_TIMER);
-  FAN_TIMER = setTimeout(() => document.querySelectorAll("#board .hand").forEach(fanHand), 80);
+  FAN_TIMER = setTimeout(() => document.querySelectorAll("#board .hand, #board .eddies .list").forEach(fanHand), 80);
 });
 
 // ---------------------------------------------------------------- arrivals
@@ -527,19 +569,84 @@ function hintFor(p) {
   return h[p.kind] || p.prompt || "";
 }
 function badge(label, val) { const b = el("div", "badge", `${label}<b>${val}</b>`); return b; }
-function gigPanel(p) {
-  const g = el("div", "panel gigs"); g.append(el("span", "lbl", "GIG AREA"));
+
+// ---------------------------------------------------------------- dice
+// A die is drawn as the solid it is — the shapes the reference client uses, and the ones on the
+// table: a tetrahedron for the d4, a cube for the d6, an octahedron for the d8, a trapezohedron
+// for the d10, a dodecahedron for the d12, an icosahedron for the d20. Outline only, with the
+// rolled face in the middle. Everything is laid out in a 100x100 box and scaled by CSS.
+const ring = (n, r, turn) => {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI / 2 + (2 * Math.PI * (i + (turn || 0))) / n;
+    out.push([50 + r * Math.cos(a), 50 + r * Math.sin(a)]);
+  }
+  return out;
+};
+const poly = (pts) => pts.map(p => p.map(v => v.toFixed(1)).join(",")).join(" ");
+const line = (a, b) => `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}"/>`;
+// The faint interior edges are what make an outline read as a solid rather than a road sign, so
+// each shape carries its own few.
+const DIE_ART = {
+  4: () => {
+    const A = [48, 6], B = [94, 74], C = [94, 94], D = [6, 94];
+    return `<polygon points="${poly([A, B, C, D])}"/>${line(A, C)}`;
+  },
+  6: () => `<path d="M10,30 H72 V92 H10 Z"/><path d="M10,30 L30,8 H92 L72,30"/><path d="M72,92 L92,70 V8"/>`,
+  8: () => {
+    const h = ring(6, 47);
+    return `<polygon points="${poly(h)}"/>${line(h[0], h[4])}${line(h[0], h[2])}${line(h[2], h[4])}`;
+  },
+  10: () => {
+    const P = [[50, 3], [94, 33], [82, 66], [50, 98], [18, 66], [6, 33]];
+    const m = [50, 58];
+    return `<polygon points="${poly(P)}"/>${line(P[0], m)}${line(m, P[2])}${line(m, P[4])}` +
+           line(P[5], m) + line(P[1], m);
+  },
+  12: () => {
+    const o = ring(10, 47), i = ring(5, 27);
+    return `<polygon points="${poly(o)}"/><polygon points="${poly(i)}"/>` +
+           i.map((p, k) => line(p, o[2 * k])).join("");
+  },
+  20: () => {
+    const o = ring(6, 47), i = ring(3, 30, 0.5);
+    return `<polygon points="${poly(o)}"/><polygon points="${poly(i)}"/>` +
+           i.map((p, k) => line(p, o[(2 * k + 1) % 6])).join("");
+  },
+};
+// `face` is the rolled value, or null for a die still in the fixer, which shows its name instead.
+function dieNode(kind, face, cls) {
+  const d = el("div", "die " + (cls || ""));
+  const art = (DIE_ART[kind] || DIE_ART[20])();
+  d.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true">${art}</svg>` +
+                `<span class="face">${face == null ? "D" + kind : face}</span>`;
+  d.dataset.kind = kind;
+  return d;
+}
+
+// The Gig area. A die keeps the colour of the player who brought it, so a die stolen from you sits
+// in the rival's area still wearing your green — which is the whole story of the game at a glance.
+function gigPanel(p, meSeat) {
+  const g = el("div", "panel gigs");
   const list = el("div", "list");
   if (!p.gigs.length) list.append(el("span", "waiting", "No Gigs yet."));
-  p.gigs.forEach(([k, v]) => list.append(el("div", "die gig", `${v}<small style="font-size:9px;color:#7f95a3">d${k}</small>`)));
-  g.append(list, badge(`${p.gigs.length}/7`, p.cred || "Null"));
+  p.gigs.forEach(([k, v, owner]) => {
+    list.append(dieNode(k, v, (owner == null ? p.seat : owner) === meSeat ? "own" : "rival"));
+  });
+  const score = el("div", "score");
+  const n = el("div", "n", `${p.gigs.length}/7`);
+  if (p.gigs.length >= 7) n.classList.add("hot");
+  score.append(n, el("div", "c" + (p.seat === meSeat ? " own" : ""), p.gigs.length ? p.cred : "Null"));
+  g.append(list, score);
   return g;
 }
+// The fixer: the dice not yet rolled, dim, named rather than numbered.
 function diceTray(p, pick, pend, onAct) {
-  const t = el("div", "panel dice"); t.append(el("span", "lbl", "FIXER"));
+  const t = el("div", "panel dice");
   const can = new Set(pick ? pend.options.filter(o => o.kind === "Die").map(o => o.inst) : []);
   [4, 6, 8, 10, 12, 20].forEach(k => {
-    const d = el("div", "die" + (p.fixer.includes(k) ? "" : " hidden"), `D${k}`);
+    if (!p.fixer.includes(k)) return;
+    const d = dieNode(k, null, "fixer");
     if (can.has(k)) { d.classList.add("pick"); d.onclick = () => onAct(pend.options.find(o => o.kind === "Die" && o.inst === k).index); }
     t.append(d);
   });
@@ -603,6 +710,9 @@ function askPayment(cost, sources) {
     });
     if (!nodes.size) return resolve([]);           // nothing to point at: let the game pay
 
+    // Only ever one of these: a second request while the first is open replaces it, rather than
+    // stacking two identical panels down the column.
+    board.querySelectorAll(".paypanel").forEach(x => x.remove());
     const panel = el("div", "panel paypanel");
     panel.append(el("span", "lbl", "PAY COST"));
     const q = el("div", "q", `Spend ${cost} ready ${cost === 1 ? "Eddie or Legend" : "Eddies or Legends"}`);
