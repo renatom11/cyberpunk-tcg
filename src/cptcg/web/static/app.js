@@ -61,7 +61,6 @@ function cardNode(c, opts = {}) {
   if (c.gear && c.gear.length) {
     const g = el("div", "gearlist"); c.gear.forEach(x => g.append(el("span", "", x.name))); d.append(g);
   }
-  d.title = `${c.name}${c.subtitle ? " — " + c.subtitle : ""}\n${c.type} · cost ${c.cost ?? "—"} · power ${c.power ?? "—"}\n${c.text || ""}`;
   return d;
 }
 function textFace(c) {
@@ -151,7 +150,6 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
     p.eddies.list.forEach(c => {
       const n = cardNode(c, { back: true, small: true });
       if (c.spent) n.classList.add("spent");
-      n.title = `${c.name}${c.subtitle ? " — " + c.subtitle : ""}${c.spent ? " (spent)" : " (ready)"}`;
       if (c.image) { n.onmouseenter = () => showPreview(`images/${c.id}.jpg`, c); n.onmouseleave = hidePreview; if (TOUCH) n.onclick = () => showPreview(`images/${c.id}.jpg`, c, true); }
       list.append(n);
     });
@@ -202,7 +200,9 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
     };
     // Payment choice is off the critical path, so it lives as a toggle rather than a settings page.
     const paybtn = el("button", "", autopay() ? "PAY: AUTO" : "PAY: ASK");
-    paybtn.title = "Whether to be asked which Eddies and Legends to spend when you can pay more than one way";
+    // aria-label, not title: a title is the browser's white tooltip box, and nothing on the
+    // board should pop one of those over the cards.
+    paybtn.setAttribute("aria-label", "Whether to be asked which Eddies and Legends to spend when you can pay more than one way");
     paybtn.onclick = () => {
       const now = !autopay();
       try { localStorage.setItem(AUTOPAY_KEY, now ? "1" : "0"); } catch (e) {}
@@ -916,90 +916,16 @@ function renderCardGrid(q) {
 // ---------------------------------------------------------------- card preview
 // The board draws cards small; hovering any card shows its face at full resolution, like the sim.
 let PREVIEW = null;
-// ---------------------------------------------------------------- card glossary
-// Every word the faces print in capitals, with the rule it stands for. A card's text is scanned for
-// these, so the preview explains itself instead of assuming the reader has the rulebook open.
-const KEYWORDS = {
-  "ADRENALINE": "This Unit can attack the turn it is played.",
-  "GO SOLO": "Pay this Legend's cost to play it as a ready Unit. It can attack this turn. If it leaves the field it is removed from the game.",
-  "QUICK": "You may also play this card, or use this effect, as a reaction while a rival Unit is attacking.",
-  "BLOCKER": "While a rival Unit is attacking, you may spend this Unit to redirect the attack to it instead.",
-  "PLAY": "When you play this card.",
-  "ATTACK": "When this Unit attacks.",
-  "DEFEATED": "When this card is defeated.",
-  "CALL": "Turn a face-down Legend face-up for 1 €$. Once per turn.",
-};
-// States the board puts a card in, rather than anything printed on it.
-const CARD_STATES = {
-  "LAG": "It entered the field this turn, so it cannot attack yet. It readies at the start of your next turn.",
-  "SPENT": "Already used this turn. It lies sideways, and readies at the start of your next turn.",
-};
-let KW_HIDDEN = false;      // the H key, as in the reference client
-
-function keywordsFor(c) {
-  const text = ((c.text || "") + " " + (c.keywords || []).join(" ")).toUpperCase();
-  const out = [];
-  // longest first, so GO SOLO is not read as two separate words
-  Object.keys(KEYWORDS).sort((a, b) => b.length - a.length).forEach(k => {
-    if (text.includes(k) && !out.some(x => x.k.includes(k))) out.push({ k, t: KEYWORDS[k] });
-  });
-  return out;
-}
-function statesFor(c) {
-  const out = [];
-  if (c.lag) out.push({ k: "LAG", t: CARD_STATES.LAG });
-  if (c.spent) out.push({ k: "SPENT", t: CARD_STATES.SPENT });
-  return out;
-}
-function keywordPanel(c) {
-  const kws = keywordsFor(c), states = statesFor(c);
-  if (!kws.length && !states.length) return null;
-  const box = el("div", "kwpanel");
-  const section = (label, rows) => {
-    if (!rows.length) return;
-    box.append(el("div", "kwhead", label));
-    rows.forEach(r => {
-      const row = el("div", "kwrow");
-      row.append(el("span", "kwtag", r.k), el("span", "kwtext", r.t));
-      box.append(row);
-    });
-  };
-  section("KEYWORDS", kws);
-  section("AFFECTING THIS CARD", states);
-  box.append(el("div", "kwhint", "PRESS H TO HIDE"));
-  return box;
-}
-
 function showPreview(src, c, touch) {
   if (!PREVIEW) { PREVIEW = el("div", "preview"); PREVIEW.append(el("img")); document.body.append(PREVIEW); PREVIEW.onclick = (e) => { e.stopPropagation(); hidePreview(); }; }
   const img = PREVIEW.querySelector("img"); img.src = src; img.alt = c.name;
-  // The keyword panel rides beside the card, as in the reference client, so a reader never has to
-  // know what ADRENALINE or LAG mean to read the board.
-  const old = PREVIEW.parentNode.querySelector(".kwpanel");
-  if (old) old.remove();
-  if (!KW_HIDDEN) {
-    const kw = keywordPanel(c);
-    if (kw) { PREVIEW.after(kw); kw.classList.toggle("touch", !!touch); }
-  }
   PREVIEW.classList.add("show"); PREVIEW.classList.toggle("touch", !!touch);
   // Centred, not following the cursor: the card lands in the same place every time, so reading it
   // is a glance rather than a chase, and moving along a row of cards swaps one image for another.
   // pointer-events stay off, so the preview never steals the hover from the card underneath it.
   PREVIEW.style.left = ""; PREVIEW.style.top = "";
 }
-function hidePreview() {
-  if (!PREVIEW) return;
-  PREVIEW.classList.remove("show", "touch");
-  const kw = PREVIEW.parentNode && PREVIEW.parentNode.querySelector(".kwpanel");
-  if (kw) kw.remove();
-}
-document.addEventListener("keydown", (e) => {
-  if (e.key !== "h" && e.key !== "H") return;
-  if (/^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName || "").toUpperCase())) return;
-  KW_HIDDEN = !KW_HIDDEN;
-  const kw = document.querySelector(".kwpanel");
-  if (kw) kw.remove();
-});
+function hidePreview() { if (PREVIEW) PREVIEW.classList.remove("show", "touch"); }
 
 // ---------------------------------------------------------------- deck builder
 // The page holds the deck being edited; legality, RAM limits and the saved file all come from
