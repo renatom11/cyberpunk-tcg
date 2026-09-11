@@ -126,6 +126,9 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
   const oppHand = el("div", "panel hand opp p-opp-hand");
   if (P[opp].hand) P[opp].hand.forEach(c => oppHand.append(cardNode(c, { small: true })));
   else for (let i = 0; i < P[opp].hand_count; i++) oppHand.append(cardNode({}, { back: true, small: true }));
+  // A row of identical backs is a count wearing a costume. Where there is room the costume is
+  // worth it; where there is not, the phone hides the backs and shows this instead.
+  oppHand.append(el("div", "handcount", `HAND ${P[opp].hand_count}`));
   const oppTray = diceTray(P[opp], false); oppTray.classList.add("p-opp-fixer");
   const oppGig = gigPanel(P[opp], me); oppGig.classList.add("p-opp-gig");
   left.append(oppHand, oppTray, oppGig);
@@ -222,11 +225,17 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
     }
     return box;
   };
-  const stacks = el("div", "stacks");
-  stacks.append(stack(P[opp], "trash"), stack(P[opp], "deck"), stack(P[me], "deck"), stack(P[me], "trash"));
+  // One strip per player rather than one for the pair. On a wide screen they stack into the same
+  // column and read as the four boxes they always were; on a phone each one becomes the right-hand
+  // flank of its own field row, opposite that player's fixer, and no CSS can put the children of a
+  // single grid item into two different grid areas.
+  const oppStacks = el("div", "stacks opp");
+  oppStacks.append(stack(P[opp], "trash"), stack(P[opp], "deck"));
+  const myStacks = el("div", "stacks mine");
+  myStacks.append(stack(P[me], "deck"), stack(P[me], "trash"));
   const oppLeg = legRow(P[opp], false), oppField = fieldRow(P[opp]), myField = fieldRow(P[me]), myLeg = legRow(P[me], true);
   oppLeg.classList.add("p-opp-legends"); oppField.classList.add("p-opp-field"); myField.classList.add("p-my-field"); myLeg.classList.add("p-my-legends");
-  center.append(oppLeg, oppField, myField, myLeg, stacks);
+  center.append(oppLeg, oppField, myField, myLeg, oppStacks, myStacks);
 
   // ----- right column
   const right = el("div", "col");
@@ -327,7 +336,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
     });
   }
   if (myTurn) wireDrag(root, pend, onAct);
-  root.querySelectorAll(".hand, .eddies .list").forEach(fanHand);
+  root.querySelectorAll(".hand, .eddies .list, .legends, .field").forEach(fanHand);
   root.querySelectorAll(".card[data-inst]").forEach(n => {
     n.addEventListener("click", (e) => {
       if (n.classList.contains("payable")) return;      // paying: the click means "spend this"
@@ -455,23 +464,37 @@ document.addEventListener("click", (e) => {
 // the hovered one need to move, because those are the ones drawn on top of it.
 const HAND_MAX_OVERLAP = 0.8;        // never hide more than this much of a card
 function fanHand(row) {
-  const hand = row;                  // the hand, or an Eddies pile: same treatment
-  const cards = hand.querySelectorAll(".card");
+  const hand = row;                  // a hand, an Eddies pile, a Legend band, a field: same treatment
+  // Empty field slots are the same shape as the cards that will replace them, so they overlap the
+  // same way; a row of four that fanned once it was full and overflowed while it was empty would
+  // be the strangest possible behaviour.
+  const cards = hand.querySelectorAll(".card, .slot");
   const n = cards.length;
   if (!n) return;
   const w = cards[0].offsetWidth;
   if (!w) return;                    // not laid out yet (a hidden tab); the resize hook retries
-  const gap = 4, avail = hand.clientWidth - 16;
-  const need = n * w + (n - 1) * gap;
-  const over = n > 1 && need > avail
-    ? Math.min(Math.ceil((need - avail) / (n - 1)) + gap, Math.round(w * HAND_MAX_OVERLAP))
-    : 0;
-  hand.style.setProperty("--overlap", over + "px");
+  // Measured, not computed from n * card width. A spent card lies on its side and carries margins
+  // of half the difference between the two dimensions to make room for it, and a row holding one
+  // is wider than the arithmetic thinks by 32px a card — which is exactly how a Legend band with a
+  // spent Legend in it kept overflowing while the fan believed it had already fixed it. Asking the
+  // browser costs one layout flush per row and cannot be wrong.
+  hand.style.setProperty("--overlap", "0px");
+  const cap = Math.round(w * HAND_MAX_OVERLAP);
+  let over = 0;
+  // Two corrections, then stop. scrollWidth does not count the last child's right margin, and a
+  // spent card carries one of 16px, so a single pass can come back still overflowing by exactly
+  // that much. Re-measuring is cheaper than reasoning about which browser counts what.
+  for (let pass = 0; pass < 4 && over < cap; pass++) {
+    const short = hand.scrollWidth - hand.clientWidth;
+    if (short <= 0) break;
+    over = Math.min(cap, over + Math.ceil(short / (n - 1)) + 1);   // +1: converge rather than oscillate on a rounding remainder
+    hand.style.setProperty("--overlap", over + "px");
+  }
 }
 let FAN_TIMER = null;
 window.addEventListener("resize", () => {
   clearTimeout(FAN_TIMER);
-  FAN_TIMER = setTimeout(() => document.querySelectorAll("#board .hand, #board .eddies .list").forEach(fanHand), 80);
+  FAN_TIMER = setTimeout(() => document.querySelectorAll("#board .hand, #board .eddies .list, #board .legends, #board .field").forEach(fanHand), 80);
 });
 
 // ---------------------------------------------------------------- arrivals

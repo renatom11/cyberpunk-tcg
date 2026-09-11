@@ -70,7 +70,12 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 /* One row, never wrapped: six cards read as a hand, a 2x3 block reads as a grid. The hand fans —
    cards overlap by --overlap, which app.js measures from how many there are and how much room. */
 .hand { display: flex; gap: 4px; overflow: hidden; min-height: 0; align-items: center; flex-wrap: nowrap; }
-.hand .card + .card, .eddies .list .card + .card { margin-left: calc(-1 * var(--overlap, 0px)); }
+/* Any row of cards that does not fit overlaps instead of being cut off: hands, the Eddies
+   pile, a Legend band on a narrow screen, a full field. `fanHand` sets --overlap to 0 when
+   the row fits, so this is inert everywhere it is not needed. */
+.hand .card + .card, .eddies .list .card + .card,
+.legends .card + .card, .field .card + .card,
+.field .slot + .slot { margin-left: calc(-1 * var(--overlap, 0px)); }
 .hand .card { transition: transform .13s ease; flex: 0 0 auto; }
 /* Only the cards drawn on top of the hovered one have to move out of its way. */
 .hand.mine .card:hover { transform: translateY(-14px); z-index: 6; }
@@ -124,7 +129,8 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .center > * { min-height: 0; min-width: 0; }
 .center > .legendrow { grid-column: 1 / -1; }
 .center > .field { grid-column: 1; }
-.center > .stacks { grid-column: 2; grid-row: 2 / 4; }
+.center > .stacks { grid-column: 2; }
+.center > .stacks.opp { grid-row: 2; } .center > .stacks.mine { grid-row: 3; }
 .legendrow { display: flex; gap: 6px; min-height: 0; align-items: stretch; }
 .legendrow > * { min-width: 0; }
 .legendrow .legends { flex: 0 0 auto; }
@@ -140,7 +146,9 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .board .eddies .badge { position: absolute; right: 8px; bottom: 4px; padding: 1px 8px; font-size: 11px; border-radius: 10px; background: #0a1622; color: var(--cyan); }
 .board .eddies .badge b { display: inline; font-size: 11px; margin-left: 5px; color: var(--cyan); }
 /* ---- deck and trash, mirrored across the middle: trash outside, deck inside. */
-.stacks { display: grid; grid-template-rows: repeat(4, 1fr); gap: 5px; }
+.stacks { display: grid; grid-template-rows: repeat(2, 1fr); gap: 5px; }
+/* the count is the phone's version of the rival's hand; a wide screen draws the cards instead */
+.handcount { display: none; }
 .stackbox { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); position: relative; display: grid; place-items: center; overflow: hidden; }
 .stackbox .n { font-size: 12px; color: var(--dim); font-weight: 700; }
 .stackbox .n.big { font-size: 20px; color: var(--green); }
@@ -424,92 +432,154 @@ table.rep th { color: var(--cyan); }
 
 .logbtn { display: none; }
 
-/* ---------------------------------------------------------------- phone: the same board, stacked
-   The rival's half on top, yours below, everything sized to fit one screen with nothing to scroll.
-   Labels float in the panel corner so card rows stay single-line and scroll sideways; the log
-   becomes an overlay and the prompt bar sits at the bottom. */
+/* ---------------------------------------------------------------- phone: the playmat, folded
+   The board is a real playmat folded about its centre line. Top to bottom: the rival's legends and
+   Eddies, their field, the centre line with both Gig trays sitting on it, my field, my legends and
+   Eddies, my hand, and the prompt.
+
+   What makes it fit is the flanks. A fixer is six dice and a deck is a number; stood up in a 34px
+   column beside the field, neither costs a row, and each sits at the same latitude as its own
+   player's field. Everything that was a row and did not need to be — the deck/trash strip, the
+   fixer block wrapped over two lines, the selected-card panel, the rival's hand drawn as a row of
+   identical backs — is gone, and the height goes to the cards instead.
+
+   No labels. The desktop board dropped them and this one has even less room for them; the previous
+   rules pinned a label into a gutter that `.board .panel` had already overridden away, so every
+   one of them was drawn on top of its own panel's text. */
 @media (max-width: 700px) {
   .top { padding: 3px 6px; height: 36px; box-sizing: border-box; flex-wrap: nowrap; }
   .brand { font-size: 10px; white-space: nowrap; letter-spacing: 0; } .brand span:not(.build) { display: none; }
-  nav { display: flex; flex-wrap: nowrap; }
-  nav button { padding: 3px 4px; font-size: 8.5px; margin-left: 2px; letter-spacing: 0; }
+  /* the nav scrolls rather than clipping its last button off the edge of the screen */
+  nav { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  nav::-webkit-scrollbar { display: none; }
+  nav button { padding: 3px 4px; font-size: 8.5px; margin-left: 2px; letter-spacing: 0; flex: 0 0 auto; }
+
   .board {
-    --card-w: 46px; --card-h: 64px;
-    display: grid; gap: 3px; padding: 3px; height: calc(100dvh - 36px); overflow: hidden; box-sizing: border-box;
-    grid-template-columns: 2fr 3fr;
-    grid-template-rows: auto auto auto minmax(0, 1fr) auto auto minmax(0, 1fr) auto auto auto;
+    /* Five rows hold a card: the two Legend bands, the two fields and my hand. Everything else is
+       measured chrome, so the card height is what is left over divided by five — derived, not the
+       fixed 46x64 this layout used to hard-code. */
+    --chrome: 276px;
+    --card-h: max(54px, calc((100dvh - var(--chrome)) / 5));
+    --card-w: calc(var(--card-h) / 1.41);
+    display: grid; gap: 3px; padding: 3px; height: calc(100dvh - 36px);
+    overflow: hidden; box-sizing: border-box;
+    grid-template-columns: 34px minmax(0, 1fr) minmax(0, 1fr) 34px;
+    grid-template-rows: auto auto minmax(0, 1fr) auto minmax(0, 1fr) auto auto auto;
     grid-template-areas:
-      "ctl ctl"
-      "ohand ohand"
-      "ofix ogig"
-      "oleg ofield"
-      "stacks stacks"
-      "banner banner"
-      "mleg mfield"
-      "mfix mgig"
-      "mhand mhand"
-      "prompt prompt";
+      "ctl   ctl    ctl   ohand"
+      "oleg  oleg   oleg  oleg"
+      "ofix  ofield ofield ostk"
+      "ogig  ogig   mgig  mgig"
+      "mfix  mfield mfield mstk"
+      "mleg  mleg   mleg  mleg"
+      "mhand mhand  mhand mhand"
+      "prmpt prmpt  prmpt prmpt";
   }
   .board > .col { display: contents; }
-  .p-controls { grid-area: ctl; display: flex; gap: 3px; justify-content: flex-end; padding: 0; border: 0; background: none; }
-  .p-controls button { padding: 3px 6px; font-size: 9px; }
-  .p-opp-hand { grid-area: ohand; } .p-opp-fixer { grid-area: ofix; } .p-opp-gig { grid-area: ogig; }
-  .p-opp-legends { grid-area: oleg; } .p-opp-field { grid-area: ofield; } .p-banner { grid-area: banner; }
-  .p-my-legends { grid-area: mleg; } .p-my-field { grid-area: mfield; } .p-my-fixer { grid-area: mfix; }
+  .p-controls { grid-area: ctl; display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
+                gap: 3px; padding: 0; border: 0; background: none; align-items: center; }
+  .p-controls::-webkit-scrollbar { display: none; }
+  .p-controls button { padding: 3px 6px; font-size: 9px; flex: 0 0 auto; }
+  .p-controls .desc { display: none; }
+  /* The rival's hand is a count here. A row of identical backs is a count wearing a costume, and
+     this layout has no room for the costume. */
+  .p-opp-hand { grid-area: ohand; padding: 0; border: 0; background: none; overflow: visible;
+                display: flex; align-items: center; justify-content: center; min-height: 0; }
+  .p-opp-hand .card { display: none; }
+  .p-opp-hand .handcount { display: block; font-size: 8px; line-height: 1.1; text-align: center;
+                           color: var(--cyan); letter-spacing: .04em; }
+
+  /* `.board ` on every one of these on purpose. The wide layout places the centre column's
+     children with `.center > .field`, `.center > .legendrow` and friends, and those are two
+     classes deep; a bare `.p-opp-field` is one and loses, which put the field in the 34px fixer
+     column. Same weight, later in the file, so these win. */
+  .board .p-opp-legends { grid-area: oleg; } .board .p-my-legends { grid-area: mleg; }
+  .board .p-opp-field { grid-area: ofield; } .board .p-my-field { grid-area: mfield; }
+  .board .p-opp-fixer { grid-area: ofix; } .board .p-my-fixer { grid-area: mfix; }
+  .board .p-opp-gig { grid-area: ogig; } .board .p-my-gig { grid-area: mgig; }
+  .board .stacks.opp { grid-area: ostk; } .board .stacks.mine { grid-area: mstk; }
+  .board .p-my-hand { grid-area: mhand; } .board .p-prompt { grid-area: prmpt; }
+  .board .p-controls { grid-area: ctl; overflow-x: auto; overflow-y: hidden; }
+  .board .p-opp-hand { grid-area: ohand; }
+
+  /* the flanks: stood up, so neither costs a row */
+  /* Six dice down a 34px column would be 166px against a field row of about 116, so they go two
+     across: three rows of two, which is shorter than the field beside it at any card size. */
+  .dice { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; padding: 1px; align-content: start; }
+  .board .panel.dice { padding: 2px 1px; }
+  .die { --die: 15px; }
+  .die svg { stroke-width: 4; }
+  .die.fixer .face { font-size: 6px; }
+  .stacks { grid-template-rows: repeat(2, 1fr); gap: 3px; }
+  .stackbox .n.big { font-size: 13px; }
+  .stackbox .card.thumb { display: none; }
+
+  /* the centre line: the two Gig trays meeting at it, rival above-left, mine above-right */
+  /* Both trays take the same top border, so the two of them draw one unbroken rule across the
+     width of the board with a Gig area hanging below each end of it — the line in the sketch. */
+  .p-opp-gig, .p-my-gig { min-height: 0; border-top: 2px solid var(--cyan); border-radius: 0 0 6px 6px; }
+  .gigs { min-height: 0; gap: 3px; padding: 2px 4px; } .gigs .list { gap: 2px; }
+  .gigs .waiting { font-size: 9px; }
+  .score { padding: 1px 5px; } .score .n { font-size: 10px; } .score .c { font-size: 11px; }
+
+  /* the banner has nothing to say here that the prompt does not: END TURN is in the prompt's own
+     list of every legal action, so only the turn and phase survive, folded into the controls row */
+  .p-banner { display: none; }
+  /* likewise the selected-card panel: the prompt lists every action the card could take, and a
+     long press already shows the card's face full size */
+  .p-cardinfo, .nameplate { display: none; }
+
+  .board .panel .lbl { display: none; }
+  .panel { padding: 3px 4px; border-radius: 6px; min-height: 0; overflow: hidden; }
   .legendrow { gap: 3px; min-height: 0; }
   .legendrow .legends { flex: 1 1 auto; min-width: 0; }
-  .legendrow .eddies { flex: 0 1 38%; min-width: 0; }
-  /* No room for a strip down the side of a phone, so deck and trash lie across the middle instead,
-     in the same order, still mirrored about the centre line of the board. */
-  .stacks { grid-area: stacks; grid-template-rows: none; grid-template-columns: repeat(4, 1fr); gap: 3px; height: 20px; }
-  .stackbox .n.big { font-size: 12px; }
-  .stackbox .card.thumb { display: none; }
-  .nameplate { display: none; }
-  /* the label is pinned across the panel top and the ready/total badge sits in that same corner.
-     At phone width the panel is about 60px wide, so there is no room to move the label aside: drop
-     it, since the badge already reads EDDIES. (.panel.eddies, not .eddies, or the generic
-     .board .panel .lbl rule further down matches just as tightly and wins on source order.) */
-  .board .panel.eddies .lbl { display: none; }
-  .board .field { min-height: 0; overflow: hidden; }
-  .eddies { width: auto; }
-  .eddies .list { min-height: 0; gap: 2px; flex-wrap: nowrap; overflow-x: auto; }
-  .eddies .list .card { width: 20px; height: 28px; } .eddies .list .card.spent { margin: 0 6px; }
-  .p-my-gig { grid-area: mgig; } .p-my-hand { grid-area: mhand; } .p-prompt { grid-area: prompt; }
+  .legendrow .eddies { flex: 0 1 40%; min-width: 0; }
+  .legends, .field, .hand { gap: 3px; flex-wrap: nowrap; overflow: hidden; align-items: flex-start; }
+  /* The field rows are the two the grid gives its leftovers to, so they are the two that run a few
+     pixels short. Trimming their own padding is worth more than shrinking every card on the board
+     by the same few pixels to pay for it. */
+  .board .panel.field { padding: 1px 3px; }
+  /* Gear hangs a fifth of a card below its host, and no row on a phone has a fifth of a card to
+     spare — it was pushing a Legend band 21px past its own edge, where it was clipped and invisible
+     anyway. The power chip already says the host is modified, which is the part that changes a
+     decision; the long-press preview still shows the card itself. */
+  .gearstack { display: none; }
+  .eddies { width: auto; min-width: 0; }
+  .eddies .list { min-height: 0; gap: 2px; flex-wrap: nowrap; overflow: hidden; }
+  .eddies .waiting { font-size: 9px; }
+  .board .eddies .badge { right: 3px; bottom: 2px; padding: 0 5px; font-size: 9px; }
+  .card { border-width: 1px; border-radius: 4px; font-size: 6px; }
+  .board .card, .board .card.sm { width: var(--card-w); height: var(--card-h); }
+  .hand.mine .card { width: var(--card-w); height: var(--card-h); }
+  /* The wide layout reserves a card's height for each hand with
+     `.col.left > .panel.hand { min-height: calc(var(--card-h) + 12px) }`, which is four classes
+     deep and beat every phone rule that tried to undo it. The rival's hand is a count here, so
+     that reservation was silently making the top row as tall as a card row and taking 105px
+     straight off the two fields. Same weight, later in the file. */
+  .col.left > .panel.hand { flex: none; min-height: 0; }
+  .col > .panel.hand.mine { min-height: 0; flex: 0 0 auto; }
+  .card.spent { margin: 0 calc((var(--card-h) - var(--card-w)) / 2); }
+  .slot { width: var(--card-w); height: var(--card-h); border-radius: 4px; }
+  .card .pnow { border-width: 1px; font-size: calc(var(--card-w) * .18); }
+
+  /* The payment picker is created mid-turn and inserted into the board, so on a grid it has no
+     area of its own and auto-places into a brand new row — which collapsed every other row to a
+     couple of pixels. It is a question that has to be answered before anything else happens, so a
+     sheet over the bottom of the screen is what it should have been here anyway. */
+  .paypanel { position: fixed; left: 4px; right: 4px; bottom: 4px; z-index: 30;
+              max-height: 52vh; overflow-y: auto; box-shadow: 0 -8px 30px #000c; }
   .logbtn { display: inline-block; }
   .p-log { display: none; position: fixed; inset: 36px 0 0 0; z-index: 40; background: #050810f2; padding: 12px; overflow-y: auto; font-size: 13px; }
   .p-log.open { display: block; }
-  .panel { padding: 12px 4px 3px; border-radius: 6px; min-height: 0; }
-  .panel.hand { padding-top: 12px; }      /* the desktop label gutter is too tall for a phone */
-  /* only the play board pins its labels into the panel corner: the BUILD deck sheet is a .panel
-     too, and pinning LEGENDS and COST CURVE to the same corner drew them on top of each other */
-  .board .panel .lbl { position: absolute; top: 2px; left: 5px; right: 5px; width: auto; font-size: 8px; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
-  .hand { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; min-height: 0; gap: 2px; align-items: flex-start; }
-  .hand.opp { gap: 0; } .hand.opp .card.back + .card.back { margin-left: -22px; }
-  .hand.mine .card { width: 58px; height: 81px; }   /* the phone sets its own sizes throughout */
-  /* ...and so is the height that column reserves for it: on a phone the hand is one row of a grid
-     and must not claim 252px of a screen the whole board has to fit on. */
-  .col > .panel.hand.mine { min-height: 0; flex: 0 0 auto; }
-  .hand.opp { min-height: 0; }
-  .hand.opp .card { width: 32px; height: 45px; }
-  .card { border-width: 1px; border-radius: 4px; font-size: 6px; }
-  .card.sm { width: 40px; height: 56px; }
-  .card.spent { margin: 0 7px; }
-  .card.lag { margin: 0 3px; }
-  .field { gap: 3px; flex-wrap: nowrap; overflow-x: auto; min-height: 0; align-items: flex-start; align-content: flex-start; }
-  .slot { width: 30px; height: 42px; border-radius: 4px; }
-  .panel { overflow: hidden; }                                  /* never draw outside the box */
-  .legends { gap: 3px; flex-wrap: nowrap; align-items: flex-start; }
-  .eddies { flex-direction: row; align-items: center; gap: 4px; padding: 12px 4px 3px; }
-  .eddies .list { flex: 1; min-height: 20px; }
-  .eddies .badge { position: absolute; right: 4px; top: 1px; padding: 0 4px; }
-  .eddies .waiting { font-size: 10px; }
-  .badge { padding: 1px 3px; font-size: 7px; border-radius: 4px; } .badge b { font-size: 10px; }
-  .die { width: 24px; height: 24px; font-size: 7px; border-radius: 4px; } .die.gig { font-size: 10px; }
-  .gigs { min-height: 0; gap: 3px; } .gigs .list { gap: 2px; }
-  .phase { padding: 3px 6px; } .phase .title { font-size: 11px; padding: 2px; } .phase .sub { font-size: 9px; margin-top: 2px; }
-  .prompt { min-height: 0; max-height: 24vh; overflow-y: auto; }
+  .col > .panel.logwrap { flex: none; }
+
+  /* A fixed ceiling, not a share of the screen. At 26vh the prompt was taking 219px of an 844px
+     phone and the two field rows were splitting what was left, which is how a field ended up 78px
+     tall holding a 111px card. It scrolls inside itself instead. */
+  .prompt { min-height: 0; max-height: 128px; overflow-y: auto; }
   .prompt .q { font-size: 12px; margin-bottom: 2px; } .prompt .desc { font-size: 10px; margin-bottom: 4px; }
-  .prompt .opts { gap: 4px; } .prompt .opts button { padding: 5px 8px; font-size: 11px; }
+  .prompt .opts { gap: 4px; max-height: none; } .prompt .opts button { padding: 5px 8px; font-size: 11px; }
+  .pileview .pilegrid .card { width: 104px; height: 147px; }
 }
 /* touch preview: centred, any size screen */
 .preview.touch { width: min(84vw, 423px); height: calc(min(84vw, 423px) * 1.395); pointer-events: auto; box-shadow: 0 0 0 100vmax #000a, 0 12px 40px #000c; }
