@@ -265,8 +265,8 @@ finished.
 
 `examples` reads replays and writes `(features, label)` rows.
 
-* **label** = `outcome(record, s.pending.player)` — 1.0 if the player to move eventually won, 0.0 if
-  they lost, 0.5 if nobody did. The perspective is the player to move, matching `features(s, me)`.
+* **label** = `outcome(record, me)` — 1.0 if `me` eventually won, 0.0 if they lost, 0.5 if nobody
+  did. `me` is the player to move by default, matching `features(s, me)`.
 * **columns**: the `NFEAT` (114) features, then `label`, `game`, `ply`. `game` is the harvest's game
   index, and it is there so the trainer can **split train/val by game, never by position** — the
   single most important thing this file has to make possible. `ply` is the decision index, for
@@ -277,6 +277,28 @@ finished.
   header is written **last**, and refuses to be written at all if the data file's size disagrees
   with the row count, so a killed run leaves an obviously incomplete pair rather than a plausible
   one.
+
+#### `--perspectives both`: one position, two rows
+
+The obvious row — the player to move, labelled with whether that player won — has a flaw that no
+loss curve would ever show. `to_move_me` (feature 3, "1 if the pending choice is mine") is then
+**1.0 in every single row**: a constant column.
+
+But an agent does not score decision states, it scores *previews*, and its most common preview by
+far is the one where its own turn has just ended. There `pending.player` is the rival, so the agent
+feeds `to_move_me = 0.0` — a value the network was never trained on — on exactly the comparison
+that decides whether to end the turn. Whatever weight training happened to leave on a constant
+input applies there, unlearned and unmeasured.
+
+So `--perspectives both` writes that row **and** the same position seen from the other seat, with
+that seat's own label. `features(s, me)` and `outcome(record, me)` are both already defined for
+either player, so it costs one extra feature extraction per kept decision and changes neither the
+column list nor `cols = 117`. The constant column stops being constant, the model sees every
+position from both sides, and `p(s, 0) + p(s, 1) ≈ 1` becomes a free calibration check. Both rows
+carry the same `game`, so the by-game split keeps them together and the label still cannot leak.
+
+The default stays `move`, because that is what the column list literally says a row is; the shipped
+weights were fitted with `both`, and the example file's header records which was used.
 
 ### The sampling rate, measured
 
@@ -838,3 +860,65 @@ The same agent against the same baseline on three deck populations. Both seats d
 Gap to fresh random decks: -3.3 points, 95% interval over the pairings -3.3 [-9.1 to +2.5] points (Welch, two independent samples of deck pairings). Both rows have deck pairings to spare, so this comparison is between deck *populations* and not between two piles of games.
 
 A gap that grows generation over generation means memorised matchups. Watch the change in these numbers, and only trust a change that is large against the per-pairing spread beside it.
+
+
+### neural vs heuristic — 2026-09-11 00:55 UTC
+
+`arena a-vs-b neural heuristic --no-sprt` over 6 deck pairings sampled from deck seed 20260910.
+
+360 games over 6 deck pairings, 180 paired comparisons — every seed played from both seats and with the deck assignments swapped. Ruleset `149b39c8f55e9d41`, 14.8s.
+
+| | games | win rate | 95% Wilson (these decks) |
+|---|---:|---:|---|
+| **neural** | 360 | 75.8% | 71.2–80.0% |
+| heuristic | 360 | 24.2% | 20.0–28.8% |
+
+The Wilson interval above is **conditional on these 6 deck pairings**: it says what more games on these decks would tell you, and nothing about other decks. Per-pairing rates run 68.3–83.3%; over the deck population the mean is 75.8 [69.9–81.8]% (t5 on 6 pairings). **That second band is the error bar for neural's strength**, and a generation-over-generation claim has to clear it rather than the Wilson one — the same protocol on five different deck samples moves several points while nothing about the agents changes. It is estimated from only 6 pairings, so it is itself noisy and can land either side of the Wilson bracket: narrower when the pairings happened to agree, much wider when one of them did not.
+
+Paired test: 96 of 99 decisive pairs (97.0%) — no sequential test was run (fixed sample).
+
+neural sat in seat 0 in 180 of 360 games — exactly half, by construction. neural on the play: 71.1% [64.1–77.2] (who goes first is the d20 winner's *choice*, so this is description, not balance). Average game length 13.3 turns. End reasons: OVERTIME 116, SEVEN_GIGS 244.
+
+| deck pairing | games | neural win rate |
+|---|---:|---|
+| `sampled-0` built vs built-b | 60 | 73.3% [61.0–82.9] |
+| `sampled-1` built vs explorer | 60 | 75.0% [62.8–84.2] |
+| `sampled-2` Sample Gangers vs random | 60 | 68.3% [55.8–78.7] |
+| `sampled-3` random vs random-b | 60 | 73.3% [61.0–82.9] |
+| `sampled-4` random vs random-b | 60 | 83.3% [72.0–90.7] |
+| `sampled-5` random vs built | 60 | 81.7% [70.1–89.4] |
+
+
+### Frozen panel: neural — 2026-09-11 00:55 UTC
+
+Panel `a1832d477c27193f`, decks `1b1799dbc029a6b7`, frozen 2026-09-10: 6 deck pairings whose **decklists are stored verbatim in `data/arena/panel.json`** and are never redrawn from the sampler, 60 games each, no early stopping. Both digests are checked on load, so these numbers are comparable across every generation as long as they read `a1832d477c27193f` / `1b1799dbc029a6b7`.
+
+| opponent | games | win rate | 95% Wilson (these decks) | per-pairing spread | decisive pairs |
+|---|---:|---:|---|---|---|
+| uniform random legal play (`random`) | 360 | 96.1% | 93.6–97.7% | 88.3–100.0% | 166/166 |
+| the frozen one-ply heuristic (`heuristic`) | 360 | 75.8% | 71.2–80.0% | 68.3–83.3% | 96/99 |
+| the generation-0 snapshot (`gen0`) | — | not available yet | — | — | lands with the first trained model; until then this row reads "not available yet" and the panel is two members |
+
+Here the Wilson interval is the right one and the *only* one that changes between generations: the decks are fixed by the panel, so nothing but more games is being sampled. The per-pairing spread is printed beside it as a reminder of what the panel is not — a panel score is a score on these twelve decklists, and generalises no further than they do. For a claim about play in general, use the between-pairing interval from `a-vs-b` or `generalisation`.
+
+
+### Delayed-reward suite: neural — 2026-09-11 00:57 UTC
+
+**Solved 3 of 8** (56 of 128 trials won), against a floor of 12 of 128 trials for uniform random play. Every position has a verified winning line that the frozen heuristic does not find on any of these seeds; a position counts as solved only when the agent wins it on every one of them. The suite holds 5 at a horizon of one turn (won inside the searched turn), 3 at a horizon of two turns (the payoff lands after the rival's answer).
+
+| position | source | horizon | trials won | floor | solved |
+|---|---|---:|---:|---:|---|
+| `gear-before-the-raid` | hand-built | 1 | 16/16 | 3/16 | yes |
+| `sell-to-afford-the-raid` | hand-built | 1 | 8/16 | 3/16 | no |
+| `two-pieces-of-gear` | hand-built | 1 | 0/16 | 0/16 | no |
+| `mined-23767-79` | mined from heuristic self-play | 1 | 16/16 | 3/16 | yes |
+| `mined-23773-81` | mined from heuristic self-play | 1 | 0/16 | 0/16 | no |
+| `mined-166300-77` | mined from heuristic self-play | 2 | 0/16 | 3/16 | no |
+| `mined-166302-115` | mined from heuristic self-play | 2 | 16/16 | 0/16 | yes |
+| `mined-166305-59` | mined from heuristic self-play | 2 | 0/16 | 0/16 | no |
+
+**Horizon** is how far past the searched turn the win may land, counted in the searched player's own turns. At 1 the line wins inside the turn; at 2 the searched turn cannot win by itself and has to leave a board the frozen policy converts on the following turn — a reward that arrives after the move that earned it. Only the searched turn is chosen by the agent either way: the suite measures which line you take *this* turn, not whether you can plan two of them.
+
+**Floor** is uniform random play over the same turn, on the same seeds, stored when the position was qualified. Read the agent's column against it, not against the frozen heuristic's zero: the heuristic scores zero here by construction, because missing these positions on these seeds is how they were selected.
+
+The win is confirmed by playing the turn out and the rival's whole reply with the frozen heuristic in both seats, so a line that reaches seven Gigs and has them stolen back does not count. That reply is one competent defence and one sample of the rival's Gig die, not a proof against every defence.

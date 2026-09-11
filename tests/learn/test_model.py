@@ -1,11 +1,11 @@
-"""The value head: does it compute what we think, and does it refuse what it should?
+"""The value model: exact round-trip, refusal to load anything ambiguous, and numpy agreement.
 
-The refusal tests matter as much as the arithmetic one. A weights file fitted to a different
-feature vector, or under a different ruleset, would still load and still return numbers — plausible
-ones — and every result downstream would be quietly wrong. So each of those is a loud failure.
+The last one is the load-bearing test of this stage. Training happens in numpy in ``tools/`` and
+inference happens in hand-written Python in ``src/cptcg`` — two implementations of the same
+arithmetic, and nothing but a test keeps them the same arithmetic. Every refusal is checked for
+*naming the offender*, because the failure this file exists to prevent is not a crash: it is a
+model that loads, scores plausibly, and is not the model that was measured.
 """
-
-from __future__ import annotations
 
 import json
 import math
@@ -14,146 +14,183 @@ import pytest
 
 from cptcg.core.config import DEFAULT_CONFIG
 from cptcg.learn import model as M
-from cptcg.learn.features import FEATURE_NAMES, NFEAT
+from cptcg.learn.features import FEATURE_NAMES, NFEAT, features
+from cptcg.learn.model import FORMAT, ValueModel, load_weights
+
+WEIGHTS = M.WEIGHTS_PATH
 
 
-def _toy(hidden: int = 3, seed: int = 1) -> M.ValueModel:
+def make(hidden: int = 6, seed: int = 5) -> ValueModel:
     import random
 
     rng = random.Random(seed)
-    return M.ValueModel(
+    return ValueModel(
         hidden=hidden,
-        w1=tuple(tuple(rng.uniform(-0.5, 0.5) for _ in range(NFEAT)) for _ in range(hidden)),
-        b1=tuple(rng.uniform(-0.2, 0.2) for _ in range(hidden)),
-        w2=tuple(rng.uniform(-0.8, 0.8) for _ in range(hidden)),
-        b2=0.15,
-    )
+        w1=tuple(tuple(rng.uniform(-0.8, 0.8) for _ in range(NFEAT)) for _ in range(hidden)),
+        b1=tuple(rng.uniform(-0.3, 0.3) for _ in range(hidden)),
+        w2=tuple(rng.uniform(-1.2, 1.2) for _ in range(hidden)),
+        b2=rng.uniform(-0.5, 0.5),
+        header={"run": {"name": "test"}})
 
 
-def _x(seed: int = 5) -> tuple[float, ...]:
+def xs(n: int = 25, seed: int = 1):
     import random
 
     rng = random.Random(seed)
-    return tuple(rng.uniform(-1.0, 1.0) for _ in range(NFEAT))
+    return [[rng.uniform(-1.0, 1.0) for _ in range(NFEAT)] for _ in range(n)]
 
 
-def test_forward_matches_the_definition_written_out_longhand():
-    m, x = _toy(), _x()
-    out = m.b2
-    for j in range(m.hidden):
-        z = sum(m.w1[j][k] * x[k] for k in range(NFEAT)) + m.b1[j]
-        out += m.w2[j] * math.tanh(z)
-    assert m.forward(x) == pytest.approx(1.0 / (1.0 + math.exp(-out)), rel=1e-12)
+# ------------------------------------------------------------------ arithmetic
+def test_forward_is_the_logistic_of_raw():
+    m = make()
+    for x in xs(8):
+        assert m.forward(x) == M._logistic(m.raw(x))
 
 
-def test_both_dot_product_implementations_agree():
-    """math.sumprod on 3.12+, map/mul below it. The two must never disagree."""
+def test_the_logistic_does_not_overflow_on_a_saturated_unit():
+    """``exp(1000)`` raises. A saturated unit is a normal thing for a fitted model to produce, so
+    it must not be an exception."""
+    assert M._logistic(1e6) == 1.0
+    assert M._logistic(-1e6) == 0.0
+    assert M._logistic(0.0) == 0.5
+
+
+def test_both_sumprod_implementations_agree(monkeypatch):
+    """``math.sumprod`` exists from 3.12. The fallback is what actually runs on 3.11, so the file
+    must be correct under either — and the two must not disagree in the last bits."""
     from operator import mul
 
-    m, x = _toy(), _x()
-    fast = m.forward(x)
-    old = M._SUMPROD
-    try:
-        M._SUMPROD = lambda a, b: sum(map(mul, a, b))
-        assert m.forward(x) == pytest.approx(fast, rel=1e-12)
-    finally:
-        M._SUMPROD = old
+    m = make()
+    fallback = (lambda a, b: sum(map(mul, a, b)))
+    base = [m.raw(x) for x in xs(6)]
+    monkeypatch.setattr(M, "_SUMPROD", fallback)
+    assert [m.raw(x) for x in xs(6)] == pytest.approx(base, rel=1e-12, abs=1e-12)
+    monkeypatch.setattr(M, "_SUMPROD", getattr(math, "sumprod", fallback))
+    assert [m.raw(x) for x in xs(6)] == pytest.approx(base, rel=1e-12, abs=1e-12)
 
 
-def test_the_logistic_does_not_overflow_at_the_extremes():
-    m = M.ValueModel(hidden=1, w1=((1e3,) + (0.0,) * (NFEAT - 1),), b1=(0.0,), w2=(1e4,), b2=0.0)
-    assert 0.0 < m.forward((1.0,) + (0.0,) * (NFEAT - 1)) <= 1.0
-    assert 0.0 <= m.forward((-1.0,) + (0.0,) * (NFEAT - 1)) < 1.0
+def test_forward_agrees_with_a_numpy_reference():
+    """The stdlib forward pass against the arithmetic the trainer used, to 1e-12 relative.
 
-
-def test_an_untrained_model_says_it_does_not_know():
-    assert M.zeros().forward(_x()) == pytest.approx(0.5)
-
-
-def test_weights_round_trip_without_losing_precision(tmp_path):
-    m = _toy(hidden=4)
-    p = m.save(tmp_path / "w.json")
-    back = M.ValueModel.load(p)
-    x = _x(9)
-    assert back.forward(x) == pytest.approx(m.forward(x), rel=1e-12)
-    assert back.hidden == m.hidden and back.b2 == m.b2
-
-
-def test_weights_fitted_to_a_different_feature_vector_are_refused(tmp_path):
-    d = _toy().to_json()
-    d["features"] = list(FEATURE_NAMES)
-    d["features"][7] = "a_feature_that_no_longer_exists"
-    p = tmp_path / "w.json"
-    p.write_text(json.dumps(d), encoding="utf-8")
-    with pytest.raises(ValueError) as e:
-        M.ValueModel.load(p)
-    # The message has to name the offender, or nobody can fix it.
-    assert "feature 7" in str(e.value) and "a_feature_that_no_longer_exists" in str(e.value)
-
-
-def test_a_shorter_feature_list_is_refused_by_length(tmp_path):
-    d = _toy().to_json()
-    d["features"] = list(FEATURE_NAMES)[:-3]
-    p = tmp_path / "w.json"
-    p.write_text(json.dumps(d), encoding="utf-8")
-    with pytest.raises(ValueError, match=f"{NFEAT}"):
-        M.ValueModel.load(p)
-
-
-def test_weights_from_another_ruleset_are_refused(tmp_path):
-    d = _toy().to_json()
-    d["rules"] = "0000000000000000"
-    p = tmp_path / "w.json"
-    p.write_text(json.dumps(d), encoding="utf-8")
-    with pytest.raises(ValueError, match="ruleset"):
-        M.ValueModel.load(p)
-    # ...and can still be read deliberately, which is what a refit needs.
-    assert M.ValueModel.load(p, rules=None).hidden == 3
-
-
-def test_a_wrong_shape_is_refused_rather_than_truncated(tmp_path):
-    d = _toy(hidden=3).to_json()
-    d["w1"] = d["w1"][:2]
-    p = tmp_path / "w.json"
-    p.write_text(json.dumps(d), encoding="utf-8")
-    with pytest.raises(ValueError, match="hidden"):
-        M.ValueModel.load(p)
-
-
-def test_an_unknown_activation_is_refused(tmp_path):
-    d = _toy().to_json()
-    d["activation"] = "relu"
-    p = tmp_path / "w.json"
-    p.write_text(json.dumps(d), encoding="utf-8")
-    with pytest.raises(ValueError, match="activation"):
-        M.ValueModel.load(p)
-
-
-def test_the_saved_ruleset_is_the_one_this_build_plays():
-    assert _toy().to_json()["rules"] == DEFAULT_CONFIG.digest()
-
-
-def test_value_scores_a_real_position(pool):
-    from cptcg.core.engine import new_game
-    from cptcg.deck.decklist import Decklist
-    from pathlib import Path
-
-    root = Path(__file__).resolve().parents[2]
-    decks = (Decklist.load(root / "data/decks/the_heist.json"),
-             Decklist.load(root / "data/decks/embracing_power.json"))
-    s = new_game(pool, decks, 3)
-    v = _toy().value(s, 0)
-    assert 0.0 <= v <= 1.0
-
-
-def test_python_inference_matches_the_numpy_training_maths():
-    """The shipped forward pass and the one the trainer optimises must be the same function.
-
-    A silent disagreement here would mean the agent we ship is not the model we measured.
+    If this drifts, every Brier number in ``docs/learning.md`` describes a different model from
+    the one the agent runs.
     """
     np = pytest.importorskip("numpy")
-    m, x = _toy(hidden=6), _x(11)
-    W1 = np.array(m.w1)
-    H = np.tanh(W1 @ np.array(x) + np.array(m.b1))
-    o = float(H @ np.array(m.w2) + m.b2)
-    assert m.forward(x) == pytest.approx(1.0 / (1.0 + np.exp(-o)), rel=1e-12)
+    m = make(hidden=32, seed=9)
+    W1 = np.array(m.w1, dtype=np.float64)
+    B1 = np.array(m.b1, dtype=np.float64)
+    W2 = np.array(m.w2, dtype=np.float64)
+    X = np.array(xs(64, seed=4), dtype=np.float64)
+    want = 1.0 / (1.0 + np.exp(-(np.tanh(X @ W1.T + B1) @ W2 + m.b2)))
+    got = [m.forward(x) for x in X.tolist()]
+    assert got == pytest.approx(want.tolist(), rel=1e-12, abs=1e-15)
+
+
+def test_value_and_score_read_a_real_position(pool):
+    from cptcg.core.engine import new_game
+    from cptcg.core.rng import Pcg32
+    from cptcg.learn.decks import sample_pair
+
+    m = make()
+    s = new_game(pool, sample_pair(pool, Pcg32(4)), 11)
+    for me in (0, 1):
+        assert m.score(s, me) == m.raw(features(s, me))
+        assert m.value(s, me) == m.forward(features(s, me))
+        assert 0.0 <= m.value(s, me) <= 1.0
+
+
+# ------------------------------------------------------------------ round trip
+def test_json_round_trip_is_exact(tmp_path):
+    """Not ``approx``: the weights are written at full ``repr`` precision precisely so that a
+    reload is the same model bit for bit."""
+    m = make(hidden=9)
+    p = m.save(tmp_path / "w.json")
+    back = ValueModel.load(p)
+    assert back.w1 == m.w1 and back.b1 == m.b1 and back.w2 == m.w2 and back.b2 == m.b2
+    assert [back.forward(x) for x in xs(10)] == [m.forward(x) for x in xs(10)]
+
+
+def test_load_weights_caches_by_path(tmp_path):
+    p = make().save(tmp_path / "c.json")
+    assert load_weights(p) is load_weights(p)
+
+
+# ------------------------------------------------------------------ refusals
+def good(tmp_path) -> dict:
+    return json.loads(make().save(tmp_path / "g.json").read_text(encoding="utf-8"))
+
+
+def refuses(d, needle):
+    with pytest.raises(ValueError, match=needle):
+        ValueModel.from_json(d, where="w")
+
+
+def test_a_future_format_is_refused(tmp_path):
+    d = good(tmp_path)
+    d["format"] = FORMAT + 1
+    refuses(d, str(FORMAT))
+
+
+def test_another_activation_is_refused(tmp_path):
+    d = good(tmp_path)
+    d["activation"] = "relu"
+    refuses(d, "relu")
+
+
+def test_a_different_feature_list_names_the_first_difference(tmp_path):
+    d = good(tmp_path)
+    d["features"] = list(FEATURE_NAMES)
+    d["features"][17] = "cred_meh"
+    with pytest.raises(ValueError) as e:
+        ValueModel.from_json(d, where="w")
+    assert "17" in str(e.value) and "cred_meh" in str(e.value) and FEATURE_NAMES[17] in str(e.value)
+
+
+def test_a_shorter_feature_list_names_both_lengths(tmp_path):
+    d = good(tmp_path)
+    d["features"] = list(FEATURE_NAMES)[:-3]
+    with pytest.raises(ValueError) as e:
+        ValueModel.from_json(d, where="w")
+    assert str(NFEAT - 3) in str(e.value) and str(NFEAT) in str(e.value)
+
+
+@pytest.mark.parametrize("key", ["w1", "b1", "w2"])
+def test_a_shape_mismatch_is_refused(tmp_path, key):
+    d = good(tmp_path)
+    d[key] = d[key][:-1]
+    refuses(d, "hidden=")
+
+
+def test_a_short_w1_row_names_the_row(tmp_path):
+    d = good(tmp_path)
+    d["w1"][3] = d["w1"][3][:-2]
+    with pytest.raises(ValueError) as e:
+        ValueModel.from_json(d, where="w")
+    assert "row 3" in str(e.value)
+
+
+def test_another_ruleset_is_refused_and_rules_none_escapes(tmp_path):
+    """Same convention as ``experience.GameRecord.from_json``: the digest is demanded by default,
+    and ``rules=None`` is the deliberate escape a refit needs."""
+    d = good(tmp_path)
+    d["rules"] = "0" * 16
+    refuses(d, "refit")
+    assert ValueModel.from_json(d, rules=None).hidden == 6
+    assert ValueModel.from_json(d, rules="0" * 16).hidden == 6
+
+
+# ------------------------------------------------------------------ the shipped file
+@pytest.mark.skipif(not WEIGHTS.exists(), reason="no weights have been fitted")
+def test_the_shipped_weights_load_under_this_build_and_ruleset():
+    m = load_weights()
+    assert m.header["rules"] == DEFAULT_CONFIG.digest()
+    assert len(m.w1) == m.hidden and all(len(r) == NFEAT for r in m.w1)
+
+
+@pytest.mark.skipif(not WEIGHTS.exists(), reason="no weights have been fitted")
+def test_the_shipped_weights_name_their_own_feature_list_and_digest():
+    d = json.loads(WEIGHTS.read_text(encoding="utf-8"))
+    assert d["features"] == list(FEATURE_NAMES)
+    assert d["feature_digest"] == M.feature_digest()
+    assert d["kind"] == "value" and d["activation"] == "tanh"
+    assert d["run"]["games"] > 0 and d["train"]["holdout_games"] > 0

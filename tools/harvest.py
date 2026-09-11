@@ -4,7 +4,7 @@
                                   [--seed S] [--workers W] [--mix random=.3,heuristic=.35,...]
                                   [--resume | --fresh] [--minutes M]
     python tools/harvest.py examples --in PATH [PATH ...] --out PREFIX [--rate 0.125] [--seed S]
-                                  [--workers W] [--max-games N]
+                                  [--workers W] [--max-games N] [--perspectives move|both]
     python tools/harvest.py compact PATH [PATH ...]
     python tools/harvest.py stats PATH [PATH ...]
 
@@ -101,6 +101,25 @@ GAPS = (1, 2, 4, 8, 16)
 #: the cheap resource (34 games/s), so that is the default. ``--rate 1.0`` keeps everything.
 DEFAULT_RATE = 0.125
 
+#: What ``--perspectives`` may be, and why ``both`` exists.
+#:
+#: ``move`` writes the obvious row: the features of the player to move, labelled with whether that
+#: player went on to win. It has one flaw, and it is not visible in any loss curve. ``to_move_me``
+#: (feature 3, "1 if the pending choice is mine") is then **1.0 in every single row** — a constant
+#: column. The agent, though, scores *previewed* positions, and its most common preview by far is
+#: the one where its turn has just ended: there ``pending.player`` is the rival and the agent feeds
+#: ``to_move_me = 0.0``, a value the network has never seen. Whatever weight training happened to
+#: leave on that input then applies, unlearned and unmeasured, to exactly the comparison that
+#: decides whether to end the turn.
+#:
+#: ``both`` writes that row **and** the same position seen from the other seat, with that seat's
+#: own label. ``features(s, me)`` and ``outcome(record, me)`` are both already defined for either
+#: player, so this costs one extra feature extraction per kept decision and nothing else. The
+#: column stops being constant, the model learns the position from both sides, and
+#: ``p(s, 0) + p(s, 1) ~ 1`` becomes a free calibration check. Both rows carry the same ``game``,
+#: so the by-game split keeps them on the same side and the label still cannot leak.
+PERSPECTIVES = ("move", "both")
+
 
 # ------------------------------------------------------------------ the index -> game mapping
 def pair_rng(seed: int, i: int) -> Pcg32:
@@ -196,7 +215,7 @@ def examples_chunk(job: tuple) -> tuple:
     the decorrelation measurement: mean L2 distance between feature vectors *k* decisions apart,
     over every decision, sampled or not.
     """
-    batch, rate, seed = job
+    batch, rate, seed, both = job
     reg = runner._REG or load_default()
     rows = array("f")
     n_rows = n_dec = 0
@@ -220,13 +239,16 @@ def examples_chunk(job: tuple) -> tuple:
                     gap_sums[k] += sum((x - y) * (x - y) for x, y in zip(f, old)) ** 0.5
                     gap_counts[k] += 1
             if keep_all or rng.below(10_000) < cut:
-                label = outcome(rec, me)
-                rows.extend(f)
-                rows.append(label)
-                rows.append(float(gi))
-                rows.append(float(ply))
-                label_sum += label
-                n_rows += 1
+                seats = (me, 1 - me) if both else (me,)
+                for seat in seats:
+                    fv = f if seat == me else features(s, seat)
+                    label = outcome(rec, seat)
+                    rows.extend(fv)
+                    rows.append(label)
+                    rows.append(float(gi))
+                    rows.append(float(ply))
+                    label_sum += label
+                    n_rows += 1
     if sys.byteorder != "little":
         rows.byteswap()
     return rows.tobytes(), n_rows, n_dec, gap_sums, gap_counts, label_sum
@@ -435,6 +457,7 @@ def cmd_examples(a) -> int:
     header.unlink(missing_ok=True)             # the header is written LAST, see below
     rules = DEFAULT_CONFIG.digest()
     workers = a.workers or max(1, os.cpu_count() or 1)
+    both = a.perspectives == "both"
 
     total_games = 0
     for p in paths:
@@ -451,7 +474,7 @@ def cmd_examples(a) -> int:
     with open(f32, "wb") as fh:
         for blob, nr, nd, gs, gc, ls in ordered_map(
                 examples_chunk,
-                ((b, a.rate, a.seed) for b in _batches(paths, rules, batch, a.max_games)),
+                ((b, a.rate, a.seed, both) for b in _batches(paths, rules, batch, a.max_games)),
                 workers):
             fh.write(blob)
             n_rows += nr
@@ -467,7 +490,8 @@ def cmd_examples(a) -> int:
             "columns": list(COLUMNS), "nfeat": NFEAT, "dtype": "float32", "byte_order": "little",
             "order": "C", "data": f32.name, "bytes": f32.stat().st_size,
             "rules": rules, "rate": a.rate, "seed": a.seed, "games": total_games,
-            "decisions": n_dec, "mean_label": (label_sum / n_rows) if n_rows else None,
+            "decisions": n_dec, "perspectives": a.perspectives,
+            "mean_label": (label_sum / n_rows) if n_rows else None,
             "sources": [str(p) for p in paths],
             "source_manifests": [read_manifest(p) for p in paths],
             "decorrelation_l2": decorr, "created": _now()}
@@ -595,6 +619,9 @@ def main(argv=None) -> int:
     e.add_argument("--seed", type=int, default=7)
     e.add_argument("--workers", type=int, default=None)
     e.add_argument("--max-games", type=int, default=None)
+    e.add_argument("--perspectives", choices=PERSPECTIVES, default="move",
+                   help="'move': one row per decision, for the player to move. 'both': that row "
+                        "and the rival's, each with its own label. See the note by PERSPECTIVES.")
     e.set_defaults(fn=cmd_examples)
 
     c = sub.add_parser("compact", help="rewrite a finished harvest as one gzip member")

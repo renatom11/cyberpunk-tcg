@@ -8,7 +8,10 @@ Four claims, and every one of them is a claim a loss curve could not tell you wa
 3. no harvested deck is a held-out retail starter — checked by contents, not by trusting the
    sampler's name filter, because the whole generalisation gap rests on this;
 4. an interrupted harvest resumes without duplicating or dropping a game, and refuses to resume
-   into a different distribution.
+   into a different distribution;
+5. ``--perspectives both`` really does write the same position from both seats, with each seat's
+   own label, which is what removes the constant ``to_move_me`` column the trainer would otherwise
+   be handed.
 
 Kept to a couple of dozen games so the suite stays near its current runtime.
 """
@@ -281,3 +284,34 @@ def test_deck_source_tallies_the_samplers_own_names():
 
 def test_the_default_output_is_never_inside_the_repository():
     assert ROOT not in harvest.default_out("heuristic", "heuristic", 7).parents
+
+
+# ------------------------------------------------------------------ 6. both perspectives
+def test_both_perspectives_writes_the_rivals_row_too(harvested, tmp_path):
+    """``--perspectives both`` is what the shipped weights were fitted on, and the reason is a
+    train/serve skew that no loss curve would show.
+
+    With one row per decision, ``to_move_me`` is 1.0 in every row — a constant column. The agent
+    then scores previews in which its turn has just ended, where that feature is 0.0, a value the
+    network was never trained on. Emitting the rival's view of the same position with the rival's
+    own label removes the constant and costs one extra ``features()`` call.
+    """
+    one, two = tmp_path / "p1", tmp_path / "p2"
+    play(["examples", "--in", str(harvested), "--out", str(one), "--rate", "1.0", "--workers", "1"])
+    play(["examples", "--in", str(harvested), "--out", str(two), "--rate", "1.0", "--workers", "1",
+          "--perspectives", "both"])
+    a, b = rows_of(one), rows_of(two)
+    assert len(b) == 2 * len(a)
+    assert json.loads(Path(str(two) + ".json").read_text())["perspectives"] == "both"
+
+    move_only = {r[NFEAT + 2] for r in a}                       # every ply is present in both
+    assert {r[NFEAT + 2] for r in b} == move_only
+    for i in range(0, len(b), 2):
+        mine, theirs = b[i], b[i + 1]
+        assert mine[:NFEAT] == a[i // 2][:NFEAT]                # the first row is unchanged
+        assert mine[NFEAT + 1:] == theirs[NFEAT + 1:]           # same game, same ply
+        assert mine[NFEAT] + theirs[NFEAT] == pytest.approx(1.0)
+        assert mine[3] == 1.0                                   # to_move_me
+        assert theirs[3] == 0.0
+    assert len({r[3] for r in a}) == 1                          # constant, which is the problem
+    assert len({r[3] for r in b}) == 2                          # and is now not
