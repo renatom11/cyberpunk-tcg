@@ -54,11 +54,18 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .panel.hand .lbl, .panel.field .lbl, .panel.legends .lbl { width: 100%; }
 /* One row, never wrapped: six cards read as a hand, a 2x3 block reads as a grid. A hand bigger
    than the row scrolls sideways rather than breaking the line. */
-.hand { display: flex; gap: 4px; overflow-x: auto; min-height: 0; align-items: flex-start; flex-wrap: nowrap; }
+/* The hand fans: cards overlap by --overlap, which app.js measures from how many there are and
+   how wide the column is. No scroll bar — a scroll bar hides the cards it scrolls past. */
+.hand { display: flex; gap: 4px; overflow: hidden; min-height: 0; align-items: flex-start; flex-wrap: nowrap; }
+.hand .card + .card { margin-left: calc(-1 * var(--overlap, 0px)); }
+.hand .card { transition: transform .13s ease; }
+/* Only the cards drawn on top of the hovered one have to move out of its way. */
+.hand.mine .card:hover { transform: translateY(-14px); z-index: 6; }
+.hand.mine .card.can:hover { transform: translateY(-14px); }
+.hand.mine .card:hover ~ .card { transform: translateX(var(--overlap, 0px)); }
 /* The rival's hand is a row of identical backs — a count, not something to read — so it is held
    well under the size the readable hand needs, and the height it gives up goes to that hand. */
 .hand.opp { min-height: calc(var(--card-h) + 26px); }
-.hand.opp .card.back + .card.back { margin-left: calc(var(--card-w) * -.62); }
 .hand .card { flex: 0 0 auto; }
 /* The label has to leave the row. As a flex item in a nowrap line it gets squeezed in beside the
    cards and steals their width; it cannot take a line of its own the way it does when wrapping. */
@@ -72,14 +79,8 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 /* The hand takes whatever height the column has left, instead of leaving it empty below the row. */
 .col > .panel.hand.mine { flex: 1 1 auto; min-height: calc(var(--card-h) + 26px); }
 /* The scroll bar is part of the board, so it is not left in the system's light grey. */
-.hand::-webkit-scrollbar { height: 10px; }
-.hand::-webkit-scrollbar-track { background: #0a1018; border-radius: 6px; }
-.hand::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 6px; }
-.hand::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
-.hand { scrollbar-width: thin; scrollbar-color: var(--line2) #0a1018; }
 .hand.mine { min-height: calc(var(--card-h) + 26px); }
 .hand.opp { overflow: hidden; }
-.hand.opp:has(.card.back) { gap: 0; }
 .dice { display: flex; gap: 8px; justify-content: center; padding: 6px; }
 .die { width: 44px; height: 44px; border: 1px solid var(--line2); border-radius: 8px; display: grid; place-items: center; color: var(--dim); font-size: 12px; font-weight: 700; }
 .die.gig { color: var(--yellow); border-color: var(--yellow); font-size: 16px; }

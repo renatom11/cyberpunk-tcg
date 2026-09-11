@@ -258,6 +258,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
     });
   }
   if (myTurn) wireDrag(root, pend, onAct);
+  root.querySelectorAll(".hand").forEach(fanHand);
   root.querySelectorAll(".card[data-inst]").forEach(n => {
     n.addEventListener("click", (e) => {
       if (n.classList.contains("payable")) return;      // paying: the click means "spend this"
@@ -376,6 +377,32 @@ document.addEventListener("click", (e) => {
   SUPPRESS_CLICK = false;
   e.stopPropagation(); e.preventDefault();
 }, true);
+
+// ---------------------------------------------------------------- the hand fans
+// Cards overlap by however much they have to, rather than the row scrolling: a hand is a fan you
+// hold, and a scroll bar hides the cards it is scrolling past. The overlap has to be measured
+// rather than fixed, because it depends on how many cards are in the hand and how wide the column
+// is, and both change. Hovering then reveals the card in full — see the CSS: only the cards *after*
+// the hovered one need to move, because those are the ones drawn on top of it.
+const HAND_MAX_OVERLAP = 0.8;        // never hide more than this much of a card
+function fanHand(hand) {
+  const cards = hand.querySelectorAll(".card");
+  const n = cards.length;
+  if (!n) return;
+  const w = cards[0].offsetWidth;
+  if (!w) return;                    // not laid out yet (a hidden tab); the resize hook retries
+  const gap = 4, avail = hand.clientWidth - 16;
+  const need = n * w + (n - 1) * gap;
+  const over = n > 1 && need > avail
+    ? Math.min(Math.ceil((need - avail) / (n - 1)) + gap, Math.round(w * HAND_MAX_OVERLAP))
+    : 0;
+  hand.style.setProperty("--overlap", over + "px");
+}
+let FAN_TIMER = null;
+window.addEventListener("resize", () => {
+  clearTimeout(FAN_TIMER);
+  FAN_TIMER = setTimeout(() => document.querySelectorAll("#board .hand").forEach(fanHand), 80);
+});
 
 // ---------------------------------------------------------------- arrivals
 // Which cards are on the board that were not a moment ago. The board is the source of truth rather
