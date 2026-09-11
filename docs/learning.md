@@ -1390,3 +1390,16 @@ ismcts sat in seat 0 in 150 of 300 games — exactly half, by construction. ismc
 **Floor** is uniform random play over the same turn, on the same seeds, stored when the position was qualified. Read the agent's column against it, not against the frozen heuristic's zero: the heuristic scores zero here by construction, because missing these positions on these seeds is how they were selected.
 
 The win is confirmed by playing the turn out and the rival's whole reply with the frozen heuristic in both seats, so a line that reaches seven Gigs and has them stolen back does not count. That reply is one competent defence and one sample of the rival's Gig die, not a proof against every defence.
+
+
+### Frozen panel: ismcts — 2026-09-11 04:32 UTC
+
+Panel `a1832d477c27193f`, decks `1b1799dbc029a6b7`, frozen 2026-09-10: 6 deck pairings whose **decklists are stored verbatim in `data/arena/panel.json`** and are never redrawn from the sampler, 60 games each, no early stopping. Both digests are checked on load, so these numbers are comparable across every generation as long as they read `a1832d477c27193f` / `1b1799dbc029a6b7`.
+
+| opponent | games | win rate | 95% Wilson (these decks) | per-pairing spread | decisive pairs |
+|---|---:|---:|---|---|---|
+| uniform random legal play (`random`) | 360 | 97.2% | 95.0–98.5% | 95.0–100.0% | 170/170 |
+| the frozen one-ply heuristic (`heuristic`) | 360 | 83.6% | 79.4–87.1% | 76.7–91.7% | 123/125 |
+| the generation-0 snapshot (`gen0`) | — | not available yet | — | — | lands with the first trained model; until then this row reads "not available yet" and the panel is two members |
+
+Here the Wilson interval is the right one and the *only* one that changes between generations: the decks are fixed by the panel, so nothing but more games is being sampled. The per-pairing spread is printed beside it as a reminder of what the panel is not — a panel score is a score on these twelve decklists, and generalises no further than they do. For a claim about play in general, use the between-pairing interval from `a-vs-b` or `generalisation`.
