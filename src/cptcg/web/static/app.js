@@ -24,15 +24,18 @@ let LOG = [];
 // ---------------------------------------------------------------- cards
 function cardNode(c, opts = {}) {
   const d = el("div", "card " + (c.color || ""));
+  // Only where the view already gives one: a face-down Legend and a rival hand card are built from
+  // {} on purpose, and must not gain an identity here.
+  if (c && c.inst != null) d.dataset.inst = c.inst;
   if (opts.back) {
     d.className = "card back" + (opts.small ? " sm" : "");
-    if (HAS_BACK) { const img = el("img"); img.src = opts.legend ? "images/_back_legend.jpg" : "images/_back.jpg"; img.alt = "card back"; img.onerror = () => { HAS_BACK = false; img.remove(); }; d.append(img); }
+    if (HAS_BACK) { const img = el("img"); img.draggable = false; img.src = opts.legend ? "images/_back_legend.jpg" : "images/_back.jpg"; img.alt = "card back"; img.onerror = () => { HAS_BACK = false; img.remove(); }; d.append(img); }
     return d;
   }
   if (opts.small) d.classList.add("sm");
   const def = CARDS[c.id] || {};
   if (def.image) {
-    const img = el("img"); img.src = `images/${c.id}.jpg`; img.alt = c.name;
+    const img = el("img"); img.draggable = false; img.src = `images/${c.id}.jpg`; img.alt = c.name;
     if (CAN_HOVER) { d.onmouseenter = () => showPreview(img.src, c); d.onmouseleave = hidePreview; }
     if (CAN_TOUCH) {
       // Touch: a long-press previews any card without acting. On a touch-only screen a plain tap
@@ -74,7 +77,7 @@ function textFace(c) {
 }
 
 // ---------------------------------------------------------------- board
-function renderBoard(root, v, { interactive, onAct, watching, onSkip } = {}) {
+function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = {}) {
   root.innerHTML = "";
   const me = v.perspective == null ? 0 : v.perspective;   // bottom seat
   const opp = 1 - me;
@@ -133,7 +136,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip } = {}) {
     const list = el("div", "list");
     if (!p.eddies.list.length) list.append(el("span", "waiting", "No Eddies yet."));
     p.eddies.list.forEach(c => {
-      const n = cardNode({}, { back: true, small: true });
+      const n = cardNode(c, { back: true, small: true });
       if (c.spent) n.classList.add("spent");
       n.title = `${c.name}${c.subtitle ? " — " + c.subtitle : ""}${c.spent ? " (spent)" : " (ready)"}`;
       if (c.image) { n.onmouseenter = () => showPreview(`images/${c.id}.jpg`, c); n.onmouseleave = hidePreview; if (TOUCH) n.onclick = () => showPreview(`images/${c.id}.jpg`, c, true); }
@@ -158,7 +161,9 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip } = {}) {
     // Deck over Trash at the far right of the band, which is where the playmat keeps them.
     const counts = el("div", "counts");
     counts.append(badge("DECK", p.deck), badge("TRASH", p.trash.length));
-    band.append(row, eddiesPanel(p), counts);
+    const ed = eddiesPanel(p);
+    if (mine) ed.classList.add("p-my-eddies");
+    band.append(row, ed, counts);
     return band;
   };
   const fieldRow = (p) => {
@@ -230,7 +235,163 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip } = {}) {
   }
   right.append(prompt);
   root.append(left, center, right);
+  if (fresh && fresh.size) {
+    root.querySelectorAll(".card[data-inst]").forEach(n => {
+      if (fresh.has(+n.dataset.inst)) n.classList.add("fresh");
+    });
+  }
+  if (myTurn) wireDrag(root, pend, onAct);
   logp.scrollTop = logp.scrollHeight;
+}
+
+// ---------------------------------------------------------------- drag to play
+// Clicking still does everything; this is the other way round, the way the cards work on a table.
+// Pointer events rather than HTML5 drag-and-drop, because HTML5 drag does not fire on touch at all
+// and this has to work on a phone.
+let DRAG = null;
+// A card face is an <img>, and an <img> is draggable by default: letting the native drag start puts
+// Chromium into HTML5 drag mode, which stops delivering pointermove entirely and leaves the gesture
+// frozen a few pixels from where it began. Images are marked draggable=false as they are built and
+// this is the backstop for anything else inside a card.
+document.addEventListener("dragstart", (e) => { if (e.target.closest(".card")) e.preventDefault(); });
+
+function wireDrag(root, pend, onAct) {
+  const plays = {}, sells = {}, gear = {};
+  pend.options.forEach(o => {
+    if (o.inst == null || o.inst < 0) return;
+    if (o.kind === "Play" && o.host >= 0) (gear[o.inst] = gear[o.inst] || {})[o.host] = o;
+    else if (o.kind === "Play" || o.kind === "GoSolo") plays[o.inst] = o;
+    else if (o.kind === "Sell") sells[o.inst] = o;
+  });
+  const field = root.querySelector(".p-my-field");
+  const eddies = root.querySelector(".p-my-eddies");
+
+  root.querySelectorAll(".hand.mine .card[data-inst], .p-my-legends .card[data-inst]").forEach(node => {
+    const inst = +node.dataset.inst;
+    const mine = { play: plays[inst], sell: sells[inst], gear: gear[inst] };
+    if (!mine.play && !mine.sell && !mine.gear) return;
+    node.classList.add("draggable");
+    node.addEventListener("pointerdown", (e) => {
+      if (e.button !== undefined && e.button !== 0) return;
+      DRAG = { node, inst, opts: mine, x0: e.clientX, y0: e.clientY, ghost: null, moved: false, onAct };
+      // No setPointerCapture: the listeners are on `document`, and capturing to a node that a
+      // re-render can replace silently stops delivering the rest of the drag.
+    });
+  });
+
+  // The zones this drag could end on, and what each one would do.
+  DRAG_ZONES = [];
+  if (field) DRAG_ZONES.push({ el: field, label: "DROP TO PLAY", pick: (d) => d.opts.play });
+  if (eddies) DRAG_ZONES.push({ el: eddies, label: "DROP TO SELL", pick: (d) => d.opts.sell });
+  root.querySelectorAll(".card[data-inst]").forEach(host => {
+    DRAG_ZONES.push({ el: host, label: "EQUIP", host: +host.dataset.inst,
+                      pick: (d) => d.opts.gear && d.opts.gear[+host.dataset.inst] });
+  });
+}
+let DRAG_ZONES = [];
+
+function dragZonesFor(d) { return DRAG_ZONES.filter(z => z.pick(d)); }
+
+document.addEventListener("pointermove", (e) => {
+  const d = DRAG;
+  if (!d) return;
+  if (!d.moved) {
+    if (Math.abs(e.clientX - d.x0) + Math.abs(e.clientY - d.y0) < 8) return;   // still a click
+    d.moved = true;
+    hidePreview();
+    const r = d.node.getBoundingClientRect();
+    const g = d.ghost = d.node.cloneNode(true);
+    g.className = d.node.className.replace(/\bfresh\b/, "") + " dragghost";
+    g.style.width = r.width + "px"; g.style.height = r.height + "px";
+    g.dataset.dx = (r.left - e.clientX); g.dataset.dy = (r.top - e.clientY);
+    document.body.append(g);
+    d.node.classList.add("dragging");
+    dragZonesFor(d).forEach(z => { z.el.classList.add("droptarget"); z.el.dataset.drop = z.label; });
+  }
+  const g = d.ghost;
+  g.style.left = (e.clientX + +g.dataset.dx) + "px";
+  g.style.top = (e.clientY + +g.dataset.dy) + "px";
+  const over = zoneAt(d, e.clientX, e.clientY);
+  DRAG_ZONES.forEach(z => z.el.classList.toggle("dropover", z === over));
+}, { passive: true });
+
+function zoneAt(d, x, y) {
+  let best = null;
+  dragZonesFor(d).forEach(z => {
+    const r = z.el.getBoundingClientRect();
+    if (x < r.left || x > r.right || y < r.top || y > r.bottom) return;
+    // the smallest box wins, so a card inside the field takes the drop over the field itself
+    if (!best || r.width * r.height < best.area) best = { z, area: r.width * r.height };
+  });
+  return best && best.z;
+}
+
+document.addEventListener("pointerup", (e) => {
+  const d = DRAG;
+  DRAG = null;
+  if (!d) return;
+  const wasDrag = d.moved;
+  if (d.ghost) d.ghost.remove();
+  d.node.classList.remove("dragging");
+  DRAG_ZONES.forEach(z => { z.el.classList.remove("droptarget", "dropover"); delete z.el.dataset.drop; });
+  if (!wasDrag) return;                       // a click: the node's own handler deals with it
+  const z = zoneAt(d, e.clientX, e.clientY);
+  const opt = z && z.pick(d);
+  if (opt) { SUPPRESS_CLICK = true; d.onAct(opt.index); }
+});
+
+// A pointerup that ended a drag is followed by a click on whatever is underneath; swallow it once
+// so dropping a card does not also fire the card's own action menu.
+let SUPPRESS_CLICK = false;
+document.addEventListener("click", (e) => {
+  if (!SUPPRESS_CLICK) return;
+  SUPPRESS_CLICK = false;
+  e.stopPropagation(); e.preventDefault();
+}, true);
+
+// ---------------------------------------------------------------- arrivals
+// Which cards are on the board that were not a moment ago. The board is the source of truth rather
+// than the log, because the log is prose and this has to be exact: a card that arrives gets the
+// arrival glow, and the first one gets shown full size the way the reference client does.
+let SEEN = new Set();
+function visibleCards(v) {
+  const out = [];
+  (v.players || []).forEach(p => {
+    (p.field || []).forEach(c => out.push(c));
+    (p.legends || []).forEach(l => { if (l.name) out.push(l); });   // a Legend still face-down has none
+    ((p.eddies && p.eddies.list) || []).forEach(c => out.push(c));
+  });
+  return out;
+}
+function arrivals(v) {
+  const now = new Set(), fresh = [];
+  visibleCards(v).forEach(c => {
+    if (c.inst == null) return;
+    now.add(c.inst);
+    if (!SEEN.has(c.inst)) fresh.push(c);
+  });
+  const opening = SEEN.size === 0;        // a new game: everything is new, so nothing is news
+  SEEN = now;
+  return opening ? [] : fresh;
+}
+
+// The card that just hit the board, shown full size for a beat. This is what makes a rival's turn
+// readable: without it a card appears in a row of six and nothing tells you which one moved.
+let SPOT_TIMER = null;
+function showcase(c) {
+  if (!c || !(CARDS[c.id] || {}).image) return;
+  let box = $("#spotlight");
+  if (!box) {
+    box = el("div", "spotlight"); box.id = "spotlight";
+    box.append(el("img"));
+    document.body.append(box);
+  }
+  box.querySelector("img").src = `images/${c.id}.jpg`;
+  box.classList.remove("show");
+  void box.offsetWidth;                    // restart the animation on a repeat play
+  box.classList.add("show");
+  clearTimeout(SPOT_TIMER);
+  SPOT_TIMER = setTimeout(() => box.classList.remove("show"), 1100);
 }
 function hintFor(p) {
   const h = {
@@ -298,7 +459,10 @@ function playRival(v) {
       const f = frames[i++];
       acc = acc.concat(f.log);
       const fv = f.view; fv.log = acc; fv.human = v.human;
-      renderBoard($("#board"), fv, { interactive: true, watching: v.rival || "The rival", onSkip: stop });
+      const fresh = arrivals(fv);
+      renderBoard($("#board"), fv, { interactive: true, watching: v.rival || "The rival", onSkip: stop,
+                                     fresh: new Set(fresh.map(c => c.inst)) });
+      showcase(f.played || fresh[0]);
       timer = setTimeout(tick, step);
     };
     tick();
@@ -370,6 +534,9 @@ async function act(verbOrIndex) {
       if (!pay.length) pay = null;         // "let the game pick" is just the default order
     }
   }
+  const about = typeof verbOrIndex === "number" && GAME.view.pending
+    ? cardOfOption(GAME.view, (GAME.view.pending.options || []).find(o => o.index === verbOrIndex))
+    : null;
   let v;
   if (verbOrIndex === "undo") { LOG = []; v = await api(`/api/games/${GAME.id}/undo`, { since: 0 }); }
   else if (verbOrIndex === "concede") v = await api(`/api/games/${GAME.id}/concede`, { since });
@@ -377,7 +544,23 @@ async function act(verbOrIndex) {
   if (v.frames && v.frames.length) await playRival(v);
   LOG = LOG.concat(v.log);
   GAME.view = v; v.log = LOG;
-  renderBoard($("#board"), v, { interactive: true, onAct: act });
+  const fresh = arrivals(v);
+  renderBoard($("#board"), v, { interactive: true, onAct: act, fresh: new Set(fresh.map(c => c.inst)) });
+  // The card the move was about comes first: a Program resolves and goes to the trash, so diffing
+  // the board would never show the one card that mattered.
+  showcase(about || fresh[0]);
+}
+
+//: Which card an option is about, looked up in the board we were holding when it was chosen.
+function cardOfOption(v, o) {
+  if (!o || o.inst == null || o.inst < 0) return null;
+  if (!["Play", "GoSolo", "Sell", "Activate", "Attack"].includes(o.kind)) return null;
+  for (const p of v.players || []) {
+    for (const c of (p.hand || [])) if (c.inst === o.inst) return c;
+    for (const c of (p.field || [])) if (c.inst === o.inst) return c;
+    for (const l of (p.legends || [])) if (l.inst === o.inst && l.name) return l;
+  }
+  return null;
 }
 async function newGame() {
   const body = { deck_me: $("#deckMe").value, deck_ai: $("#deckAi").value, agent: $("#agent").value, seat: +$("#seat").value };
@@ -385,6 +568,8 @@ async function newGame() {
   const r = await api("/api/games", body);
   GAME = { id: r.id, view: r.view };
   LOG = r.view.log.slice();
+  SEEN = new Set();
+  arrivals(r.view);                        // seed the board history; the opening board is not news
   $("#setup").classList.add("hidden"); $("#board").classList.remove("hidden");
   renderBoard($("#board"), r.view, { interactive: true, onAct: act });
 }
@@ -636,16 +821,90 @@ function renderCardGrid(q) {
 // ---------------------------------------------------------------- card preview
 // The board draws cards small; hovering any card shows its face at full resolution, like the sim.
 let PREVIEW = null;
+// ---------------------------------------------------------------- card glossary
+// Every word the faces print in capitals, with the rule it stands for. A card's text is scanned for
+// these, so the preview explains itself instead of assuming the reader has the rulebook open.
+const KEYWORDS = {
+  "ADRENALINE": "This Unit can attack the turn it is played.",
+  "GO SOLO": "Pay this Legend's cost to play it as a ready Unit. It can attack this turn. If it leaves the field it is removed from the game.",
+  "QUICK": "You may also play this card, or use this effect, as a reaction while a rival Unit is attacking.",
+  "BLOCKER": "While a rival Unit is attacking, you may spend this Unit to redirect the attack to it instead.",
+  "PLAY": "When you play this card.",
+  "ATTACK": "When this Unit attacks.",
+  "DEFEATED": "When this card is defeated.",
+  "CALL": "Turn a face-down Legend face-up for 1 €$. Once per turn.",
+};
+// States the board puts a card in, rather than anything printed on it.
+const CARD_STATES = {
+  "LAG": "It entered the field this turn, so it cannot attack yet. It readies at the start of your next turn.",
+  "SPENT": "Already used this turn. It lies sideways, and readies at the start of your next turn.",
+};
+let KW_HIDDEN = false;      // the H key, as in the reference client
+
+function keywordsFor(c) {
+  const text = ((c.text || "") + " " + (c.keywords || []).join(" ")).toUpperCase();
+  const out = [];
+  // longest first, so GO SOLO is not read as two separate words
+  Object.keys(KEYWORDS).sort((a, b) => b.length - a.length).forEach(k => {
+    if (text.includes(k) && !out.some(x => x.k.includes(k))) out.push({ k, t: KEYWORDS[k] });
+  });
+  return out;
+}
+function statesFor(c) {
+  const out = [];
+  if (c.lag) out.push({ k: "LAG", t: CARD_STATES.LAG });
+  if (c.spent) out.push({ k: "SPENT", t: CARD_STATES.SPENT });
+  return out;
+}
+function keywordPanel(c) {
+  const kws = keywordsFor(c), states = statesFor(c);
+  if (!kws.length && !states.length) return null;
+  const box = el("div", "kwpanel");
+  const section = (label, rows) => {
+    if (!rows.length) return;
+    box.append(el("div", "kwhead", label));
+    rows.forEach(r => {
+      const row = el("div", "kwrow");
+      row.append(el("span", "kwtag", r.k), el("span", "kwtext", r.t));
+      box.append(row);
+    });
+  };
+  section("KEYWORDS", kws);
+  section("AFFECTING THIS CARD", states);
+  box.append(el("div", "kwhint", "PRESS H TO HIDE"));
+  return box;
+}
+
 function showPreview(src, c, touch) {
   if (!PREVIEW) { PREVIEW = el("div", "preview"); PREVIEW.append(el("img")); document.body.append(PREVIEW); PREVIEW.onclick = (e) => { e.stopPropagation(); hidePreview(); }; }
   const img = PREVIEW.querySelector("img"); img.src = src; img.alt = c.name;
+  // The keyword panel rides beside the card, as in the reference client, so a reader never has to
+  // know what ADRENALINE or LAG mean to read the board.
+  const old = PREVIEW.parentNode.querySelector(".kwpanel");
+  if (old) old.remove();
+  if (!KW_HIDDEN) {
+    const kw = keywordPanel(c);
+    if (kw) { PREVIEW.after(kw); kw.classList.toggle("touch", !!touch); }
+  }
   PREVIEW.classList.add("show"); PREVIEW.classList.toggle("touch", !!touch);
   // Centred, not following the cursor: the card lands in the same place every time, so reading it
   // is a glance rather than a chase, and moving along a row of cards swaps one image for another.
   // pointer-events stay off, so the preview never steals the hover from the card underneath it.
   PREVIEW.style.left = ""; PREVIEW.style.top = "";
 }
-function hidePreview() { if (PREVIEW) PREVIEW.classList.remove("show", "touch"); }
+function hidePreview() {
+  if (!PREVIEW) return;
+  PREVIEW.classList.remove("show", "touch");
+  const kw = PREVIEW.parentNode && PREVIEW.parentNode.querySelector(".kwpanel");
+  if (kw) kw.remove();
+}
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "h" && e.key !== "H") return;
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName || "").toUpperCase())) return;
+  KW_HIDDEN = !KW_HIDDEN;
+  const kw = document.querySelector(".kwpanel");
+  if (kw) kw.remove();
+});
 
 // ---------------------------------------------------------------- deck builder
 // The page holds the deck being edited; legality, RAM limits and the saved file all come from

@@ -108,11 +108,19 @@ class Game:
         guard = 0
         while not self.s.over and self.s.pending is not None and self.s.pending.player != self.human and guard < 500:
             legal_actions(self.s)
+            played = len(self.s.played)
             apply(self.s, self.agent.act(self.s, self.s.pending))
             guard += 1
             said = self._narrate()
             if said and len(self.frames) < FRAME_CAP:
-                self.frames.append({"log": said, "view": view_state(self.s, self.human, self.names, [])})
+                # Which card this move played, if any. A Program never reaches the board — it
+                # resolves and goes to the trash — so a client diffing zones would never see it,
+                # and the one card the move was *about* would be the one it could not show.
+                shown = None
+                if len(self.s.played) > played:
+                    shown = card_json(self.s, self.s.played[-1])
+                self.frames.append({"log": said, "played": shown,
+                                    "view": view_state(self.s, self.human, self.names, [])})
         self._narrate()
 
     def act(self, index: int, pay: list[int] | None = None) -> None:
