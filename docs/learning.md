@@ -9,12 +9,18 @@ constants that ten thousand games leave untouched. The training loop closes that
           └────────────────────  accepted weights  ◄────────────────────────────────┘
 ```
 
-This page is the shipped record of that loop. **What exists today is the first box and the last
-one: experience capture, and the gate that every future generation has to pass.** The search agent
-and the model arrive in later stages, and each one adds its section here — including the
-generation-by-generation numbers, published whether or not they flatter the run. Until then the
-honest summary is: the format is in place, the measuring instruments are built and tested, and the
-only games stored so far were played by the existing heuristic agent, which does not search.
+This page is the shipped record of that loop. **Three of the four boxes exist today: experience
+capture, a fitted value head, and the gate.** The search agent arrives in the next stage and adds
+its section here, as every stage does — including the generation-by-generation numbers, published
+whether or not they flatter the run.
+
+Where the loop stands: 50,000 heuristic and random self-play games became 1.45M labelled positions;
+a 1,857-parameter value head fitted to them predicts held-out outcomes at a Brier of 0.139 against
+0.206 for the frozen heuristic's own evaluation; and `neural` — the *same* one-ply agent, scored by
+that head instead of by seventeen hand-written constants — beats the frozen heuristic 75.8% of the
+time, and 80.0% on the two retail starters it was never trained on. The pre-registered gate wanted
+a Wilson lower bound above 0.55 on decks it never trained on; it got 0.756. What is still missing
+is any claim about positions neither agent reaches, because nothing here searches.
 
 ## What is stored, and what is deliberately not
 
@@ -392,6 +398,272 @@ misvalues are labelled with its mistakes. That is why the `random` agent is avai
 covers state space the heuristic never visits — and why this stage claims a data path and no
 playing-strength result at all. The claim about strength has to come from the gate below.
 
+## The value head
+
+`src/cptcg/learn/model.py` is the middle box of the diagram at the top of this page, and
+`src/cptcg/agents/neural.py` is what plays with it. Together they replace
+`agents/heuristic.py`'s dict of seventeen hand-written constants with 1,857 numbers fitted to what
+actually happened in 50,000 games.
+
+```python
+from cptcg.learn.model import load_weights
+m = load_weights()              # cached; reads src/cptcg/agents/weights.json
+m.value(state, me)              # probability that `me` wins from here
+m.score(state, me)              # the same thing before the logistic — what the agent ranks on
+```
+
+One hidden layer of 16 `tanh` units over the 114 features, one output through a logistic.
+
+**Inference is pure stdlib; training is not.** `src/cptcg` is zipped into a phone browser by
+`tools/build_site.py`, where there is no pip, so the forward pass is hand-written Python
+(`math.sumprod` where the interpreter has it, `sum(map(mul, …))` where it does not) while the
+trainer in `tools/fit_eval.py` imports numpy lazily inside `fit`. Two implementations of one piece
+of arithmetic is a real risk, so `tests/learn/test_model.py` checks them against each other to
+1e-12, and `tests/unit/test_stdlib_only.py` walks every module under `src/cptcg` and fails on any
+import that is neither stdlib nor `cptcg` — the Pyodide constraint as a test rather than a promise.
+`weights.json` needs no build change: the site build already packs every non-`.pyc` file under
+`src/cptcg`.
+
+`ValueModel.from_json` refuses rather than scoring plausibly from the wrong numbers: a format it
+does not know, an activation it does not implement, a feature list that differs from
+`FEATURE_NAMES` (the message names the first differing index, both names and both lengths), any
+shape mismatch (the message names the row), or a ruleset digest that is not this build's.
+`rules=None` is the deliberate escape a refit needs — the same convention `experience.read_games`
+uses.
+
+### Choosing the width, before any game was played
+
+The agent's budget is a *move*, not a forward pass: a leaf costs `features()` **and** the model,
+and under Pyodide both cost more. So the cost table comes first (`tools/fit_eval.py bench`, this
+box, 4 cores, CPython 3.11 without `math.sumprod`):
+
+| hidden | parameters | forward pass | vs the 29.8 µs feature extraction | leaf evaluations/s |
+|---:|---:|---:|---:|---:|
+| 8 | 929 | 19.4 µs | 0.65× | 20,325 |
+| 16 | 1,857 | 38.6 µs | 1.29× | 14,618 |
+| 24 | 2,785 | 57.6 µs | 1.93× | 11,435 |
+| 32 | 3,713 | 76.9 µs | 2.58× | 9,372 |
+| 48 | 5,569 | 115.1 µs | 3.86× | 6,902 |
+| 64 | 7,425 | 154.0 µs | 5.16× | 5,441 |
+| 96 | 11,137 | 234.5 µs | 7.86× | 3,784 |
+| 128 | 14,849 | 314.4 µs | 10.54× | 2,905 |
+
+**This is the number that shapes the stage.** `evaluate()` costs about 4 µs; `features()` alone
+costs 30. The neural agent is not "the heuristic with a different scorer", it is roughly a five
+times slower agent, and every arena budget below is sized from that.
+
+The selection rule was fixed in advance: fit every width on the *same* by-game split, and ship the
+smallest whose held-out Brier is within 1% relative of the best, subject to ≤150 µs a forward pass.
+**No arena result enters this decision.** Every width is published whether shipped or not
+(`tools/fit_eval.py sweep`, all 1.45M rows, early stopping on held-out Brier):
+
+| hidden | held-out Brier | log-loss | accuracy | best epoch | shipped |
+|---:|---:|---:|---:|---:|---|
+| 8 | 0.14058 | 0.42715 | 78.90% | 74 | — |
+| **16** | **0.13929** | 0.42376 | 79.14% | 63 | **yes** |
+| 24 | 0.13916 | 0.42325 | 79.13% | 63 | — |
+| 32 | 0.13937 | 0.42373 | 79.10% | 36 | — |
+| 48 | 0.13922 | 0.42353 | 79.16% | 72 | — |
+| 64 | 0.13942 | 0.42369 | 79.08% | 47 | — |
+
+The curve is flat from 16 to 64 — a spread of 0.0003 Brier across four times the parameters — so
+the rule picks 16 and, more importantly, **capacity is not what is holding this model back**. That
+is a measurement, not a consolation: see the diagnosis at the end of this section.
+
+### The data, and how it was split
+
+| | games | decisions | rows kept | wall, 4 cores |
+|---|---:|---:|---:|---:|
+| heuristic self-play, seed 7 | 30,000 | 4,156,939 | 1,039,492 | 924 s |
+| random self-play, seed 21 | 20,000 | 1,665,923 | 414,500 | 35 s |
+| **total** | **50,000** | **5,822,862** | **1,453,992** | 16 min |
+
+`--rate 0.125` (the measured knee, above), `--perspectives both` (the constant-column fix, above).
+680 MB of float32 in the scratchpad; **not committed** — it is regenerable exactly from
+`(seed, agent, mix, ruleset digest)`, all four of which are in each harvest manifest.
+
+The split is **by game**: 40,000 games train, 10,000 held out, which is 1,161,380 training rows
+against 292,612. Splitting the 1.45M rows at random instead would put the two perspectives of the
+same decision — and the 140 near-identical decisions of the same game, all sharing one label — on
+both sides, and every number below would be inflated by memorisation rather than earned.
+
+### What it learned
+
+Adam on Brier (squared error after the logistic, so one noisy sample of an outcome cannot dominate
+the gradient), batches of 4,096, L2 1e-4 on the two weight matrices and not on the biases, early
+stopping on held-out Brier with the best weights restored: best at epoch 95, stopped at 120, 254 s.
+
+Four models, all scored on held-out **games**. The first table is all 292,612 held-out rows; the
+second is the 182,516 of them that were replayed so that `heuristic.evaluate()` could be scored on
+exactly the same positions — the score is not a column of the training matrix, because the matrix
+stores a description and not an opinion.
+
+| model | Brier | log-loss | accuracy |
+|---|---:|---:|---:|
+| always 0.5 | 0.25000 | 0.69315 | 50.00% |
+| logistic regression, same 114 features, no hidden layer | 0.16074 | 0.48293 | 75.50% |
+| **the value head, hidden=16** | **0.13914** | **0.42351** | **79.14%** |
+
+| model, on the replayed subsample | Brier | log-loss | accuracy |
+|---|---:|---:|---:|
+| always 0.5 | 0.25000 | 0.69315 | 50.00% |
+| the frozen heuristic's `evaluate()`, squashed through a logistic fitted on the training split | 0.20631 | 0.59824 | 67.23% |
+| logistic regression, same 114 features | 0.16489 | 0.49317 | 74.70% |
+| **the value head, hidden=16** | **0.14350** | **0.43533** | **78.45%** |
+
+The heuristic baseline is fitted rather than assumed: its scale and offset are learned on the
+*training* split, so the comparison is against the best probability that score can be turned into,
+not against a badly calibrated version of it. Against that, the value head takes 30% off the Brier
+and adds 11 points of accuracy. The no-hidden-layer row says how much of that is the feature set
+(most of it) and how much is the hidden layer (0.0021 Brier, about a sixth of the gap).
+
+### Calibration
+
+Held-out games, ten buckets, expected calibration error **0.0219**, worst bucket gap **0.0435**.
+
+| predicted | n | mean prediction | actually won | 95% Wilson |
+|---|---:|---:|---:|---|
+| 0.0–0.1 | 42,009 | 0.041 | 0.021 | 0.020–0.023 |
+| 0.1–0.2 | 24,599 | 0.149 | 0.105 | 0.101–0.109 |
+| 0.2–0.3 | 22,697 | 0.250 | 0.215 | 0.210–0.221 |
+| 0.3–0.4 | 24,931 | 0.352 | 0.323 | 0.317–0.329 |
+| 0.4–0.5 | 30,250 | 0.451 | 0.437 | 0.431–0.442 |
+| 0.5–0.6 | 30,555 | 0.549 | 0.549 | 0.543–0.554 |
+| 0.6–0.7 | 25,444 | 0.648 | 0.664 | 0.658–0.669 |
+| 0.7–0.8 | 23,134 | 0.750 | 0.779 | 0.774–0.784 |
+| 0.8–0.9 | 25,059 | 0.852 | 0.885 | 0.881–0.889 |
+| 0.9–1.0 | 43,934 | 0.961 | 0.975 | 0.973–0.976 |
+
+It is slightly *under*-confident at both ends — it says 4% and wins 2%, says 96% and wins 97.5% —
+which is the expected shape for a Brier-trained head and the harmless direction: a ranking is
+unaffected by a monotone squash.
+
+## The agent: same search, learned value
+
+`src/cptcg/agents/neural.py` registers `neural`. It **inherits** `act`, `_keep` and `_resolve` from
+the frozen `HeuristicAgent` and copies `_greedy` line for line, changing one line: the score.
+`tests/unit/test_neural_agent.py` asserts the inheritance by identity and compares the two `_greedy`
+bodies statement by statement, so a win here cannot quietly become a difference in mulligan policy
+or preview depth. Configuration rides on class attributes (`weights_path`, `noise`, `depth`,
+`go_first`), because `make_agent(name, seed)` has no config channel; `agents/base.py` gained one
+import line.
+
+Three things do differ from `evaluate()`, and all three are forced.
+
+**It ranks on the logit, not the probability.** `ValueModel.raw` is the unbounded pre-logistic
+score. The logistic is monotone so the ordering is identical, but in a position the model reads as
+99% won, two options can differ by 1e-5 in probability and by 0.2 in log-odds; squashing first
+throws the deciding difference into float noise.
+
+**The tie-break noise is measured, not copied.** `tools/fit_eval.py diagnose` scores the options of
+4,275 real multi-option decisions with both scorers. The median spread of `evaluate()` across one
+decision's options is 7.50 points and the heuristic's noise reaches 0.0999 — 1.33% of it. The
+median spread of the learned logit across the *same* decisions is 0.595, so the same 1.33% is
+`noise = 8e-6` per unit. Copying the heuristic's `1e-4` would have been a noise term 1.7× the whole
+spread, and this agent would have played at random.
+
+**A preview it cannot tell apart from the position it is in is scored as a loss.** This one is a
+bug report. A greedy agent on a static evaluation hangs the moment the rules offer a free no-op,
+and this pool has one: activate Panam Palmer, decline the pick, get the identical main menu back.
+The frozen heuristic escapes it by accident — it happens to rate taking the pick above declining —
+but nothing in its design prevents it, and the fitted value rates declining higher. The first gate
+run died with `game 5005167 exceeded 50000 actions` after `neural` re-activated the same Legend 750
+times. `_value` now compares the previewed position to the position being chosen from, field by
+field (an exact comparison, never a hash or a feature match, so it cannot mistake two different
+positions for one), and scores an exact repeat as a loss: taking it leads back here and the same
+choice would be made again, for ever. `tests/unit/test_neural_agent.py` keeps that game in the
+suite. The first version of the guard compared pending menus and was silent through the very loop
+it guarded; "The 50,000-action ceiling", at the end of this page, is the post-mortem.
+
+### The pre-registered gate, and what it said
+
+Pre-registered before any number existed: **`neural` beats the frozen `heuristic` with a Wilson
+lower bound above 0.55 on decks it never trained on, the held-out retail starters included.**
+Model selection was by held-out Brier only; every gate command was run once, with docs appended by
+default (`--no-docs` was never passed), and the full sections are below.
+
+| instrument | result | gate |
+|---|---|---|
+| `a-vs-b neural heuristic --no-sprt`, 360 games, 6 sampled pairings | **75.8%**, Wilson 71.2–80.0%, between-pairing 75.8 [69.9–81.8]% | lower bound 0.712 |
+| `generalisation`, **holdout** — the two retail starters, never trained on | **80.0%**, Wilson 75.6–83.8% | lower bound **0.756 > 0.55 ✓** |
+| `generalisation`, unseen-random — fresh random decks on a seed training never used | 75.8%, Wilson 71.2–80.0% | lower bound 0.712 |
+| `generalisation`, training — the mix self-play draws from | 79.7%, Wilson 75.3–83.6% | — |
+| `panel neural` — the frozen panel | 96.1% vs `random`, 75.8% vs `heuristic` | — |
+| `delayed neural` | solved 3 of 8, 56/128 trials, against a random floor of 12/128 | — |
+
+**The gate passes**, and it passes hardest on the population it was meant to be hardest on: the gap
+from the training decks to the held-out retail starters is **−0.3 points** — the holdout rate sits
+inside the 63.3–91.7% spread the six training pairings cover among themselves. `exploit` was not
+run: `neural` does not consult `core.view.determinize`, so `run_exploit` correctly refuses it. That
+instrument belongs to the search stage.
+
+### Why it worked, and where the ceiling is
+
+The plan pre-registered a diagnosis for the case where greedy play on a learned value failed to beat
+greedy play on hand-tuned weights. It did not fail, but the diagnostics were collected either way,
+because they say what the *next* stage should spend its time on.
+
+**It is not copying the teacher.** Argmax agreement with `heuristic` over 4,275 held-out
+multi-option decisions is **42.1%** — `MAIN` 38.3%, `PICK` 19.9%, `TARGET` 79.3%, `REACTION` 72.6%.
+The two agents agree about which attack to answer and disagree about almost everything else. Had
+this come back near 95%, a 75.8% win rate would have been impossible and no amount of data or width
+would have fixed it.
+
+**More data would not help.** Held-out Brier against how much training data there is, on a fixed
+held-out set:
+
+| training games | training rows | held-out Brier | accuracy |
+|---:|---:|---:|---:|
+| 3,999 (10%) | 116,980 | 0.14330 | 78.41% |
+| 9,999 (25%) | 290,132 | 0.13991 | 78.98% |
+| 19,999 (50%) | 580,080 | 0.13973 | 79.02% |
+| 39,999 (100%) | 1,161,380 | 0.13929 | 79.14% |
+
+Quadrupling the data past 25% buys 0.0006 Brier. Together with the flat width sweep, **both of the
+"more of the same" levers are exhausted**: the remaining error is the feature set, or it is the
+irreducible noise in a single sampled outcome. The 0.0021 Brier between the logistic and the
+network says how little is left for the hidden layer to find in these 114 numbers.
+
+**Random games are coverage, not poison.** Three fits, all scored on the *same* held-out rows:
+
+| trained on | training rows | held-out Brier, all | on heuristic games | on random games |
+|---|---:|---:|---:|---:|
+| both (shipped) | 1,161,380 | **0.13929** | 0.13066 | 0.16094 |
+| heuristic games only | 830,262 | 0.14378 | **0.12836** | 0.18248 |
+| random games only | 331,118 | 0.18759 | 0.19640 | 0.16547 |
+
+Heuristic-only is marginally better on heuristic positions and much worse on unstructured ones;
+random-only is worse everywhere. The mix costs 0.0023 Brier on the heuristic's own distribution and
+buys 0.0215 on the other end of the state space — and the random half of the harvest cost 35
+seconds against the heuristic half's 924.
+
+**The honest caveat stands.** These labels are outcomes *under heuristic play*. The value head is
+well calibrated about a world in which both players are the frozen heuristic, and the gate shows
+that ranking moves by that value beats the heuristic itself. It does not show the value is right
+about positions neither agent reaches, and it cannot: nothing in this stage searches.
+
+### Reproducing it
+
+```bash
+python tools/harvest.py play --games 30000 --agent heuristic --seed 7  --workers 4 --out H.jsonl.gz --fresh
+python tools/harvest.py play --games 20000 --agent random    --seed 21 --workers 4 --out R.jsonl.gz --fresh
+python tools/harvest.py examples --in H.jsonl.gz --out ex-h --rate 0.125 --perspectives both --workers 4
+python tools/harvest.py examples --in R.jsonl.gz --out ex-r --rate 0.125 --perspectives both --workers 4
+python tools/fit_eval.py bench --markdown
+python tools/fit_eval.py sweep ex-h ex-r --widths 8,16,24,32,48,64 --epochs 120 --patience 12
+python tools/fit_eval.py fit   ex-h ex-r --hidden 16 --l2 1e-4 --epochs 400 --patience 25 \
+       --out src/cptcg/agents/weights.json --name bootstrap-1
+python tools/fit_eval.py curve ex-h ex-r --hidden 16
+python tools/fit_eval.py diagnose --games 40
+python tools/arena.py a-vs-b neural heuristic --no-sprt -n 360 --decks 6
+python tools/arena.py panel neural
+python tools/arena.py generalisation neural --baseline heuristic
+python tools/arena.py delayed neural
+```
+
+Everything except the last four is deterministic given the seeds; the arena commands are
+deterministic given their own (`--seed`, `--deck-seed`), which they print.
+
 ## The gate
 
 `tools/arena.py` (also `cptcg arena`) is the gate. **Nothing about this project's AI may be claimed
@@ -705,8 +977,12 @@ one that has learned six deck pairings drives it positive by more than that scat
 
 ## Honest caveats
 
-* **The games stored today were played by the heuristic agent**, which does not search. They carry
-  no visit counts, so they train a value head and not a policy.
+* **The games stored today were played by the heuristic and random agents**, neither of which
+  searches. They carry no visit counts, so they train a value head and not a policy.
+* **The value head's ceiling is measured, and it is not data or capacity.** Held-out Brier is flat
+  from 25% of the training games onward and flat from 16 hidden units to 64. What is left is the
+  feature set and the noise in a single sampled outcome, so the next gain has to come from search
+  or from richer features, not from a bigger harvest.
 * **A value function fitted to heuristic games predicts outcomes under heuristic play.** It is a
   starting prior that makes the first search generation cheap, not ground truth, and it inherits
   that agent's biases until search generations correct them.
