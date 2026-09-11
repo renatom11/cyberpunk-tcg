@@ -119,29 +119,9 @@ function renderBoard(root, v, { interactive, onAct } = {}) {
 
   // ----- centre column
   const center = el("div", "col center");
-  const legRow = (p, mine) => {
-    const row = el("div", "panel legends");
-    const lbl = el("span", "lbl", "LEGENDS"); lbl.dataset.counts = `DECK ${p.deck} · TRASH ${p.trash.length}`; row.append(lbl);
-    p.legends.forEach(l => {
-      let n;
-      if (l.faceup || l.known_only) { n = cardNode(l, { small: true }); if (l.faceup) n.classList.add("faceup-legend"); if (l.known_only) n.style.opacity = .7; }
-      else { n = cardNode({}, { back: true, small: true, legend: true }); }
-      if (l.spent) n.classList.add("spent");
-      if (l.gear && l.gear.length) { const g = el("div", "gearlist"); l.gear.forEach(x => g.append(el("span", "", x.name))); n.append(g); }
-      decorate(n, l.inst);
-      row.append(n);
-    });
-    const counts = el("div", "counts");
-    counts.append(badge("DECK", p.deck), badge("TRASH", p.trash.length));
-    row.append(counts);
-    return row;
-  };
-  const fieldRow = (p) => {
-    const wrap = el("div", "fieldwrap");
-    const row = el("div", "panel field"); row.append(el("span", "lbl", `${p.name.toUpperCase()} · FIELD`));
-    if (!p.field.length) for (let i = 0; i < 4; i++) row.append(el("div", "slot"));
-    p.field.forEach(u => { const n = cardNode(u); decorate(n, u.inst); row.append(n); });
-    // Eddies area: sold cards sit here face-down (their identity is public — they were revealed when sold)
+  // The official playmat (gameplay guide, "Playmat areas") puts LEGENDS and EDDIES side by side on
+  // one band, with FIELD above them and DECK/TRASH down the right edge. legRow builds that band.
+  const eddiesPanel = (p) => {
     const ed = el("div", "panel eddies"); ed.append(el("span", "lbl", "EDDIES AREA"));
     const list = el("div", "list");
     if (!p.eddies.list.length) list.append(el("span", "waiting", "No Eddies yet."));
@@ -153,8 +133,32 @@ function renderBoard(root, v, { interactive, onAct } = {}) {
       list.append(n);
     });
     ed.append(list, badge("EDDIES", `${p.eddies.ready}/${p.eddies.total}`));
-    wrap.append(row, ed);
-    return wrap;
+    return ed;
+  };
+  const legRow = (p, mine) => {
+    const band = el("div", "legendrow");
+    const row = el("div", "panel legends");
+    const lbl = el("span", "lbl", "LEGENDS"); lbl.dataset.counts = `DECK ${p.deck} · TRASH ${p.trash.length}`; row.append(lbl);
+    p.legends.forEach(l => {
+      let n;
+      if (l.faceup || l.known_only) { n = cardNode(l, { small: true }); if (l.faceup) n.classList.add("faceup-legend"); if (l.known_only) n.style.opacity = .7; }
+      else { n = cardNode({}, { back: true, small: true, legend: true }); }
+      if (l.spent) n.classList.add("spent");
+      if (l.gear && l.gear.length) { const g = el("div", "gearlist"); l.gear.forEach(x => g.append(el("span", "", x.name))); n.append(g); }
+      decorate(n, l.inst);
+      row.append(n);
+    });
+    // Deck over Trash at the far right of the band, which is where the playmat keeps them.
+    const counts = el("div", "counts");
+    counts.append(badge("DECK", p.deck), badge("TRASH", p.trash.length));
+    band.append(row, eddiesPanel(p), counts);
+    return band;
+  };
+  const fieldRow = (p) => {
+    const row = el("div", "panel field"); row.append(el("span", "lbl", `${p.name.toUpperCase()} · FIELD`));
+    if (!p.field.length) for (let i = 0; i < 4; i++) row.append(el("div", "slot"));
+    p.field.forEach(u => { const n = cardNode(u); decorate(n, u.inst); row.append(n); });
+    return row;
   };
   const oppLeg = legRow(P[opp], false), oppField = fieldRow(P[opp]), myField = fieldRow(P[me]), myLeg = legRow(P[me], true);
   oppLeg.classList.add("p-opp-legends"); oppField.classList.add("p-opp-field"); myField.classList.add("p-my-field"); myLeg.classList.add("p-my-legends");
@@ -519,15 +523,12 @@ function showPreview(src, c, touch) {
   if (!PREVIEW) { PREVIEW = el("div", "preview"); PREVIEW.append(el("img")); document.body.append(PREVIEW); PREVIEW.onclick = (e) => { e.stopPropagation(); hidePreview(); }; }
   const img = PREVIEW.querySelector("img"); img.src = src; img.alt = c.name;
   PREVIEW.classList.add("show"); PREVIEW.classList.toggle("touch", !!touch);
-  if (touch) { PREVIEW.style.left = ""; PREVIEW.style.top = ""; return; }
-  document.onmousemove = (e) => {
-    const w = PREVIEW.offsetWidth, h = PREVIEW.offsetHeight;
-    const left = e.clientX + 24 + w > window.innerWidth ? e.clientX - 24 - w : e.clientX + 24;
-    const top = Math.max(8, Math.min(window.innerHeight - h - 8, e.clientY - h / 2));
-    PREVIEW.style.left = left + "px"; PREVIEW.style.top = top + "px";
-  };
+  // Centred, not following the cursor: the card lands in the same place every time, so reading it
+  // is a glance rather than a chase, and moving along a row of cards swaps one image for another.
+  // pointer-events stay off, so the preview never steals the hover from the card underneath it.
+  PREVIEW.style.left = ""; PREVIEW.style.top = "";
 }
-function hidePreview() { if (PREVIEW) PREVIEW.classList.remove("show", "touch"); document.onmousemove = null; }
+function hidePreview() { if (PREVIEW) PREVIEW.classList.remove("show", "touch"); }
 
 // ---------------------------------------------------------------- deck builder
 // The page holds the deck being edited; legality, RAM limits and the saved file all come from

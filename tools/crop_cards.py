@@ -90,10 +90,29 @@ def captions(ocr_boxes, scale: float):
 
 def legend_back(back: Image.Image, yellow=(255, 230, 0)) -> Image.Image:
     """Legend cards have the same back with the two colours swapped: yellow shapes on black.
-    Map luminance onto the yellow so black areas become yellow and yellow areas become black."""
+    Map luminance onto the yellow so black areas become yellow and yellow areas become black.
+
+    The two levels are read off the histogram, not from ``getextrema``. The back is two inks, so the
+    yellow's own luminance (about 214 in ITU-R 601, not 255) is what has to land on black; measuring
+    against the brightest pixel instead leaves the whole field at RGB(44, 39, 0), a dark olive rather
+    than the black the printed Legend back actually is. Percentiles also ignore the few blown-out
+    pixels and the JPEG ringing at the ink boundary, which extrema do not.
+    """
     lum = back.convert("L")
-    lo, hi = lum.getextrema()
-    inv = lum.point(lambda v: 255 - int(255 * (v - lo) / max(1, hi - lo)))
+    hist = lum.histogram()
+    total = sum(hist)
+
+    def level(frac: float) -> int:
+        seen = 0
+        for v, n in enumerate(hist):
+            seen += n
+            if seen >= frac * total:
+                return v
+        return 255
+
+    lo, hi = level(0.05), level(0.95)            # the black ink and the yellow ink
+    span = max(1, hi - lo)
+    inv = lum.point(lambda v: max(0, min(255, 255 - round(255 * (v - lo) / span))))
     return Image.merge("RGB", [inv.point(lambda v, c=c: v * c // 255) for c in yellow])
 
 
