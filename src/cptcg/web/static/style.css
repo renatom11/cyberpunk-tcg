@@ -222,10 +222,14 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .card:has(.pnow) .pw { display: none; }
 /* The Gear hangs below the Unit and the area clips it, so what shows is the top strip of each
    piece — the name and what it adds — which is all the reference client shows too. */
-.gearstack { position: absolute; left: 3%; top: auto; bottom: calc(-0.22 * var(--card-h));
-  width: 100%; height: calc(var(--card-h) * .74); z-index: -1; pointer-events: none; }
+/* The stack's box is exactly the host card's box, which is what lets a spent host counter-rotate
+   it below: same box, same centre, so `rotate(-90deg)` cancels the host's `rotate(90deg)` on the
+   nose and the Gear stays lying flat under a card that is lying on its side. */
+.gearstack { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.card.spent .gearstack { transform: rotate(-90deg); }
 /* wins over `.board .card.sm`, which sets every other card on the board to one size */
-.board .card .gearcard { position: absolute; bottom: 0; top: auto; left: calc(var(--i) * 27%);
+.board .card .gearcard { position: absolute; top: auto; bottom: calc(-0.22 * var(--card-h));
+  left: calc(3% + var(--i) * 27%);
   width: calc(var(--card-w) * .74); height: calc(var(--card-h) * .74); pointer-events: auto; }
 /* The Unit no longer clips its own box, or the Gear under it would be cut off at its bottom edge,
    and it becomes its own stacking context so the Gear can sit *behind the Unit's face* without

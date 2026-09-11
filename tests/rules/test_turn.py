@@ -3,7 +3,7 @@ from conftest import Side, board, do, find
 
 from cptcg.core.actions import Attack, CallLegend, EndTurn, GoSolo, Play, Sell, TakeGigDie
 from cptcg.core.enums import EndReason, F_GO_SOLO, Zone
-from cptcg.core.ops import available
+from cptcg.core.ops import available, play_cost
 
 
 def test_sell_once_per_turn_worth_one_eddie(reg):
@@ -63,6 +63,30 @@ def test_go_solo_plays_legend_as_ready_unit_that_can_attack(reg):
     assert Attack(l) in s.pending.options                                               # but GO SOLO attacks
     do(s, Attack(l))
     assert s.gig[0] == [(6, 3)]
+
+
+def test_a_legend_may_not_spend_itself_toward_its_own_go_solo(reg):
+    """Ruling 027 (CR 4.5): the Legend going solo is being played, not spent.
+
+    The board this came off: two Eddies and three Legends, one of them the cost-5 GO SOLO Legend,
+    already Called. Five ready sources of €$ are sitting on the table and the cost is five, so it
+    reads like it should be payable — but one of those five is the card being played, and the
+    menu is right to leave GO SOLO off it.
+    """
+    def table(eddies):
+        s = board(reg, Side(eddies=eddies, legends=[("T-L1", {"faceup": True}), "T-L5", "T-L6"]),
+                  Side())
+        return s, find(s, "T-L1")
+
+    s, l = table(2)
+    assert play_cost(s, 0, l, go_solo=True) == 5
+    assert available(s, 0) == 5                  # 2 Eddies + 2 face-down Legends + the face-up one
+    assert available(s, 0, exclude=l) == 4       # ... but not the one going solo
+    assert GoSolo(l) not in s.pending.options
+
+    s, l = table(3)                              # one more Eddie and the same Legend can go
+    assert available(s, 0, exclude=l) == 5
+    assert GoSolo(l) in s.pending.options
 
 
 def test_spent_legend_may_go_solo_and_arrives_spent(reg):
