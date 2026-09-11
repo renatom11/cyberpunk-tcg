@@ -11,7 +11,13 @@ const api = async (path, body) => {
 
 let CARDS = {};            // id -> card def (+ image flag)
 let HAS_BACK = true;       // data/images/_back.jpg exists (cleared on first failed load)
-const TOUCH = window.matchMedia("(hover: none)").matches || navigator.maxTouchPoints > 0;
+// A Windows laptop with a touchscreen reports maxTouchPoints > 0 and still has a mouse, so these
+// are not two kinds of device but two kinds of input, and a hybrid has both. Reading touch
+// capability as "cannot hover" is what stopped the card preview ever appearing on those machines.
+// any-hover asks whether ANY attached pointer can hover, which is the question that matters here.
+const CAN_HOVER = window.matchMedia("(any-hover: hover)").matches || window.matchMedia("(hover: hover)").matches;
+const CAN_TOUCH = navigator.maxTouchPoints > 0 || window.matchMedia("(hover: none)").matches;
+const TOUCH = CAN_TOUCH && !CAN_HOVER;      // touch only: a tap has to do the work a hover would
 let GAME = null;           // {id, view, log[]}
 let LOG = [];
 
@@ -27,11 +33,12 @@ function cardNode(c, opts = {}) {
   const def = CARDS[c.id] || {};
   if (def.image) {
     const img = el("img"); img.src = `images/${c.id}.jpg`; img.alt = c.name;
-    if (!TOUCH) { d.onmouseenter = () => showPreview(img.src, c); d.onmouseleave = hidePreview; }
-    else {
-      // Touch: a tap on a card with nothing to do opens the full-size face (decorate() replaces
-      // onclick for cards that can act); a long-press previews any card without acting.
-      d.onclick = () => showPreview(img.src, c, true);
+    if (CAN_HOVER) { d.onmouseenter = () => showPreview(img.src, c); d.onmouseleave = hidePreview; }
+    if (CAN_TOUCH) {
+      // Touch: a long-press previews any card without acting. On a touch-only screen a plain tap
+      // does it too, since there is no hover to fall back on (decorate() replaces onclick for cards
+      // that can act); where a mouse is also present, tapping is left alone so it can still click.
+      if (!CAN_HOVER) d.onclick = () => showPreview(img.src, c, true);
       let press = null, fired = false;
       d.addEventListener("touchstart", () => { fired = false; press = setTimeout(() => { press = null; fired = true; showPreview(img.src, c, true); }, 450); }, { passive: true });
       const cancel = () => { if (press) { clearTimeout(press); press = null; } };

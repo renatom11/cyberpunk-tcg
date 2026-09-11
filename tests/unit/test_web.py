@@ -78,6 +78,18 @@ def test_play_undo_and_hidden_information(base):
         post(base, f"/api/games/{gid}/act", {"index": 999})
 
 
+def test_hover_is_not_gated_on_a_screen_being_untouchable():
+    """A Windows laptop with a touchscreen reports maxTouchPoints > 0 and still has a mouse. Reading
+    that as "cannot hover" is what stopped the card preview ever appearing on those machines, so the
+    hover handler must key off hover capability and nothing else. Text, because there is no JS test
+    harness here and the alternative is finding out from a user again."""
+    js = (web.STATIC / "app.js").read_text(encoding="utf-8")
+    assert "const CAN_HOVER" in js and "any-hover: hover" in js
+    assert "if (CAN_HOVER) { d.onmouseenter" in js
+    # the touch branch may add to that, never replace it
+    assert "if (!TOUCH) { d.onmouseenter" not in js
+
+
 def test_the_rival_turn_comes_back_as_frames_to_play_through(base):
     """Ending a turn must return the rival's moves one at a time, not just the board afterwards:
     without them the board cuts from "end turn" to the next prompt and everything they did is
