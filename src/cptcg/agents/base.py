@@ -54,6 +54,7 @@ def make_agent(name: str, seed: int = 0) -> Agent:
     import cptcg.agents.random_agent  # noqa: F401
     import cptcg.agents.heuristic  # noqa: F401
     import cptcg.agents.neural  # noqa: F401
+    import cptcg.agents.search.ismcts  # noqa: F401
     cheat = name.startswith(CHEAT_PREFIX)
     if cheat:
         name = name[len(CHEAT_PREFIX):]
