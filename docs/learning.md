@@ -1477,3 +1477,12 @@ The same agent against the same baseline on three deck populations. Both seats d
 Gap to fresh random decks: -4.2 points, 95% interval over the pairings -4.2 [-20.7 to +12.4] points (Welch, two independent samples of deck pairings). Both rows have deck pairings to spare, so this comparison is between deck *populations* and not between two piles of games.
 
 A gap that grows generation over generation means memorised matchups. Watch the change in these numbers, and only trust a change that is large against the per-pairing spread beside it.
+
+
+### Cost of hidden information: ismcts — 2026-09-11 19:22 UTC
+
+`cheat:ismcts` is the same agent with determinization replaced by the true state: same budget, same evaluation, same policy, perfect information.
+
+Cheating beats honest **45.8%** [27.9–64.9] over 24 games (0/1 decisive pairs), the bracket conditional on 6 deck pairings; over the deck population 45.8 [35.1–56.5]%.
+
+*This is a ceiling for this agent at this budget — the value of perfect information to its own search — not an upper bound on play quality.*
