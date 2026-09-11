@@ -94,13 +94,8 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
     const opts = byInst[inst];
     if (targets.has(inst)) { node.classList.add("target"); }
     else if (opts && opts.length) { node.classList.add("can"); }
-    if ((opts && opts.length) || targets.has(inst)) {
-      node.onclick = (e) => {
-        const all = (byInst[inst] || []).concat(pend.options.filter(o => o.kind === "Target" && o.inst === inst));
-        if (all.length === 1) onAct(all[0].index);
-        else showPopover(e, all, onAct);
-      };
-    }
+    // What a click does is *select*: the card's actions are listed in a panel that stays put,
+    // rather than a menu that appears under the cursor and vanishes. Dragging is the fast path.
     if (atk && atk.attacker === inst) node.classList.add("attacking");
   };
 
@@ -114,10 +109,28 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
   const oppGig = gigPanel(P[opp]); oppGig.classList.add("p-opp-gig");
   left.append(oppHand, oppTray, oppGig);
 
+  // The banner says what is being asked of you, not which phase the engine is in — "ROLL FIXER DIE"
+  // is a instruction, "START PHASE" is a label. The turn and phase stay on the line below it.
   const phase = el("div", "panel phase");
-  const title = v.over ? "GAME OVER" : (pend ? pend.phase.toUpperCase() : "…");
-  const who = v.over ? `${P[v.winner].name} wins (${v.end_reason})` : (pend ? (pend.player === me ? "YOUR DECISION" : `${P[pend.player].name} is deciding`) : "");
-  phase.append(el("div", "title", title), el("div", "sub", `Turn ${v.turn}${v.overtime ? " · OVERTIME" : ""} · ${who}`));
+  const STATE = { MULLIGAN: "OPENING HAND", ORDER: "TURN ORDER", GIG_DIE: "ROLL FIXER DIE",
+                  MAIN: "YOUR TURN", TARGET: "CHOOSE A TARGET", REACTION: "RIVAL ATTACKS",
+                  PICK: "MAKE A CHOICE" };
+  const mine = pend && pend.player === me;
+  const title = v.over ? "GAME OVER"
+    : !pend ? "…"
+    : mine ? (STATE[pend.kind] || pend.phase.toUpperCase())
+    : "WAIT FOR RIVAL";
+  phase.classList.toggle("waiting", !v.over && !!pend && !mine);
+  phase.classList.toggle("done", !!v.over);
+  const sub = v.over ? `${P[v.winner].name} wins · ${v.end_reason}`
+    : `TURN ${v.turn}${v.overtime ? " · OVERTIME" : ""} | ${(pend ? pend.phase : "").toUpperCase()}`;
+  phase.append(el("div", "title", title), el("div", "sub", sub));
+  // The one move that ends the turn belongs in the banner, where it is always in the same place,
+  // rather than somewhere in a list of every legal action.
+  if (mine && interactive) {
+    const end = (pend.options || []).find(o => o.kind === "EndTurn");
+    if (end) { const b = el("button", "endturn", "END TURN"); b.onclick = () => onAct(end.index); phase.append(b); }
+  }
   phase.classList.add("p-banner");
   const myGig = gigPanel(P[me]); myGig.classList.add("p-my-gig");
   const myTray = diceTray(P[me], myTurn && pend.kind === "GIG_DIE", pend, onAct); myTray.classList.add("p-my-fixer");
@@ -233,7 +246,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       prompt.append(el("div", "waiting", "Next: " + v.next_action));
     }
   }
-  right.append(prompt);
+  right.append(prompt, cardPanel(v, byInst, pend, myTurn, onAct));
   root.append(left, center, right);
   if (fresh && fresh.size) {
     root.querySelectorAll(".card[data-inst]").forEach(n => {
@@ -241,6 +254,17 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
     });
   }
   if (myTurn) wireDrag(root, pend, onAct);
+  root.querySelectorAll(".card[data-inst]").forEach(n => {
+    n.addEventListener("click", (e) => {
+      if (n.classList.contains("payable")) return;      // paying: the click means "spend this"
+      e.stopPropagation();
+      SELECTED = +n.dataset.inst;
+      const box = root.querySelector(".p-cardinfo");
+      if (box) box.replaceWith(cardPanel(v, byInst, pend, myTurn, onAct));
+      root.querySelectorAll(".card.picked").forEach(x => x.classList.remove("picked"));
+      n.classList.add("picked");
+    });
+  });
   logp.scrollTop = logp.scrollHeight;
 }
 
@@ -393,6 +417,42 @@ function showcase(c) {
   clearTimeout(SPOT_TIMER);
   SPOT_TIMER = setTimeout(() => box.classList.remove("show"), 1100);
 }
+//: The card the player last clicked. It survives a re-render, the way a selection should.
+let SELECTED = null;
+
+function findOnBoard(v, inst) {
+  for (const p of v.players || []) {
+    for (const c of (p.hand || [])) if (c.inst === inst) return c;
+    for (const c of (p.field || [])) if (c.inst === inst) return c;
+    for (const l of (p.legends || [])) if (l.inst === inst) return l.name ? l : { inst, name: "Face-down Legend" };
+    for (const c of ((p.eddies && p.eddies.list) || [])) if (c.inst === inst) return c;
+  }
+  return null;
+}
+
+function cardPanel(v, byInst, pend, myTurn, onAct) {
+  const box = el("div", "panel cardinfo p-cardinfo");
+  box.append(el("span", "lbl", "SELECTED CARD"));
+  const c = SELECTED == null ? null : findOnBoard(v, SELECTED);
+  if (!c) {
+    box.append(el("div", "desc", "Select a card to see what it can do here."));
+    return box;
+  }
+  box.append(el("div", "q", c.name + (c.subtitle ? ` — ${c.subtitle}` : "")));
+  if (c.text) box.append(el("div", "ctext", c.text.replace(/\n/g, "<br>")));
+  const acts = myTurn
+    ? (byInst[SELECTED] || []).concat((pend.options || []).filter(o => o.kind === "Target" && o.inst === SELECTED))
+    : [];
+  if (!acts.length) {
+    box.append(el("div", "desc", "This card has no card actions in the current phase."));
+    return box;
+  }
+  const row = el("div", "opts");
+  acts.forEach(o => { const b = el("button", "", o.label); b.onclick = () => onAct(o.index); row.append(b); });
+  box.append(row);
+  return box;
+}
+
 function hintFor(p) {
   const h = {
     MULLIGAN: "Keep your opening hand, or shuffle it back and draw 6 new cards. You may do this only once.",
@@ -424,15 +484,6 @@ function diceTray(p, pick, pend, onAct) {
   });
   return t;
 }
-function showPopover(e, opts, onAct) {
-  const pop = $("#popover"); pop.innerHTML = "";
-  opts.forEach(o => { const b = el("button", "", o.label); b.onclick = () => { pop.classList.add("hidden"); onAct(o.index); }; pop.append(b); });
-  const cancel = el("button", "", "cancel"); cancel.onclick = () => pop.classList.add("hidden"); pop.append(cancel);
-  pop.style.left = Math.min(e.clientX, window.innerWidth - 260) + "px"; pop.style.top = Math.min(e.clientY, window.innerHeight - 200) + "px";
-  pop.classList.remove("hidden");
-  e.stopPropagation();
-}
-document.addEventListener("click", (e) => { if (!e.target.closest("#popover")) $("#popover").classList.add("hidden"); });
 
 // ---------------------------------------------------------------- play
 let PLAYBACK = null;        // a function that ends the rival-turn replay early, while one is running

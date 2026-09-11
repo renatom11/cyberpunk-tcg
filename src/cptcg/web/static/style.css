@@ -58,8 +58,14 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .badge { border: 1px solid var(--line2); border-radius: 8px; padding: 4px 10px; text-align: center; font-size: 12px; color: var(--dim); }
 .badge b { display: block; color: var(--yellow); font-size: 16px; }
 .phase { text-align: center; padding: 10px; }
-.phase .title { color: var(--green); font-weight: 800; letter-spacing: .12em; border: 1px solid var(--green); border-radius: 8px; padding: 6px; }
-.phase .sub { color: var(--dim); font-size: 12px; margin-top: 6px; }
+.phase { border-color: var(--green); }
+.phase .title { color: var(--green); font-weight: 800; letter-spacing: .12em; border: 1px solid var(--green); border-radius: 8px; padding: 6px; font-size: 17px; }
+.phase .sub { color: var(--dim); font-size: 11px; margin-top: 7px; letter-spacing: .1em; }
+.phase .endturn { margin-top: 9px; border-color: var(--green); color: var(--green); letter-spacing: .12em; font-size: 12px; }
+/* waiting is not an instruction, so it does not get the green that means "you can act" */
+.phase.waiting { border-color: var(--line); }
+.phase.waiting .title { color: var(--red); border-color: var(--red); }
+.phase.done .title { color: var(--yellow); border-color: var(--yellow); }
 .center { display: grid; grid-template-rows: auto 1fr 1fr auto; gap: 6px; }
 /* The playmat's lower band: LEGENDS on the left, EDDIES filling the rest of the row beside it. */
 .legendrow { display: flex; gap: 6px; min-height: 0; align-items: stretch; }
@@ -124,7 +130,6 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .card.attacking { box-shadow: 0 0 0 2px var(--yellow), 0 0 16px var(--yellow); }
 .slot { width: var(--card-w); height: var(--card-h); border: 1px dashed var(--line); border-radius: 8px; flex: 0 0 auto; }
 .legend-slot { width: calc(var(--card-w) * .78); height: calc(var(--card-h) * .78); }
-.popover { position: fixed; z-index: 50; background: #101a28; border: 1px solid var(--cyan); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 8px 30px #000a; }
 .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
 .card-grid .card { width: 150px; height: 212px; font-size: 12px; }
 .card-grid .card .txt { font-size: 10px; max-height: 90px; }
@@ -260,6 +265,14 @@ table.rep th { color: var(--cyan); }
   .kwpanel { left: 50%; top: auto; bottom: 12px; transform: translateX(-50%); width: min(92vw, 420px);
     max-height: 30vh; }
 }
+
+/* ---------------------------------------------------------------- selected card */
+.cardinfo .q { color: var(--yellow); font-weight: 800; font-size: 13px; line-height: 1.25; }
+.cardinfo .ctext { color: #c8d4dc; font-size: 11px; line-height: 1.45; margin: 6px 0; }
+.cardinfo .desc { color: var(--dim); font-size: 11px; margin-top: 6px; }
+.cardinfo .opts { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+.cardinfo .opts button { font-size: 11px; text-align: left; }
+.card.picked { outline: 2px solid var(--cyan); outline-offset: 1px; }
 
 /* ---------------------------------------------------------------- payment picker */
 /* The sources are cards on the table, so the choice is made on the table. The panel keeps the
