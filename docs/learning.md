@@ -1430,3 +1430,16 @@ ismcts sat in seat 0 in 108 of 216 games — exactly half, by construction. ismc
 | `sampled-3` random vs random-b | 36 | 52.8% [37.0–68.0] |
 | `sampled-4` random vs random-b | 36 | 55.6% [39.6–70.5] |
 | `sampled-5` random vs built | 36 | 50.0% [34.5–65.5] |
+
+
+### Frozen panel: ismcts — 2026-09-11 17:51 UTC
+
+Panel `a1832d477c27193f`, decks `1b1799dbc029a6b7`, frozen 2026-09-10: 6 deck pairings whose **decklists are stored verbatim in `data/arena/panel.json`** and are never redrawn from the sampler, 60 games each, no early stopping. Both digests are checked on load, so these numbers are comparable across every generation as long as they read `a1832d477c27193f` / `1b1799dbc029a6b7`.
+
+| opponent | games | win rate | 95% Wilson (these decks) | per-pairing spread | decisive pairs |
+|---|---:|---:|---|---|---|
+| uniform random legal play (`random`) | 360 | 96.9% | 94.6–98.3% | 91.7–100.0% | 169/169 |
+| the frozen one-ply heuristic (`heuristic`) | 360 | 85.0% | 80.9–88.3% | 81.7–90.0% | 127/128 |
+| the generation-0 snapshot (`gen0`) | — | not available yet | — | — | lands with the first trained model; until then this row reads "not available yet" and the panel is two members |
+
+Here the Wilson interval is the right one and the *only* one that changes between generations: the decks are fixed by the panel, so nothing but more games is being sampled. The per-pairing spread is printed beside it as a reminder of what the panel is not — a panel score is a score on these twelve decklists, and generalises no further than they do. For a claim about play in general, use the between-pairing interval from `a-vs-b` or `generalisation`.
