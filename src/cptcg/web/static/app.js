@@ -55,8 +55,14 @@ function cardNode(c, opts = {}) {
   }
   if (c.spent) d.classList.add("spent");
   if (c.lag_blocks) d.classList.add("lag");   // lagged AND stopped by it; a GO SOLO Legend is neither
-  if (c.power_now != null && c.type !== "Program") {
-    const pn = el("div", "pnow", c.power_now); d.append(pn);
+  // The chip is for power that is *not* what the card prints — Gear, a buff, a debuff. A Unit
+  // standing at its printed power says so in its own bottom corner already, and a second copy of
+  // that number in a circle on every card made the board look like every card was modified.
+  // A variable-power card ("0+") prints no fixed number, so it always gets the chip.
+  if (c.power_now != null && c.type !== "Program" && c.power_now !== c.power) {
+    const pn = el("div", "pnow", c.power_now);
+    if (typeof c.power === "number") pn.classList.add(c.power_now > c.power ? "up" : "down");
+    d.append(pn);
   }
   if (c.gear && c.gear.length) d.append(gearStack(c.gear));
   return d;

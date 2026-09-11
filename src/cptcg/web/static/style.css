@@ -211,13 +211,21 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .card.faceup-legend .nm { color: var(--yellow); }
 /* The live power sits where the card prints its own: bottom right. It supersedes the printed
    number, so on a text face the printed one gives way rather than sitting beside it. */
-.card .pnow { position: absolute; right: -6px; bottom: -6px; min-width: 26px; height: 26px; display: grid; place-items: center; color: var(--green); font-weight: 900; font-size: 15px; background: #0b1620; border: 2px solid var(--green); border-radius: 50%; z-index: 4; padding: 0 4px; }
+/* Sized and placed off the card itself, so it lands on the same spot of the artwork whatever the
+   window is doing: a disc a fifth of the card wide, sitting on the card's own bottom-right corner
+   rather than hanging off it. */
+.card .pnow { position: absolute; right: 4%; bottom: 1.5%; width: 21%; aspect-ratio: 1 / 1;
+  display: grid; place-items: center; color: var(--green); font-weight: 900;
+  font-size: calc(var(--card-w) * .125); line-height: 1; background: #0b1620e8;
+  border: 2px solid var(--green); border-radius: 50%; z-index: 4; }
+.card .pnow.down { color: var(--red); border-color: var(--red); }
 .card:has(.pnow) .pw { display: none; }
 /* The Gear hangs below the Unit and the area clips it, so what shows is the top strip of each
    piece — the name and what it adds — which is all the reference client shows too. */
-.gearstack { position: absolute; left: 3%; top: calc(100% - 2px); width: 100%; height: var(--card-h); z-index: -1; pointer-events: none; }
+.gearstack { position: absolute; left: 3%; top: auto; bottom: calc(-0.22 * var(--card-h));
+  width: 100%; height: calc(var(--card-h) * .74); z-index: -1; pointer-events: none; }
 /* wins over `.board .card.sm`, which sets every other card on the board to one size */
-.board .card .gearcard { position: absolute; top: 0; left: calc(var(--i) * 27%);
+.board .card .gearcard { position: absolute; bottom: 0; top: auto; left: calc(var(--i) * 27%);
   width: calc(var(--card-w) * .74); height: calc(var(--card-h) * .74); pointer-events: auto; }
 /* The Unit no longer clips its own box, or the Gear under it would be cut off at its bottom edge,
    and it becomes its own stacking context so the Gear can sit *behind the Unit's face* without
