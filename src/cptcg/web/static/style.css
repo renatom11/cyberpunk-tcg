@@ -147,7 +147,13 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .stackbox .card.thumb { width: 84%; height: auto; aspect-ratio: 1 / 1.41; border-width: 1px; }
 .stackbox.trash .n { position: absolute; right: 5px; bottom: 3px; }
 
-.logwrap { flex: 1 1 0; min-height: 60px; overflow-y: auto; font-size: 12.5px; }
+.logwrap { overflow-y: auto; font-size: 12.5px; }
+.col > .panel.logwrap { flex: 1 1 0; min-height: 74px; }
+/* folded away: the header stays, so the way back is where the way out was */
+.col > .panel.logwrap.min { flex: 0 0 auto; min-height: 0; height: 26px; overflow: hidden; }
+.loghead { display: flex; align-items: center; justify-content: space-between; gap: 6px; position: sticky; top: 0; background: var(--panel); padding-bottom: 2px; }
+.loghead .lbl { margin: 0; }
+.foldbtn { padding: 0 7px; font-size: 13px; line-height: 1.2; border-radius: 5px; }
 /* The right column is a fixed-height flex column. Everything but the log holds its size and
    the log takes what is left, so the prompt is always where it was a moment ago. */
 .col > .panel { flex: 0 0 auto; }
@@ -367,6 +373,36 @@ table.rep th { color: var(--cyan); }
 .card.payable { cursor: pointer; box-shadow: 0 0 0 2px var(--yellow), 0 0 14px var(--yellow); }
 .card.payable:hover { transform: translateY(-3px); }
 .card.paypicked { box-shadow: 0 0 0 3px var(--green), 0 0 18px var(--green); filter: brightness(1.2); }
+
+/* ---------------------------------------------------------------- hover hints
+   A `title` attribute is the browser's white tooltip box, which does not belong over the cards.
+   Anything that wants to name itself carries `data-hint` and the board draws it in its own
+   colours, above the thing, and never in the way of a click. */
+[data-hint] { position: relative; }
+[data-hint]:hover::after {
+  content: attr(data-hint); position: absolute; left: 50%; bottom: calc(100% + 6px);
+  transform: translateX(-50%); white-space: nowrap; pointer-events: none; z-index: 30;
+  background: #0a1620; border: 1px solid var(--line2); border-radius: 6px; padding: 3px 8px;
+  color: var(--cyan); font-size: 11px; font-weight: 600; letter-spacing: .04em;
+  box-shadow: 0 4px 14px #000a;
+}
+/* the rival's row has nothing above it, so its hints hang below instead */
+.p-opp-fixer [data-hint]:hover::after, .p-opp-gig [data-hint]:hover::after,
+.stacks > .stackbox:first-child[data-hint]:hover::after {
+  bottom: auto; top: calc(100% + 6px);
+}
+
+/* ---------------------------------------------------------------- looking through a pile */
+.pileview { position: fixed; inset: 0; z-index: 60; background: #030608d8; display: none; place-items: center; padding: 24px; }
+.pileview.show { display: grid; }
+.pileview .sheet { background: var(--panel); border: 1px solid var(--line2); border-radius: 14px; padding: 16px 18px; max-width: min(1500px, 94vw); max-height: 88vh; overflow-y: auto; box-shadow: 0 18px 60px #000c; }
+.pileview .head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.pileview .head .t { color: var(--cyan); font-size: 21px; font-weight: 800; letter-spacing: .1em; }
+.pileview .head .c { color: var(--dim); font-size: 12px; letter-spacing: .1em; margin-right: auto; }
+.pileview .pilegrid { display: flex; flex-wrap: wrap; gap: 10px; }
+.pileview .pilegrid .card { width: 168px; height: 237px; font-size: 11px; }
+.stackbox.open { cursor: pointer; }
+.stackbox.open:hover { border-color: var(--cyan); }
 
 /* ---------------------------------------------------------------- hover preview */
 .preview { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 50; width: 423px; height: 590px; border-radius: 14px; overflow: hidden; border: 2px solid var(--line2); box-shadow: 0 12px 40px #000c; background: #000; display: none; pointer-events: none; }

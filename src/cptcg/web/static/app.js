@@ -169,7 +169,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       if (c.image) { n.onmouseenter = () => showPreview(`images/${c.id}.jpg`, c); n.onmouseleave = hidePreview; if (TOUCH) n.onclick = () => showPreview(`images/${c.id}.jpg`, c, true); }
       list.append(n);
     });
-    ed.append(list, badge("Eddies", `${p.eddies.ready}/${p.eddies.total}`));
+    ed.append(list);
     return ed;
   };
   const legRow = (p, mine) => {
@@ -204,8 +204,15 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       const top = p.trash.length ? p.trash[p.trash.length - 1] : null;
       if (top) { const n = cardNode(top, { small: true }); n.classList.add("thumb"); box.append(n); }
       box.append(el("span", "n", p.trash.length || ""));
+      box.dataset.hint = `${p.name} · trash · ${p.trash.length} card${p.trash.length === 1 ? "" : "s"}`
+                       + (p.trash.length ? " · click to look through it" : "");
+      if (p.trash.length) {
+        box.classList.add("open");
+        box.onclick = () => openPile(`${p.name} trash`, p.trash);
+      }
     } else {
       box.append(el("span", "n big", p.deck));
+      box.dataset.hint = `${p.name} · deck · ${p.deck} card${p.deck === 1 ? "" : "s"} left`;
     }
     return box;
   };
@@ -241,7 +248,22 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
     controls.append(undo, concede, leave, dl, paybtn);
   }
   right.append(controls);
-  const logp = el("div", "panel logwrap p-log"); logp.append(el("span", "lbl", "LOG"));
+  const logp = el("div", "panel logwrap p-log");
+  // The log is the tallest thing in the column and the least urgent; it folds away to its own
+  // header so the prompt and the selected card are never below the fold. The choice sticks.
+  const logHead = el("div", "loghead");
+  const fold = el("button", "foldbtn", logMin() ? "＋" : "−");
+  fold.setAttribute("aria-label", "minimise the log");
+  logHead.append(el("span", "lbl", "LOG"), fold);
+  logp.append(logHead);
+  logp.classList.toggle("min", logMin());
+  fold.onclick = (e) => {
+    e.stopPropagation();
+    const now = !logMin();
+    try { localStorage.setItem(LOG_MIN_KEY, now ? "1" : "0"); } catch (err) {}
+    logp.classList.toggle("min", now);
+    fold.textContent = now ? "＋" : "−";
+  };
   const logBtn = el("button", "logbtn", "LOG"); logBtn.onclick = () => logp.classList.toggle("open"); controls.append(logBtn);
   logp.onclick = (e) => { if (e.target === logp) logp.classList.remove("open"); };
   const who = (v.players || []).map(x => x.name);
@@ -533,6 +555,9 @@ function findOnBoard(v, inst) {
   return null;
 }
 
+const LOG_MIN_KEY = "cptcg.logmin";
+function logMin() { try { return localStorage.getItem(LOG_MIN_KEY) === "1"; } catch (e) { return false; } }
+
 function cardPanel(v, byInst, pend, myTurn, onAct) {
   const box = el("div", "panel cardinfo p-cardinfo");
   box.append(el("span", "lbl", "SELECTED CARD"));
@@ -621,6 +646,10 @@ function dieNode(kind, face, cls) {
   d.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true">${art}</svg>` +
                 `<span class="face">${face == null ? "D" + kind : face}</span>`;
   d.dataset.kind = kind;
+  // Not a `title`: that is the browser's white tooltip box, and nothing on the board pops one of
+  // those over the cards. `data-hint` is drawn by the stylesheet, in the board's own colours.
+  d.dataset.hint = "d" + kind + (face == null ? " · not rolled yet" : ` · rolled ${face}`) +
+                   (cls && cls.indexOf("own") >= 0 ? " · yours" : cls && cls.indexOf("rival") >= 0 ? " · the rival's" : "");
   return d;
 }
 
@@ -1063,6 +1092,33 @@ function showPreview(src, c, touch) {
   PREVIEW.style.left = ""; PREVIEW.style.top = "";
 }
 function hidePreview() { if (PREVIEW) PREVIEW.classList.remove("show", "touch"); }
+
+// ---------------------------------------------------------------- looking through a pile
+// The trash is public — every card in it was played face up — so it is something to read rather
+// than remember. Clicking the pile lays the whole thing out at a size the text can be read at.
+let PILE = null;
+function openPile(title, cards) {
+  if (!PILE) {
+    PILE = el("div", "pileview");
+    PILE.append(el("div", "sheet"));
+    document.body.append(PILE);
+    PILE.onclick = (e) => { if (e.target === PILE) closePile(); };
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePile(); });
+  }
+  const sheet = PILE.querySelector(".sheet");
+  sheet.innerHTML = "";
+  const head = el("div", "head");
+  head.append(el("div", "t", title.toUpperCase()),
+              el("div", "c", `${cards.length} card${cards.length === 1 ? "" : "s"}`));
+  const close = el("button", "", "CLOSE"); close.onclick = closePile;
+  head.append(close);
+  const grid = el("div", "pilegrid");
+  // Newest on top of a pile, so newest first here too.
+  cards.slice().reverse().forEach(c => grid.append(cardNode(c)));
+  sheet.append(head, grid);
+  PILE.classList.add("show");
+}
+function closePile() { if (PILE) PILE.classList.remove("show"); }
 
 // ---------------------------------------------------------------- deck builder
 // The page holds the deck being edited; legality, RAM limits and the saved file all come from
