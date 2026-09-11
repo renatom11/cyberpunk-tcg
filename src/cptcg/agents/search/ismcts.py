@@ -59,7 +59,11 @@ from cptcg.core.engine import apply, legal_actions
 from cptcg.core.rng import Pcg32
 from cptcg.core.state import GameState
 from cptcg.core.view import determinize
+from cptcg.learn.policy import policy_in
 from cptcg.learn.features import features
+
+
+_UNSET = object()
 
 
 class _Node:
@@ -140,6 +144,11 @@ class IsmctsAgent(NeuralAgent):
 
     #: Visit-count temperature for the final choice. 0 is argmax, which is what a gate measures.
     temperature = 0.0
+
+    #: Softmax temperature for the *policy-head* prior, when the weights file carries one. Separate
+    #: from ``prior_temp`` because the two priors are on different scales: one is a value logit in
+    #: log-odds, the other is a move logit trained against a visit distribution.
+    policy_temp = 1.0
 
     # ------------------------------------------------------------------ entry point
     def act(self, s: GameState, choice: Choice) -> int:
@@ -342,6 +351,18 @@ class IsmctsAgent(NeuralAgent):
             if math.log(u) < 0.5 * x * x + d * (1.0 - v + math.log(v)):
                 return d * v
 
+    @property
+    def policy(self):
+        """The policy head inside this agent's weights file, or None if it has not been fitted.
+
+        Cached on the instance *and* per path inside ``learn.policy``, because an agent is rebuilt
+        for every game and a worker plays thousands of them.
+        """
+        pol = getattr(self, "_policy", _UNSET)
+        if pol is _UNSET:
+            pol = self._policy = policy_in(self.weights_path)
+        return pol
+
     def _priors(self, w: GameState, ch: Choice, idxs: list[int]) -> dict:
         """One-ply previews, softmaxed, from the perspective of whoever is choosing.
 
@@ -351,6 +372,12 @@ class IsmctsAgent(NeuralAgent):
         """
         opts = ch.options
         actor = ch.player
+        pol = self.policy
+        if pol is not None:
+            # A move ordering, read straight off the moves: no clone, no apply, no value head.
+            # Measured at 4.7x cheaper per move at width 8 than the preview below — see
+            # ``learn/policy.py`` for the table and for why that is the whole point.
+            return pol.prior(w, actor, [opts[i] for i in idxs], temp=self.policy_temp)
         model = self.model
         raw = []
         for i in idxs:
