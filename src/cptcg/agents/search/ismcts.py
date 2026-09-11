@@ -115,6 +115,14 @@ class IsmctsAgent(NeuralAgent):
     #: so a temperature of 1.0 would make every prior nearly uniform and the prior pointless.
     prior_temp = 0.3
 
+    #: Whether the prior previews an option all the way to a settled position, as the greedy agent
+    #: does, or scores it where it lands. Scoring where it lands can be *mid-action*: "Attack" is
+    #: then measured at the target menu, with the attacker already spent and nothing stolen yet, so
+    #: attacking reads as a pure loss and takes the lowest prior on the board. Settling fixes that
+    #: and costs the prior its independence from the greedy policy. Chosen by measurement — the
+    #: table is in docs/learning.md.
+    prior_settle = True
+
     #: Plies of frozen-heuristic play before falling back to the value head at a leaf. 0 means the
     #: value head alone. Each ply costs ~0.65 ms against the leaf's 89 us, so this is expensive by
     #: construction; it exists so "would playing further help?" stays a measurement.
@@ -294,7 +302,8 @@ class IsmctsAgent(NeuralAgent):
             # target menu, where the attacker is already spent and nothing has been stolen yet, so
             # attacking looks like a pure loss and gets the lowest prior on the board. That is what
             # made the search equip the Gear correctly and then end the turn instead of swinging.
-            self._resolve(c, 1)
+            if self.prior_settle:
+                self._resolve(c, 1)
             if c.over:
                 won = c.winner == actor
                 raw.append(12.0 if won else -12.0)
