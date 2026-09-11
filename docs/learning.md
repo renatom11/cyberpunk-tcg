@@ -1342,3 +1342,51 @@ Two process notes worth keeping, because both nearly buried this:
   assignments, so a bare seed cannot be replayed without re-deriving the arena's seed arithmetic by
   hand. It now names both decks and both agents.
 
+
+
+### ismcts vs neural — 2026-09-11 04:28 UTC
+
+`arena a-vs-b ismcts neural` over 6 deck pairings sampled from deck seed 20260910, SPRT at delta 0.05.
+
+300 games over 5 deck pairings, 150 paired comparisons — every seed played from both seats and with the deck assignments swapped. Ruleset `149b39c8f55e9d41`, 764.0s.
+
+| | games | win rate | 95% Wilson (these decks) |
+|---|---:|---:|---|
+| **ismcts** | 300 | 61.0% | 55.4–66.3% |
+| neural | 300 | 39.0% | 33.7–44.6% |
+
+The Wilson interval above is **conditional on these 5 deck pairings**: it says what more games on these decks would tell you, and nothing about other decks. Per-pairing rates run 55.0–66.7%; over the deck population the mean is 61.0 [55.6–66.4]% (t4 on 5 pairings). **That second band is the error bar for ismcts's strength**, and a generation-over-generation claim has to clear it rather than the Wilson one — the same protocol on five different deck samples moves several points while nothing about the agents changes. It is estimated from only 5 pairings, so it is itself noisy and can land either side of the Wilson bracket: narrower when the pairings happened to agree, much wider when one of them did not.
+
+Paired test: 38 of 43 decisive pairs (88.4%) — agent A is stronger (SPRT accepted H1). Stopped early.
+
+ismcts sat in seat 0 in 150 of 300 games — exactly half, by construction. ismcts on the play: 66.7% [58.8–73.7] (who goes first is the d20 winner's *choice*, so this is description, not balance). Average game length 12.9 turns. End reasons: OVERTIME 80, SEVEN_GIGS 220.
+
+| deck pairing | games | ismcts win rate |
+|---|---:|---|
+| `sampled-0` built vs built-b | 60 | 55.0% [42.5–66.9] |
+| `sampled-1` built vs explorer | 60 | 60.0% [47.4–71.4] |
+| `sampled-2` Sample Gangers vs random | 60 | 66.7% [54.1–77.3] |
+| `sampled-3` random vs random-b | 60 | 63.3% [50.7–74.4] |
+| `sampled-4` random vs random-b | 60 | 60.0% [47.4–71.4] |
+
+
+### Delayed-reward suite: ismcts — 2026-09-11 04:32 UTC
+
+**Solved 4 of 8** (64 of 128 trials won), against a floor of 12 of 128 trials for uniform random play. Every position has a verified winning line that the frozen heuristic does not find on any of these seeds; a position counts as solved only when the agent wins it on every one of them. The suite holds 5 at a horizon of one turn (won inside the searched turn), 3 at a horizon of two turns (the payoff lands after the rival's answer).
+
+| position | source | horizon | trials won | floor | solved |
+|---|---|---:|---:|---:|---|
+| `gear-before-the-raid` | hand-built | 1 | 16/16 | 3/16 | yes |
+| `sell-to-afford-the-raid` | hand-built | 1 | 16/16 | 3/16 | yes |
+| `two-pieces-of-gear` | hand-built | 1 | 0/16 | 0/16 | no |
+| `mined-23767-79` | mined from heuristic self-play | 1 | 16/16 | 3/16 | yes |
+| `mined-23773-81` | mined from heuristic self-play | 1 | 0/16 | 0/16 | no |
+| `mined-166300-77` | mined from heuristic self-play | 2 | 0/16 | 3/16 | no |
+| `mined-166302-115` | mined from heuristic self-play | 2 | 16/16 | 0/16 | yes |
+| `mined-166305-59` | mined from heuristic self-play | 2 | 0/16 | 0/16 | no |
+
+**Horizon** is how far past the searched turn the win may land, counted in the searched player's own turns. At 1 the line wins inside the turn; at 2 the searched turn cannot win by itself and has to leave a board the frozen policy converts on the following turn — a reward that arrives after the move that earned it. Only the searched turn is chosen by the agent either way: the suite measures which line you take *this* turn, not whether you can plan two of them.
+
+**Floor** is uniform random play over the same turn, on the same seeds, stored when the position was qualified. Read the agent's column against it, not against the frozen heuristic's zero: the heuristic scores zero here by construction, because missing these positions on these seeds is how they were selected.
+
+The win is confirmed by playing the turn out and the rival's whole reply with the frozen heuristic in both seats, so a line that reaches seven Gigs and has them stolen back does not count. That reply is one competent defence and one sample of the rival's Gig die, not a proof against every defence.
