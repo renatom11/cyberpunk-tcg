@@ -67,7 +67,8 @@ class _Node:
     throughout; ``_select`` flips them for a node where the rival chooses, which is correct because
     the game is zero-sum."""
 
-    __slots__ = ("visits", "value", "children", "avail", "prior", "actor", "expanded", "allowed")
+    __slots__ = ("visits", "value", "children", "avail", "prior", "actor", "expanded", "allowed",
+                 "noise")
 
     def __init__(self) -> None:
         self.visits = 0
@@ -80,6 +81,9 @@ class _Node:
         #: Root only: the subset of actions worth searching, after collapsing options that differ
         #: only in which copy of a card they name.
         self.allowed = None
+        #: Root only, and only while generating training data: mix exploration noise into this
+        #: node's prior the first time it is built.
+        self.noise = False
 
     def q(self, default: float) -> float:
         return self.value / self.visits if self.visits else default
@@ -152,6 +156,9 @@ class IsmctsAgent(NeuralAgent):
         root.actor = choice.player
         root.expanded = True
         root.allowed = self._root_actions(s, choice)
+        # Marked, not passed: the prior is computed lazily inside _select on a node's second
+        # visit, so the root has to carry the instruction to have noise mixed into it.
+        root.noise = self.root_noise_alpha > 0.0
 
         deadline = None
         if self.max_seconds > 0.0:
@@ -254,7 +261,11 @@ class IsmctsAgent(NeuralAgent):
 
         prior = node.prior
         if prior is None:
-            prior = node.prior = self._priors(w, ch, idxs)
+            prior = self._priors(w, ch, idxs)
+            if node.noise:
+                prior = self._with_root_noise(prior)
+                node.noise = False
+            node.prior = prior
 
         # Availability, not visits: this is the whole difference between ISMCTS and MCTS. An action
         # legal in few sampled worlds must not be punished for the visits it never had the chance
@@ -281,6 +292,55 @@ class IsmctsAgent(NeuralAgent):
             if score > best_score:
                 best_i, best_score = i, score
         return best_i
+
+    def _with_root_noise(self, prior: dict) -> dict:
+        """Mix Dirichlet noise into the root prior — the AlphaZero exploration protocol.
+
+        Without it a generation of self-play only ever revisits what the current policy already
+        likes, and the training data narrows around the player's existing opinions: this is the
+        mechanism behind the blind spots that pure self-play is known to grow. It is off by default
+        and on only for the agent that *generates training data*; a gate has to measure the agent
+        playing to win, and noise at the root is the opposite of that.
+
+        Dirichlet(alpha) is sampled as independent Gamma(alpha) draws normalised to sum to one, so
+        the only thing needed on top of the engine's own generator is a Gamma sampler. Everything
+        runs off ``self.rng``, so a seeded generation run is still reproducible.
+        """
+        a = self.root_noise_alpha
+        keys = list(prior)
+        if len(keys) < 2:
+            return prior
+        g = [self._gamma(a) for _ in keys]
+        total = sum(g) or 1.0
+        w = self.root_noise_weight
+        return {k: (1.0 - w) * prior[k] + w * (gi / total) for k, gi in zip(keys, g)}
+
+    def _uniform(self) -> float:
+        """A float in (0, 1). Open at both ends: a log of zero is not a rounding problem."""
+        return (self.rng.next_u32() + 0.5) / 4294967296.0
+
+    def _gamma(self, a: float) -> float:
+        """Marsaglia-Tsang, with the standard boost for a < 1 (Gamma(a) = Gamma(a+1) * U**(1/a)).
+
+        Normal variates come from Box-Muller over the same generator rather than from ``random``,
+        because the whole point of carrying a Pcg32 around is that a run can be replayed.
+        """
+        if a < 1.0:
+            return self._gamma(a + 1.0) * self._uniform() ** (1.0 / a)
+        d = a - 1.0 / 3.0
+        c = 1.0 / math.sqrt(9.0 * d)
+        while True:
+            u1, u2 = self._uniform(), self._uniform()
+            x = math.sqrt(-2.0 * math.log(u1)) * math.cos(2.0 * math.pi * u2)
+            v = 1.0 + c * x
+            if v <= 0.0:
+                continue
+            v = v * v * v
+            u = self._uniform()
+            if u < 1.0 - 0.0331 * (x ** 4):
+                return d * v
+            if math.log(u) < 0.5 * x * x + d * (1.0 - v + math.log(v)):
+                return d * v
 
     def _priors(self, w: GameState, ch: Choice, idxs: list[int]) -> dict:
         """One-ply previews, softmaxed, from the perspective of whoever is choosing.
@@ -387,3 +447,27 @@ class HeuristicPolicy:
     def act(agent: IsmctsAgent, w: GameState, ch: Choice) -> int:
         from cptcg.agents.heuristic import HeuristicAgent
         return HeuristicAgent._greedy(agent, w, ch, 0)
+
+
+@register
+class IsmctsExplorer(IsmctsAgent):
+    """The same search, set up to *generate training data* rather than to win.
+
+    Two changes, both from the AlphaZero protocol and both deliberately absent from the agent a
+    gate measures. Dirichlet noise at the root keeps the generation visiting moves the current
+    policy has learned to dismiss, which is the mechanism that stops a self-play corpus narrowing
+    around the player's existing opinions. Sampling the final move in proportion to visits, rather
+    than taking the argmax, spreads the games over the plausible lines instead of replaying one.
+
+    Never gate with this. Noisy games make better data and a worse measurement, and swapping the
+    two is how a loop convinces itself it is improving.
+    """
+
+    name = "ismcts-explore"
+
+    #: 0.3 is the concentration used for games of this branching factor (median 5, mean 6.7): low
+    #: enough that the noise is lumpy rather than uniform, which is the point — it promotes a few
+    #: neglected moves a lot rather than every move a little.
+    root_noise_alpha = 0.3
+    root_noise_weight = 0.25
+    temperature = 1.0

@@ -31,8 +31,18 @@ def _per_pairing(games: int, pairings: int) -> int:
     return -(-per // GAMES_PER_SEED) * GAMES_PER_SEED
 
 
+def _slug(name: str) -> str:
+    """A file name from an agent name. Agent names can carry a path now — ``ismcts@out/learn/
+    gen-003/weights.json`` says which fitted weights to play with — and a slash in a file name is
+    a directory, not a character."""
+    out = []
+    for ch in name:
+        out.append(ch if (ch.isalnum() or ch in "-._") else "-")
+    return "".join(out).strip("-")
+
+
 def _emit(args, name: str, data: dict, section: str) -> None:
-    path = Path(args.out) / f"{name}.json"
+    path = Path(args.out) / f"{_slug(name)}.json"
     arena.write_json(path, data)
     print(f"\nwritten to {path}", file=sys.stderr)
     if args.docs:

@@ -86,7 +86,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-from cptcg.agents.base import AGENTS, CHEAT_PREFIX, make_agent
+from cptcg.agents.base import AGENTS, CHEAT_PREFIX, WEIGHTS_SEP, make_agent
 from cptcg.cards.registry import Registry
 from cptcg.core.config import DEFAULT_CONFIG, RulesConfig
 from cptcg.core.rng import Pcg32
@@ -118,13 +118,33 @@ def known_agents() -> list[str]:
     return sorted(AGENTS)
 
 
+def agent_base(name: str) -> str:
+    """The registered name inside a decorated one: ``cheat:ismcts@weights.json`` -> ``ismcts``.
+
+    Both decorations travel inside the agent name on purpose, so that a worker process can rebuild
+    the same agent from a string. That means every place that validates a name has to know how to
+    undress one, and there is exactly one place that does: here.
+    """
+    if name.startswith(CHEAT_PREFIX):
+        name = name[len(CHEAT_PREFIX):]
+    return name.partition(WEIGHTS_SEP)[0]
+
+
 def agent_exists(name: str) -> bool:
-    base = name[len(CHEAT_PREFIX):] if name.startswith(CHEAT_PREFIX) else name
-    return base in known_agents()
+    base = agent_base(name)
+    if base not in known_agents():
+        return False
+    weights = name.partition(WEIGHTS_SEP)[2]
+    # A missing weights file is a typo that would otherwise surface as a stack trace inside a
+    # worker, halfway through a run that has already cost an hour.
+    return not weights or Path(weights).exists()
 
 
 def require_agent(name: str) -> str:
     if not agent_exists(name):
+        weights = name.partition(WEIGHTS_SEP)[2]
+        if weights and agent_base(name) in known_agents():
+            raise FileNotFoundError(f"agent {name!r}: no weights at {weights!r}")
         raise KeyError(f"unknown agent {name!r}; known: {known_agents()}")
     return name
 
