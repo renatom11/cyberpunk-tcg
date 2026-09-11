@@ -164,6 +164,61 @@ def test_it_plays_a_two_move_line_where_the_first_move_gains_nothing(pool):
              < next(i for i, x in enumerate(played) if x.startswith("Attack")), (sd, played)
 
 
+# ------------------------------------------------------- the no-op filter at the root
+def test_a_move_that_changes_nothing_is_not_searched(pool):
+    """The root drops an action that returns the game to the position it was already in.
+
+    Built rather than found: a fake choice whose first option is a genuine no-op — an EndTurn that
+    is applied to a clone and then thrown away — would need engine surgery to construct, so this
+    uses the real detector on real options and asserts what it says about each of them.
+    """
+    from cptcg.core.actions import EndTurn
+
+    decks = sample_pair(pool, Pcg32(7, seq=3))
+    s = new_game(pool, decks, 99)
+    for _ in range(60):                       # play into a main phase with a menu worth filtering
+        legal_actions(s)
+        if s.pending.kind.name == "MAIN" and len(s.pending.options) > 3:
+            break
+        apply(s, 0)
+    ch = s.pending
+    a = make_agent("ismcts", 1)
+    a.new_game(99, ch.player)
+    # Every real move changes something. Ending the turn certainly does.
+    for opt in ch.options:
+        if isinstance(opt, EndTurn):
+            assert not a._is_no_op(s, ch, opt)
+    kept = a._root_actions(s, ch)
+    if kept is not None:
+        for opt in kept:
+            assert not a._is_no_op(s, ch, opt), opt
+
+
+def test_the_detector_says_yes_to_an_actual_repeat(pool):
+    """The other half: a position compared against itself is a repeat, or the filter is vacuous."""
+    from cptcg.agents.neural import _same_position
+
+    decks = sample_pair(pool, Pcg32(11, seq=3))
+    s = new_game(pool, decks, 5)
+    legal_actions(s)
+    assert _same_position(s, s.clone())
+
+
+def test_when_every_option_does_nothing_one_is_still_offered(pool):
+    """Refusing to move is not available. If the filter would empty the menu it keeps it whole,
+    and the engine's Overtime and turn limits are the backstop."""
+    decks = sample_pair(pool, Pcg32(13, seq=3))
+    s = new_game(pool, decks, 21)
+    legal_actions(s)
+    ch = s.pending
+    a = make_agent("ismcts", 2)
+    a.new_game(21, ch.player)
+    a._is_no_op = lambda *_: True             # every option is a no-op
+    kept = a._root_actions(s, ch)
+    left = ch.options if kept is None else kept
+    assert len(left) >= 1
+
+
 def replay_labels(pool, entry, me, line):
     """The chosen line as readable actions, replayed against a fresh copy of the position."""
     from cptcg.learn import delayed

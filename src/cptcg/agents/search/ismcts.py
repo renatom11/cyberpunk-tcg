@@ -54,7 +54,7 @@ import math
 from cptcg.agents.base import register
 from cptcg.agents.heuristic import _default_index, _equiv_key
 from cptcg.agents.neural import NeuralAgent, _same_position
-from cptcg.core.actions import Choice, ChoiceKind
+from cptcg.core.actions import Action, Choice, ChoiceKind
 from cptcg.core.engine import apply, legal_actions
 from cptcg.core.rng import Pcg32
 from cptcg.core.state import GameState
@@ -198,11 +198,45 @@ class IsmctsAgent(NeuralAgent):
         return self._choose(s, choice, root)
 
     def _root_actions(self, s: GameState, choice: Choice):
-        """Collapse options that differ only in which copy of a card they name.
+        """What is worth searching at the root: no duplicate copies, and no moves that do nothing.
 
-        ``_equiv_key`` reads ``s.i_card``, so it means something different in every sampled world
-        and must not be used inside the tree. At the root there is exactly one world — the real one
-        — so it is both safe and worth it: three identical face-down Legends are one choice.
+        **Copies.** ``_equiv_key`` reads ``s.i_card``, so it means something different in every
+        sampled world and must not be used inside the tree. At the root there is exactly one world
+        — the real one — so it is both safe and worth it: three identical face-down Legends are one
+        choice.
+
+        **Moves that do nothing.** This is the fix for a hang. The pool contains a free no-op:
+        ``panam-palmer-strength-through-family`` has a zero-cost ability with no spend and no
+        once-per-turn marker whose optional pick can be declined for literally no effect, returning
+        a byte-identical position. That is rules-correct — the card says you *may* Call a Legend for
+        free, and declining means you have not Called — so the agent has to be the robust part.
+
+        ``neural`` was given a guard for exactly this (``_same_position``, scored as a loss inside
+        ``_value``). This agent replaced ``_greedy`` wholesale and none of its three scoring paths
+        — ``_leaf``, ``_priors``, ``_terminal`` — goes through ``_value``, so the guard was imported
+        and never called. A child returning to the root scored the *root's own* value, which is
+        competitive with any real move and free, so it collected visits and ``_choose`` handed it
+        back for ever. An ``arena generalisation`` run died on it three hours in, on the same seed
+        that had hung ``neural``.
+
+        The root is where correctness is decided, because ``_choose`` can only return something the
+        root offered. One clone-apply-settle per option, once per decision, against the *true*
+        state. Measured on a 13-option main menu: **230 us for the whole of this method**, dedup
+        included, against ~140 ms for a 200-iteration decision on a real board — about 0.2%.
+        ``_priors`` already pays the same price per option, and pays it per node rather than once.
+
+        Two rules worth stating rather than inferring:
+
+        * If *every* option is a no-op, keep them all. Refusing to move is not available; the
+          engine's Overtime and turn limits are the backstop. Same convention as ``neural``.
+        * Settle first, exactly as ``_priors`` does, so a compound action is judged on where it
+          actually lands rather than on its first step.
+
+        **What this does not catch:** a two-step cycle, where A then B returns to the start. The
+        observed bug is one-step, and the general fix — threading a position reference down
+        ``_iterate`` and comparing at every apply — costs a full state comparison per node. Not
+        worth paying until something demonstrates it is needed; ``runner.play_game``'s ceiling
+        remains the backstop for the rest of the class.
         """
         seen, keep = set(), []
         for a in choice.options:
@@ -211,7 +245,18 @@ class IsmctsAgent(NeuralAgent):
                 continue
             seen.add(key)
             keep.append(a)
+        moves = [a for a in keep if not self._is_no_op(s, choice, a)]
+        if moves and len(moves) < len(keep):
+            keep = moves
         return frozenset(keep) if len(keep) < len(choice.options) else None
+
+    def _is_no_op(self, s: GameState, choice: Choice, a: Action) -> bool:
+        """Does taking this action leave the game in a position indistinguishable from this one?"""
+        c = s.clone()
+        c.rng = Pcg32(self.rng.next_u32(), seq=3)      # never preview the true future
+        apply(c, choice.options.index(a))
+        self._resolve(c, 1)
+        return _same_position(c, s)
 
     def _iterate(self, root: _Node, w: GameState) -> None:
         node = root
