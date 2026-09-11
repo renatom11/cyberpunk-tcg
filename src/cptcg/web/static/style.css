@@ -21,7 +21,13 @@
      Two things bind. Across: four cards have to fit the centre column. Down: the centre column
      stacks a Legend band, two field rows and a Legend band, so four card heights plus their labels
      have to fit its height, which is the board less its own padding. */
-  --card-h: min(clamp(120px, 18.5vh, 230px), calc((var(--centre) - 30px) / 4 * 1.41));
+  /* Down: the centre column stacks Legend band, field, field, Legend band, so four card heights
+     plus their chrome have to fit the board. --chrome is that chrome, measured: four panels of
+     (16px top padding for the pinned label + 4px bottom) and three 4px gaps. Writing the budget
+     out rather than guessing a vh means the cards use every pixel that is actually free. */
+  --chrome: 92px;
+  --card-h: min(calc((100vh - 52px - 12px - var(--chrome)) / 4),
+                calc((var(--centre) - 30px) / 4 * 1.41), 340px);
   --card-w: calc(var(--card-h) / 1.41);
 }
 * { box-sizing: border-box; }
@@ -52,6 +58,11 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px 6px; position: relative; }
 .panel .lbl { display: block; font-size: 10px; color: var(--dim); letter-spacing: .1em; margin: 0 0 4px; }
 .panel.hand .lbl, .panel.field .lbl, .panel.legends .lbl { width: 100%; }
+/* On the board a label is pinned into the panel's top padding instead of taking a line of its own.
+   Four panels stack in the centre column, so a line each is 72px that the cards could have had. */
+.board .panel { padding: 16px 6px 4px; }
+.board .panel > .lbl { position: absolute; top: 3px; left: 7px; right: 7px; width: auto; margin: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* One row, never wrapped: six cards read as a hand, a 2x3 block reads as a grid. A hand bigger
    than the row scrolls sideways rather than breaking the line. */
 /* The hand fans: cards overlap by --overlap, which app.js measures from how many there are and
@@ -98,18 +109,20 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .phase.waiting { border-color: var(--line); }
 .phase.waiting .title { color: var(--red); border-color: var(--red); }
 .phase.done .title { color: var(--yellow); border-color: var(--yellow); }
-.center { display: grid; grid-template-rows: auto 1fr 1fr auto; gap: 6px; }
+.center { display: grid; grid-template-rows: auto 1fr 1fr auto; gap: 4px; }
 /* The playmat's lower band: LEGENDS on the left, EDDIES filling the rest of the row beside it. */
 .legendrow { display: flex; gap: 6px; min-height: 0; align-items: stretch; }
 .legendrow > * { min-width: 0; }
 .legendrow .legends { flex: 0 0 auto; }
 .legendrow .eddies { flex: 1 1 auto; width: auto; }
 .legendrow .counts { flex: 0 0 auto; flex-direction: column; justify-content: center; margin-left: 0; gap: 6px; }
-.field { display: flex; gap: 6px; flex-wrap: wrap; min-height: calc(var(--card-h) + 16px); align-content: flex-start; }
+.field { display: flex; gap: 6px; flex-wrap: wrap; min-height: var(--card-h); align-content: flex-start; }
 .eddies { display: flex; flex-direction: column; min-width: 160px; }
 .eddies .list { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 4px; align-items: flex-start; flex: 1; min-height: 0; }
 .eddies .list .card { cursor: default; }
 .eddies .list .card.spent { transform: rotate(90deg); filter: brightness(.45); margin: 0 13px; }
+.board .eddies .badge { position: absolute; right: 6px; top: 2px; padding: 1px 6px; font-size: 10px; }
+.board .eddies .badge b { display: inline; font-size: 11px; margin-left: 4px; }
 .eddies .badge { align-self: flex-end; }
 .legends { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .counts { display: flex; gap: 10px; margin-left: auto; align-items: center; }
