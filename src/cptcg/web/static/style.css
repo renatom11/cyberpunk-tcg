@@ -1,11 +1,24 @@
 :root {
   --bg: #070b12; --panel: #0d1420; --line: #1c3a4a; --line2: #2a5a70; --text: #d7e3ea; --dim: #7f95a3;
   --yellow: #f4e01f; --cyan: #58e0ff; --green: #8ff26a; --red: #ff5c6c; --blue: #6aa8ff;
-  --card-w: 112px; --card-h: 158px;
-  /* Big enough to read the card in the hand without previewing it. Three fit across the column and
-     the rest scroll: the column has the height to spare, and a hand you can read beats a hand you
-     can see all of at once. */
-  --hand-w: 160px; --hand-h: 226px;
+  /* Cards are as big as the window allows rather than a fixed size, because the point of the board
+     is to read the cards. A real card is 1.41 times as tall as it is wide, so height is the free
+     variable and width follows from it.
+
+     Two things bind, so both are in the min(): the field must fit four cards across the centre
+     column, and two field rows plus the two Legend bands must fit the board's height. The centre
+     column is the viewport less the two side columns and the gaps, hence the 100vw term. */
+  /* The two side columns, named here so the grid and the card size cannot drift apart: the card
+     size is derived from what is left over after them, and the grid is laid out from the same
+     two values. */
+  --side-l: clamp(300px, 27vw, 520px);
+  --side-r: clamp(250px, 19vw, 340px);
+  --centre: calc(100vw - var(--side-l) - var(--side-r) - 32px);   /* 32px: the gaps and the padding */
+  --card-h: min(clamp(150px, 21vh, 250px), calc((var(--centre) - 30px) / 4 * 1.41));
+  --card-w: calc(var(--card-h) / 1.41);
+  /* The hand is one row that scrolls, so only height binds — it can afford to be bigger still. */
+  --hand-h: clamp(170px, 26vh, 280px);
+  --hand-w: calc(var(--hand-h) / 1.41);
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.35 "Segoe UI", Roboto, system-ui, sans-serif; }
@@ -30,7 +43,7 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 /* The hand column is wide enough to lay a full opening hand out in one unbroken row, which is
    how it sits on a table. The width comes out of the centre column, where the Eddies area had
    far more room than it uses. */
-.board { display: grid; grid-template-columns: 520px minmax(0, 1fr) 330px; gap: 8px; padding: 8px; height: calc(100vh - 52px); }
+.board { display: grid; grid-template-columns: var(--side-l) minmax(0, 1fr) var(--side-r); gap: 8px; padding: 8px; height: calc(100vh - 52px); }
 .col { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px 6px; position: relative; }
 .panel .lbl { display: block; font-size: 10px; color: var(--dim); letter-spacing: .1em; margin: 0 0 4px; }
@@ -38,8 +51,11 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 /* One row, never wrapped: six cards read as a hand, a 2x3 block reads as a grid. A hand bigger
    than the row scrolls sideways rather than breaking the line. */
 .hand { display: flex; gap: 4px; overflow-x: auto; min-height: 0; align-items: flex-start; flex-wrap: nowrap; }
-/* the rival's hand is a row of backs and wants none of the height the readable hand needs */
-.hand.opp { min-height: calc(var(--card-h) * .78 + 26px); }
+/* The rival's hand is a row of identical backs — a count, not something to read — so it is held
+   well under the size the readable hand needs, and the height it gives up goes to that hand. */
+.hand.opp { min-height: calc(var(--card-h) * .62 + 26px); }
+.hand.opp .card { width: calc(var(--card-w) * .62); height: calc(var(--card-h) * .62); }
+.hand.opp .card.back + .card.back { margin-left: calc(var(--card-w) * -.42); }
 .hand .card { flex: 0 0 auto; }
 /* The label has to leave the row. As a flex item in a nowrap line it gets squeezed in beside the
    cards and steals their width; it cannot take a line of its own the way it does when wrapping. */
@@ -61,7 +77,6 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .hand.mine { min-height: calc(var(--hand-h) + 26px); }
 .hand.opp { overflow: hidden; }
 .hand.opp:has(.card.back) { gap: 0; }
-.hand.opp .card.back + .card.back { margin-left: -58px; }
 .dice { display: flex; gap: 8px; justify-content: center; padding: 6px; }
 .die { width: 44px; height: 44px; border: 1px solid var(--line2); border-radius: 8px; display: grid; place-items: center; color: var(--dim); font-size: 12px; font-weight: 700; }
 .die.gig { color: var(--yellow); border-color: var(--yellow); font-size: 16px; }
@@ -89,7 +104,7 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .field { display: flex; gap: 6px; flex-wrap: wrap; min-height: calc(var(--card-h) + 16px); align-content: flex-start; }
 .eddies { display: flex; flex-direction: column; min-width: 160px; }
 .eddies .list { display: flex; flex-wrap: wrap; gap: 4px; align-content: flex-start; flex: 1; min-height: 60px; }
-.eddies .list .card { width: 44px; height: 62px; cursor: default; }
+.eddies .list .card { width: calc(var(--card-w) * .42); height: calc(var(--card-h) * .42); cursor: default; }
 .eddies .list .card.spent { transform: rotate(90deg); filter: brightness(.45); margin: 0 13px; }
 .eddies .badge { align-self: flex-end; }
 .legends { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
