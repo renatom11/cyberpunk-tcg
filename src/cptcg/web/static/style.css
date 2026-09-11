@@ -82,7 +82,13 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .legends { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .counts { display: flex; gap: 10px; margin-left: auto; align-items: center; }
 .counts .badge { min-width: 60px; }
-.logwrap { flex: 1; overflow-y: auto; font-size: 12.5px; }
+.logwrap { flex: 1 1 0; min-height: 60px; overflow-y: auto; font-size: 12.5px; }
+/* The right column is a fixed-height flex column. Everything but the log holds its size and
+   the log takes what is left; without this the panels overflow the column and the bottom one
+   is drawn over the prompt's buttons, which then cannot be clicked at all. */
+.col > .panel { flex: 0 0 auto; }
+.col { overflow: hidden; }
+.prompt, .cardinfo { max-height: 42vh; overflow-y: auto; }
 .logwrap p { margin: 3px 0; padding-left: 10px; text-indent: -10px; color: var(--text); }
 .logwrap p.turn { color: var(--cyan); font-weight: 700; margin-top: 8px; }
 .logwrap p.end { color: var(--yellow); font-weight: 700; }
@@ -265,6 +271,11 @@ table.rep th { color: var(--cyan); }
   .kwpanel { left: 50%; top: auto; bottom: 12px; transform: translateX(-50%); width: min(92vw, 420px);
     max-height: 30vh; }
 }
+
+/* ---------------------------------------------------------------- log */
+.logwrap b.who { color: var(--text); font-weight: 800; }
+.logwrap b.cardname { color: var(--yellow); font-weight: 600; }
+.logwrap .turn b { color: inherit; }      /* a turn header is already the loudest line there is */
 
 /* ---------------------------------------------------------------- selected card */
 .cardinfo .q { color: var(--yellow); font-weight: 800; font-size: 13px; line-height: 1.25; }

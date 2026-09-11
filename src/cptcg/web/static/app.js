@@ -214,7 +214,11 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
   const logp = el("div", "panel logwrap p-log"); logp.append(el("span", "lbl", "LOG"));
   const logBtn = el("button", "logbtn", "LOG"); logBtn.onclick = () => logp.classList.toggle("open"); controls.append(logBtn);
   logp.onclick = (e) => { if (e.target === logp) logp.classList.remove("open"); };
-  (v.log || LOG).forEach(line => { const p = el("p", line.startsWith("—") ? "turn" : line.startsWith("GAME OVER") ? "end" : "", line); logp.append(p); });
+  const who = (v.players || []).map(x => x.name);
+  (v.log || LOG).forEach(line => {
+    const p = el("p", line.startsWith("—") ? "turn" : line.startsWith("GAME OVER") ? "end" : "", markLog(line, who));
+    logp.append(p);
+  });
   right.append(logp);
   const prompt = el("div", "panel prompt p-prompt"); prompt.append(el("span", "lbl", "PROMPT"));
   if (v.over) {
@@ -417,6 +421,36 @@ function showcase(c) {
   clearTimeout(SPOT_TIMER);
   SPOT_TIMER = setTimeout(() => box.classList.remove("show"), 1100);
 }
+// ---------------------------------------------------------------- log
+// A wall of sentences is hard to scan for the thing that changed, so the two kinds of proper noun
+// in it are marked: who did it, and which card. Both are matched against lists the client already
+// holds — the player names in the view and every card name in CARDS — rather than guessed at from
+// the sentence, so nothing is highlighted that is not actually one of them.
+let LOG_RE = null;
+function logPattern(who) {
+  const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const cards = [];
+  for (const id in CARDS) {
+    const d = CARDS[id];
+    cards.push(d.subtitle ? `${d.name} — ${d.subtitle}` : d.name);
+    if (d.subtitle) cards.push(d.name);          // some lines name the card without its subtitle
+  }
+  // longest first: "Goro Takemura — Losing His Way" must win over "Goro Takemura"
+  const all = cards.concat(who).filter(Boolean).sort((a, b) => b.length - a.length);
+  return new RegExp("(" + all.map(esc).join("|") + ")", "g");
+}
+function markLog(line, who) {
+  const key = who.join("|") + "#" + Object.keys(CARDS).length;   // CARDS arrives asynchronously
+  if (!LOG_RE || LOG_RE._key !== key) {
+    LOG_RE = logPattern(who);
+    LOG_RE._key = key;
+  }
+  LOG_RE.lastIndex = 0;
+  const whoSet = new Set(who);
+  return line.replace(/[&<>]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[ch]))
+             .replace(LOG_RE, (m) => `<b class="${whoSet.has(m) ? "who" : "cardname"}">${m}</b>`);
+}
+
 //: The card the player last clicked. It survives a re-render, the way a selection should.
 let SELECTED = null;
 
