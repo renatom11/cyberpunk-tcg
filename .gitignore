@@ -7,5 +7,8 @@ venv/
 .ruff_cache/
 out/
 *.jsonl.gz
+# ...except the committed bootstrap sample: one real experience file so the schema has an example
+# in the repo and tests/learn/test_harvest.py can fail loudly when a ruling changes its digest.
+!data/experience/*.jsonl.gz
 data/decks/generated/
 site/

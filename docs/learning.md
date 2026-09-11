@@ -187,6 +187,167 @@ weights are not. So weights are committed and kept forever, and a generation's e
 deleted once the generation that learned from it has been gated. This is a public repository and a
 few hundred MB of regenerable JSONL has no business in its history.
 
+## The cheap bootstrap
+
+`tools/harvest.py` turns heuristic and random self-play into labelled positions at scale. The value
+head can learn most of what it needs from games that are already free, because those games already
+contain accidental setup sequences; nothing here claims the labels are ground truth, and the caveat
+is at the bottom of this section rather than left implied.
+
+```bash
+python tools/harvest.py play --games 200000 --agent heuristic --workers 4   # self-play, resumable
+python tools/harvest.py play --games 200000 --agent heuristic --resume      # after an interrupt
+python tools/harvest.py compact OUT.jsonl.gz                                # when it is finished
+python tools/harvest.py examples --in OUT.jsonl.gz --out train              # -> train.f32 + .json
+python tools/harvest.py stats OUT.jsonl.gz                                  # size + composition
+```
+
+Nothing under `src/cptcg` changes: everything harvest needs is already importable, so the
+stdlib-only rule for the Pyodide build holds by construction and `tools/bench.py check` cannot
+move. No numpy either — harvesting is engine-bound, the `.f32` file is written with
+`array('f').tofile`, and the numpy half of the split begins at the trainer that reads it.
+
+### A fresh deck pair per game, indexed rather than streamed
+
+Every game draws its own pair from `learn.decks.sample_pair`, so what is learned is how to play *a*
+deck and not how to play one matchup — and the two retail starters stay out of training entirely,
+which is what the generalisation gap rests on. `tools/harvest.py stats` re-checks that by
+**contents** (`decks.is_holdout` on the reconstructed `Decklist`), not by trusting the sampler's
+name filter, and so does the test suite over a 40-game harvest.
+
+The pair is a pure function of the game index, not of a sequential generator:
+
+```python
+pair_rng(seed, i)  = Pcg32((seed ^ (i * 0x9E3779B1)) & MASK64, seq=909)
+game_seed(seed, i) = (seed * 1000003 + i) & 0x7FFFFFFF
+```
+
+`arena.sampled_pairings` advances one `Pcg32` across games, which is right for a gate and wrong
+here: it makes game *i* reachable only by drawing the *i−1* pairs before it, and that breaks both
+sharding and resume. Indexed, a worker handed games 5000–5099 draws exactly the decks and seeds
+those games would have had in any other run with the same `--seed`, so whole-run reproducibility,
+arbitrary sharding and exact resume all fall out of one property. Each record carries
+`meta={"i": i}`, and a 4-game harvest is byte-for-byte the first four records of a 6-game one.
+
+### Resume: a manifest with a byte offset, and a truncate
+
+Sessions get wiped mid-run, and an interrupt can tear the last line — or the last gzip member. The
+data file is the bulk; the truth about how far it got is the sidecar `<out>.harvest.json`, rewritten
+atomically (temp file + `os.replace`) after every chunk:
+
+```json
+{"format": 1, "out": "...", "seed": 7, "agents": ["heuristic", "heuristic"], "mix": null,
+ "rules": "149b39c8f55e9d41", "games_target": 3000, "games_done": 372, "bytes": 91146,
+ "decisions": 52104, "elapsed_s": 11.3, "sources": {...}, "end_reasons": {...}, "winners": {...}}
+```
+
+`--resume` does three things, in order:
+
+1. **refuses** if the seed, the agents, the mix or the ruleset digest differ from the manifest — a
+   resume that silently mixed two distributions would be invisible in a loss curve, which is the
+   same failure `read_games`' ruleset gate exists to prevent;
+2. **truncates** the data file back to `bytes`, which discards a torn tail and nothing else;
+3. continues from game index `games_done`.
+
+This is exact for gzip because `gzip.open(path, "at")` writes a **discrete member** per call,
+concatenated members read back as one stream, and truncating to a recorded member boundary yields
+exactly the committed records. Verified for real and not only in a test: a 3000-game harvest was
+`SIGKILL`ed 12 seconds in at 372 games, resumed, and finished holding indices 0–2999 once each.
+
+That safety has a price, and it is worth naming rather than hiding: each member restarts the
+compressor with an empty window, so a 100-game harvest written in 34 chunks costs **666 gzipped
+bytes per game** where the same records in one member cost **246**. `harvest.py compact` rewrites a
+*finished* harvest as a single member and updates the manifest's byte count so a later `--resume`
+still lines up; it refuses a file whose manifest disagrees with its size, and one that is not
+finished.
+
+### What a training row is
+
+`examples` reads replays and writes `(features, label)` rows.
+
+* **label** = `outcome(record, s.pending.player)` — 1.0 if the player to move eventually won, 0.0 if
+  they lost, 0.5 if nobody did. The perspective is the player to move, matching `features(s, me)`.
+* **columns**: the `NFEAT` (114) features, then `label`, `game`, `ply`. `game` is the harvest's game
+  index, and it is there so the trainer can **split train/val by game, never by position** — the
+  single most important thing this file has to make possible. `ply` is the decision index, for
+  calibration by game phase. float32 holds a game index exactly to 16.7M games.
+* **format**: raw little-endian float32 rows in `PREFIX.f32`, plus a `PREFIX.json` header with the
+  row count, column names, dtype, source files, rate, seed, the decorrelation table and the source
+  harvest manifests. One `numpy.fromfile(path, dtype="<f4").reshape(rows, cols)` reads it. The
+  header is written **last**, and refuses to be written at all if the data file's size disagrees
+  with the row count, so a killed run leaves an obviously incomplete pair rather than a plausible
+  one.
+
+### The sampling rate, measured
+
+Consecutive decisions inside one turn share almost the whole feature vector and share the label
+exactly, so they add loss weight without adding information. Rather than assert that, `examples`
+measures it on every run and prints it: the mean L2 distance between feature vectors *k* decisions
+apart. Over 554,479 heuristic decisions from 4,000 games:
+
+| gap *k* | mean L2 | share of an independent pair | gained by halving the rate |
+|---:|---:|---:|---|
+| 1 | 1.098 | 32.3% | — |
+| 2 | 1.517 | 44.7% | +0.419 |
+| 4 | 1.928 | 56.8% | +0.411 |
+| 8 | 2.501 | 73.6% | **+0.573** |
+| 16 | 2.699 | 79.5% | +0.198 |
+| two positions from the same game, any gap | 2.953 | 86.9% | — |
+| two positions from **different** games | 3.397 | 100% | — |
+
+**This moved the default.** The plan guessed 1-in-4; the curve says 1-in-4 is still only 57% of the
+way to an independent pair and is climbing steeply, while the gain flattens after 1-in-8. Halving
+from 1-in-4 to 1-in-8 buys +0.573 for half the rows; halving again buys +0.198. So `--rate` defaults
+to **0.125**, and since games are the cheap resource here (34/s, below) the right way to want more
+rows is to harvest more games. `--rate 1.0` keeps everything, for anyone who wants to re-test this.
+
+The last two rows are the part subsampling cannot fix: positions from one game are *never*
+independent, because they share a game, a deck pair and a label however far apart they are — 2.953
+against 3.397. That is why the `game` column exists and why the split must use it.
+
+The Bernoulli draw is a `Pcg32` seeded from each record's own seed, so the same replays give the
+same rows every time, in any order and at any worker count.
+
+### What it cost, measured on this box
+
+4 cores, the real card pool, deck pairs from `learn.decks.sample_pair`, one fresh pair per game.
+These are measurements from the runs described above, not estimates, and they are this box's — not
+a portable figure.
+
+| run | games | decisions | wall | games/s | positions/hour |
+|---|---:|---:|---:|---:|---:|
+| heuristic self-play, 4 workers | 4,000 | 554,479 | 116.3 s | **34.4** | **17.2M** |
+| random self-play, 4 workers | 40,000 | 3,333,512 | 69.7 s | **573.9** | **172.2M** |
+| heuristic, interrupted and resumed | 3,000 | 421,811 | 90.6 s | 33.1 | 16.8M |
+| `examples` at `--rate 1.0`, 4 workers | 4,000 | 554,479 | 19.5 s | 205 | — |
+| `examples` at `--rate 0.125`, 4 workers | 4,000 | 554,479 | 17.6 s | 227 | — |
+
+Storage, from `harvest.py stats` on those files: heuristic 12.4 bytes/decision raw and **1.7
+gzipped**, 238 gzipped bytes per game at 138.6 decisions per game; random 19.1 raw and 2.2 gzipped,
+183 bytes per game at 83.3 decisions. So **10 million labelled heuristic positions is about 5 hours
+of wall clock and about 17 MB gzipped**, and at `--rate 0.125` that is 1.25M training rows at 117
+float32 each, 585 MB on disk as raw f32.
+
+Realised deck mix over the 4,000-game heuristic harvest, tallied from the decklist names rather
+than assumed from the config: explorer 19.7%, heuristic 36.1%, random 29.7%, sample 14.5% (against
+the configured 20/35/30/15). End reasons: SEVEN_GIGS 2164, OVERTIME 1834, DECKOUT 2. Seat 0 won
+1989 of 4000 — the harvest is balanced by construction, because each game draws an independent pair
+rather than mirroring one.
+
+`data/experience/bootstrap-sample.jsonl.gz` is 100 of these games, 24 KB, committed so the schema
+has a real example in the repository and so a ruling that changes the digest fails a test loudly —
+the same staleness contract `tests/golden/games.json` has. The bulk harvest is **not** committed: it
+is regenerable exactly from `(seed, agent, mix, ruleset digest)`, all four of which are in the
+manifest, and the retention rule is that experience is regenerable and weights are not.
+
+### The caveat the numbers come with
+
+A value head fitted to these games predicts the outcome **under heuristic play**. It inherits the
+heuristic's biases: positions the heuristic never reaches are unlabelled, and positions it
+misvalues are labelled with its mistakes. That is why the `random` agent is available here too — it
+covers state space the heuristic never visits — and why this stage claims a data path and no
+playing-strength result at all. The claim about strength has to come from the gate below.
+
 ## The gate
 
 `tools/arena.py` (also `cptcg arena`) is the gate. **Nothing about this project's AI may be claimed

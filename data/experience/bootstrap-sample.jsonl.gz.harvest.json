@@ -1,0 +1,33 @@
+{
+ "agents": [
+  "heuristic",
+  "heuristic"
+ ],
+ "bytes": 24632,
+ "compacted": "2026-09-10T23:51:36+00:00",
+ "decisions": 14848,
+ "elapsed_s": 3.58,
+ "end_reasons": {
+  "OVERTIME": 54,
+  "SEVEN_GIGS": 46
+ },
+ "format": 1,
+ "games_done": 100,
+ "games_target": 100,
+ "mix": null,
+ "out": "data/experience/bootstrap-sample.jsonl.gz",
+ "rules": "149b39c8f55e9d41",
+ "seed": 1,
+ "sources": {
+  "explorer": 30,
+  "heuristic": 82,
+  "random": 56,
+  "sample": 32
+ },
+ "started": "2026-09-10T23:51:32+00:00",
+ "updated": "2026-09-10T23:51:36+00:00",
+ "winners": {
+  "seat0": 49,
+  "seat1": 51
+ }
+}
