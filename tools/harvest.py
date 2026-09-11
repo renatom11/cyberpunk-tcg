@@ -364,7 +364,13 @@ def cmd_play(a) -> int:
         return _report(out, man, workers, 0, man["elapsed_s"])
 
     todo = target - done
-    chunk = min(250, max(1, todo // max(1, workers * 8)))
+    # The unit of work AND the unit of resume: the manifest is rewritten after each chunk, so a
+    # killed run loses at most one chunk per worker. The default divides the job eight ways per
+    # worker and caps at 250, which suits a machine that stays up. It does not suit this one — a
+    # 25,500-game generation gives 250-game chunks of about eighteen minutes, against a container
+    # that has restarted roughly hourly all day, so a third of every interval would be thrown
+    # away. --chunk trades a little scheduling overhead for that.
+    chunk = a.chunk or min(250, max(1, todo // max(1, workers * 8)))
     jobs = [(lo, min(lo + chunk, target), a.seed, agents[0], agents[1], mix)
             for lo in range(done, target, chunk)]
     deadline = time.time() + a.minutes * 60 if a.minutes else None
@@ -604,6 +610,9 @@ def main(argv=None) -> int:
     p.add_argument("--seed", type=int, default=7)
     p.add_argument("--workers", type=int, default=None)
     p.add_argument("--mix", default=None, help="random=.3,heuristic=.35,explorer=.2,sample=.15")
+    p.add_argument("--chunk", type=int, default=0,
+                   help="games per unit of work and of resume (default: sized from the job). "
+                        "Smaller loses less to an interrupted run and costs a little overhead")
     p.add_argument("--resume", action="store_true", help="continue an interrupted harvest")
     p.add_argument("--fresh", action="store_true", help="overwrite any existing harvest")
     p.add_argument("--minutes", type=float, default=None,
