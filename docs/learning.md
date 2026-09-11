@@ -1486,3 +1486,144 @@ A gap that grows generation over generation means memorised matchups. Watch the 
 Cheating beats honest **45.8%** [27.9–64.9] over 24 games (0/1 decisive pairs), the bracket conditional on 6 deck pairings; over the deck population 45.8 [35.1–56.5]%.
 
 *This is a ceiling for this agent at this budget — the value of perfect information to its own search — not an upper bound on play quality.*
+
+
+## Stage 3: the search teacher, and what it did not buy
+
+The stage shipped and its headline claim passed. It did not do the thing it was named for, and that
+is the first sentence rather than a footnote.
+
+`two-pieces-of-gear` in `data/arena/delayed.json` is the position the plan called "the thesis of
+this stage as a unit test": both Gear equipped *before* the attack, because 7+2 and 7+1 each still
+steal one Gig and only 7+2+1 crosses the threshold, so each equip alone scores as a rounding error
+and no per-decision agent can reach it at any strength of evaluation. **ISMCTS at 200 iterations
+solves it 0 times in 16.** Three of the eight suite positions are still unsolved and they are the
+horizon-2 ones. Searching the sequence produced a materially stronger player; it did not produce
+the two-move plan that justified building it.
+
+### Every row here was re-measured after the no-op fix
+
+The fix at the end of this section changes which actions the search considers at the root, so an
+agent measured before it is not the agent in the repo. The first four rows of this gate were run
+pre-fix and are not quoted as the result; they are quoted beside it, because the *difference*
+between them is the only honest estimate this project has of what re-running a row costs in noise.
+
+| row | post-fix result | pre-fix reading | Stage 2's agent |
+|---|---|---|---|
+| `a-vs-b` vs `neural` | 57.9% [51.2–64.3] over 216, SPRT undecided | 61.0% over 300, SPRT accepted | — |
+| `panel` vs uniform random | 96.9% [94.6–98.3] over 360 | 97.2% [95.0–98.5] | — |
+| `panel` vs the frozen heuristic | **85.0%** [80.9–88.3] over 360 | 83.6% [79.4–87.1] | **75.8%** |
+| `generalisation`, gap to fresh random | −4.2 [−20.7 to +12.4] over 72/row | never produced a number | +3.9 [−7.9 to +15.7] |
+| `exploit`, the cheating agent | 45.8% [27.9–64.9] over 24 | 47.5% over 200 | — |
+
+Two of those moved by about a point and a half and one moved by three. None of the movements is
+large against its own interval, which is the expected result and worth recording precisely because
+it is boring: it says a re-run of this protocol is worth a couple of points of wobble, and a
+generation-over-generation claim of two points is therefore worth nothing.
+
+The `a-vs-b` row deserves its own sentence, because the number went *down* and the verdict went
+with it. 61.0% over 300 games cleared SPRT; 57.9% over 216 does not, and the honest reason is that
+the second run is smaller, not that the agent got worse — 57.9% is inside the first run's interval
+and the first is inside the second's. The row that carries the stage is the panel row anyway.
+
+The panel row is the one worth keeping. The frozen heuristic cannot move — it is frozen by project
+rule and by test — so a score against it is the closest thing this project has to a fixed yardstick,
+and search over the *same weights* is worth **nine points** on it, 75.8% to 85.0%, with the two
+Wilson intervals nowhere near touching. That is the version of the result that cannot be explained
+by two agents drifting together, and it is exactly the check that `learn/loop.py` now makes a
+condition of promotion.
+
+### Generalisation: the row the hang cost us, and what it does not say
+
+This row has never produced a number before — it crashed three hours in on the cycle described
+below, and two attempts to re-run it were killed by the container restarting. It exists now, and it
+was run twice, which turned out to matter.
+
+| | training mix | held-out starters | fresh random decks |
+|---|---:|---:|---:|
+| 24 games/row | 79.2% [59.5–90.8] | 95.8% | 91.7% [74.2–97.7] |
+| **72 games/row** | **84.7%** [74.7–91.2] | **94.4%** [86.6–97.8] | **88.9%** [79.6–94.3] |
+
+Both gaps come out **negative** — the agent scores *better* off the training mix than on it, which
+is the opposite sign from memorisation. And both shrank toward zero as the sample grew, −16.7 to
+−9.7 on the holdout and −12.5 to −4.2 on fresh random, which is what a gap of zero measured twice
+looks like. The Welch interval on the fresh-random gap is [−20.7 to +12.4]: it contains zero and it
+contains Stage 2's +3.9, so the bar the plan set — *the gap must not widen* — is cleared in the only
+sense this sample can support, which is that a widening large enough to see is not there.
+
+The first of those two runs is the reason the pair is printed. It was launched at `-n 20`, which
+the arena reads as games *per row* and rounds to 24 — four games a deck pairing, Wilson bars of
+±16 points. That row cannot detect the thing it exists to detect, and publishing it alone would
+have been publishing a coin flip with a table around it. The re-run at 72 is still small; it is
+labelled small rather than quoted as though it were the 360-game protocol.
+
+### The exploit row, and what a two-searching-sides game costs
+
+`cheat:ismcts` searches the true state instead of a world sampled from what its seat may
+legitimately know, and over 200 pre-fix games it **was not ahead**: 47.5%, every cumulative reading
+below even money, the trend flat. On 200 games the interval around that is roughly 40.6–54.5%, so
+this does not establish that cheating *hurts* — it establishes that whatever hidden information is
+worth to this search is smaller than this measurement can resolve, and is certainly not the large
+advantage one would expect if determinization were failing. Two readings, and the row cannot
+separate them: the determinization is doing its job, or the search is not deep enough to exploit
+what it is handed. The second would be another argument for the policy head, whose entire purpose
+is to buy depth.
+
+The post-fix check on this row is deliberately small, and the arithmetic is the reason. A game
+where **both** sides run a 200-iteration search costs about 150 CPU-seconds — fifteen times the
+`a-vs-b` row, whose opponent is a one-ply agent doing almost none of the work — and this is the
+only row in the gate with two searching sides. At the 240 games the protocol wants, that is two and
+a half hours in one unbroken block, on a box that went down three times in an afternoon. The
+pre-fix 200-game number therefore stands as the estimate and the post-fix run is sized as a
+direction check, with bars wide enough that it can only contradict the estimate, never refine it.
+It does not contradict it: 45.8% [27.9–64.9] over 24 games, the same side of even money, an
+interval that contains the 200-game figure and most other figures besides.
+
+Sizing every other run in this project off the `a-vs-b` number was an error that cost most of a
+night before it was caught. It is written down here because the cost of the mistake was entirely in
+not having measured the thing that was being assumed.
+
+### The 50,000-action ceiling, again: a guard is not a guard on a class of bug
+
+`arena generalisation ismcts` ran for three hours and died on
+`game 5005167 exceeded 50000 actions ... pending 6` — a PICK. It is the *same seed* that hung
+`neural`, documented above, and the same cause.
+
+The pool contains one free no-op. `panam-palmer-strength-through-family` has a zero-cost ability
+with no spend and no once-per-turn marker, and it calls `offer_call_free`, which is `optional=True`
+with no `otherwise`: activate it, choose the trailing `Pick(())`, and the continuation does nothing.
+You are returned to a byte-identical position. That is rules-correct — the card says you *may* Call
+a Legend for free, and declining means you have not Called, so the flag is rightly unset. Real
+players never do it. The agent has to be the robust part.
+
+`neural` was given a guard for exactly this: `_same_position`, compared field by field, scored as a
+loss inside `_value`. Then `IsmctsAgent` replaced `_greedy` wholesale, and its three scoring paths —
+`_leaf`, `_priors`, `_terminal` — all bypass `_value`. It **imported `_same_position` and never
+called it**, which is why the module read as though the guard were wired in. A child that returns to
+the root scored the root's own value: competitive with any real move, and free. It collected visits
+and `_choose` handed it back for ever.
+
+`_root_actions` now drops any option that leaves the game in a position indistinguishable from the
+one being chosen from. The root is where this has to be caught, because `_choose` can only return
+something the root offered. If every option is a no-op it keeps them all — refusing to move is not
+available — and it settles before comparing, so a compound action is judged on where it lands.
+Measured at 230 us for the whole method on a 13-option menu against ~140 ms for a decision. It does
+not catch a two-step cycle, and the comment says so rather than leaving that to be discovered.
+
+**The lesson is about the test, not the guard.** The guard was written, measured, documented, and
+given a regression test — a test that named `neural`, the agent that was broken at the time. The
+next agent bypassed the code path holding it and nothing noticed for a month.
+`tests/props/test_no_agent_cycles.py` plays the known-hanging seed with *every* agent the registry
+can build, from both seats, at a reduced search budget, so the next one is covered on the day it is
+written rather than on the day it costs a three-hour gate run. Run against the code before the fix
+it fails on `ismcts` and `ismcts-flat` — and passes on `ismcts-explore`, whose visit-proportional
+sampling shakes it loose by luck, exactly the way the frozen heuristic escapes by luck. Neither
+passing was ever evidence of anything.
+
+The same shape of mistake turned up twice more while finishing this gate, both in the shell rather
+than the engine, and both worth a line because they are the same error. The chunk scripts waited
+for each other with `pgrep -f "tools/arena.py"`, a pattern that matches any process whose command
+line merely *contains* that string — including the session's own monitoring commands — so a chunk
+sat waiting eleven minutes on a phantom. And an earlier run of this project killed its own shell
+with `pkill -f`, for the same reason. A predicate that can match the thing asking the question is
+not a predicate; the fix in both cases was to remove the question, not to sharpen it.
