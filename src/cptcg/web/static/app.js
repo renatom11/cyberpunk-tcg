@@ -44,7 +44,7 @@ function cardNode(c, opts = {}) {
     d.append(...textFace(c));
   }
   if (c.spent) d.classList.add("spent");
-  if (c.lag) d.classList.add("lag");
+  if (c.lag_blocks) d.classList.add("lag");   // lagged AND stopped by it; a GO SOLO Legend is neither
   if (c.power_now != null && c.type !== "Program") {
     const pn = el("div", "pnow", `⚔ ${c.power_now}`); d.append(pn);
   }

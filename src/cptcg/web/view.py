@@ -5,6 +5,7 @@ from __future__ import annotations
 from cptcg.core.actions import (Activate, Attack, Block, CallLegend, ChoiceKind, ChooseOrder, EndTurn,
                                 GoSolo, Mulligan, Pass, Pick, Play, Sell, TakeGigDie, Target)
 from cptcg.core.engine import legal_actions
+from cptcg.core.legal import attack_permission
 from cptcg.core.enums import NO_INST, NZONE, TARGET_GIG, CardType, Keyword, Zone
 from cptcg.core.ops import ATTACKING, available, has_keyword, play_cost, power
 from cptcg.core.state import GameState
@@ -21,7 +22,13 @@ def card_json(s: GameState, inst: int) -> dict:
 
 def _in_play(s: GameState, inst: int) -> dict:
     j = card_json(s, inst)
-    j.update({"power_now": power(s, inst, ATTACKING), "spent": bool(s.i_spent[inst]), "lag": bool(s.i_lag[inst]),
+    # A GO SOLO Legend arrives Lagged (CR 4.5.2) but its keyword lets it attack anyway, and
+    # ADRENALINE does the same. The rules state and what the player can actually do therefore come
+    # apart, so the board sends both: `lag` is the rule, `lag_blocks` is whether it is stopping
+    # anything. The badge reads the second, or it tells the player a card is stuck when it is not.
+    lag = bool(s.i_lag[inst])
+    j.update({"power_now": power(s, inst, ATTACKING), "spent": bool(s.i_spent[inst]), "lag": lag,
+              "lag_blocks": lag and not any(attack_permission(s, inst)),
               "blocker": has_keyword(s, inst, Keyword.BLOCKER),
               "gear": [dict(card_json(s, g), spent=bool(s.i_spent[g])) for g in s.gear_on(inst)]})
     return j

@@ -226,3 +226,49 @@ def test_site_build_stamps_every_script(tmp_path):
     # local storage, so archetypes, card values and champions survive a reload.
     boot = (tmp_path / "site/static/boot.js").read_text(encoding="utf-8")
     assert all(f'"out/{name}.json"' in boot for name in ("archetypes", "knowledge", "hall_of_fame"))
+
+
+def test_a_go_solo_legend_is_lagged_but_the_board_does_not_call_it_stuck(reg):
+    """CR 4.5.2 lags a Legend that goes solo, and its keyword lets it attack regardless.
+
+    The rules state and the player's options come apart here, so the board sends both. The LAG
+    badge reads `lag_blocks`; if it read `lag` it would tell the player a card that can attack
+    right now is stuck, which is the one thing the badge exists to say.
+    """
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from conftest import Side, board, do, find
+
+    from cptcg.core.actions import Attack, GoSolo
+    from cptcg.core.enums import Zone
+    from cptcg.web.view import view_state
+
+    s = board(reg, Side(eddies=5, legends=[("T-L1", {"faceup": True}), "T-L5", "T-L6"]),
+              Side(gig=[(6, 3)]))
+    leg = find(s, "T-L1")
+    do(s, GoSolo(leg))
+    assert s.i_zone[leg] == Zone.FIELD and s.i_lag[leg] == 1        # the rule still applies
+    assert Attack(leg) in s.pending.options                         # and it can still attack
+
+    card = next(c for c in view_state(s, 0, ("me", "you"), [])["players"][0]["field"]
+                if c["inst"] == leg)
+    assert card["lag"] is True and card["lag_blocks"] is False
+
+
+def test_an_ordinary_unit_played_this_turn_is_shown_as_stuck(reg):
+    """The other half: without a keyword waiving it, Lag does stop the attack, and the badge says so."""
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from conftest import Side, board, find
+
+    from cptcg.web.view import view_state
+
+    s = board(reg, Side(field=[("T-U3", {"lag": True})]), Side(gig=[(6, 3)]))
+    u = find(s, "T-U3")
+    card = next(c for c in view_state(s, 0, ("me", "you"), [])["players"][0]["field"]
+                if c["inst"] == u)
+    assert card["lag"] is True and card["lag_blocks"] is True
