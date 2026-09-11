@@ -507,3 +507,22 @@ class IsmctsExplorer(IsmctsAgent):
     root_noise_alpha = 0.3
     root_noise_weight = 0.25
     temperature = 1.0
+
+
+@register
+class IsmctsFlat(IsmctsAgent):
+    """The same search with **no** prior: every legal move starts equally likely.
+
+    This is a control, not a player. The value-head prior costs 82 us a move and is the single most
+    expensive thing the search does, and across 24,990 real decisions its biggest share is a median
+    of 0.354 against a uniform 0.248 — opinionated, but not by much. So "is that prior worth its
+    price?" is a fair question with a cheap answer: play this against the ordinary agent at the
+    same budget. If it holds up, the prior has been buying very little and the policy head's real
+    competition was never the value head.
+
+    A very large temperature is how the softmax is flattened rather than a separate code path, so
+    the two agents differ in exactly one number and nothing else.
+    """
+
+    name = "ismcts-flat"
+    prior_temp = 1e9
