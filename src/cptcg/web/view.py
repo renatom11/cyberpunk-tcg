@@ -9,7 +9,7 @@ from cptcg.core.legal import attack_permission
 from cptcg.core.enums import NO_INST, NZONE, TARGET_GIG, CardType, Keyword, Zone
 from cptcg.core.ops import ATTACKING, available, has_keyword, payable_sources, play_cost, power
 from cptcg.core.state import GameState
-from cptcg.core.view import hand_visible, legend_identity_known
+from cptcg.core.view import hand_visible, knows_identity, legend_identity_known
 
 
 def card_json(s: GameState, inst: int) -> dict:
@@ -70,6 +70,32 @@ def _label(s: GameState, a) -> tuple[str, str, int | None]:
     if isinstance(a, Pick):
         return ("Decline" if not a.picks else "Choose " + ", ".join(str(p) for p in a.picks)), "Pick", None
     return repr(a), "Other", None
+
+
+def _pay_sources(s: GameState, p: int, perspective: int | None) -> list[dict]:
+    """The €$ sources ``p`` could spend, named only where ``p`` is allowed to know the name.
+
+    A face-down Legend is anonymous **to its own controller**: the slot's identity is learned by
+    Calling it or by an effect that looks, and nothing else (``core.view.legend_identity_known``).
+    Sending the name here handed the player a fact the rules withhold, which is how the picker came
+    to read "LEGEND (face-down) - Viktor Vektor". The slot index is sent instead: the three cards
+    are physically distinct on the table, so choosing "the left one" is a choice the player can
+    actually make, and it reveals nothing.
+
+    Eddies keep their names — selling reveals the card, so an Eddies area is public as an unordered
+    multiset (ruling 002) — but the decision still goes through ``knows_identity`` rather than being
+    assumed, so a later face-down zone cannot quietly inherit the wrong answer.
+    """
+    slot_of = {inst: k for k, inst in enumerate(s.legends(p))}
+    out = []
+    for i in payable_sources(s, p):
+        in_legends = i in slot_of
+        out.append({"inst": i,
+                    "name": s.card(i).name if knows_identity(s, perspective, i) else None,
+                    "slot": slot_of.get(i, -1),
+                    "where": "Legend" if in_legends else "Eddie",
+                    "faceup": bool(s.i_faceup[i]) and in_legends})
+    return out
 
 
 def _cost(s: GameState, player: int, a) -> int:
@@ -182,10 +208,7 @@ def view_state(s: GameState, perspective: int | None, names: tuple[str, str], lo
                        "list": [dict(card_json(s, i), spent=bool(s.i_spent[i])) for i in s.z[base + Zone.EDDIES]]},
             # What this player could spend to pay a cost, in the order the engine would pick if left
             # alone. The client offers a choice from this; ruling 025 otherwise decides silently.
-            "pay_sources": [{"inst": i, "name": s.card(i).name,
-                             "where": "Legend" if s.i_zone[i] == Zone.LEGENDS else "Eddie",
-                             "faceup": bool(s.i_faceup[i]) and s.i_zone[i] == Zone.LEGENDS}
-                            for i in payable_sources(s, p)] if p == perspective else None,
+            "pay_sources": _pay_sources(s, p, perspective) if p == perspective else None,
             "deck": len(s.z[base + Zone.DECK]),
             "trash": [card_json(s, i) for i in s.z[base + Zone.TRASH]],
             "removed": [card_json(s, i) for i in s.z[base + Zone.REMOVED]],
@@ -195,9 +218,15 @@ def view_state(s: GameState, perspective: int | None, names: tuple[str, str], lo
     pending = None
     if s.pending is not None and not s.over:
         ch = s.pending
-        pick_labels = _pick_labels(s) if ch.kind is ChoiceKind.PICK else None
+        # A menu is only ever sent to the seat whose menu it is. The rival's options name the cards
+        # in their hand — "Play Kiroshi Optics" is the card itself — so shipping them to the other
+        # seat hands over their hand, even though the client never draws them: it is in the JSON,
+        # and anyone can open the network tab. The omniscient view (perspective None) is the replay
+        # and debug view and keeps everything.
+        mine = perspective is None or ch.player == perspective
+        pick_labels = _pick_labels(s) if mine and ch.kind is ChoiceKind.PICK else None
         opts = []
-        for idx, a in enumerate(ch.options):
+        for idx, a in enumerate(ch.options if mine else ()):
             label, kind, inst = _label(s, a)
             if pick_labels and idx < len(pick_labels):
                 label = pick_labels[idx]
@@ -207,7 +236,8 @@ def view_state(s: GameState, perspective: int | None, names: tuple[str, str], lo
         phase = {ChoiceKind.MULLIGAN: "Opening hand", ChoiceKind.ORDER: "Turn order", ChoiceKind.GIG_DIE: "Start phase",
                  ChoiceKind.MAIN: "Main phase", ChoiceKind.TARGET: "Attack", ChoiceKind.REACTION: "Rival reacts",
                  ChoiceKind.PICK: "Choose"}[ch.kind]
-        pending = {"kind": ch.kind.name, "player": ch.player, "prompt": ch.prompt, "phase": phase, "options": opts}
+        pending = {"kind": ch.kind.name, "player": ch.player, "prompt": ch.prompt, "phase": phase,
+                   "options": opts, "mine": mine}
     return {"turn": s.turn, "active": s.active, "first_player": s.first_player, "overtime": s.overtime,
             "over": s.over, "winner": s.winner if s.over else None,
             "end_reason": s.end_reason.name if s.over else None, "perspective": perspective,

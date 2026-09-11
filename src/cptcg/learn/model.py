@@ -4,18 +4,30 @@ This is the half of the learning loop that replaces ``agents/heuristic.py``'s di
 hand-written constants with numbers fitted to what actually happened. Given the features of a
 position it returns the probability that the player to move eventually wins.
 
-**Why it is this small.** One hidden layer, thirty-two units, 3,713 parameters. The search agent
-calls this at every leaf, inside a move budget of about 1.5 s, in pure Python, under Pyodide on a
-phone. ``tools/fit_eval.py bench`` measures the forward pass against hidden width on the machine
-you are on; at width 32 it costs about 78 us here, against 48-75 us to *extract* the features that
-feed it. Doubling the width doubles the model's cost for capacity a 114-dimensional hand-designed
-input probably cannot use, and would make the model cost twice its own input. A model too slow to
-search with is worth nothing, so the width is a measured decision and not a taste.
+**Why it is this small.** One hidden layer. The shipped weights are sixteen units, 1,857
+parameters; ``tools/fit_eval.py bench`` measures the forward pass against hidden width on whatever
+machine you are on. The search agent calls this at every leaf, inside a move budget of about 1.5 s,
+in pure Python, under Pyodide on a phone, so the width is a measured decision and not a taste.
 
-**Why tanh.** ``math.tanh`` is one C call; a ``x > 0.0`` test for ReLU is an interpreted branch, so
-tanh is *faster* here as well as better behaved. The dot product is about 96% of the cost either
-way, which is why the forward pass below is written as one row-major ``sumprod`` per hidden unit
-rather than as nested loops: that shape is roughly twice as fast as the obvious one.
+Measured here (CPython 3.11, medians over 400 calls on a real-shaped 114-vector)::
+
+    width 16   1,857 params    46 us        width 32   3,713 params    93 us
+    features(), on real decision states:    49 us median (45 to 102)
+
+So at the shipped width the model costs about as much as extracting its own input, and doubling it
+would make the model cost twice its input for capacity a 114-dimensional hand-designed vector
+probably cannot use.
+
+**Why tanh — and not for the reason you might expect.** An earlier version of this file claimed
+tanh was *faster* than ReLU here, on the reasoning that ``math.tanh`` is one C call where ``x >
+0.0`` is an interpreted branch. That is measurably wrong: ReLU is not slower, and at width 32 it is
+about 5% quicker (88 us against 93), because the branch skips an accumulate. The real reason to
+prefer tanh is modelling — a bounded output, a clean gradient for the squared-error Brier fit this
+is trained under, and no dead units on an input that is already scaled. The activation is nearly
+free either way: the dot product alone is 44 us of the 46, about 96% of the cost.
+
+That 96% is why the forward pass below is one row-major ``sumprod`` per hidden unit rather than
+nested loops. At the shipped width that shape measures 38.5 us against 74.0 us, 1.9x.
 
 **Inference is stdlib only.** Training lives in ``tools/fit_eval.py`` and may use numpy; nothing in
 ``src/cptcg`` may, because this package is shipped into the browser. ``tools/build_site.py`` already

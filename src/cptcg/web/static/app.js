@@ -325,7 +325,12 @@ function askPayment(cost, sources) {
     const done = (val) => { back.remove(); document.removeEventListener("keydown", onKey); resolve(val); };
     const onKey = (e) => { if (e.key === "Escape") done(null); };
     sources.forEach(src => {
-      const chip = el("button", "paychip", `${src.where === "Legend" ? (src.faceup ? "LEGEND · " : "LEGEND (face-down) · ") : "EDDIE · "}${src.name}`);
+      // A face-down Legend arrives without a name, because its controller is not allowed to know
+      // which of the three it is. Its slot is what the player picks by, and what they can see.
+      const label = src.where !== "Legend" ? `EDDIE · ${src.name}`
+        : src.name ? `LEGEND · ${src.name}`
+        : `LEGEND · face-down, slot ${src.slot + 1}`;
+      const chip = el("button", "paychip", label);
       chip.onclick = () => {
         const at = picked.indexOf(src.inst);
         if (at >= 0) { picked.splice(at, 1); chip.classList.remove("on"); }
