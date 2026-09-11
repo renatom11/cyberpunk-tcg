@@ -14,6 +14,7 @@ from pathlib import Path
 
 from cptcg.agents.base import make_agent
 from cptcg.cards.registry import load_default
+from cptcg.core import ops
 from cptcg.core.engine import apply, legal_actions, new_game
 from cptcg.core.rng import Pcg32
 from cptcg.deck.builder import heuristic_deck, random_deck
@@ -31,6 +32,10 @@ DECK_DIRS = [ROOT / "data" / "decks", ROOT / "out"]
 REG = None
 LOCK = threading.Lock()
 GAMES: dict[str, "Game"] = {}
+
+# How many of the rival's moves one reply will animate. A whole turn is a handful of moves;
+# the cap is there so a long chain cannot turn one response into megabytes of board JSON.
+FRAME_CAP = 40
 
 
 def reg():
@@ -50,45 +55,77 @@ class Game:
                       "You" if human_seat == 1 else f"AI ({decks[1].name})")
         self.reset()
 
-    def reset(self, actions: list[int] | None = None) -> None:
+    def reset(self, actions: list[int] | None = None, pays: dict[int, tuple] | None = None) -> None:
         self.s = new_game(reg(), self.decks, self.seed, record=True)
         self.agent = make_agent(self.agent_name, self.seed)
         self.agent.new_game(self.seed, 1 - self.human)
         self.lines: list[str] = []
+        self.frames: list[dict] = []
         self.cursor = 0
         self.human_marks: list[int] = []            # action counts at each human decision
+        # Which €$ sources the human chose, by the action count the choice was made at. Payment is
+        # not part of the recorded action list, so a replay would otherwise auto-pay and rebuild a
+        # board that differs from the one the player was looking at before the undo.
+        self.pays: dict[int, tuple] = dict(pays or {})
         for idx in actions or []:
             self._note_human()
-            apply(self.s, idx)
+            self._apply(idx)
         self._narrate()
         self.run_ai()
+        self.frames = []
+
+    def _apply(self, index: int) -> None:
+        """One human action, honouring any payment choice recorded for this point in the game."""
+        pref = self.pays.get(len(self.s.actions))
+        if pref:
+            ops.PAY_PREF = (id(self.s), self.human, tuple(pref))
+        try:
+            apply(self.s, index)
+        finally:
+            ops.PAY_PREF = None
 
     def _note_human(self) -> None:
         if self.s.pending is not None and self.s.pending.player == self.human:
             self.human_marks.append(len(self.s.actions))
 
-    def _narrate(self) -> None:
+    def _narrate(self) -> list[str]:
         new = self.s.log[self.cursor:]
         self.cursor = len(self.s.log)
-        self.lines += narrate(self.s, new, self.names)
+        said = narrate(self.s, new, self.names)
+        self.lines += said
+        return said
 
     def run_ai(self) -> None:
-        """Let the AI act until it's the human's decision or the game is over."""
+        """Let the AI act until it's the human's decision or the game is over.
+
+        Every AI action that produces narration is snapshotted, so the client can play the rival's
+        turn back one move at a time instead of cutting from "end turn" straight to the next prompt.
+        Only actions that say something get a frame: most decisions are internal (which target, what
+        order) and would show an unchanged board. FRAME_CAP bounds the response; past it the client
+        still lands on the correct final board, it just does not animate the tail.
+        """
+        self.frames = []
         guard = 0
         while not self.s.over and self.s.pending is not None and self.s.pending.player != self.human and guard < 500:
             legal_actions(self.s)
             apply(self.s, self.agent.act(self.s, self.s.pending))
             guard += 1
+            said = self._narrate()
+            if said and len(self.frames) < FRAME_CAP:
+                self.frames.append({"log": said, "view": view_state(self.s, self.human, self.names, [])})
         self._narrate()
 
-    def act(self, index: int) -> None:
+    def act(self, index: int, pay: list[int] | None = None) -> None:
         legal_actions(self.s)
         if self.s.pending is None or self.s.pending.player != self.human:
             raise ValueError("not your decision")
         if not 0 <= index < len(self.s.pending.options):
             raise ValueError("bad option")
-        self.human_marks.append(len(self.s.actions))
-        apply(self.s, index)
+        mark = len(self.s.actions)
+        self.human_marks.append(mark)
+        if pay:
+            self.pays[mark] = tuple(int(i) for i in pay)
+        self._apply(index)
         self._narrate()
         self.run_ai()
 
@@ -98,14 +135,18 @@ class Game:
         # go back to the state before the human's last decision
         target = self.human_marks[-1]
         actions = list(self.s.actions[:target])
+        pays = {k: v for k, v in self.pays.items() if k < target}
         self.human_marks = []
-        self.reset(actions)
+        self.reset(actions, pays)
         self.human_marks = self.human_marks[:-1] if self.human_marks else []
 
-    def view(self, since: int = 0) -> dict:
+    def view(self, since: int = 0, frames: bool = False) -> dict:
         v = view_state(self.s, self.human, self.names, self.lines[since:])
         v["log_total"] = len(self.lines)
         v["human"] = self.human
+        if frames and self.frames:
+            v["frames"] = self.frames
+            v["rival"] = self.names[1 - self.human]
         return v
 
 
@@ -780,7 +821,7 @@ def dispatch(method: str, path: str, query: dict, body: dict) -> tuple[int, obje
                 if g is None:
                     return 404, {"error": "no such game"}
                 if verb == "act":
-                    g.act(int(body["index"]))
+                    g.act(int(body["index"]), body.get("pay"))
                 elif verb == "undo":
                     g.undo()
                 elif verb == "concede":
@@ -790,6 +831,6 @@ def dispatch(method: str, path: str, query: dict, body: dict) -> tuple[int, obje
                     g._narrate()
                 else:
                     return 404, {"error": "unknown verb"}
-                return 200, g.view(int(body.get("since", 0)))
+                return 200, g.view(int(body.get("since", 0)), frames=(verb == "act"))
         return 404, {"error": "not found"}
     return 405, {"error": "method not allowed"}

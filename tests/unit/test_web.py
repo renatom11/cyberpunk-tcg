@@ -78,6 +78,77 @@ def test_play_undo_and_hidden_information(base):
         post(base, f"/api/games/{gid}/act", {"index": 999})
 
 
+def test_the_rival_turn_comes_back_as_frames_to_play_through(base):
+    """Ending a turn must return the rival's moves one at a time, not just the board afterwards:
+    without them the board cuts from "end turn" to the next prompt and everything they did is
+    invisible. Only moves that say something get a frame, so every frame carries log lines."""
+    decks = [d for d in get(base, "/api/decks") if d["ok"]]
+    r = post(base, "/api/games", {"deck_me": decks[0]["path"], "deck_ai": decks[1]["path"],
+                                  "agent": "heuristic", "seat": 0, "seed": 11})
+    gid, v = r["id"], r["view"]
+    assert "frames" not in v                       # a fresh game has nothing to replay
+    seen = None
+    for _ in range(60):
+        if v["over"]:
+            break
+        opts = v["pending"]["options"]
+        pick = next((o for o in opts if o["kind"] == "EndTurn"), opts[0])
+        v = post(base, f"/api/games/{gid}/act", {"index": pick["index"], "since": v["log_total"]})
+        if v.get("frames"):
+            seen = v
+            break
+    assert seen is not None, "the AI never produced a frame"
+    assert seen["rival"].startswith("AI")
+    assert all(f["log"] and "players" in f["view"] for f in seen["frames"])
+    # The frames are the rival's own perspective-redacted boards, not an omniscient peek.
+    assert all(f["view"]["players"][1]["hand"] is None for f in seen["frames"])
+    # Their lines are the tail of everything new — the head is what the human's own action said —
+    # so the client can seed the running log with the head and then play the frames onto it.
+    tail = [ln for f in seen["frames"] for ln in f["log"]]
+    assert tail and seen["log"][len(seen["log"]) - len(tail):] == tail
+
+
+def test_a_chosen_payment_is_honoured_and_survives_an_undo(base):
+    """Ruling 025 auto-pays; a human may say otherwise. The choice is not part of the recorded
+    action list, so the undo path has to carry it separately or a replay rebuilds a different board.
+    """
+    from cptcg.web import backend
+    decks = [d for d in get(base, "/api/decks") if d["ok"]]
+    r = post(base, "/api/games", {"deck_me": decks[0]["path"], "deck_ai": decks[1]["path"],
+                                  "agent": "random", "seat": 0, "seed": 5})
+    gid, v = r["id"], r["view"]
+    spent_of = lambda view: [c["spent"] for c in view["players"][0]["eddies"]["list"]]   # noqa: E731
+    chose = None
+    for _ in range(80):
+        if v["over"]:
+            break
+        opts = v["pending"]["options"]
+        src = v["players"][0]["pay_sources"] or []
+        costly = [o for o in opts if o["cost"] > 0 and len(src) > o["cost"]]
+        body = {"since": v["log_total"]}
+        if costly:
+            # pay from the back of the queue: the opposite of what the engine would do alone
+            body["pay"] = [x["inst"] for x in src[-costly[0]["cost"]:]]
+            body["index"] = costly[0]["index"]
+            chose = (body["pay"], v["log_total"])
+        else:
+            # selling banks an Eddie, which is how a real choice of sources comes about at all
+            sell = next((o for o in opts if o["kind"] == "Sell"), None)
+            body["index"] = (sell or next((o for o in opts if o["kind"] == "EndTurn"), opts[0]))["index"]
+        v = post(base, f"/api/games/{gid}/act", body)
+        if chose:
+            break
+    assert chose is not None, "never reached a position with a real payment choice"
+    after = spent_of(v)
+    g = backend.GAMES[gid]
+    assert all(bool(g.s.i_spent[i]) for i in chose[0])
+    # An undo of a later decision must not re-pay the earlier one from the front of the queue.
+    opts = v["pending"]["options"]
+    v = post(base, f"/api/games/{gid}/act", {"index": opts[0]["index"], "since": v["log_total"]})
+    v = post(base, f"/api/games/{gid}/undo", {"since": 0})
+    assert spent_of(v) == after
+
+
 def test_deck_builder_endpoints(base, tmp_path):
     sample = get(base, "/api/deck?path=data/decks/sample_corpos.json")
     assert sample["ok"] and sample["size"] == 40 and len(sample["legends"]) == 3

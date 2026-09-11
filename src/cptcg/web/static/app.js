@@ -67,7 +67,7 @@ function textFace(c) {
 }
 
 // ---------------------------------------------------------------- board
-function renderBoard(root, v, { interactive, onAct } = {}) {
+function renderBoard(root, v, { interactive, onAct, watching, onSkip } = {}) {
   root.innerHTML = "";
   const me = v.perspective == null ? 0 : v.perspective;   // bottom seat
   const opp = 1 - me;
@@ -175,7 +175,15 @@ function renderBoard(root, v, { interactive, onAct } = {}) {
       if (window.CPTCG_BRIDGE) window.CPTCG_BRIDGE.download(`cptcg-game-${GAME.id}.json`, await api(`/api/games/${GAME.id}/replay`));
       else window.open(`/api/games/${GAME.id}/replay`);
     };
-    controls.append(undo, concede, leave, dl);
+    // Payment choice is off the critical path, so it lives as a toggle rather than a settings page.
+    const paybtn = el("button", "", autopay() ? "PAY: AUTO" : "PAY: ASK");
+    paybtn.title = "Whether to be asked which Eddies and Legends to spend when you can pay more than one way";
+    paybtn.onclick = () => {
+      const now = !autopay();
+      try { localStorage.setItem(AUTOPAY_KEY, now ? "1" : "0"); } catch (e) {}
+      paybtn.textContent = now ? "PAY: AUTO" : "PAY: ASK";
+    };
+    controls.append(undo, concede, leave, dl, paybtn);
   }
   right.append(controls);
   const logp = el("div", "panel logwrap p-log"); logp.append(el("span", "lbl", "LOG"));
@@ -186,6 +194,14 @@ function renderBoard(root, v, { interactive, onAct } = {}) {
   const prompt = el("div", "panel prompt p-prompt"); prompt.append(el("span", "lbl", "PROMPT"));
   if (v.over) {
     prompt.append(el("div", "q", `${P[v.winner].name.toUpperCase()} WINS`), el("div", "desc", v.end_reason));
+  } else if (pend && watching) {
+    // Replaying the rival's turn: their own prompt text and the human hints below it would both be
+    // about a decision that is not the reader's to make.
+    prompt.append(el("div", "q", `${watching} is playing`),
+                  el("div", "desc", "Their turn, one move at a time. Click anywhere, or SKIP, to jump to the end."));
+    const opts = el("div", "opts");
+    const b = el("button", "end", "SKIP"); b.onclick = onSkip; opts.append(b);
+    prompt.append(opts);
   } else if (pend) {
     prompt.append(el("div", "q", pend.prompt || pend.phase), el("div", "desc", hintFor(pend)));
     if (myTurn) {
@@ -251,13 +267,102 @@ function showPopover(e, opts, onAct) {
 document.addEventListener("click", (e) => { if (!e.target.closest("#popover")) $("#popover").classList.add("hidden"); });
 
 // ---------------------------------------------------------------- play
+let PLAYBACK = null;        // a function that ends the rival-turn replay early, while one is running
+
+// Play the rival's turn back move by move. Without this the board cuts from "end turn" straight to
+// the next prompt and everything they did is only in the log. The server sends one frame per move
+// that said something; the whole sequence is held to about seven seconds, and a click ends it.
+function playRival(v) {
+  const frames = v.frames;
+  const step = Math.max(220, Math.round(Math.min(7000, frames.length * 850) / frames.length));
+  // The frames carry the rival's lines, which are the tail of everything new. The head is what the
+  // human's own action said, and it belongs on screen before their turn starts playing.
+  const rivalLines = frames.reduce((n, f) => n + f.log.length, 0);
+  let acc = LOG.concat(v.log.slice(0, Math.max(0, v.log.length - rivalLines))), i = 0, timer = null;
+  return new Promise(resolve => {
+    const stop = () => {
+      if (!PLAYBACK) return;
+      clearTimeout(timer); document.removeEventListener("click", stop, true); PLAYBACK = null; resolve();
+    };
+    PLAYBACK = stop;
+    document.addEventListener("click", stop, true);
+    const tick = () => {
+      if (i >= frames.length) return stop();
+      const f = frames[i++];
+      acc = acc.concat(f.log);
+      const fv = f.view; fv.log = acc; fv.human = v.human;
+      renderBoard($("#board"), fv, { interactive: true, watching: v.rival || "The rival", onSkip: stop });
+      timer = setTimeout(tick, step);
+    };
+    tick();
+  });
+}
+
+// ---- choosing what to spend
+// The engine auto-pays (ruling 025) because making payment a decision multiplies the AI's branching
+// factor. At a table you do get to choose, so when the human has more ready sources than the cost,
+// ask. Between two face-down Eddies the choice changes nothing in the rules — no card ever reads
+// which card is sitting in an Eddies area — but between an Eddie and a Legend it very much does,
+// and the player is the one who should decide. "Let the game pick" is remembered per browser.
+const AUTOPAY_KEY = "cptcg.autopay";
+function autopay() { try { return localStorage.getItem(AUTOPAY_KEY) === "1"; } catch (e) { return false; } }
+
+function askPayment(cost, sources) {
+  return new Promise(resolve => {
+    const back = el("div", "modalback");
+    const box = el("div", "paybox");
+    const head = el("div", "q", `Pay ${cost} €$`);
+    const sub = el("div", "desc", `Choose ${cost} of your ${sources.length} ready sources. Spending a Legend keeps an Eddie in hand for later — between two Eddies it makes no difference.`);
+    const grid = el("div", "paygrid");
+    const picked = [];
+    const done = (val) => { back.remove(); document.removeEventListener("keydown", onKey); resolve(val); };
+    const onKey = (e) => { if (e.key === "Escape") done(null); };
+    sources.forEach(src => {
+      const chip = el("button", "paychip", `${src.where === "Legend" ? (src.faceup ? "LEGEND · " : "LEGEND (face-down) · ") : "EDDIE · "}${src.name}`);
+      chip.onclick = () => {
+        const at = picked.indexOf(src.inst);
+        if (at >= 0) { picked.splice(at, 1); chip.classList.remove("on"); }
+        else { picked.push(src.inst); chip.classList.add("on"); }
+        count.textContent = `${picked.length} / ${cost} chosen`;
+        if (picked.length === cost) done(picked.slice());
+      };
+      grid.append(chip);
+    });
+    const count = el("div", "desc", `0 / ${cost} chosen`);
+    const row = el("div", "opts");
+    const auto = el("button", "", "LET THE GAME PICK"); auto.onclick = () => done([]);
+    const never = el("button", "", "ALWAYS LET THE GAME PICK");
+    never.onclick = () => { try { localStorage.setItem(AUTOPAY_KEY, "1"); } catch (e) {} done([]); };
+    const cancel = el("button", "", "CANCEL"); cancel.onclick = () => done(null);
+    row.append(auto, never, cancel);
+    box.append(head, sub, grid, count, row);
+    back.append(box);
+    back.onclick = (e) => { if (e.target === back) done(null); };
+    document.addEventListener("keydown", onKey);
+    document.body.append(back);
+  });
+}
+
 async function act(verbOrIndex) {
-  if (!GAME) return;
+  if (!GAME || PLAYBACK) return;
   const since = LOG.length;
+  let pay = null;
+  if (typeof verbOrIndex === "number" && !autopay()) {
+    const pend = GAME.view && GAME.view.pending;
+    const opt = pend && pend.options && pend.options.find(o => o.index === verbOrIndex);
+    const me = GAME.view && (GAME.view.perspective == null ? 0 : GAME.view.perspective);
+    const src = (opt && opt.cost > 0 && GAME.view.players[me].pay_sources) || [];
+    if (opt && opt.cost > 0 && src.length > opt.cost) {
+      pay = await askPayment(opt.cost, src);
+      if (pay === null) return;            // cancelled: the action was never sent
+      if (!pay.length) pay = null;         // "let the game pick" is just the default order
+    }
+  }
   let v;
   if (verbOrIndex === "undo") { LOG = []; v = await api(`/api/games/${GAME.id}/undo`, { since: 0 }); }
   else if (verbOrIndex === "concede") v = await api(`/api/games/${GAME.id}/concede`, { since });
-  else v = await api(`/api/games/${GAME.id}/act`, { index: verbOrIndex, since });
+  else v = await api(`/api/games/${GAME.id}/act`, { index: verbOrIndex, since, pay });
+  if (v.frames && v.frames.length) await playRival(v);
   LOG = LOG.concat(v.log);
   GAME.view = v; v.log = LOG;
   renderBoard($("#board"), v, { interactive: true, onAct: act });

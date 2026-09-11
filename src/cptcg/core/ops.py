@@ -267,6 +267,15 @@ def discard(s: GameState, inst: int) -> None:
 
 
 # ----------------------------------------------------------------- economy
+# Ruling 025 auto-pays, because making payment an engine decision multiplies the search branching
+# factor for almost no strategic content. A person at a table does get to choose, though, so an
+# interactive front end may set this around a single apply() to name the sources that player wants
+# spent first. Nothing inside the engine ever writes it, so simulated games are unaffected. The
+# id(state) in the token keeps one game's preference from reaching another game running in a sibling
+# thread; the caller holds a reference to that state for the whole apply, so the id cannot be reused.
+PAY_PREF: tuple[int, int, tuple[int, ...]] | None = None
+
+
 def payable_sources(s: GameState, player: int, exclude: int = NO_INST) -> list[int]:
     """Ready sources of €$ in payment-priority order: Eddies, face-down Legends, face-up Legends."""
     spent = s.i_spent
@@ -275,7 +284,15 @@ def payable_sources(s: GameState, player: int, exclude: int = NO_INST) -> list[i
     legs = [i for i in s.legends(player) if not spent[i] and i != exclude]
     facedown = [i for i in legs if not s.i_faceup[i]]
     faceup = [i for i in legs if s.i_faceup[i] and s.card(i).sell_tag]   # CR 5.7.2.2
-    return eddies + facedown + faceup
+    srcs = eddies + facedown + faceup
+    pref = PAY_PREF
+    if pref is not None and pref[1] == player and pref[0] == id(s):
+        # Only sources that are still legal right now; the rest keep their usual order behind them,
+        # so an under-filled or stale choice still pays rather than raising.
+        first = [i for i in pref[2] if i in srcs]
+        if first:
+            return first + [i for i in srcs if i not in first]
+    return srcs
 
 
 def available(s: GameState, player: int, exclude: int = NO_INST) -> int:

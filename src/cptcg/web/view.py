@@ -7,7 +7,7 @@ from cptcg.core.actions import (Activate, Attack, Block, CallLegend, ChoiceKind,
 from cptcg.core.engine import legal_actions
 from cptcg.core.legal import attack_permission
 from cptcg.core.enums import NO_INST, NZONE, TARGET_GIG, CardType, Keyword, Zone
-from cptcg.core.ops import ATTACKING, available, has_keyword, play_cost, power
+from cptcg.core.ops import ATTACKING, available, has_keyword, payable_sources, play_cost, power
 from cptcg.core.state import GameState
 from cptcg.core.view import hand_visible, legend_identity_known
 
@@ -70,6 +70,29 @@ def _label(s: GameState, a) -> tuple[str, str, int | None]:
     if isinstance(a, Pick):
         return ("Decline" if not a.picks else "Choose " + ", ".join(str(p) for p in a.picks)), "Pick", None
     return repr(a), "Other", None
+
+
+def _cost(s: GameState, player: int, a) -> int:
+    """€$ this action spends. 0 for everything that costs nothing, so the client can ignore it."""
+    if isinstance(a, Play):
+        return play_cost(s, player, a.inst)
+    if isinstance(a, GoSolo):
+        return play_cost(s, player, a.inst, go_solo=True)
+    if isinstance(a, CallLegend):
+        return 1
+    if isinstance(a, Activate):
+        sc = s.card(a.inst).script
+        ab = sc.abilities[a.ability]
+        try:
+            return int(ab.cost(_ctx_for(s, a.inst)) if callable(ab.cost) else ab.cost)
+        except Exception:      # noqa: BLE001  a cost that needs a live context is not worth a crash here
+            return 0
+    return 0
+
+
+def _ctx_for(s: GameState, inst: int):
+    from cptcg.core.ops import _ctx
+    return _ctx(s, inst)
 
 
 def _pick_labels(s: GameState) -> list[str] | None:
@@ -157,6 +180,12 @@ def view_state(s: GameState, perspective: int | None, names: tuple[str, str], lo
             "eddies": {"ready": available(s, p), "cards": len(s.z[base + Zone.EDDIES]),
                        "total": len(s.z[base + Zone.EDDIES]) + len(s.legends(p)),
                        "list": [dict(card_json(s, i), spent=bool(s.i_spent[i])) for i in s.z[base + Zone.EDDIES]]},
+            # What this player could spend to pay a cost, in the order the engine would pick if left
+            # alone. The client offers a choice from this; ruling 025 otherwise decides silently.
+            "pay_sources": [{"inst": i, "name": s.card(i).name,
+                             "where": "Legend" if s.i_zone[i] == Zone.LEGENDS else "Eddie",
+                             "faceup": bool(s.i_faceup[i]) and s.i_zone[i] == Zone.LEGENDS}
+                            for i in payable_sources(s, p)] if p == perspective else None,
             "deck": len(s.z[base + Zone.DECK]),
             "trash": [card_json(s, i) for i in s.z[base + Zone.TRASH]],
             "removed": [card_json(s, i) for i in s.z[base + Zone.REMOVED]],
@@ -173,6 +202,7 @@ def view_state(s: GameState, perspective: int | None, names: tuple[str, str], lo
             if pick_labels and idx < len(pick_labels):
                 label = pick_labels[idx]
             opts.append({"index": idx, "label": label, "kind": kind, "inst": inst,
+                         "cost": _cost(s, ch.player, a),
                          "host": getattr(a, "host", -1) if isinstance(a, Play) else -1})
         phase = {ChoiceKind.MULLIGAN: "Opening hand", ChoiceKind.ORDER: "Turn order", ChoiceKind.GIG_DIE: "Start phase",
                  ChoiceKind.MAIN: "Main phase", ChoiceKind.TARGET: "Attack", ChoiceKind.REACTION: "Rival reacts",
