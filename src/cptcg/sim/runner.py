@@ -78,7 +78,15 @@ def play_game(reg: Registry, decks: tuple[Decklist, Decklist], agent_names: tupl
         apply(s, agents[ch.player].act(s, ch))
         n += 1
         if n > max_actions:
-            raise RuntimeError(f"game {seed} exceeded {max_actions} actions")
+            # Name the game, not just the seed. A seed alone is not enough to replay this: the same
+            # number is reused across pairings and across both seat assignments, and re-deriving
+            # which one it was from an arena traceback means guessing at the seed arithmetic. This
+            # ceiling means an agent is cycling, and the only way to find out which one is to be
+            # able to play the exact game again.
+            raise RuntimeError(
+                f"game {seed} exceeded {max_actions} actions: "
+                f"{decks[0].name!r} ({agent_names[0]}) vs {decks[1].name!r} ({agent_names[1]}), "
+                f"turn {s.turn}, active {s.active}, pending {getattr(s.pending, 'kind', None)}")
     return s
 
 
