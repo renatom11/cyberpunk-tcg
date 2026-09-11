@@ -1460,3 +1460,20 @@ The same agent against the same baseline on three deck populations. Both seats d
 Gap to fresh random decks: -12.5 points, 95% interval over the pairings -12.5 [-34.0 to +9.0] points (Welch, two independent samples of deck pairings). Both rows have deck pairings to spare, so this comparison is between deck *populations* and not between two piles of games.
 
 A gap that grows generation over generation means memorised matchups. Watch the change in these numbers, and only trust a change that is large against the per-pairing spread beside it.
+
+
+### Generalisation gap: ismcts vs heuristic — 2026-09-11 18:52 UTC
+
+The same agent against the same baseline on three deck populations. Both seats draw from the same population in each row, so the number measures play, not deck strength; what matters is the difference between the rows.
+
+| deck population | pairings | games | win rate | 95% Wilson (these decks) | per-pairing spread |
+|---|---:|---:|---:|---|---|
+| training — the training mix (learn.decks.DEFAULT_MIX), the distribution self-play draws from | 6 | 72 | 84.7% | 74.7–91.2% | 58.3–100.0% |
+| holdout — the two retail starters, held out of training entirely — **one** matchup, because the game has exactly two of them | 1 | 72 | 94.4% | 86.6–97.8% | one matchup |
+| unseen-random — fresh RAM-legal random decks on a deck seed training never used. **Not** out of distribution: `random` is the 0.30 slice of the training mix, so this row is a fresh draw from a source the model does train on, and it isolates the unstructured end of that mix rather than testing transfer | 6 | 72 | 88.9% | 79.6–94.3% | 75.0–100.0% |
+
+**Gap to the held-out starters: -9.7 points, and no test statistic.** The holdout is 1 matchup, so those games are not a sample of a deck population and a two-proportion z over them would claim a precision the design cannot support. Read it against the training row's own scatter instead: its 6 pairings run 58.3–100.0%, which puts the holdout rate inside the range the training decks themselves cover.
+
+Gap to fresh random decks: -4.2 points, 95% interval over the pairings -4.2 [-20.7 to +12.4] points (Welch, two independent samples of deck pairings). Both rows have deck pairings to spare, so this comparison is between deck *populations* and not between two piles of games.
+
+A gap that grows generation over generation means memorised matchups. Watch the change in these numbers, and only trust a change that is large against the per-pairing spread beside it.
