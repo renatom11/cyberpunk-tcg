@@ -1443,3 +1443,20 @@ Panel `a1832d477c27193f`, decks `1b1799dbc029a6b7`, frozen 2026-09-10: 6 deck pa
 | the generation-0 snapshot (`gen0`) | — | not available yet | — | — | lands with the first trained model; until then this row reads "not available yet" and the panel is two members |
 
 Here the Wilson interval is the right one and the *only* one that changes between generations: the decks are fixed by the panel, so nothing but more games is being sampled. The per-pairing spread is printed beside it as a reminder of what the panel is not — a panel score is a score on these twelve decklists, and generalises no further than they do. For a claim about play in general, use the between-pairing interval from `a-vs-b` or `generalisation`.
+
+
+### Generalisation gap: ismcts vs heuristic — 2026-09-11 18:26 UTC
+
+The same agent against the same baseline on three deck populations. Both seats draw from the same population in each row, so the number measures play, not deck strength; what matters is the difference between the rows.
+
+| deck population | pairings | games | win rate | 95% Wilson (these decks) | per-pairing spread |
+|---|---:|---:|---:|---|---|
+| training — the training mix (learn.decks.DEFAULT_MIX), the distribution self-play draws from | 6 | 24 | 79.2% | 59.5–90.8% | 50.0–100.0% |
+| holdout — the two retail starters, held out of training entirely — **one** matchup, because the game has exactly two of them | 1 | 24 | 95.8% | 79.8–99.3% | one matchup |
+| unseen-random — fresh RAM-legal random decks on a deck seed training never used. **Not** out of distribution: `random` is the 0.30 slice of the training mix, so this row is a fresh draw from a source the model does train on, and it isolates the unstructured end of that mix rather than testing transfer | 6 | 24 | 91.7% | 74.2–97.7% | 75.0–100.0% |
+
+**Gap to the held-out starters: -16.7 points, and no test statistic.** The holdout is 1 matchup, so those games are not a sample of a deck population and a two-proportion z over them would claim a precision the design cannot support. Read it against the training row's own scatter instead: its 6 pairings run 50.0–100.0%, which puts the holdout rate inside the range the training decks themselves cover.
+
+Gap to fresh random decks: -12.5 points, 95% interval over the pairings -12.5 [-34.0 to +9.0] points (Welch, two independent samples of deck pairings). Both rows have deck pairings to spare, so this comparison is between deck *populations* and not between two piles of games.
+
+A gap that grows generation over generation means memorised matchups. Watch the change in these numbers, and only trust a change that is large against the per-pairing spread beside it.
