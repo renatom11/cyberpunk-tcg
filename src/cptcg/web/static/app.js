@@ -152,7 +152,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
     p.legends.forEach(l => {
       let n;
       if (l.faceup || l.known_only) { n = cardNode(l, { small: true }); if (l.faceup) n.classList.add("faceup-legend"); if (l.known_only) n.style.opacity = .7; }
-      else { n = cardNode({}, { back: true, small: true, legend: true }); }
+      else { n = cardNode({ inst: l.inst }, { back: true, small: true, legend: true }); }
       if (l.spent) n.classList.add("spent");
       if (l.gear && l.gear.length) { const g = el("div", "gearlist"); l.gear.forEach(x => g.append(el("span", "", x.name))); n.append(g); }
       decorate(n, l.inst);
@@ -479,43 +479,53 @@ const AUTOPAY_KEY = "cptcg.autopay";
 function autopay() { try { return localStorage.getItem(AUTOPAY_KEY) === "1"; } catch (e) { return false; } }
 
 function askPayment(cost, sources) {
+  // On the board, not in a dialog: the sources are cards sitting in front of you, so the thing to
+  // click is the card. The panel only keeps the count and the way out.
   return new Promise(resolve => {
-    const back = el("div", "modalback");
-    const box = el("div", "paybox");
-    const head = el("div", "q", `Pay ${cost} €$`);
-    const sub = el("div", "desc", `Choose ${cost} of your ${sources.length} ready sources. Spending a Legend keeps an Eddie in hand for later — between two Eddies it makes no difference.`);
-    const grid = el("div", "paygrid");
+    const board = $("#board");
     const picked = [];
-    const done = (val) => { back.remove(); document.removeEventListener("keydown", onKey); resolve(val); };
-    const onKey = (e) => { if (e.key === "Escape") done(null); };
+    const nodes = new Map();
     sources.forEach(src => {
-      // A face-down Legend arrives without a name, because its controller is not allowed to know
-      // which of the three it is. Its slot is what the player picks by, and what they can see.
-      const label = src.where !== "Legend" ? `EDDIE · ${src.name}`
-        : src.name ? `LEGEND · ${src.name}`
-        : `LEGEND · face-down, slot ${src.slot + 1}`;
-      const chip = el("button", "paychip", label);
-      chip.onclick = () => {
-        const at = picked.indexOf(src.inst);
-        if (at >= 0) { picked.splice(at, 1); chip.classList.remove("on"); }
-        else { picked.push(src.inst); chip.classList.add("on"); }
-        count.textContent = `${picked.length} / ${cost} chosen`;
+      const n = board.querySelector('.card[data-inst="' + src.inst + '"]');
+      if (n) nodes.set(src.inst, n);
+    });
+    if (!nodes.size) return resolve([]);           // nothing to point at: let the game pay
+
+    const panel = el("div", "panel paypanel");
+    panel.append(el("span", "lbl", "PAY COST"));
+    const q = el("div", "q", `Spend ${cost} ready ${cost === 1 ? "Eddie or Legend" : "Eddies or Legends"}`);
+    const count = el("div", "count", `Selected 0 of ${cost}`);
+    const hint = el("div", "desc", "Click the glowing cards. Between two Eddies it changes nothing — no card ever reads which one you spent — but spending a Legend keeps an Eddie ready for later.");
+    const row = el("div", "opts");
+    const auto = el("button", "", "LET THE GAME PICK");
+    const cancel = el("button", "", "CANCEL");
+    row.append(auto, cancel);
+    panel.append(q, count, hint, row);
+
+    const done = (val) => {
+      panel.remove();
+      nodes.forEach(n => { n.classList.remove("payable", "paypicked"); n.onclick = n._payPrev || null; });
+      document.removeEventListener("keydown", onKey);
+      resolve(val);
+    };
+    const onKey = (e) => { if (e.key === "Escape") done(null); };
+    auto.onclick = () => done([]);
+    cancel.onclick = () => done(null);
+    nodes.forEach((n, inst) => {
+      n.classList.add("payable");
+      n._payPrev = n.onclick;                      // the card's own action menu, restored on the way out
+      n.onclick = (e) => {
+        e.stopPropagation();
+        const at = picked.indexOf(inst);
+        if (at >= 0) { picked.splice(at, 1); n.classList.remove("paypicked"); }
+        else { picked.push(inst); n.classList.add("paypicked"); }
+        count.textContent = `Selected ${picked.length} of ${cost}`;
         if (picked.length === cost) done(picked.slice());
       };
-      grid.append(chip);
     });
-    const count = el("div", "desc", `0 / ${cost} chosen`);
-    const row = el("div", "opts");
-    const auto = el("button", "", "LET THE GAME PICK"); auto.onclick = () => done([]);
-    const never = el("button", "", "ALWAYS LET THE GAME PICK");
-    never.onclick = () => { try { localStorage.setItem(AUTOPAY_KEY, "1"); } catch (e) {} done([]); };
-    const cancel = el("button", "", "CANCEL"); cancel.onclick = () => done(null);
-    row.append(auto, never, cancel);
-    box.append(head, sub, grid, count, row);
-    back.append(box);
-    back.onclick = (e) => { if (e.target === back) done(null); };
     document.addEventListener("keydown", onKey);
-    document.body.append(back);
+    const prompt = board.querySelector(".p-prompt");
+    if (prompt) prompt.before(panel); else board.append(panel);
   });
 }
 

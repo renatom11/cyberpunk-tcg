@@ -17,6 +17,7 @@ def narrate(s: GameState, events: list, names: tuple[str, str]) -> list[str]:
     """Sentences for a slice of ``s.log``. Card names are resolved against the *current* state,
     which is fine: identities never change."""
     out: list[str] = []
+    act_at = 0                 # index of the current action's first line; the payment attaches there
     P = lambda p: names[p]  # noqa: E731
     for ev in events:
         k = ev[0]
@@ -32,6 +33,7 @@ def narrate(s: GameState, events: list, names: tuple[str, str]) -> list[str]:
             out.append(f"{P(ev[1])} rolls d{ev[2]} for {ev[3]} and adds it to the Gig area.")
         elif k == "action":
             kind, p, a = ev[1], ev[2], ev[3]
+            act_at = len(out)          # where this action's first line lands, for the payment suffix
             if isinstance(a, Mulligan):
                 if a.keep:
                     out.append(f"{P(p)} keeps the opening hand.")
@@ -46,7 +48,10 @@ def narrate(s: GameState, events: list, names: tuple[str, str]) -> list[str]:
             elif isinstance(a, GoSolo):
                 out.append(f"{P(p)}: {_name(s, a.inst)} GOES SOLO onto the field.")
             elif isinstance(a, CallLegend):
-                out.append(f"{P(p)} Calls a Legend: {_name(s, a.inst)} is revealed.")
+                # Two sentences, because the cost is paid for the Call and the reveal is its result:
+                # "Calls a Legend by spending 1 Eddie. Royce is revealed."
+                out.append(f"{P(p)} Calls a Legend.")
+                out.append(f"{_name(s, a.inst)} is revealed.")
             elif isinstance(a, Activate):
                 sc = s.card(a.inst).script
                 label = sc.abilities[a.ability].label if sc and sc.abilities else "ability"
@@ -66,6 +71,18 @@ def narrate(s: GameState, events: list, names: tuple[str, str]) -> list[str]:
             elif isinstance(a, Pick):
                 if kind is ChoiceKind.PICK and not a.picks:
                     out.append(f"{P(p)} declines.")
+        elif k == "pay":
+            # Hung on the end of the line that caused it — the action is already narrated by the
+            # time the payment resolves, and "played X by spending 1 Eddie and 2 Legends" is one
+            # sentence rather than two.
+            if len(ev) >= 5 and act_at < len(out) and out[act_at].endswith("."):
+                bits = []
+                if ev[3]:
+                    bits.append(f"{ev[3]} Eddie" + ("s" if ev[3] != 1 else ""))
+                if ev[4]:
+                    bits.append(f"{ev[4]} Legend" + ("s" if ev[4] != 1 else ""))
+                if bits:
+                    out[act_at] = out[act_at][:-1] + " by spending " + " and ".join(bits) + "."
         elif k == "fight":
             out.append(f"Fight: {_name(s, ev[1])} ({ev[3]}) vs {_name(s, ev[2])} ({ev[4]}).")
         elif k == "defeated":

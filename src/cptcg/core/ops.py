@@ -305,9 +305,16 @@ def pay(s: GameState, player: int, amount: int, exclude: int = NO_INST) -> None:
     srcs = payable_sources(s, player, exclude)
     if len(srcs) < amount:
         raise RuntimeError(f"player {player} cannot pay {amount} (has {len(srcs)})")
-    for inst in srcs[:amount]:
+    taken = srcs[:amount]
+    for inst in taken:
         spend(s, inst)
-    s.emit("pay", player, amount)
+    if s.log is None:
+        s.emit("pay", player, amount)
+    else:
+        # What was actually spent, so the log can say it. Only counted when the game is recording:
+        # a rollout emits nothing and must not pay for the arithmetic.
+        legends = sum(1 for i in taken if s.i_zone[i] == Zone.LEGENDS)
+        s.emit("pay", player, amount, amount - legends, legends)
 
 
 def spend(s: GameState, inst: int) -> None:
