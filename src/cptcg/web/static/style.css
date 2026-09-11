@@ -14,11 +14,15 @@
   --side-l: clamp(300px, 27vw, 520px);
   --side-r: clamp(250px, 19vw, 340px);
   --centre: calc(100vw - var(--side-l) - var(--side-r) - 32px);   /* 32px: the gaps and the padding */
-  --card-h: min(clamp(150px, 21vh, 250px), calc((var(--centre) - 30px) / 4 * 1.41));
+  /* ONE size for every card on the board — hand, field, Legend slot, Eddies pile, yours or the
+     rival's, face up or face down. They are the same object on a table and looking like four
+     different objects is what made this board read wrong.
+
+     Two things bind. Across: four cards have to fit the centre column. Down: the centre column
+     stacks a Legend band, two field rows and a Legend band, so four card heights plus their labels
+     have to fit its height, which is the board less its own padding. */
+  --card-h: min(clamp(120px, 18.5vh, 230px), calc((var(--centre) - 30px) / 4 * 1.41));
   --card-w: calc(var(--card-h) / 1.41);
-  /* The hand is one row that scrolls, so only height binds — it can afford to be bigger still. */
-  --hand-h: clamp(170px, 26vh, 280px);
-  --hand-w: calc(var(--hand-h) / 1.41);
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.35 "Segoe UI", Roboto, system-ui, sans-serif; }
@@ -53,28 +57,27 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .hand { display: flex; gap: 4px; overflow-x: auto; min-height: 0; align-items: flex-start; flex-wrap: nowrap; }
 /* The rival's hand is a row of identical backs — a count, not something to read — so it is held
    well under the size the readable hand needs, and the height it gives up goes to that hand. */
-.hand.opp { min-height: calc(var(--card-h) * .62 + 26px); }
-.hand.opp .card { width: calc(var(--card-w) * .62); height: calc(var(--card-h) * .62); }
-.hand.opp .card.back + .card.back { margin-left: calc(var(--card-w) * -.42); }
+.hand.opp { min-height: calc(var(--card-h) + 26px); }
+.hand.opp .card.back + .card.back { margin-left: calc(var(--card-w) * -.62); }
 .hand .card { flex: 0 0 auto; }
 /* The label has to leave the row. As a flex item in a nowrap line it gets squeezed in beside the
    cards and steals their width; it cannot take a line of its own the way it does when wrapping. */
 .panel.hand { padding-top: 20px; }
 .panel.hand .lbl { position: absolute; top: 4px; left: 8px; right: 8px; width: auto; margin: 0;
                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hand.mine .card { width: var(--hand-w); height: var(--hand-h); font-size: 10px; }
+.hand.mine .card { font-size: 10px; }
 .hand.mine .card .nm { font-size: 12px; } .hand.mine .card .txt { font-size: 9.5px; max-height: 92px; }
 .hand.mine .card .sub { font-size: 10px; } .hand.mine .card .tags { font-size: 9px; }
 .hand.mine .card .cost { font-size: 16px; } .hand.mine .card .pw { font-size: 17px; }
 /* The hand takes whatever height the column has left, instead of leaving it empty below the row. */
-.col > .panel.hand.mine { flex: 1 1 auto; min-height: calc(var(--hand-h) + 26px); }
+.col > .panel.hand.mine { flex: 1 1 auto; min-height: calc(var(--card-h) + 26px); }
 /* The scroll bar is part of the board, so it is not left in the system's light grey. */
 .hand::-webkit-scrollbar { height: 10px; }
 .hand::-webkit-scrollbar-track { background: #0a1018; border-radius: 6px; }
 .hand::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 6px; }
 .hand::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
 .hand { scrollbar-width: thin; scrollbar-color: var(--line2) #0a1018; }
-.hand.mine { min-height: calc(var(--hand-h) + 26px); }
+.hand.mine { min-height: calc(var(--card-h) + 26px); }
 .hand.opp { overflow: hidden; }
 .hand.opp:has(.card.back) { gap: 0; }
 .dice { display: flex; gap: 8px; justify-content: center; padding: 6px; }
@@ -103,8 +106,8 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .legendrow .counts { flex: 0 0 auto; flex-direction: column; justify-content: center; margin-left: 0; gap: 6px; }
 .field { display: flex; gap: 6px; flex-wrap: wrap; min-height: calc(var(--card-h) + 16px); align-content: flex-start; }
 .eddies { display: flex; flex-direction: column; min-width: 160px; }
-.eddies .list { display: flex; flex-wrap: wrap; gap: 4px; align-content: flex-start; flex: 1; min-height: 60px; }
-.eddies .list .card { width: calc(var(--card-w) * .42); height: calc(var(--card-h) * .42); cursor: default; }
+.eddies .list { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 4px; align-items: flex-start; flex: 1; min-height: 0; }
+.eddies .list .card { cursor: default; }
 .eddies .list .card.spent { transform: rotate(90deg); filter: brightness(.45); margin: 0 13px; }
 .eddies .badge { align-self: flex-end; }
 .legends { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
@@ -136,7 +139,11 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 
 /* ---------------- cards ---------------- */
 .card { width: var(--card-w); height: var(--card-h); border-radius: 8px; border: 2px solid var(--line2); background: #0a1018; position: relative; overflow: hidden; flex: 0 0 auto; font-size: 10px; transition: transform .08s; }
+/* `sm` marks a card the board draws as a back or a token — a rival hand card, a Legend slot,
+   a sold Eddie. On the board they are the same object as every other card and are drawn at
+   the same size; `sm` still means small in the deck builder and the card browser. */
 .card.sm { width: calc(var(--card-w) * .78); height: calc(var(--card-h) * .78); }
+.board .card.sm { width: var(--card-w); height: var(--card-h); }
 .card img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .card .hd { display: flex; justify-content: space-between; padding: 3px 5px; background: #111c2a; }
 .card .cost { font-weight: 900; color: #fff; font-size: 13px; }
@@ -168,7 +175,7 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .card.target { box-shadow: 0 0 0 2px var(--red), 0 0 14px var(--red); cursor: pointer; }
 .card.attacking { box-shadow: 0 0 0 2px var(--yellow), 0 0 16px var(--yellow); }
 .slot { width: var(--card-w); height: var(--card-h); border: 1px dashed var(--line); border-radius: 8px; flex: 0 0 auto; }
-.legend-slot { width: calc(var(--card-w) * .78); height: calc(var(--card-h) * .78); }
+.legend-slot { width: var(--card-w); height: var(--card-h); }
 .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
 .card-grid .card { width: 150px; height: 212px; font-size: 12px; }
 .card-grid .card .txt { font-size: 10px; max-height: 90px; }
@@ -374,7 +381,7 @@ table.rep th { color: var(--cyan); }
   .board .panel .lbl { position: absolute; top: 2px; left: 5px; right: 5px; width: auto; font-size: 8px; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
   .hand { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; min-height: 0; gap: 2px; align-items: flex-start; }
   .hand.opp { gap: 0; } .hand.opp .card.back + .card.back { margin-left: -22px; }
-  .hand.mine .card { width: 58px; height: 81px; }   /* --hand-w is for the desktop column */
+  .hand.mine .card { width: 58px; height: 81px; }   /* the phone sets its own sizes throughout */
   /* ...and so is the height that column reserves for it: on a phone the hand is one row of a grid
      and must not claim 252px of a screen the whole board has to fit on. */
   .col > .panel.hand.mine { min-height: 0; flex: 0 0 auto; }
