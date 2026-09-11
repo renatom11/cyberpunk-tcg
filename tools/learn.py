@@ -48,8 +48,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from cptcg.learn.loop import (  # noqa: E402
-    ANCHOR, FLOOR, REPLAY_WINDOW, GateResult, GenerationRecord, Ledger, decide, drift_report,
-    opponent_schedule, pick_past,
+    ANCHOR, FLOOR, REPLAY_WINDOW, SEED_RETIRE_RATIO, GateResult, GenerationRecord, Ledger, decide,
+    drift_report, opponent_schedule, pick_past, seed_in_window,
 )
 from cptcg.learn.model import WEIGHTS_PATH  # noqa: E402
 
@@ -137,6 +137,20 @@ def step_fit(led: Ledger, g: GenerationRecord, gdir: Path, *, hidden: int, dry: 
     if not ex and not dry:
         g.notes.append("no example files to fit — generation produced nothing")
         return False
+    self_rows = sum(_rows(Path(f)) for f in ex)
+    seed = sorted((gdir.parent / "seed").glob("*.f32"))
+    seed_rows = sum(_rows(f) for f in seed)
+    if seed and seed_in_window(seed_rows, self_rows):
+        # In front, so a truncated read during development loses self-play rather than the anchor.
+        ex = [str(f) for f in seed] + ex
+        g.notes.append(f"seed corpus in window: {seed_rows:,} rows against {self_rows:,} of "
+                       f"self-play")
+    elif seed:
+        g.notes.append(f"seed corpus retired: {self_rows:,} self-play rows is past "
+                       f"{SEED_RETIRE_RATIO}x its {seed_rows:,}")
+    else:
+        g.notes.append("no seed corpus — this generation is fitted on its own games alone, which "
+                       "is what scored 10% at generation 0")
     g.notes.append(f"fit window: generations {[x.n for x in window]}, {len(ex)} example files")
     out = gdir / "weights.json"
     rc = _run([sys.executable, str(ROOT / "tools" / "fit_eval.py"), "fit", *ex,
@@ -145,6 +159,15 @@ def step_fit(led: Ledger, g: GenerationRecord, gdir: Path, *, hidden: int, dry: 
               log=gdir / "fit.log", dry=dry)
     g.weights = str(out)
     return rc == 0
+
+
+def _rows(f32: Path) -> int:
+    """How many rows an example file holds, from the sidecar the harvester writes beside it."""
+    side = f32.with_suffix(".json")
+    try:
+        return int(json.loads(side.read_text(encoding="utf-8")).get("rows") or 0)
+    except Exception:
+        return 0
 
 
 def _read_json(p: Path) -> dict:

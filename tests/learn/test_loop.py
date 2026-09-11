@@ -8,6 +8,7 @@ import json
 import pytest
 
 from cptcg.agents.base import WEIGHTS_SEP, make_agent
+from cptcg.learn import loop
 from cptcg.learn.loop import (
     ANCHOR, FLOOR, SCHEDULE, GateResult, GenerationRecord, Ledger, decide, drift_report,
     opponent_schedule, pick_past,
@@ -183,3 +184,29 @@ def test_the_noise_is_reproducible_from_the_agents_seed():
     one = make_agent("ismcts-explore", 11)._with_root_noise(p)
     two = make_agent("ismcts-explore", 11)._with_root_noise(p)
     assert one == two
+
+
+# ---------------------------------------------------------------- the seed corpus in the window
+def test_a_generation_with_no_data_of_its_own_keeps_the_seed():
+    """The case that matters: generation 1 has just been harvested and is being fitted for the
+    first time. Without the seed it is fitted on its own games alone, which is what produced a 10%
+    gate score at generation 0 on 6,900 rows against an incumbent fitted on 1,453,992."""
+    assert loop.seed_in_window(1_453_992, 0)
+
+
+def test_the_seed_retires_once_self_play_outweighs_it():
+    seed = 1_000
+    assert loop.seed_in_window(seed, int(loop.SEED_RETIRE_RATIO * seed) - 1)
+    assert not loop.seed_in_window(seed, int(loop.SEED_RETIRE_RATIO * seed))
+    assert not loop.seed_in_window(seed, 10 * seed)
+
+
+def test_no_seed_corpus_means_no_seed_in_the_window():
+    """A run started without one must not claim to have kept something it never had."""
+    assert not loop.seed_in_window(0, 0)
+    assert not loop.seed_in_window(0, 5_000)
+
+
+def test_the_ratio_is_a_knob_and_the_rule_follows_it():
+    assert loop.seed_in_window(100, 500, ratio=10.0)
+    assert not loop.seed_in_window(100, 500, ratio=2.0)

@@ -58,6 +58,18 @@ CHEAT_PREFIX = "cheat:"
 #: gen 7 against gen 6 holds exactly two models however many games it plays.
 WEIGHTS_SEP = "@"
 
+#: Separator that sets a searching agent's iteration budget: ``"ismcts-explore:32@weights.json"``.
+#: Like the other two it travels inside the name, for the same reason — the arena and the harvester
+#: both build their agents inside worker processes.
+#:
+#: It exists because search budget is the project's real throughput dial and was previously a class
+#: attribute nothing could reach. Measured on self-play with both sides searching, on four cores:
+#: 200 iterations is 434 games an hour, 32 is 3,335, 8 is 11,913. A generation that must produce
+#: data on the order of the bootstrap corpus (1.45M rows from 50,000 games) cannot do it at 200 —
+#: that is eleven hundred hours — and can at 32. Which budget is honest for which job is a
+#: judgement the caller now gets to make explicitly instead of inheriting.
+BUDGET_SEP = ":"
+
 
 def make_agent(name: str, seed: int = 0) -> Agent:
     import cptcg.agents.random_agent  # noqa: F401
@@ -67,9 +79,17 @@ def make_agent(name: str, seed: int = 0) -> Agent:
     cheat = name.startswith(CHEAT_PREFIX)
     if cheat:
         name = name[len(CHEAT_PREFIX):]
-    weights = ""
-    if WEIGHTS_SEP in name:
+    # Each separator is recorded as *present* rather than as a non-empty value, so a trailing
+    # "ismcts:" or "ismcts@" is a typo that raises instead of one that is silently ignored. The
+    # silent version is the dangerous one: a nine-hour generation would run at the default budget
+    # and be twenty times slower than whoever launched it believed.
+    weights, has_weights = "", WEIGHTS_SEP in name
+    if has_weights:
         name, _, weights = name.partition(WEIGHTS_SEP)
+    # After the weights split, so a path containing a colon cannot be read as a budget.
+    budget, has_budget = "", BUDGET_SEP in name
+    if has_budget:
+        name, _, budget = name.partition(BUDGET_SEP)
     try:
         agent = AGENTS[name](seed)
     except KeyError:
@@ -79,9 +99,27 @@ def make_agent(name: str, seed: int = 0) -> Agent:
             raise ValueError(f"agent {name!r} does not sample hidden information, so there is "
                              f"nothing for {CHEAT_PREFIX!r} to take away from it")
         agent.cheating = True
-    if weights:
+    if has_budget:
+        if not hasattr(type(agent), "iterations"):
+            raise ValueError(f"agent {name!r} does not search, so there is no iteration budget "
+                             f"for {BUDGET_SEP!r} to set")
+        if not budget:
+            raise ValueError(f"{BUDGET_SEP!r} with no number after it in agent name; give an "
+                             f"iteration budget or drop the separator")
+        try:
+            n = int(budget)
+        except ValueError:
+            raise ValueError(f"search budget {budget!r} is not a whole number of "
+                             f"iterations") from None
+        if n < 1:
+            raise ValueError(f"search budget must be at least 1 iteration, got {n}")
+        agent.iterations = n
+    if has_weights:
         if not hasattr(type(agent), "weights_path"):
             raise ValueError(f"agent {name!r} has no weights to point somewhere else; "
                              f"{WEIGHTS_SEP!r} is for the fitted agents")
+        if not weights:
+            raise ValueError(f"{WEIGHTS_SEP!r} with no path after it in agent name; give a "
+                             f"weights file or drop the separator")
         agent.weights_path = weights
     return agent

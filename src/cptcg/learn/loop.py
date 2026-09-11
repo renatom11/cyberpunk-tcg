@@ -82,6 +82,21 @@ SCHEDULE: tuple[tuple[str, float], ...] = (
 #: because fitting only the newest generation is how a net forgets what it used to know.
 REPLAY_WINDOW = 5
 
+#: How many times the seed corpus a window must hold in self-play rows before the seed retires.
+#:
+#: The seed corpus is the data the *incumbent* was fitted on — for generation 1 that is the
+#: bootstrap's 1,453,992 rows from 50,000 games. Without it in the window a generation is fitted
+#: from scratch on its own games alone, and generation 0 showed exactly what that costs: 300 games
+#: became 6,900 rows, a net fitted on 0.5% of what it was being asked to beat, and a gate score of
+#: 10%. That was read at the time as the promotion rule working. It was, but it was also the loop
+#: being structurally unable to produce a promotable generation at any budget, which is the more
+#: important half and was missed.
+#:
+#: It retires rather than staying for ever, because the whole point of the loop is to move past the
+#: quality of play the bootstrap sampled. Three-to-one is the point where the self-play data is
+#: clearly the thing being fitted and the seed is a regulariser rather than the subject.
+SEED_RETIRE_RATIO = 3.0
+
 #: A candidate may be this many points worse than the incumbent against the frozen panel before it
 #: is rejected as a regression, even if it beat the incumbent head to head. Not zero, because the
 #: panel is itself a sample and a point or two is noise; not large, because this is the check that
@@ -264,3 +279,14 @@ def drift_report(rates: dict[int, float]) -> tuple[bool, list[str]]:
             bad.append(f"beats the older generation {a} ({rates[a]:.1f}%) by less than the newer "
                        f"generation {b} ({rates[b]:.1f}%) — the ladder is not a straight line here")
     return (not bad), bad
+
+
+def seed_in_window(seed_rows: int, window_rows: int, ratio: float = SEED_RETIRE_RATIO) -> bool:
+    """Should the seed corpus be part of this fit?
+
+    Yes while the window's own self-play rows are still fewer than ``ratio`` times the seed. A
+    generation with no data of its own therefore always keeps it, and a mature window drops it.
+    """
+    if seed_rows <= 0:
+        return False
+    return window_rows < ratio * seed_rows
