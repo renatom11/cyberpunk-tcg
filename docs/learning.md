@@ -1403,3 +1403,30 @@ Panel `a1832d477c27193f`, decks `1b1799dbc029a6b7`, frozen 2026-09-10: 6 deck pa
 | the generation-0 snapshot (`gen0`) | — | not available yet | — | — | lands with the first trained model; until then this row reads "not available yet" and the panel is two members |
 
 Here the Wilson interval is the right one and the *only* one that changes between generations: the decks are fixed by the panel, so nothing but more games is being sampled. The per-pairing spread is printed beside it as a reminder of what the panel is not — a panel score is a score on these twelve decklists, and generalises no further than they do. For a claim about play in general, use the between-pairing interval from `a-vs-b` or `generalisation`.
+
+
+### ismcts vs neural — 2026-09-11 17:51 UTC
+
+`arena a-vs-b ismcts neural` over 6 deck pairings sampled from deck seed 20260910, SPRT at delta 0.05.
+
+216 games over 6 deck pairings, 108 paired comparisons — every seed played from both seats and with the deck assignments swapped. Ruleset `149b39c8f55e9d41`, 762.2s.
+
+| | games | win rate | 95% Wilson (these decks) |
+|---|---:|---:|---|
+| **ismcts** | 216 | 57.9% | 51.2–64.3% |
+| neural | 216 | 42.1% | 35.7–48.8% |
+
+The Wilson interval above is **conditional on these 6 deck pairings**: it says what more games on these decks would tell you, and nothing about other decks. Per-pairing rates run 50.0–66.7%; over the deck population the mean is 57.9 [50.4–65.3]% (t5 on 6 pairings). **That second band is the error bar for ismcts's strength**, and a generation-over-generation claim has to clear it rather than the Wilson one — the same protocol on five different deck samples moves several points while nothing about the agents changes. It is estimated from only 6 pairings, so it is itself noisy and can land either side of the Wilson bracket: narrower when the pairings happened to agree, much wider when one of them did not.
+
+Paired test: 25 of 33 decisive pairs (75.8%) — undecided at this sample size.
+
+ismcts sat in seat 0 in 108 of 216 games — exactly half, by construction. ismcts on the play: 60.2% [50.8–68.9] (who goes first is the d20 winner's *choice*, so this is description, not balance). Average game length 13.2 turns. End reasons: OVERTIME 73, SEVEN_GIGS 143.
+
+| deck pairing | games | ismcts win rate |
+|---|---:|---|
+| `sampled-0` built vs built-b | 36 | 55.6% [39.6–70.5] |
+| `sampled-1` built vs explorer | 36 | 66.7% [50.3–79.8] |
+| `sampled-2` Sample Gangers vs random | 36 | 66.7% [50.3–79.8] |
+| `sampled-3` random vs random-b | 36 | 52.8% [37.0–68.0] |
+| `sampled-4` random vs random-b | 36 | 55.6% [39.6–70.5] |
+| `sampled-5` random vs built | 36 | 50.0% [34.5–65.5] |
