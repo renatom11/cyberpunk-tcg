@@ -220,6 +220,73 @@ def test_the_tie_break_noise_is_small_beside_the_logit_it_actually_perturbs(pool
     assert NeuralAgent.noise * 999 < median / 50, (NeuralAgent.noise, median)
 
 
+# ------------------------------------------------------------------ the no-op guard
+def test_a_previewed_position_identical_to_this_one_is_scored_as_a_loss(pool, agent):
+    """The hang this agent found, as a unit.
+
+    A greedy agent on a static evaluation loops for ever the moment the rules offer a free no-op,
+    and this pool has one: activate a Legend, decline the pick, get the identical menu back. The
+    frozen heuristic escapes it only because it happens to rate taking the pick above declining.
+    """
+    decks = sample_pair(pool, Pcg32(41))
+    s = new_game(pool, decks, 5)
+    legal_actions(s)
+    a = agent(0)
+    a.me = s.pending.player
+    assert N._same_position(s, s.clone())
+    assert a._value(s.clone(), a.model, s) == -N.WIN        # the same position: a loss
+    assert a._value(s.clone(), a.model, None) != -N.WIN     # without the guard, an opinion
+
+
+def test_a_real_move_is_not_mistaken_for_a_no_op(pool, agent):
+    """The guard must never fire on an option that actually did something, or the agent would
+    refuse to play. It is an exact field-by-field comparison for exactly this reason."""
+    decks = sample_pair(pool, Pcg32(42))
+    s = new_game(pool, decks, 6)
+    a = agent(0)
+    fired = moved = 0
+    for _ in range(80):
+        legal_actions(s)
+        if s.over:
+            break
+        ch = s.pending
+        a.me = ch.player
+        for i in range(len(ch.options)):
+            c = s.clone()
+            c.rng = Pcg32(i + 1, seq=3)
+            apply(c, i)
+            a._resolve(c, 1)
+            if c.over:
+                continue
+            if N._same_position(c, s):
+                fired += 1
+            else:
+                moved += 1
+                assert a._value(c, a.model, s) != -N.WIN
+        apply(s, a.act(s, ch))
+    assert moved > 100, moved
+
+
+@pytest.mark.skipif(not N.WEIGHTS_PATH.exists(), reason="no weights have been fitted")
+def test_the_game_that_hung_now_finishes(pool):
+    """The exact game that hit ``runner.play_game``'s 50,000-action ceiling: seed 5005167 on
+    training pairing 5 of ``arena generalisation``. It ran 750 activations of the same Legend."""
+    from cptcg.learn.arena import sampled_pairings
+
+    pr = sampled_pairings(pool, 6, deck_seed=31, label="train")[5]
+    s = new_game(pool, (pr.deck_b, pr.deck_a), 5005167)
+    ags = [make_agent(n, 5005167 * 2 + i) for i, n in enumerate(("neural", "heuristic"))]
+    for p, ag in enumerate(ags):
+        ag.new_game(5005167, p)
+    n = 0
+    while not s.over and n < 2000:
+        legal_actions(s)
+        ch = s.pending
+        apply(s, ags[ch.player].act(s, ch))
+        n += 1
+    assert s.over, f"still going after {n} actions"
+
+
 # ------------------------------------------------------------------ the shipped weights
 @pytest.mark.skipif(not N.WEIGHTS_PATH.exists(), reason="no weights have been fitted")
 def test_the_shipped_agent_plays_with_the_shipped_weights(pool):

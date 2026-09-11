@@ -56,27 +56,28 @@ from cptcg.learn.model import WEIGHTS_PATH, ValueModel, load_weights
 WIN = 1e6
 
 
-class _Position:
-    """The position a ``_greedy`` call is choosing *from*, for the no-op guard below.
+def _same_position(a: GameState, b: GameState) -> bool:
+    """True when two states are the same position: every mutable board field compared directly.
 
-    Built once per call and read at most a few times: the feature vector is extracted lazily,
-    because the only previews that can possibly be no-ops are the ones that came back to a menu
-    with exactly the same options, which is rare.
+    Not a hash and not a feature comparison — an exact test, so it can never call two different
+    positions the same one. The list comparisons are C-level and the cheap scalars come first, so a
+    mismatch costs a couple of integer tests; only a genuine repeat pays for the whole thing.
+
+    ``pending.options`` is deliberately not compared: a preview stops without calling
+    ``legal_actions``, so its pending menu is unmaterialised and empty. The kind and the player are
+    what is available and what matters.
     """
-
-    __slots__ = ("state", "me", "options", "_x")
-
-    def __init__(self, state: GameState, me: int, options) -> None:
-        self.state = state
-        self.me = me
-        self.options = options
-        self._x = None
-
-    @property
-    def x(self):
-        if self._x is None:
-            self._x = features(self.state, self.me)
-        return self._x
+    pa, pb = a.pending, b.pending
+    return (a.turn == b.turn and a.active == b.active and a.over == b.over
+            and a.overtime == b.overtime and a.empty_starts == b.empty_starts
+            and pa is not None and pb is not None
+            and pa.kind is pb.kind and pa.player == pb.player
+            and a.turns_taken == b.turns_taken and len(a.stack) == len(b.stack)
+            and a.gig == b.gig and a.fixer == b.fixer
+            and a.i_zone == b.i_zone and a.i_spent == b.i_spent and a.i_lag == b.i_lag
+            and a.i_faceup == b.i_faceup and a.i_host == b.i_host and a.i_flags == b.i_flags
+            and a.z == b.z and a.temp_power == b.temp_power and a.mods == b.mods
+            and a.used == b.used and a.played == b.played and a.once == b.once)
 
 
 @register
@@ -111,7 +112,7 @@ class NeuralAgent(HeuristicAgent):
         return m
 
     # ------------------------------------------------------------------ scoring
-    def _value(self, c: GameState, model: ValueModel, here: "_Position | None" = None) -> float:
+    def _value(self, c: GameState, model: ValueModel, here: GameState | None = None) -> float:
         """Log-odds that ``self.me`` wins from this previewed position.
 
         The terminal short-circuit is not an optimisation: a finished game has no features worth
@@ -126,20 +127,18 @@ class NeuralAgent(HeuristicAgent):
         value rates declining higher, so `neural` re-activated the same Legend 750 times and a
         game hit ``runner.play_game``'s 50,000-action ceiling.
 
-        The rule is stated in terms of what this agent can *perceive*: if a previewed position is
-        indistinguishable from the one being chosen from — the same menu, and a bit-identical
-        feature vector — then taking that option returns me here and I will choose it again, for
-        ever. An option that provably cannot advance the game is scored as a loss. If every option
-        is one, the first is still taken and the engine's own Overtime and turn limits end the
-        game, exactly as before.
+        The rule is exact, not a heuristic about it: if the previewed position **is** the position
+        being chosen from — every board field equal, same player to move, same kind of choice —
+        then taking that option leads back here and I would choose it again, for ever. An option
+        that provably cannot advance the game is scored as a loss. If every option is one, the
+        first is still taken and the engine's own Overtime and turn limits end the game, exactly as
+        before.
         """
         if c.over:
             return WIN if c.winner == self.me else -WIN
-        x = features(c, self.me)
-        if (here is not None and c.pending is not None and c.pending.player == self.me
-                and c.pending.options == here.options and x == here.x):
+        if here is not None and _same_position(c, here):
             return -WIN
-        return model.raw(x)
+        return model.raw(features(c, self.me))
 
     # ------------------------------------------------------------------ search
     def _greedy(self, s: GameState, choice: Choice, depth: int) -> int:
@@ -157,7 +156,7 @@ class NeuralAgent(HeuristicAgent):
         seen = set()
         rng = self.rng; options = choice.options                      # noqa: E702
         model = self.model; noise = self.noise                        # noqa: E702
-        here = _Position(s, self.me, options)
+        here = s
         for i in range(len(options)):
             key = _equiv_key(s, options[i])
             if key in seen:

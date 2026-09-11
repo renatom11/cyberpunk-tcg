@@ -884,6 +884,12 @@ Gap to fresh random decks: -3.3 points, 95% interval over the pairings -3.3 [-9.
 A gap that grows generation over generation means memorised matchups. Watch the change in these numbers, and only trust a change that is large against the per-pairing spread beside it.
 
 
+> **The four sections that follow were measured before the no-op guard in `agents/neural.py`
+> worked** (see "The 50,000-action ceiling" at the end of this file). They are kept because they
+> are the record of what was run, and because the re-runs at 01:06 and 01:07 came back with the
+> same numbers: the guard only changes a game in which the agent was about to cycle for ever, and
+> no game that finished was played differently. Read the 01:06 block as the current one.
+
 ### neural vs heuristic — 2026-09-11 00:55 UTC
 
 `arena a-vs-b neural heuristic --no-sprt` over 6 deck pairings sampled from deck seed 20260910.
@@ -1025,51 +1031,38 @@ A gap that grows generation over generation means memorised matchups. Watch the 
 The win is confirmed by playing the turn out and the rival's whole reply with the frozen heuristic in both seats, so a line that reaches seven Gigs and has them stolen back does not count. That reply is one competent defence and one sample of the rival's Gig die, not a proof against every defence.
 
 
-### Generalisation gap: neural vs heuristic — 2026-09-11 01:08 UTC
-
-The same agent against the same baseline on three deck populations. Both seats draw from the same population in each row, so the number measures play, not deck strength; what matters is the difference between the rows.
-
-| deck population | pairings | games | win rate | 95% Wilson (these decks) | per-pairing spread |
-|---|---:|---:|---:|---|---|
-| training — the training mix (learn.decks.DEFAULT_MIX), the distribution self-play draws from | 6 | 360 | 79.7% | 75.3–83.6% | 63.3–91.7% |
-| holdout — the two retail starters, held out of training entirely — **one** matchup, because the game has exactly two of them | 1 | 360 | 80.0% | 75.6–83.8% | one matchup |
-| unseen-random — fresh RAM-legal random decks on a deck seed training never used. **Not** out of distribution: `random` is the 0.30 slice of the training mix, so this row is a fresh draw from a source the model does train on, and it isolates the unstructured end of that mix rather than testing transfer | 6 | 360 | 75.8% | 71.2–80.0% | 70.0–90.0% |
-
-**Gap to the held-out starters: -0.3 points, and no test statistic.** The holdout is 1 matchup, so those games are not a sample of a deck population and a two-proportion z over them would claim a precision the design cannot support. Read it against the training row's own scatter instead: its 6 pairings run 63.3–91.7%, which puts the holdout rate inside the range the training decks themselves cover.
-
-Gap to fresh random decks: +3.9 points, 95% interval over the pairings +3.9 [-7.9 to +15.7] points (Welch, two independent samples of deck pairings). Both rows have deck pairings to spare, so this comparison is between deck *populations* and not between two piles of games.
-
-A gap that grows generation over generation means memorised matchups. Watch the change in these numbers, and only trust a change that is large against the per-pairing spread beside it.
-
-
-
-### Open: one `neural` game hit the 50,000-action ceiling, once
+### The 50,000-action ceiling: the no-op guard did not work
 
 The first `arena generalisation neural` run died on `RuntimeError: game 5005167 exceeded 50000
-actions` — `sim/runner.py`'s safety ceiling, which means some agent was cycling rather than
-advancing the game. **The same command with the same seeds then ran to completion twice**, and a
-direct scan of every seed in the implicated pairing, both match orderings and both seat
-assignments, reproduced nothing. The numbers reported above come from a clean run.
+actions` — `sim/runner.py`'s safety ceiling, which means an agent was cycling rather than advancing
+the game. It is exactly the failure `agents/neural.py`'s `_value` guard was written to prevent, and
+the guard did not prevent it, because of how it asked the question:
 
-Recording it rather than dropping it, because none of the obvious explanations survives:
+```python
+if (here is not None and c.pending is not None and c.pending.player == self.me
+        and c.pending.options == here.options and x == here.x):
+```
 
-* The agent is deterministic. The action sequences of eighteen fixed games digest identically under
-  three different `PYTHONHASHSEED` values, so it is not set or dict iteration order leaking into
-  play through the feature vector.
-* Nothing about the run is sampled at runtime. The decks come from a seeded sampler, the seeds from
-  `seed + k * 1_000_003`, and the worker chunking from a fixed `-j 4`.
-* It is not obviously the guard in `agents/neural.py` being insufficient, which is the first
-  suspect: that guard only catches a **one-step** self-loop, and a two-cycle between positions A and
-  B would walk straight past it. But a two-cycle would be deterministic, and this was not.
+A preview is produced by `apply` on a clone and then handed straight to the scorer, so its pending
+menu has not been through `legal_actions` and does not hold the options the agent would actually
+face. Comparing it against the live menu therefore fails on positions that genuinely are the same
+one, and the guard stayed silent through the loop it was guarding.
 
-What is known: `neural` can cycle where the frozen `heuristic` does not, because the pool contains
-a free no-op and a greedy agent on a static evaluation will take one for ever if it rates it
-highest. That is what the guard in `_value` is for, and it is not known to be sufficient. Until the
-game is reproduced, the honest statement is that the arena can lose a whole run to one such game
-and nobody would know which game it was. The ceiling now names the decks and both agents so a
-recurrence is diagnosable in one shot rather than by re-deriving seed arithmetic.
+The replacement does not ask what the agent can perceive; it compares the two states directly —
+every mutable board array, both players' zones, the dice, the per-turn bookkeeping, and the kind of
+choice and player to move — so it can neither miss a repeat nor mistake two different positions for
+the same one. Cheap scalars are tested first, so a mismatch costs a couple of integer comparisons
+and only a genuine repeat pays for the whole comparison.
 
-The general fix, if it recurs: keep the set of positions already visited this turn and score a
-preview that lands on one as a loss, which catches cycles of any length rather than just the
-one-step case. That changes play, so it invalidates every number in this file and is not worth
-doing on a single unreproduced failure.
+Measured on the pairing the crash came from, scanning every seed across both match orderings and
+both seat assignments: **3 hung games with the old guard, 0 with the new one.**
+
+Two process notes worth keeping, because both nearly buried this:
+
+* Every attempt to reproduce the crash *succeeded* — that is, found nothing — because the fix
+  landed at 01:04:55, thirty seconds before the run died, and everything afterwards ran the fixed
+  code. The reproduction only worked once the old file was checked out again deliberately.
+* The ceiling used to report only a seed. Seeds are reused across pairings and across both seat
+  assignments, so a bare seed cannot be replayed without re-deriving the arena's seed arithmetic by
+  hand. It now names both decks and both agents.
+
