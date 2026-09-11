@@ -145,6 +145,10 @@ class IsmctsAgent(NeuralAgent):
     #: Visit-count temperature for the final choice. 0 is argmax, which is what a gate measures.
     temperature = 0.0
 
+    #: The root visit counts of the most recent search, as {action: visits}. Written by
+    #: ``_choose`` and read by the policy trainer; empty until a search has run.
+    last_visits: dict = {}
+
     #: Softmax temperature for the *policy-head* prior, when the weights file carries one. Separate
     #: from ``prior_temp`` because the two priors are on different scales: one is a value logit in
     #: log-odds, the other is a move logit trained against a visit distribution.
@@ -437,6 +441,11 @@ class IsmctsAgent(NeuralAgent):
         opts = choice.options
         counts = [(i, root.children[opts[i]].visits) for i in range(len(opts))
                   if opts[i] in root.children]
+        # The search's own answer to "which move is worth looking at", left where a caller can read
+        # it. This is the target a policy head should be fitted to — it is strictly better than the
+        # one-ply prior, because it is what the whole search concluded — and recording it costs a
+        # dict per decision. Nothing in play reads it.
+        self.last_visits = {opts[i]: n for i, n in counts}
         if self.temperature > 0.0:
             return self._sample(counts)
         best_i, best_n, best_q = counts[0][0], -1, -1e18
