@@ -1816,3 +1816,80 @@ Gear archetype is built on it.
 The ledger now reads: generation 0 rejected at 10% (the loop could not fit), generation 1 promoted
 at 59.1%, generation 2 rejected at 52.5%. That is a promotion rule doing its job in both
 directions, which is the property worth having before any of this is trusted.
+
+
+## The evolution strategy: a working optimiser, and a flat objective
+
+The idea was sound and the reason for it was specific. Backprop minimises Brier; we care about
+games won; and this project has a measurement showing the two come apart — the gear-aware model beat
+gen-1 on Brier, accuracy *and* calibration and played 4.4 points worse. At 1,857 parameters, an
+evolution strategy can optimise the objective we actually have.
+
+### Survival of the fittest cannot work here, and that was measurable in half an hour
+
+The first design was the obvious one: a population, cull the bottom, breed the top with mutations.
+A probe killed it. Twenty-four mutants of gen-1, each 48 games against the parent on identical
+paired seeds:
+
+**mean 49.1%, median 49.0%, best 54.2%, worst 45.8%.**
+
+Random perturbations at sigma 0.03 are slightly *harmful* on average — what a converged fit at a
+local optimum looks like. And 48 games carry a ±14-point band, against plausible mutation effects of
+one or two points. Truncation selection would have ranked noise with great confidence. The best
+mutant's +4.2 is not evidence of anything.
+
+So the design changed to estimating a *direction*: antithetic pairs, where each perturbation plays
+its own mirror on shared seeds; centred ranks, so one lucky pair cannot steer the step; and every
+sample contributing, rather than a selected few.
+
+### The optimiser works. It was proven before any compute was spent
+
+`learn/evolve.py` takes fitness as *numbers* and plays no games, so it runs against a synthetic hill
+whose optimum is known — with the measured noise injected. It climbs: +24% at 24 games a pair,
+where 24 games is a 10.2-point standard error.
+
+That test paid for itself immediately. The first step size was 0.03 and **diverged** — the objective
+got twenty-five times *worse* with no noise at all, because the update divides by sigma and
+0.03/(16×0.02) makes every rank worth a tenth of a weight unit, so the random half of a 16-sample
+estimate swamps the signal. Swept on the same hill: 3e-2 → −2461%, 3e-3 → +23%, 3e-4 → +9%. A test
+now asserts 0.03 still diverges, so the scaling cannot drift silently.
+
+Without that test the run would have been ten hours of a diverging optimiser, and the result would
+have read as "evolution does not work on this game".
+
+### Applied to gen-1, it finds nothing — and the measurement is unusually clean
+
+Ten iterations, 160 antithetic pairs, 3,840 games. The champion validates at **52.9% [49.0–56.8]**
+over 408 games against gen-1: SPRT undecided, interval containing 50.
+
+The sharper result is in the ES's own inputs. If a direction existed, pair scores would deviate
+from 0.5 more than chance allows. They do not:
+
+| | observed | pure-noise prediction | ratio |
+|---|---:|---:|---:|
+| per-iteration mean score, SD | 0.0228 | 0.0255 | 0.89 |
+| all 160 pair scores, SD | 0.0659 | 0.1021 | 0.65 |
+| grand mean of all pairs | **0.4971 ± 0.0158** | 0.5 | — |
+
+Every pair score is consistent with a coin. The 0.65 is worth noting for the opposite reason: the
+paired common-random-numbers design cut variance *below* independent sampling, which is exactly what
+it was built to do. The instrument works; there is nothing under it.
+
+**The objective is flat around gen-1 at sigma 0.02, to within what 3,840 games can resolve.**
+
+### Three roads, one destination
+
+| attempt | what it added | result |
+|---|---|---|
+| generation 2 | 30,000 more games, 2.84M-row fit | 52.5%, flat |
+| gear-aware features | 11 features the model could not see before | better Brier, **−4.4** panel |
+| evolution strategy | an optimiser aimed at wins, not Brier | 52.9%, no signal at all |
+
+More data, more information, and a better-targeted optimiser all arrived at the same place. That
+convergence is the finding. It is not that the loop is broken — the loop rejected all three
+correctly — it is that **gen-1 is at or near the best this 114-feature representation allows**, and
+every further point has to come from what the model can *express*, not from how it is fitted or how
+much it is fed.
+
+The interaction map already names the things it cannot say. "I control Royce and two Gear" is one
+sentence, and no quantity of aggregate counters, games, or gradient-free search will reach it.
