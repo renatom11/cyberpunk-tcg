@@ -2338,6 +2338,58 @@
     "fit: 2,147,010 rows over 79,995 games, hidden 16, best epoch 72, holdout Brier 0.14420 (its own holdout, which includes search self-play and is NOT comparable to the bootstrap's 0.13914 on a different distribution)",
     "gate (both sides at budget 32): beat the incumbent 59.1% [band from 54.3%], panel 87.2% against 79.4%, delayed 4 against 4"
    ]
+  },
+  {
+   "n": 2,
+   "seed": 20260921,
+   "status": "rejected",
+   "games": 30000,
+   "weights": "out/learn/gen-002/weights.json",
+   "parent": "out/learn/gen-001/weights.json",
+   "started": "2026-09-12T07:38:00+00:00",
+   "finished": "2026-09-12T13:14:00+00:00",
+   "gate": {
+    "a_vs_b": {
+     "games": 408,
+     "a_rate": 52.5,
+     "wilson": [
+      47.6,
+      57.3
+     ],
+     "pairing_band": [
+      48.3,
+      56.6
+     ],
+     "verdict": "continue",
+     "decisive_pairs": [
+      32,
+      54
+     ]
+    },
+    "panel": {
+     "candidate": {
+      "random": 96.4,
+      "heuristic": 86.4
+     },
+     "incumbent": {
+      "random": 97.2,
+      "heuristic": 87.2
+     },
+     "budget": 32
+    },
+    "delayed": {
+     "candidate": 4,
+     "incumbent": 4,
+     "of": 8
+    }
+   },
+   "reason": "",
+   "notes": [
+    "opponents: self 18000, past(bootstrap) 7500, heuristic 3000, random 1500",
+    "seed corpus in window: 1,453,992 rows against 1,387,016 of self-play",
+    "fit: 2,841,008 rows, hidden 16, best epoch 98, holdout Brier 0.14594",
+    "gate (both sides budget 32): did not beat the incumbent: sequential test says 'continue' at 52.5%"
+   ]
   }
  ]
 }

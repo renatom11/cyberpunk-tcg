@@ -1779,3 +1779,40 @@ one: aggregate counts still cannot express *"I control Royce and two Gear"*, whi
 value actually lives. The interaction map in `data/strategy/graph.json` already names those
 relationships — a feature keyed to its tokens ("I hold a card paid for equipped Units, and I have
 equipped Units") can say the thing eleven more counters could not.
+
+
+## Generation 2: the handle turned and nothing moved
+
+Thirty thousand more games — 18,000 self-play under generation 1's promoted weights, 7,500 against
+the bootstrap as a league opponent, 3,000 against the frozen heuristic, 1,500 against random —
+fitted over a window of 2,841,008 rows. **Rejected.**
+
+| check | gen-2 | gen-1 (incumbent) | verdict |
+|---|---|---|---|
+| head-to-head, 408 games | 52.5% [47.6–57.3], band from **48.3** | — | SPRT undecided |
+| frozen panel vs `heuristic` | 86.4% [82.5–89.5] | 87.2% [83.4–90.3] | flat |
+| frozen panel vs `random` | 96.4% | 97.2% | flat |
+| delayed-reward suite | 4 of 8 | 4 of 8 | flat |
+
+`decide` returns reject on the first clause: the sequential test says `continue` at 52.5%, and the
+between-pairing band reaches 48.3%, which does not clear even money on the deck population. Every
+other row is within noise of the incumbent.
+
+This is the more interesting outcome of the two. Generation 1 gained nine points on the frozen
+panel by being the first generation fitted on *more data than the bootstrap alone*. Generation 2
+added a comparable pile of data — 693,998 rows against generation 1's 693,018 — and bought nothing
+measurable. Two readings, and this gate cannot separate them: the loop has found what a 16-unit
+network over 114 aggregate features can express about this game, or 30,000 games a generation is
+simply too few to move it and the curve is flat at this scale rather than finished.
+
+The first reading is the one the evidence around it favours. The same day, eleven features that let
+the model see Gear and card abilities improved every prediction measure and *lost* four points of
+play, which is what a representation at its ceiling looks like: more information, no more skill.
+The next thing worth trying is not another turn of the handle at this size. It is a representation
+that can express what the interaction map already names — "I control Royce and two Gear" — because
+neither the current features nor eleven more counters can say that sentence, and the pool's whole
+Gear archetype is built on it.
+
+The ledger now reads: generation 0 rejected at 10% (the loop could not fit), generation 1 promoted
+at 59.1%, generation 2 rejected at 52.5%. That is a promotion rule doing its job in both
+directions, which is the property worth having before any of this is trusted.
