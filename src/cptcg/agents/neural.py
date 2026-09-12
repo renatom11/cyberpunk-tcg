@@ -80,6 +80,51 @@ def _same_position(a: GameState, b: GameState) -> bool:
             and a.used == b.used and a.played == b.played and a.once == b.once)
 
 
+def _freeze(v):
+    """A hashable, order-stable copy of a state field.
+
+    Written structurally rather than per field because guessing was wrong twice: ``used`` is a
+    *set*, whose iteration order is not part of the position, and ``mods``/``played`` hold lists
+    once they are non-empty. Sorting the set members is what makes two equal positions produce one
+    key instead of two.
+    """
+    if isinstance(v, (bytearray, memoryview)):
+        return bytes(v)
+    if isinstance(v, (set, frozenset)):
+        # key=repr, not natural order: `used` mixes strings and ints, and sorting those raises.
+        # repr is a total, deterministic order over the frozen values, which is all that is needed.
+        return ("s",) + tuple(sorted((_freeze(x) for x in v), key=repr))
+    if isinstance(v, (list, tuple)):
+        return tuple(_freeze(x) for x in v)
+    if isinstance(v, dict):
+        return ("d",) + tuple(sorted(((k, _freeze(x)) for k, x in v.items()), key=repr))
+    try:
+        hash(v)
+    except TypeError:                                  # a new mutable field type on GameState
+        raise TypeError(f"position_key cannot freeze {type(v).__name__}; teach _freeze about it "
+                        f"rather than letting the cycle guard silently stop working") from None
+    return v
+
+
+def position_key(s: GameState) -> tuple:
+    """A hashable value equal for exactly the positions ``_same_position`` calls the same.
+
+    The same fields in the same order, frozen so a set of positions can be remembered cheaply.
+    Keeping this beside ``_same_position`` is deliberate — the two must agree, and
+    ``tests/props/test_no_agent_cycles.py`` asserts they do on real positions, in both directions.
+    """
+    p = s.pending
+    # Everything goes through _freeze, including the fields that look like scalars. Assuming per
+    # field was wrong three times running: `used` is a set, `mods`/`played` hold lists once
+    # non-empty, and `turns_taken` — which reads like an int — is a list of two.
+    return tuple(_freeze(x) for x in (
+        s.turn, s.active, s.over, s.overtime, s.empty_starts,
+        None if p is None else p.kind, None if p is None else p.player,
+        s.turns_taken, len(s.stack),
+        s.gig, s.fixer, s.i_zone, s.i_spent, s.i_lag, s.i_faceup, s.i_host, s.i_flags,
+        s.z, s.temp_power, s.mods, s.used, s.played, s.once))
+
+
 @register
 class NeuralAgent(HeuristicAgent):
     """Greedy one-ply on ``ValueModel.raw``. Everything but the scorer is the frozen heuristic."""

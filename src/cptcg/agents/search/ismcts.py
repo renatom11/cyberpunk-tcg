@@ -53,7 +53,7 @@ import math
 
 from cptcg.agents.base import register
 from cptcg.agents.heuristic import _default_index, _equiv_key
-from cptcg.agents.neural import NeuralAgent, _same_position
+from cptcg.agents.neural import NeuralAgent, _same_position, position_key
 from cptcg.core.actions import Action, Choice, ChoiceKind
 from cptcg.core.engine import apply, legal_actions
 from cptcg.core.rng import Pcg32
@@ -105,6 +105,12 @@ class IsmctsAgent(NeuralAgent):
     uses_determinization = True
 
     #: Iterations per decision. 200 is ~0.7 ms each here, so ~140 ms a decision and ~20 s a game.
+    #: Positions this agent has already been asked to decide from, this turn. Reset per turn by
+    #: ``_root_actions``; see its docstring for why a turn is the right scope.
+    _seen: set = frozenset()
+    _seen_turn: int = -1
+
+
     iterations = 200
 
     #: Wall-clock ceiling per decision, seconds. 0 disables it. The browser build sets this, because
@@ -232,11 +238,19 @@ class IsmctsAgent(NeuralAgent):
         * Settle first, exactly as ``_priors`` does, so a compound action is judged on where it
           actually lands rather than on its first step.
 
-        **What this does not catch:** a two-step cycle, where A then B returns to the start. The
-        observed bug is one-step, and the general fix — threading a position reference down
-        ``_iterate`` and comparing at every apply — costs a full state comparison per node. Not
-        worth paying until something demonstrates it is needed; ``runner.play_game``'s ceiling
-        remains the backstop for the rest of the class.
+        **Multi-step cycles.** The first version of this caught only one-step no-ops and said so:
+        "what this does not catch is a two-step cycle, where A then B returns to the start... not
+        worth paying until something demonstrates it is needed". Something did. Mutated weights,
+        generated while probing an evolutionary search, drove two agents around a two-step loop on a
+        MAIN menu and hit ``runner.play_game``'s 50,000-action ceiling — a fresh instance of the
+        same class, on a different choice kind, from a model nobody had trained.
+
+        So the agent now remembers the positions it has already been asked to decide from **this
+        turn** and refuses to walk back into one. That catches cycles of any length within a turn
+        without threading state down ``_iterate``: the memory is a set of ``position_key`` values,
+        the comparison is a hash lookup, and a settle is already being paid for the one-step test.
+        The memory clears on a new turn, so it can never make a legal repeat of a position illegal
+        across turns — repeating a board on a later turn is ordinary play, not a loop.
         """
         seen, keep = set(), []
         for a in choice.options:
@@ -245,10 +259,39 @@ class IsmctsAgent(NeuralAgent):
                 continue
             seen.add(key)
             keep.append(a)
-        moves = [a for a in keep if not self._is_no_op(s, choice, a)]
+        if s.turn != self._seen_turn:
+            self._seen_turn, self._seen = s.turn, set()
+        self._seen.add(position_key(s))
+        moves = [a for a in keep if not self._loops(s, choice, a)]
+        # If every option loops, keep them all: refusing to move is not available, and the engine's
+        # Overtime and turn limits are the backstop. Same convention as the one-step guard.
         if moves and len(moves) < len(keep):
             keep = moves
         return frozenset(keep) if len(keep) < len(choice.options) else None
+
+    def _loops(self, s: GameState, choice: Choice, a: Action) -> bool:
+        """Does this action go nowhere — back to here, or back somewhere I have already been?
+
+        Two tests, both always on: back to *here*, or back to somewhere I already stood this turn.
+
+        An attempt to run the second one only on suspiciously long turns is not in this code, and
+        the reason is worth keeping. It looked like it saved 10% — but that number came from
+        comparing against *no guard at all*, when the real alternative is the one-step guard that
+        already shipped and already paid for the settle. Measured honestly, against that baseline,
+        the same benchmark returned +10.4% once and -8.7% the next time: the cost is below what this
+        measurement can resolve. The gate meanwhile let a real cycle through, because it re-broke
+        the one-step case the threshold could never reach. Cheap and wrong is not cheap.
+
+        The settle is the expensive half and both tests share one. ``_same_position`` early-exits on
+        a scalar mismatch; only when it says "different" is a full key built and looked up.
+        """
+        c = s.clone()
+        c.rng = Pcg32(self.rng.next_u32(), seq=3)      # never preview the true future
+        apply(c, choice.options.index(a))
+        self._resolve(c, 1)
+        if _same_position(c, s):
+            return True
+        return position_key(c) in self._seen
 
     def _is_no_op(self, s: GameState, choice: Choice, a: Action) -> bool:
         """Does taking this action leave the game in a position indistinguishable from this one?"""

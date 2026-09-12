@@ -82,3 +82,75 @@ def test_no_registered_agent_cycles_from_the_other_seat(pool, name):
     one ordering only because that is the one the arena happened to play first."""
     s, n = _play(pool, ("heuristic", name))
     assert s.over, f"{name} was still going after {n} actions from seat 1 on seed {HUNG_SEED}"
+
+
+# ---------------------------------------------------------------- the key the guard is built on
+def test_position_key_agrees_with_same_position_in_both_directions(pool):
+    """``position_key`` is what lets the guard remember positions in a set instead of comparing
+    them pairwise. It has to partition states *exactly* as ``_same_position`` does: coarser and the
+    agent refuses legal moves, finer and the cycle guard stops working.
+
+    It was wrong four times while being written — ``used`` is a set (unordered), ``mods`` and
+    ``played`` hold lists, ``turns_taken`` reads like an int and is a list of two, and some index
+    arrays are ``bytearray``. Every one of those produced either an unhashable key or a key that
+    silently disagreed, so this checks the property rather than the field list.
+    """
+    from cptcg.agents.base import make_agent
+    from cptcg.agents.neural import _same_position, position_key
+    from cptcg.core.engine import apply, legal_actions, new_game
+    from cptcg.learn.arena import sampled_pairings
+
+    clones = unequal = 0
+    for sd in range(20, 26):
+        pr = sampled_pairings(pool, 6, deck_seed=5, label="t")[sd % 6]
+        s = new_game(pool, (pr.deck_a, pr.deck_b), sd)
+        a = make_agent("heuristic", sd)
+        a.new_game(sd, 0)
+        prev = []
+        for _ in range(120):
+            if s.over:
+                break
+            legal_actions(s)
+            k = position_key(s)
+            hash(k)                                     # must be usable as a set member
+            c = s.clone()
+            # The "same position" direction, deterministically: a clone always is one. Waiting for
+            # a natural repeat is not a test, it is a coincidence — an earlier version asserted one
+            # turned up and failed on a narrower seed range.
+            assert position_key(c) == k and _same_position(c, s), "a clone is the same position"
+            clones += 1
+            for pk, ps in prev[-30:]:
+                if (pk == k) != _same_position(ps, s):
+                    raise AssertionError("position_key disagrees with _same_position")
+                unequal += pk != k
+            prev.append((k, s.clone()))
+            apply(s, a.act(s, s.pending))
+    assert unequal > 1000, "not enough comparisons to mean anything"
+    assert clones > 200, "not enough same-position checks to mean anything"
+
+
+@pytest.mark.skipif(not WEIGHTS_PATH.exists(), reason="no weights have been fitted")
+def test_a_multi_step_cycle_does_not_hang_the_search(pool):
+    """A two-step loop: A then B returns to A. The one-step guard explicitly did not catch this —
+    its docstring said so and said it was not worth paying for until something demonstrated it was
+    needed. Mutated weights, generated while probing an evolutionary search, demonstrated it: two
+    ISMCTS agents walked a MAIN menu in a circle and hit runner's 50,000-action ceiling.
+
+    The mutant is not checked in, so this plays the same shape — two searching agents on the deck
+    pairing and seed that failed — and asserts termination rather than reproducing that exact file.
+    """
+    from cptcg.agents.base import make_agent
+    from cptcg.core.engine import apply, legal_actions, new_game
+    from cptcg.learn.arena import sampled_pairings
+
+    prs = sampled_pairings(pool, 6, deck_seed=777001, label="evo")
+    for pr in prs[:2]:
+        s = new_game(pool, (pr.deck_a, pr.deck_b), 2004248)
+        ags = [_agent("ismcts", 2004248 * 2 + i, i) for i in range(2)]
+        n = 0
+        while not s.over and n < CAP:
+            legal_actions(s)
+            ch = s.pending
+            apply(s, ags[ch.player].act(s, ch))
+            n += 1
+        assert s.over, f"two searching agents did not finish in {CAP} actions on {pr.deck_a.name}"
