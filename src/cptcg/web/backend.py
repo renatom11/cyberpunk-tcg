@@ -706,11 +706,37 @@ def replay_views(rel: str) -> list[dict]:
     return views
 
 
+#: Card-by-card strategy notes, written for the CARDS page. Kept in ``data/`` beside the card text
+#: rather than in the client, so the same file feeds the local server and the Pyodide build, and so
+#: a note can be edited without touching JavaScript.
+GUIDE_PATH = ROOT / "data" / "strategy" / "cards.json"
+_GUIDE: dict | None = None
+
+
+def guide() -> dict:
+    """``{card id: {"role": str, "guide": str, "tips": [str]}}``, read once.
+
+    A missing file is not an error: the notes are commentary, and the pool has to render without
+    them. The page says so rather than showing an empty panel.
+    """
+    global _GUIDE
+    if _GUIDE is None:
+        try:
+            _GUIDE = json.loads(GUIDE_PATH.read_text(encoding="utf-8")).get("cards", {})
+        except Exception:
+            _GUIDE = {}
+    return _GUIDE
+
+
 def card_json_static(d) -> dict:
-    return {"id": d.id, "name": d.name, "subtitle": d.subtitle, "type": d.type.name.title(), "color": d.color.name.title(),
-            "cost": d.cost, "power": (f"{d.power}+" if d.power_variable else d.power), "ram": d.ram,
-            "sell_tag": d.sell_tag, "tags": sorted(d.tags), "keywords": [k.name.replace("_", " ") for k in d.keywords],
-            "text": d.text, "verified": d.verified, "set": d.set_code, "number": d.number}
+    j = {"id": d.id, "name": d.name, "subtitle": d.subtitle, "type": d.type.name.title(), "color": d.color.name.title(),
+         "cost": d.cost, "power": (f"{d.power}+" if d.power_variable else d.power), "ram": d.ram,
+         "sell_tag": d.sell_tag, "tags": sorted(d.tags), "keywords": [k.name.replace("_", " ") for k in d.keywords],
+         "text": d.text, "verified": d.verified, "set": d.set_code, "number": d.number}
+    g = guide().get(d.id)
+    if g:
+        j["guide"] = g
+    return j
 
 
 # ---------------------------------------------------------------- environment knobs
