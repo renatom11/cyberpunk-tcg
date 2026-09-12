@@ -86,7 +86,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-from cptcg.agents.base import AGENTS, CHEAT_PREFIX, WEIGHTS_SEP, make_agent
+from cptcg.agents.base import AGENTS, BUDGET_SEP, CHEAT_PREFIX, WEIGHTS_SEP, make_agent
 from cptcg.cards.registry import Registry
 from cptcg.core.config import DEFAULT_CONFIG, RulesConfig
 from cptcg.core.rng import Pcg32
@@ -127,7 +127,11 @@ def agent_base(name: str) -> str:
     """
     if name.startswith(CHEAT_PREFIX):
         name = name[len(CHEAT_PREFIX):]
-    return name.partition(WEIGHTS_SEP)[0]
+    # Weights first: a path may contain a colon, and stripping the budget first would eat it.
+    # Every decoration ``make_agent`` understands has to be undressed here too — adding one there
+    # and not here is how ``ismcts:32@weights.json`` came back as "unknown agent" after a
+    # five-hour harvest, from the one function whose docstring promises it knows them all.
+    return name.partition(WEIGHTS_SEP)[0].partition(BUDGET_SEP)[0]
 
 
 def agent_exists(name: str) -> bool:

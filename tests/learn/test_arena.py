@@ -421,3 +421,38 @@ def test_the_json_result_carries_the_ruleset_and_the_seeds(pool, tmp_path):
     d = json.loads(arena.write_json(tmp_path / "r.json", res.to_json()).read_text())
     assert d["rules"] and d["seed"] == 2 and d["deck_seed"] == 6
     assert d["wilson_low"] <= d["rate"] <= d["wilson_high"]
+
+
+# ------------------------------------------------- every decoration make_agent takes, undressed
+def test_agent_base_strips_every_decoration_make_agent_understands():
+    """``agent_base`` promises in its docstring to be the one place that undresses a name. This
+    test is the thing that makes the promise true, because the promise on its own did not: the
+    budget separator was added to ``make_agent`` and not here, and ``ismcts:32@weights.json`` came
+    back as "unknown agent" at the gate after a five-hour harvest.
+
+    It is written against the separators rather than against literal strings, so a fourth
+    decoration fails here on the day it is added.
+    """
+    from cptcg.agents.base import BUDGET_SEP, CHEAT_PREFIX, WEIGHTS_SEP
+    from cptcg.learn.arena import agent_base
+
+    dressed = f"{CHEAT_PREFIX}ismcts{BUDGET_SEP}64{WEIGHTS_SEP}some/path/weights.json"
+    assert agent_base(dressed) == "ismcts"
+    for name in ("ismcts", f"ismcts{BUDGET_SEP}32", f"ismcts{WEIGHTS_SEP}w.json",
+                 f"{CHEAT_PREFIX}ismcts"):
+        assert agent_base(name) == "ismcts", name
+
+
+def test_a_weights_path_containing_a_colon_still_resolves():
+    """Order matters: weights are stripped before the budget, so a colon in the path is safe."""
+    from cptcg.agents.base import WEIGHTS_SEP
+    from cptcg.learn.arena import agent_base
+    assert agent_base(f"ismcts{WEIGHTS_SEP}C:/models/weights.json") == "ismcts"
+
+
+def test_a_budgeted_agent_with_real_weights_is_accepted_by_the_gate():
+    from cptcg.learn.arena import agent_exists
+    from cptcg.learn.model import WEIGHTS_PATH
+    if WEIGHTS_PATH.exists():
+        assert agent_exists(f"ismcts:32@{WEIGHTS_PATH}")
+    assert not agent_exists("ismcts:32@definitely/not/here.json")

@@ -2285,6 +2285,59 @@
     "opponents: self 255, heuristic 30, random 15",
     "fit window: generations [0], 3 example files"
    ]
+  },
+  {
+   "n": 1,
+   "seed": 20260912,
+   "status": "promoted",
+   "games": 30000,
+   "weights": "out/learn/gen-001/weights.json",
+   "parent": "/home/user/cyberpunk-tcg/src/cptcg/agents/weights.json",
+   "started": "2026-09-12T00:42:00+00:00",
+   "finished": "2026-09-12T05:58:00+00:00",
+   "gate": {
+    "a_vs_b": {
+     "games": 408,
+     "a_rate": 59.1,
+     "wilson": [
+      54.2,
+      63.7
+     ],
+     "pairing_band": [
+      54.3,
+      63.8
+     ],
+     "verdict": "high",
+     "decisive_pairs": [
+      51,
+      65
+     ]
+    },
+    "panel": {
+     "candidate": {
+      "random": 97.2,
+      "heuristic": 87.2
+     },
+     "incumbent": {
+      "random": 96.9,
+      "heuristic": 79.4
+     },
+     "budget": 32
+    },
+    "delayed": {
+     "candidate": 4,
+     "incumbent": 4,
+     "of": 8
+    }
+   },
+   "reason": "",
+   "notes": [
+    "opponents: self 25500, heuristic 3000, random 1500",
+    "generator budget 32 iterations (ismcts-explore:32) \u2014 3,700-5,400 games/h on four cores against 434 at the class default of 200",
+    "seed corpus in window: 1,453,992 rows against 693,018 of self-play",
+    "fit: 2,147,010 rows over 79,995 games, hidden 16, best epoch 72, holdout Brier 0.14420 (its own holdout, which includes search self-play and is NOT comparable to the bootstrap's 0.13914 on a different distribution)",
+    "gate (both sides at budget 32): beat the incumbent 59.1% [band from 54.3%], panel 87.2% against 79.4%, delayed 4 against 4"
+   ]
   }
  ]
 }

@@ -1627,3 +1627,109 @@ line merely *contains* that string — including the session's own monitoring co
 sat waiting eleven minutes on a phantom. And an earlier run of this project killed its own shell
 with `pkill -f`, for the same reason. A predicate that can match the thing asking the question is
 not a predicate; the fix in both cases was to remove the question, not to sharpen it.
+
+
+## Generation 1: the handle turns
+
+The loop promoted a generation. It is the first one, generation 0 having been rejected at 10%, and
+the reason for the gap between them is not compute — it is that the loop could not have promoted
+anything at any budget until two things were fixed.
+
+### Why generation 0 could never have worked
+
+`step_fit` built its replay window by globbing generation directories. The bootstrap corpus the
+model is supposed to improve *on* lives in none of them, so generation 0 was fitted on its own 300
+games alone: **6,900 rows, against an incumbent fitted on 1,453,992.** It scored 10% and that was
+written down here as the promotion rule working correctly. It was — but it was also a structural
+failure, and the half that was missed is the more important one. Every future generation would
+have failed the same way, for the same invisible reason, and the failure would have looked like
+evidence that the idea was wrong rather than that the plumbing was.
+
+The window now carries a *seed corpus* and retires it once self-play rows reach three times its
+size, so the bootstrap anchors the early generations and does not anchor them for ever. Generation
+1 was fitted on 2,147,010 rows: the seed's 1,453,992 plus 693,018 of its own.
+
+### The second fix: a budget that could be reached
+
+Search budget was a class attribute. Everything ran at 200 iterations. Measured on the shape a
+generation actually runs — both sides `ismcts-explore`, four cores:
+
+| iterations | games/hour |
+|---:|---:|
+| 8 | 11,913 |
+| 32 | 3,335 (observed 3,700–5,400 in the real run) |
+| 200 | 434 |
+
+At 200, matching the bootstrap's 50,000 games is eleven hundred hours. The budget now travels
+inside the agent name (`ismcts-explore:32@weights.json`) beside `cheat:` and `@weights`, so it
+reaches worker processes. **The data is therefore search-selected by a shallower search than the
+one being measured, and that is a real concession, stated here rather than buried.**
+
+### What generation 1 is, and what the gate said
+
+30,000 games — 25,500 self-play, 3,000 against the frozen heuristic, 1,500 against random — at
+budget 32, sampled at 0.125 from both perspectives into 693,018 rows.
+
+Both sides of the gate ran at budget 32. That matters: the incumbent's 85.0% panel score on record
+was measured at 200, and comparing a candidate at 32 against it would have been comparing budgets
+rather than weights. So the incumbent was re-measured at the candidate's budget.
+
+| check | candidate | incumbent | verdict |
+|---|---|---|---|
+| head-to-head, 408 games | **59.1%** [54.2–63.7], band from 54.3 | — | SPRT accepted H1 |
+| frozen panel vs `heuristic` | **87.2%** [83.4–90.3] | 79.4% [75.0–83.3] | +7.8, intervals clear |
+| frozen panel vs `random` | 97.2% | 96.9% | unchanged |
+| delayed-reward suite | 4 of 8 | 4 of 8 | no ability lost |
+
+`decide` returns **promote**: *beat the incumbent 59.1% [band from 54.3%], panel 87.2% against
+79.4%, delayed 4 against 4.*
+
+The panel row is the one that carries it. The frozen heuristic cannot move, so a score against it
+is the nearest thing to a fixed yardstick, and 79.4 to 87.2 at matched budget cannot be explained
+by the candidate and the incumbent drifting together — which is the exact failure the panel exists
+to catch.
+
+### What this does not say
+
+The holdout Brier went the *wrong* way: 0.14420 against the bootstrap's 0.13914. That is not
+evidence of a worse model, because the two numbers are computed on different holdout sets — the
+candidate's includes search self-play, which is closer and harder to call than heuristic and random
+games. It is also not evidence of a better one. Comparing Brier across distributions establishes
+nothing in either direction, and the only reason it appears here is that quoting it as an
+improvement would have been easy and wrong.
+
+`two-pieces-of-gear` is still 0 of 16. Three generations of work have now gone past the position
+this whole line of work was named for, and none of them solves it.
+
+### The container, which shaped the schedule more than any decision did
+
+The box reclaims itself when the session goes idle, and — measured, not assumed — a *scheduled
+wake provisions a fresh container*, killing whatever is running.
+
+| condition | throughput |
+|---|---|
+| hourly watchdog + 10-minute keepalive armed | 160 games / 80 min |
+| no timers, session actively working | **640 games / 9.5 min** |
+| no timers, session idle | dies about 6 minutes later |
+
+Every trigger fire landed on a container with 0 minutes of uptime, three for three. The watchdog
+built to protect the run was the thing ending it, and an earlier note in this session calling it
+"earning its keep" when it relaunched the harvest had it backwards: it was cleaning up its own
+damage. With both timers deleted the harvest ran 4 hours 46 minutes without interruption and
+finished all 30,000 games.
+
+`--chunk` became a flag for the same reason. The chunk is also the unit of resume, and the default
+sized it from the job — 250 games, about eighteen minutes — so a restart threw away a third of an
+interval. At 40 it is well under a minute.
+
+### A third instance of the same bug
+
+The gate refused to start: `unknown agent 'ismcts:32@out/learn/gen-001/weights.json'`. `agent_base`
+in `learn/arena.py` undresses a decorated name, and its docstring says *"there is exactly one place
+that does: here."* A third decoration was added to `make_agent` and not to it. The promise in the
+docstring did not keep itself, in the same way the no-op guard's regression test did not cover the
+agent that came after the one it named.
+
+`tests/learn/test_arena.py` now asserts against the separator *constants* rather than literal
+strings, so a fourth decoration fails on the day it is added rather than five hours into the next
+generation.
