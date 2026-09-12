@@ -293,9 +293,11 @@
     <details class="how" id="how-cards" open>
       <summary>What CARDS does</summary>
       <p><b>Browse the whole pool</b> — 151 cards of <i>Welcome to Night City</i> plus the cards that come only in the starter decks. Search matches name, subtitle, rules text, tags, type and colour (try <code>blocker</code>, <code>arasaka</code>, <code>steal</code>). Hover or tap a card to read it at full size. The set filter isolates the starter-only cards.</p>
-      <p>Card data is transcribed from the printed cards and is the source of truth for the engine; the images are the real faces. Three cards are still placeholders because their full face was never captured: 6th Street Recruits, Adam Smasher — Metal Over Meat and Adrenaline Converter; Rebecca's ability is not yet revealed. These can't be put in a deck.</p>
+      <p><b>Click any card for its strategy guide</b> — what it does, what it combos with, and what wants it. The connections are not opinions: every card in the pool was tagged with what it <i>creates</i> and what it is <i>paid for</i>, and a link appears wherever one card's output meets another's requirement (a card that pushes a Gig down connects to every card paid for a min Gig). Links marked <i>one step away</i> need an intervening play — a Gear tutor finds the Gear, you still have to equip it.</p>
+    <p>Card data is transcribed from the printed cards and is the source of truth for the engine; the images are the real faces. Three cards are still placeholders because their full face was never captured: 6th Street Recruits, Adam Smasher — Metal Over Meat and Adrenaline Converter; Rebecca's ability is not yet revealed. These can't be put in a deck.</p>
     </details>
     <div class="row"><input id="cardSearch" placeholder="search name, text, tag…">
+      <select id="cardArch"><option value="">any archetype</option></select>
       <select id="cardSet"><option value="">any set</option><option value="MS01-WNC">Welcome to Night City</option><option value="S001-HEI">The Heist (starter)</option><option value="S002-EBP">Embracing Power (starter)</option><option value="PR001">Promo</option></select></div>
     <div id="cardGrid" class="card-grid"></div>
   </div>

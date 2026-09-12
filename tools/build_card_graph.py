@@ -32,7 +32,9 @@ IMPLIES = {
     "legend.call_free": ["legend.faceup"],
     "legend.go_solo":   ["legend.faceup"],
     "unit.ready":    ["spend.trigger"],
-    "power.pump":    ["power.threshold"],
+    # NOT power.pump -> power.threshold. Every pump can in principle cross a 10-power step, so
+    # that edge joined nearly every pump card to nearly every large attacker: 85 links on Royce
+    # alone, burying the two that matter. A threshold is situational, not an interaction.
 }
 
 cards = {c["id"]: c for c in json.load(open("data/cards/wnc.json"))["cards"]}

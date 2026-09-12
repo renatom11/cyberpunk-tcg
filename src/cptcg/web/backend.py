@@ -728,6 +728,57 @@ def guide() -> dict:
     return _GUIDE
 
 
+#: The interaction map: ``tools/build_card_graph.py`` output. Served to the CARDS page so a card
+#: can show what it combos with, rather than only what it says.
+GRAPH_PATH = ROOT / "data" / "strategy" / "graph.json"
+_GRAPH: dict | None = None
+_LINKS: dict | None = None
+
+
+def graph() -> dict:
+    global _GRAPH
+    if _GRAPH is None:
+        try:
+            _GRAPH = json.loads(GRAPH_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            _GRAPH = {"cards": {}, "edges": [], "tribal_edges": [], "co_need": [], "tokens": {}}
+    return _GRAPH
+
+
+def card_links() -> dict:
+    """Per card, the links pointing out of it and into it, ready to render.
+
+    Built once and cached. The client gets exactly what it draws — the raw edge list is 1,386
+    entries and re-grouping it in the browser on every click would be the same work done worse.
+    """
+    global _LINKS
+    if _LINKS is not None:
+        return _LINKS
+    g = graph()
+    out: dict[str, dict] = {cid: {"enables": [], "enabled_by": [], "tribal": [], "co_need": [],
+                                  "produces": v.get("produces", []), "rewards": v.get("rewards", []),
+                                  "archetypes": v.get("archetypes", [])}
+                            for cid, v in g.get("cards", {}).items()}
+    for e in g.get("edges", ()):
+        a, b = e["from"], e["to"]
+        if a in out:
+            out[a]["enables"].append({"id": b, "token": e["token"], "kind": e["kind"]})
+        if b in out:
+            out[b]["enabled_by"].append({"id": a, "token": e["token"], "kind": e["kind"]})
+    for e in g.get("tribal_edges", ()):
+        a, b = e["from"], e["to"]
+        if a in out:
+            out[a]["tribal"].append({"id": b, "token": e["token"], "kind": "tribal"})
+        if b in out:
+            out[b]["tribal"].append({"id": a, "token": e["token"], "kind": "tribal"})
+    for e in g.get("co_need", ()):
+        for x, y in ((e["a"], e["b"]), (e["b"], e["a"])):
+            if x in out:
+                out[x]["co_need"].append({"id": y, "token": e["token"], "kind": "co-need"})
+    _LINKS = out
+    return out
+
+
 def card_json_static(d) -> dict:
     j = {"id": d.id, "name": d.name, "subtitle": d.subtitle, "type": d.type.name.title(), "color": d.color.name.title(),
          "cost": d.cost, "power": (f"{d.power}+" if d.power_variable else d.power), "ram": d.ram,
@@ -778,6 +829,10 @@ def dispatch(method: str, path: str, query: dict, body: dict) -> tuple[int, obje
             return 200, dict(deck_json(Decklist.load(path_)), path=rel(path_))
         if p == "/api/cards":
             return 200, [dict(card_json_static(d), image=_has_image(d.id)) for d in reg().defs]
+        if p == "/api/cardlinks":
+            return 200, {"tokens": graph().get("tokens", {}),
+                         "archetypes": graph().get("archetypes", {}),
+                         "links": card_links()}
         if p.startswith("/api/games/"):
             gid = p.split("/")[3]
             with LOCK:

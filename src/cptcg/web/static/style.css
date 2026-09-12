@@ -782,3 +782,47 @@ table.rep th { color: var(--cyan); }
   .report .deckgrid { grid-template-columns: 1fr; }
   .report .rsec h3 { font-size: 13px; }
 }
+
+
+/* ---------------------------------------------------------------- card guide
+   The CARDS page opens a card's own page: its face, its text, and every card in the pool it
+   connects to. Modelled on .pileview — same dim backdrop, same escape-to-close — because it is the
+   same gesture, reading something at a size you can actually read it at. */
+.guideview { position: fixed; inset: 0; background: rgba(4, 6, 10, .82); z-index: 60;
+  display: none; align-items: flex-start; justify-content: center; padding: 3vh 2vw; overflow: auto; }
+.guideview.show { display: flex; }
+.guideview > .sheet { background: var(--panel, #0d1117); border: 1px solid var(--cyan, #2de2e6);
+  border-radius: 6px; max-width: 1000px; width: 100%; max-height: 94vh; overflow: auto; }
+.guideview .head { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 14px; border-bottom: 1px solid rgba(45, 226, 230, .3); position: sticky; top: 0;
+  background: var(--panel, #0d1117); z-index: 1; }
+.guideview .head h3 { margin: 0; font-size: 1.05rem; }
+.guideview .x { background: none; border: 0; color: inherit; font-size: 1.1rem; cursor: pointer; }
+.guideview .gbody { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 16px; padding: 14px; }
+.guideview .gleft img { width: 100%; border-radius: 6px; display: block; }
+.guideview .gstats { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 8px; font-size: .78rem; }
+.guideview .gtags { margin-top: 6px; font-size: .72rem; opacity: .7; letter-spacing: .04em; }
+.guideview .gtext { white-space: pre-wrap; font: inherit; font-size: .86rem; margin: 0 0 10px;
+  padding: 10px; background: rgba(255,255,255,.04); border-left: 2px solid var(--cyan, #2de2e6); border-radius: 3px; }
+.guideview h4 { margin: 14px 0 6px; font-size: .74rem; letter-spacing: .1em; opacity: .85; }
+.guideview .garch { margin: 4px 0 2px; }
+.guideview .garch .tag { display: inline-block; padding: 1px 7px; margin-right: 5px; font-size: .72rem;
+  border: 1px solid rgba(45,226,230,.45); border-radius: 10px; }
+.guideview .tips { margin: 6px 0 0 16px; padding: 0; font-size: .84rem; }
+.guideview .tips li { margin: 2px 0; }
+.guideview .lgroup { margin-bottom: 8px; }
+.guideview .why { font-size: .76rem; opacity: .8; margin-bottom: 3px; }
+.guideview .links .row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.guideview .chip { background: rgba(45,226,230,.12); border: 1px solid rgba(45,226,230,.4);
+  color: inherit; border-radius: 3px; padding: 2px 7px; font-size: .76rem; cursor: pointer; }
+.guideview .chip:hover { background: rgba(45,226,230,.3); }
+.guideview .chip.soft { border-style: dashed; opacity: .75; }
+.guideview .warn { font-size: .8rem; padding: 6px 8px; border-left: 2px solid #f5a623; margin-bottom: 8px; }
+@media (max-width: 700px) {
+  .guideview { padding: 0; }
+  .guideview > .sheet { max-height: 100vh; border-radius: 0; border: 0; }
+  .guideview .gbody { grid-template-columns: 1fr; }
+  .guideview .gleft img { max-width: 220px; margin: 0 auto; }
+}
+.guideview .chip .sub { opacity: .6; font-style: italic; }
+.guideview .chip .sub::before { content: " · "; }

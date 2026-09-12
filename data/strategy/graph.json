@@ -83,9 +83,6 @@
   ],
   "unit.ready": [
    "spend.trigger"
-  ],
-  "power.pump": [
-   "power.threshold"
   ]
  },
  "state_tokens": [
@@ -5517,24 +5514,6 @@
   },
   {
    "from": "judy-alvarez-braindance-maestro",
-   "to": "v-corporate-exile",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "judy-alvarez-braindance-maestro",
-   "to": "adam-smasher-ender-of-legends",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "judy-alvarez-braindance-maestro",
-   "to": "royce-psycho-on-the-edge",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "judy-alvarez-braindance-maestro",
    "to": "v-streetkid",
    "token": "program.trash",
    "kind": "indirect"
@@ -5609,24 +5588,6 @@
    "from": "sasha-yakovleva-wont-let-you-down",
    "to": "zetatech-berserk",
    "token": "legend.faceup",
-   "kind": "indirect"
-  },
-  {
-   "from": "sasha-yakovleva-wont-let-you-down",
-   "to": "v-corporate-exile",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "sasha-yakovleva-wont-let-you-down",
-   "to": "adam-smasher-ender-of-legends",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "sasha-yakovleva-wont-let-you-down",
-   "to": "royce-psycho-on-the-edge",
-   "token": "power.threshold",
    "kind": "indirect"
   },
   {
@@ -5771,24 +5732,6 @@
    "from": "wakako-okada-peace-and-harmony",
    "to": "alt-cunningham-soulkiller-architect",
    "token": "gig.min",
-   "kind": "indirect"
-  },
-  {
-   "from": "wakako-okada-peace-and-harmony",
-   "to": "v-corporate-exile",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "wakako-okada-peace-and-harmony",
-   "to": "adam-smasher-ender-of-legends",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "wakako-okada-peace-and-harmony",
-   "to": "royce-psycho-on-the-edge",
-   "token": "power.threshold",
    "kind": "indirect"
   },
   {
@@ -5915,24 +5858,6 @@
    "from": "goro-takemura-vengeful-bodyguard",
    "to": "alt-cunningham-soulkiller-architect",
    "token": "program.trash",
-   "kind": "indirect"
-  },
-  {
-   "from": "goro-takemura-vengeful-bodyguard",
-   "to": "v-corporate-exile",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "goro-takemura-vengeful-bodyguard",
-   "to": "adam-smasher-ender-of-legends",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "goro-takemura-vengeful-bodyguard",
-   "to": "royce-psycho-on-the-edge",
-   "token": "power.threshold",
    "kind": "indirect"
   },
   {
@@ -6339,27 +6264,9 @@
   },
   {
    "from": "dexter-deshawn-off-the-grid",
-   "to": "v-corporate-exile",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "dexter-deshawn-off-the-grid",
-   "to": "adam-smasher-ender-of-legends",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "dexter-deshawn-off-the-grid",
    "to": "johnny-silverhand-rocking-renegade",
    "token": "gig.high8",
    "kind": "direct"
-  },
-  {
-   "from": "dexter-deshawn-off-the-grid",
-   "to": "royce-psycho-on-the-edge",
-   "token": "power.threshold",
-   "kind": "indirect"
   },
   {
    "from": "dexter-deshawn-off-the-grid",
@@ -6420,24 +6327,6 @@
    "to": "octant",
    "token": "gig.high8",
    "kind": "direct"
-  },
-  {
-   "from": "johnny-silverhand-rocking-renegade",
-   "to": "v-corporate-exile",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "johnny-silverhand-rocking-renegade",
-   "to": "adam-smasher-ender-of-legends",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "johnny-silverhand-rocking-renegade",
-   "to": "royce-psycho-on-the-edge",
-   "token": "power.threshold",
-   "kind": "indirect"
   },
   {
    "from": "johnny-silverhand-rocking-renegade",
@@ -6641,24 +6530,6 @@
    "from": "v-streetkid",
    "to": "placide-voodoo-sentinel",
    "token": "program.trash",
-   "kind": "indirect"
-  },
-  {
-   "from": "dum-dum-maelstrom-triggerman",
-   "to": "v-corporate-exile",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "dum-dum-maelstrom-triggerman",
-   "to": "adam-smasher-ender-of-legends",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "dum-dum-maelstrom-triggerman",
-   "to": "royce-psycho-on-the-edge",
-   "token": "power.threshold",
    "kind": "indirect"
   },
   {
@@ -7293,24 +7164,6 @@
   },
   {
    "from": "floor-it",
-   "to": "v-corporate-exile",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "floor-it",
-   "to": "adam-smasher-ender-of-legends",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "floor-it",
-   "to": "royce-psycho-on-the-edge",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "floor-it",
    "to": "v-streetkid",
    "token": "program.trash",
    "kind": "indirect"
@@ -7596,24 +7449,6 @@
    "to": "judy-alvarez-braindance-maestro",
    "token": "program.play",
    "kind": "direct"
-  },
-  {
-   "from": "synapse-burnout",
-   "to": "v-corporate-exile",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "synapse-burnout",
-   "to": "adam-smasher-ender-of-legends",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "synapse-burnout",
-   "to": "royce-psycho-on-the-edge",
-   "token": "power.threshold",
-   "kind": "indirect"
   },
   {
    "from": "synapse-burnout",
@@ -8679,24 +8514,6 @@
   },
   {
    "from": "pyramid-song",
-   "to": "v-corporate-exile",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "pyramid-song",
-   "to": "adam-smasher-ender-of-legends",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "pyramid-song",
-   "to": "royce-psycho-on-the-edge",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "pyramid-song",
    "to": "v-streetkid",
    "token": "program.braindance",
    "kind": "direct"
@@ -8760,24 +8577,6 @@
    "to": "judy-alvarez-braindance-maestro",
    "token": "program.play",
    "kind": "direct"
-  },
-  {
-   "from": "gunpoint-diplomacy",
-   "to": "v-corporate-exile",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "gunpoint-diplomacy",
-   "to": "adam-smasher-ender-of-legends",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "gunpoint-diplomacy",
-   "to": "royce-psycho-on-the-edge",
-   "token": "power.threshold",
-   "kind": "indirect"
   },
   {
    "from": "gunpoint-diplomacy",
@@ -9318,24 +9117,6 @@
    "to": "judy-alvarez-braindance-maestro",
    "token": "program.play",
    "kind": "direct"
-  },
-  {
-   "from": "towerfall",
-   "to": "v-corporate-exile",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "towerfall",
-   "to": "adam-smasher-ender-of-legends",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "towerfall",
-   "to": "royce-psycho-on-the-edge",
-   "token": "power.threshold",
-   "kind": "indirect"
   },
   {
    "from": "towerfall",
@@ -10547,24 +10328,6 @@
    "from": "modded-muramasa",
    "to": "alt-cunningham-mother-of-daemons",
    "token": "spend.trigger",
-   "kind": "indirect"
-  },
-  {
-   "from": "rogue-amendiares-queen-of-the-afterlife",
-   "to": "v-corporate-exile",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "rogue-amendiares-queen-of-the-afterlife",
-   "to": "adam-smasher-ender-of-legends",
-   "token": "power.threshold",
-   "kind": "indirect"
-  },
-  {
-   "from": "rogue-amendiares-queen-of-the-afterlife",
-   "to": "royce-psycho-on-the-edge",
-   "token": "power.threshold",
    "kind": "indirect"
   },
   {

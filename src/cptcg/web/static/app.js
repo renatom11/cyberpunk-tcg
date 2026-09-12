@@ -1104,9 +1104,140 @@ async function initLab(decks, arche) {
 function renderCardGrid(q) {
   const grid = $("#cardGrid"); grid.innerHTML = "";
   const s = (q || "").toLowerCase(), set = $("#cardSet").value;
-  Object.values(CARDS).filter(c => (!set || c.set === set) && (!s || `${c.name} ${c.subtitle || ""} ${c.text} ${c.tags.join(" ")} ${c.keywords.join(" ")} ${c.type} ${c.color}`.toLowerCase().includes(s)))
-    .slice(0, 200).forEach(c => grid.append(cardNode(c)));
+  const arch = $("#cardArch") ? $("#cardArch").value : "";
+  Object.values(CARDS).filter(c => (!set || c.set === set)
+      && (!arch || ((LINKS[c.id] || {}).archetypes || []).includes(arch))
+      && (!s || `${c.name} ${c.subtitle || ""} ${c.text} ${c.tags.join(" ")} ${c.keywords.join(" ")} ${c.type} ${c.color}`.toLowerCase().includes(s)))
+    .slice(0, 200).forEach(c => {
+      const n = cardNode(c);
+      // A plain click opens the guide. cardNode() already wires hover-preview and long-press, and
+      // on a touch-only screen it takes onclick for the preview — so only override where a real
+      // click exists to take, otherwise tapping would lose the ability to read the card at all.
+      if (CAN_HOVER) n.onclick = () => openCardGuide(c.id);
+      else n.ondblclick = () => openCardGuide(c.id);
+      n.title = CAN_HOVER ? "click for the strategy guide" : "double-tap for the strategy guide";
+      grid.append(n);
+    });
 }
+
+// ---------------------------------------------------------------- the card guide
+// Every card's page: what it does, what it combos with, and what wants it. The connections come
+// from data/strategy/graph.json — each of the 151 cards hand-tagged with what it CREATES and what
+// it is PAID FOR — so "works with" is a fact about the two texts rather than an opinion.
+let LINKS = {}, TOKENS = {}, ARCHES = {}, GUIDE_OPEN = null;
+
+async function loadCardLinks() {
+  try {
+    const d = await api("/api/cardlinks");
+    LINKS = d.links || {}; TOKENS = d.tokens || {}; ARCHES = d.archetypes || {};
+  } catch (e) { LINKS = {}; }                    // the pool still browses without the map
+  const sel = $("#cardArch");
+  if (sel && Object.keys(ARCHES).length) {
+    Object.keys(ARCHES).sort().forEach(a => {
+      const o = el("option", "", `${a} (${ARCHES[a].length})`); o.value = a; sel.append(o);
+    });
+  }
+}
+
+function tokenLabel(tok) {
+  if (tok.startsWith("tribe.")) return tok.slice(6);
+  return TOKENS[tok] || tok;
+}
+
+function linkRow(list, dir) {
+  // Group by the reason, so a card reads as "these six all want my min Gig" rather than as a
+  // flat list of names whose connection you have to reconstruct.
+  const by = {};
+  list.forEach(l => { (by[l.token] = by[l.token] || []).push(l); });
+  const wrap = el("div", "links");
+  Object.keys(by).sort((a, b) => by[a].length - by[b].length).forEach(tok => {
+    const g = el("div", "lgroup");
+    const kinds = new Set(by[tok].map(l => l.kind));
+    g.append(el("div", "why", `${dir} <b>${tokenLabel(tok)}</b>` +
+      (kinds.has("indirect") && !kinds.has("direct") ? " <i class=dim>(one step away)</i>" : "")));
+    const row = el("div", "row");
+    by[tok].slice(0, 14).forEach(l => {
+      const c = CARDS[l.id]; if (!c) return;
+      const chip = el("button", "chip" + (l.kind === "indirect" ? " soft" : ""),
+        c.subtitle ? `${c.name} <span class=sub>${c.subtitle}</span>` : c.name);
+      chip.title = c.subtitle ? `${c.name} — ${c.subtitle}` : c.name;
+      chip.onclick = () => openCardGuide(l.id);
+      row.append(chip);
+    });
+    if (by[tok].length > 14) row.append(el("span", "dim", `+${by[tok].length - 14} more`));
+    g.append(row); wrap.append(g);
+  });
+  return wrap;
+}
+
+function openCardGuide(id) {
+  const c = CARDS[id]; if (!c) return;
+  if (!GUIDE_OPEN) {
+    GUIDE_OPEN = el("div", "guideview");
+    GUIDE_OPEN.append(el("div", "sheet"));
+    document.body.append(GUIDE_OPEN);
+    GUIDE_OPEN.onclick = (e) => { if (e.target === GUIDE_OPEN) closeCardGuide(); };
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeCardGuide(); });
+  }
+  const sheet = GUIDE_OPEN.querySelector(".sheet");
+  sheet.innerHTML = "";
+  const head = el("div", "head");
+  head.append(el("h3", "", c.name + (c.subtitle ? ` <small class=dim>— ${c.subtitle}</small>` : "")));
+  const x = el("button", "x", "✕"); x.onclick = closeCardGuide; head.append(x);
+  sheet.append(head);
+
+  const body = el("div", "gbody");
+  const left = el("div", "gleft");
+  if (c.image) { const img = el("img"); img.src = `images/${c.id}.jpg`; img.alt = c.name; left.append(img); }
+  const stats = el("div", "gstats");
+  [["type", c.type], ["colour", c.color], ["cost", c.cost ?? "—"], ["power", c.power ?? "—"],
+   ["RAM", c.ram]].forEach(([k, v]) => stats.append(el("span", "", `${k} <b>${v}</b>`)));
+  left.append(stats);
+  if (c.tags && c.tags.length) left.append(el("div", "gtags", c.tags.join(" · ")));
+  body.append(left);
+
+  const right = el("div", "gright");
+  if (c.text) right.append(el("pre", "gtext", c.text));
+  if (!c.verified) right.append(el("div", "warn", "This card is unverified — its printed face was never captured, so the values shown are placeholders."));
+
+  const L = LINKS[c.id];
+  if (L) {
+    if (L.archetypes && L.archetypes.length) {
+      const a = el("div", "garch");
+      a.append(el("span", "dim", "plays in: "));
+      L.archetypes.forEach(k => a.append(el("span", "tag", k)));
+      right.append(a);
+    }
+    const guide = c.guide;
+    if (guide && guide.guide) {
+      right.append(el("h4", "", "HOW IT PLAYS"));
+      right.append(el("p", "", guide.guide));
+      if (guide.tips && guide.tips.length) {
+        const ul = el("ul", "tips");
+        guide.tips.forEach(tp => ul.append(el("li", "", tp)));
+        right.append(ul);
+      }
+    }
+    const sections = [["WHAT THIS TURNS ON", L.enables, "sets up"],
+                      ["WHAT SETS THIS UP", L.enabled_by, "needs"],
+                      ["WANTS THE SAME BOARD", L.co_need, "both want"],
+                      ["TRIBAL", L.tribal, "tag"]];
+    let any = false;
+    sections.forEach(([title, list, dir]) => {
+      if (!list || !list.length) return;
+      any = true;
+      right.append(el("h4", "", `${title} <span class=dim>· ${list.length}</span>`));
+      right.append(linkRow(list, dir));
+    });
+    if (!any) right.append(el("p", "dim", "No interactions with the rest of the pool — this card does its job on its own."));
+  }
+  body.append(right);
+  sheet.append(body);
+  GUIDE_OPEN.classList.add("show");
+  sheet.scrollTop = 0;
+}
+
+function closeCardGuide() { if (GUIDE_OPEN) GUIDE_OPEN.classList.remove("show"); }
 
 // ---------------------------------------------------------------- card preview
 // The board draws cards small; hovering any card shows its face at full resolution, like the sim.
@@ -1296,6 +1427,7 @@ async function init() {
   if (window.CPTCG_BRIDGE) await window.CPTCG_BRIDGE.ready;
   const cards = await api("/api/cards");
   cards.forEach(c => { CARDS[c.id] = c; });
+  await loadCardLinks();
   const decks = await api("/api/decks");
   for (const sel of [$("#deckMe"), $("#deckAi")]) {
     decks.filter(d => d.ok).forEach(d => { const o = el("option", "", `${d.name} (${d.size}) — ${d.path}`); o.value = d.path; sel.append(o); });
@@ -1320,6 +1452,7 @@ async function init() {
   $("#loadReport").onclick = async () => renderReport(await api(`/api/report?file=${encodeURIComponent($("#reportFile").value)}`));
   $("#cardSearch").oninput = (e) => renderCardGrid(e.target.value);
   $("#cardSet").onchange = () => renderCardGrid($("#cardSearch").value);
+  $("#cardArch").onchange = () => renderCardGrid($("#cardSearch").value);
   renderCardGrid("");
   await initBuilder(decks);
   await initLab(decks.filter(d => d.ok), ARCHETYPES || await api("/api/archetypes"));

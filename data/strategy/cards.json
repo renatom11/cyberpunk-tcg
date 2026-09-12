@@ -1,0 +1,222 @@
+{
+ "version": 1,
+ "note": "Hand-written notes on how a card plays. The mechanical connections shown beside these come from graph.json and are generated; this file is judgement and is written card by card.",
+ "cards": {
+  "alt-cunningham-soulkiller-architect": {
+   "role": "Program-deck engine",
+   "guide": "Alt turns a Program-heavy list from a pile of Eddie fodder into a real engine. The discount scales with your min Gigs, so she rewards exactly the board a Program deck tends to build — lots of low dice you have not pushed up yet. The trash recursion is the stronger half late: a second copy of your best Program for 1 €$ plus the card's cost is often the whole turn.",
+   "tips": [
+    "Hold the discount until you can chain two Programs in one turn.",
+    "Bottom-decking the recurred Program means you can find it again in a long game.",
+    "Do not push your Gigs up early if you are leaning on the discount."
+   ]
+  },
+  "evelyn-parker-beautiful-enigma": {
+   "role": "Eddie engine for CORPO/GANGER",
+   "guide": "A tempo Legend rather than a value one: readying an Eddie every time a CORPO or GANGER Unit steals means your attacks pay for your next play. Build around the tag and she is close to a free Eddie per turn. The forced-attack ability is a defensive trick — pull a rival blocker into a fight it does not want.",
+   "tips": [
+    "Only worth a slot if a real share of your Units are CORPO or GANGER.",
+    "Forcing an attack can clear a blocker out of the way of your own swing."
+   ]
+  },
+  "jackie-welles-pour-one-out-for-me": {
+   "role": "Blue tempo, Gig control",
+   "guide": "Decreasing your own Gig sounds backwards until you remember min Gigs draw you a card here. Jackie converts Blue Units and Gear into card advantage every single turn, and the decrease also sets up cards that care about min Gigs. The catch is the Blue requirement — in a two-colour list he can go dead for whole turns.",
+   "tips": [
+    "Aim the decrease at a Gig you can push back up later, not one you are about to score.",
+    "Sequence your Blue card first each turn so the trigger never goes to waste."
+   ]
+  },
+  "judy-alvarez-braindance-maestro": {
+   "role": "BRAINDANCE payoff and digger",
+   "guide": "Two halves that want the same deck. The +1 power on a BRAINDANCE Program is small but it is free and it stacks with a swing you were making anyway. The trash-and-take ability is the reason to run her: in a list that is a third Programs it is a real card most turns, and it fills the trash for Alt Cunningham and V — Streetkid.",
+   "tips": [
+    "Use the dig ability early when your deck is dense with Programs.",
+    "The +1 power can be the difference between stealing one Gig and two at a 10-power threshold."
+   ]
+  },
+  "sasha-yakovleva-wont-let-you-down": {
+   "role": "GO SOLO body with a variable swing",
+   "guide": "A 5 €$ Legend whose power is whatever you reveal, so she is a gamble that a high-cost card is on top. In a deck with a heavy top end she regularly attacks for 6-9 and draws you the card as well. The DEFEATED discard means trading her off is never pure loss.",
+   "tips": [
+    "Best in a list with an expensive top end — the reveal is the power.",
+    "Revealing a cheap card still nets you the card; the attack is the bonus."
+   ]
+  },
+  "v-corporate-exile": {
+   "role": "Clean 5-Eddie beater",
+   "guide": "The most honest Legend in the set: pay 5, get an 8-power Unit that can attack immediately. No conditions, no build-around. Eight power is one short of the 10 that steals a second Gig, so V is a natural home for a single point of pump or a piece of Gear.",
+   "tips": [
+    "Pair with any +2 power effect to cross the 10-power line.",
+    "Remember it is removed from the game when it leaves the field — there is no second use."
+   ]
+  },
+  "wakako-okada-peace-and-harmony": {
+   "role": "Flexible utility Fixer",
+   "guide": "Never spectacular, never dead. The CALL choice covers both halves of a tight game — shrink a blocker to win a fight, or just draw. The Gig adjustment is the quiet one that matters: two points of Gig movement is often exactly the gap between scoring this turn and next.",
+   "tips": [
+    "Default to Draw 1 unless the -2 power actually changes a fight.",
+    "Use the decrease to set up min-Gig payoffs, not only to protect."
+   ]
+  },
+  "goro-takemura-hands-unclean": {
+   "role": "Defensive GO SOLO body",
+   "guide": "Seven power with BLOCKER for 5 €$ is a wall that also threatens. Unlike most GO SOLO Legends he is worth playing when you are behind, because BLOCKER buys the turn you need. Against a deck trying to cross 10 power he is a genuine problem.",
+   "tips": [
+    "Hold him as a defensive play rather than racing him out as a beater.",
+    "Seven power still steals a Gig on the swing back."
+   ]
+  },
+  "goro-takemura-vengeful-bodyguard": {
+   "role": "Cheap-Unit protector",
+   "guide": "Turns your smallest Units into blockers at instant speed, which is a much better deal than it reads — QUICK means you decide after the rival commits. The value-pair rider pushes the blocker to a size that actually wins fights. The discard-draw on BLOCKER use keeps your hand moving.",
+   "tips": [
+    "Hold the Eddie open on the rival's turn; this is a trick, not a proactive play.",
+    "Value-pairs of Gigs are worth steering toward for the extra power."
+   ]
+  },
+  "hanako-arasaka-daughter-of-the-emperor": {
+   "role": "Gig manipulation and card draw",
+   "guide": "The swap is the strongest single Gig effect in the set — take their nearly-scored Gig and hand them your worst. The draw clause rewards value-pairs, so a deck built to line its dice up gets paid twice for the same board. She is slow, and she is devastating in a long game.",
+   "tips": [
+    "Save the swap for a Gig at 8 or higher rather than using it on curve.",
+    "Deliberately pairing Gig values turns every upkeep into extra cards."
+   ]
+  },
+  "jackie-welles-mamas-favorite": {
+   "role": "Big body plus insurance",
+   "guide": "Eight power for 6 €$ is fair, and the redirect is the real text: for 1 €$ Jackie eats a removal spell or a lost fight aimed at your best Unit. Opponents have to play around him being in the Legend area even before you pay.",
+   "tips": [
+    "Keep 1 €$ open once he is on the field so the redirect is live.",
+    "The redirect removes him from the game — it is one use, so spend it on a real threat."
+   ]
+  },
+  "padre-man-of-the-cross": {
+   "role": "Removal-flavoured utility Fixer",
+   "guide": "Spending a rival Unit is a tempo hit that reads like removal — a spent Unit cannot block and cannot attack. The Gig-setting ability is unusual and worth thinking about in both directions: set their high Gig down to your low one, or set yours up to match theirs.",
+   "tips": [
+    "Spend the rival Unit that was going to block, then swing.",
+    "Setting equal Gigs can create value-pairs for Hanako or Goro."
+   ]
+  },
+  "panam-palmer-nomad-cavalry": {
+   "role": "Gear deck engine",
+   "guide": "The payoff Legend for the archetype the AI cannot play. Moving Gear and readying the receiving Unit is a double attack in one ability, and the end-of-turn mass ready with five equipped bodies is a genuinely unfair board. It needs a real Gear count to work — half measures do nothing.",
+   "tips": [
+    "Only run in a list with 10+ Gear; below that the end-step clause never turns on.",
+    "Move Gear to a Unit that has already attacked to attack again."
+   ]
+  },
+  "saburo-arasaka-stubborn-patriarch": {
+   "role": "ARASAKA anthem",
+   "guide": "A flat +1 power while attacking across every ARASAKA Unit, which matters far more than it looks because Units steal an extra Gig per 10 power. Turning 9-power attackers into 10-power attackers doubles their output. Build the deck around the tag or leave him out.",
+   "tips": [
+    "Count your attackers' power at 9 — Saburo is what turns them into two-Gig swings.",
+    "Stacks with other pump; the 10 and 20 thresholds are where games are decided."
+   ]
+  },
+  "adam-smasher-ender-of-legends": {
+   "role": "Top-end finisher with removal",
+   "guide": "Nine Eddies is a real cost and you get a 9-power body that kills something on arrival. This is a closer, not a curve card: play him when the removal and the swing together end the game. In a long, grindy match he is the best single card in the set.",
+   "tips": [
+    "Nine power is one short of 10 — a single pump makes the swing steal two Gigs.",
+    "Kill the blocker with the PLAY trigger, then attack with everything."
+   ]
+  },
+  "dexter-deshawn-off-the-grid": {
+   "role": "All-purpose Fixer",
+   "guide": "The cleanest of the choice Fixers: +2 power wins a fight or crosses a threshold, Draw 1 is never dead, and the +2 Gig increase pushes a die toward scoring. Nothing here is exciting and all of it is useful, which is why he shows up in so many lists.",
+   "tips": [
+    "The +2 power and the +2 Gig both push toward the same thing — count before choosing.",
+    "A fine default Legend while you learn the pool."
+   ]
+  },
+  "johnny-silverhand-rocking-renegade": {
+   "role": "ROCKER aggression enabler",
+   "guide": "Letting a Unit attack spent rival Units the turn it arrives is a way to punish a tapped-out board, and the ROCKER rider makes it a real damage spike. The cost reduction for Gigs at 8+ means he gets cheaper exactly when you are closing the game out.",
+   "tips": [
+    "Push a Gig to 8+ before using him and the ability can be nearly free.",
+    "Best in a ROCKER list where the +2 power rider is usually live."
+   ]
+  },
+  "rebecca-having-a-moment": {
+   "role": "Not yet revealed",
+   "guide": "This is a promo card whose face has never been captured in full, so its cost, power and rules text are unknown. Everything the simulator shows for it is a placeholder and it cannot be put in a deck. There is no strategy to give yet — the entry exists so the card is not silently missing from the pool.",
+   "tips": [
+    "Marked unverified in the card data; excluded from deckbuilding."
+   ]
+  },
+  "royce-psycho-on-the-edge": {
+   "role": "Gear-hungry GO SOLO threat",
+   "guide": "Six power base that grows by 2 for every Gear on him during your turn, so two pieces make him a 10-power attacker — a two-Gig swing on his own. He is the reason to build a Gear deck alongside Panam, and he punishes an opponent who lets Gear accumulate.",
+   "tips": [
+    "Two Gear is the magic number: it crosses the 10-power threshold.",
+    "Only your turn — he does not get the bonus defending."
+   ]
+  },
+  "v-streetkid": {
+   "role": "BRAINDANCE tutor",
+   "guide": "Trash 3 then take a BRAINDANCE Program back is card selection and graveyard filling in one, and the GO SOLO body gives you a 6-power attacker afterwards. In a BRAINDANCE list he finds the piece you are missing; outside one, the CALL does nothing.",
+   "tips": [
+    "Trashing 3 is a cost but it feeds Alt Cunningham and Judy.",
+    "Check you actually have BRAINDANCE Programs before running him."
+   ]
+  },
+  "yorinobu-arasaka-embracing-destruction": {
+   "role": "ARASAKA draw engine",
+   "guide": "A card every turn for attacking with an ARASAKA Unit is a strong rate, and the Street Cred clause means the discard downside switches off as the game goes long. Early it is a real cost — you are effectively rummaging rather than drawing.",
+   "tips": [
+    "Track your Street Cred: past 20 the draw is unconditional.",
+    "Pairs naturally with Saburo in the same ARASAKA shell."
+   ]
+  },
+  "dum-dum-maelstrom-triggerman": {
+   "role": "Gear sacrifice and pump",
+   "guide": "Draw 2 by eating one of your own Gear is a fine rate when the Gear has already done its job, and the QUICK pump scales with equipment, so he is a second payoff for the Gear archetype. Note the pump is instant speed — it wins fights the rival thought they had.",
+   "tips": [
+    "Sacrifice a Gear that has already been attacked through, not a fresh one.",
+    "Hold 1 €$ open: the QUICK pump is a combat trick."
+   ]
+  },
+  "kerry-eurodyne-axe-attitude-audience": {
+   "role": "Dice-luck manipulator",
+   "guide": "A reroll on every Gig you roll in is quietly one of the best abilities in the set, because it turns your worst outcomes into average ones every single game. The min/max draw makes the extreme results good news either way, and drawing 3 off a d20 is a genuine swing.",
+   "tips": [
+    "Reroll aggressively — average outcomes beat bad ones over a game.",
+    "With a d20 in the fixer area the min/max draw is worth chasing."
+   ]
+  },
+  "muamar-reyes-el-capitan": {
+   "role": "Protective utility Fixer",
+   "guide": "The no-defeat clause is a hard answer to a fight you must not lose, and unlike a pump it works regardless of how much power the rival brings. The 1-point Gig adjustment is small but it is the precise tool for hitting an exact value.",
+   "tips": [
+    "Save the protection for a Unit carrying Gear or an anthem effect.",
+    "One point of adjustment is enough to make or break a value-pair."
+   ]
+  },
+  "river-ward-detective-on-the-hunt": {
+   "role": "Cheap-Gear enabler",
+   "guide": "A free Gear with cost 2 or less every turn, at QUICK speed, is a real engine in a Gear list — it is tempo you do not pay for. The second ability turns your equipped Units dying into deck filtering rather than pure loss.",
+   "tips": [
+    "Build with a critical mass of 1- and 2-cost Gear to use the ability every turn.",
+    "QUICK means you can equip in response to a fight."
+   ]
+  },
+  "rogue-amendiares-preem-solo": {
+   "role": "Legend-centric value",
+   "guide": "Seven power for 7 €$ is a fair body, and the trigger pays you whichever way the die lands — a card on even, a rival discard on odd. It wants a deck with several GO SOLO Legends so the trigger fires more than once a game.",
+   "tips": [
+    "Works off any friendly Legend stealing, not only herself.",
+    "In a Legend-heavy list she is a slow but relentless value drain."
+   ]
+  },
+  "viktor-vektor-sit-down-and-relax": {
+   "role": "Gear tutor",
+   "guide": "Digs five deep and takes two cheap Gear, which in a Gear deck is the most reliable way to assemble Royce or Panam's board. Outside a Gear deck it is a blank. This is the card that makes the Gear archetype consistent rather than a gamble.",
+   "tips": [
+    "Pair with River Ward: he plays for free what Viktor finds.",
+    "Only counts Gear with cost 2 or less — build the curve to match."
+   ]
+  }
+ }
+}

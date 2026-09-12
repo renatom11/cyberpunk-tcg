@@ -102,3 +102,30 @@ def test_derived_data_never_lands_in_the_card_pool_directory():
     stray = sorted(p.name for p in DATA_DIR.glob("*.json") if p.name != "wnc.json")
     assert not stray, (f"non-card JSON in the card pool directory: {stray}. "
                        f"registry.load_default() will try to parse these as card sets.")
+
+
+def test_the_web_backend_serves_the_map_and_the_notes():
+    """The CARDS page is the only consumer; if the join breaks there the page silently loses its
+    panel rather than erroring, so it is worth asserting here."""
+    import sys
+    sys.path.insert(0, str(ROOT / "src"))
+    from cptcg.web import backend as B
+
+    links = B.card_links()
+    pool = {c["id"] for c in json.loads(POOL.read_text(encoding="utf-8"))["cards"]}
+    assert set(links) == pool
+    # every link points at a real card, both directions agree
+    for cid, v in links.items():
+        for key in ("enables", "enabled_by", "tribal", "co_need"):
+            for l in v[key]:
+                assert l["id"] in pool, (cid, key, l)
+    # the worked example, through the backend rather than the file
+    mins = [l["id"] for l in links["trust-no-one"]["enables"] if l["token"] == "gig.min"]
+    assert "three-mouths-one-desire" in mins
+
+    # hand-written notes attach to the card JSON
+    guided = [B.card_json_static(d) for d in B.reg().defs]
+    assert any("guide" in c for c in guided), "no card carries hand-written guide text"
+    for c in guided:
+        if "guide" in c:
+            assert c["guide"].get("guide"), c["id"]

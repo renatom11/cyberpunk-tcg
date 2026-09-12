@@ -61,6 +61,14 @@ def build(out: Path, pyodide_url: str = PYODIDE) -> dict:
     manifest = {"decks": [], "images": [], "replays": []}
     (out / "data/cards").mkdir(parents=True)
     shutil.copy(ROOT / "data/cards/wnc.json", out / "data/cards/wnc.json")
+    # Derived commentary — the interaction map and the per-card notes. Deliberately NOT under
+    # data/cards: registry.load_default() globs that directory and would try to parse them as
+    # card sets. Missing files are not fatal; the CARDS page renders without the panel.
+    (out / "data/strategy").mkdir(parents=True, exist_ok=True)
+    for name in ("graph.json", "cards.json"):
+        src = ROOT / "data/strategy" / name
+        if src.exists():
+            shutil.copy(src, out / "data/strategy" / name)
     for p in sorted((ROOT / "data/decks").rglob("*.json")):
         rel = p.relative_to(ROOT)
         (out / rel).parent.mkdir(parents=True, exist_ok=True)
