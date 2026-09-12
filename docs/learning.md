@@ -1497,9 +1497,12 @@ is the first sentence rather than a footnote.
 this stage as a unit test": both Gear equipped *before* the attack, because 7+2 and 7+1 each still
 steal one Gig and only 7+2+1 crosses the threshold, so each equip alone scores as a rounding error
 and no per-decision agent can reach it at any strength of evaluation. **ISMCTS at 200 iterations
-solves it 0 times in 16.** Three of the eight suite positions are still unsolved and they are the
-horizon-2 ones. Searching the sequence produced a materially stronger player; it did not produce
-the two-move plan that justified building it.
+solves it 0 times in 16.** ~~Three of the eight suite positions are still unsolved and they are the
+horizon-2 ones.~~ **That sentence is wrong and a later diagnostic caught it: four are unsolved, and
+they are not the horizon-2 ones.** Two of the four unsolved are horizon-1
+(`two-pieces-of-gear`, `mined-23773-81`), and one horizon-2 position (`mined-166302-115`) *is*
+solved. Horizon does not predict which positions the agent finds. Searching the sequence produced a
+materially stronger player; it did not produce the two-move plan that justified building it.
 
 ### Every row here was re-measured after the no-op fix
 
@@ -1893,3 +1896,85 @@ much it is fed.
 
 The interaction map already names the things it cannot say. "I control Royce and two Gear" is one
 sentence, and no quantity of aggregate counters, games, or gradient-free search will reach it.
+
+
+## The ceiling was the wrong diagnosis. Here is the right one
+
+Three failures — more data, more features, a better optimiser — all pointed at the same conclusion:
+gen-1 sits at the ceiling of what 114 aggregate features can *express*. Before building a fourth
+thing on that inference, it was worth an hour to test it. **The test refuted it**, and the thing it
+found instead is both more specific and more fixable.
+
+### The diagnostic, and its control
+
+`data/arena/delayed.json` holds 8 positions with exhaustively verified winning lines. Four the agent
+solves 16/16, four it never solves. That split is a free control. For each position, every legal
+option was applied, settled exactly as `ismcts._root_actions` settles, and measured: where the
+verified winning move falls in the value head's ordering, and how far its resulting state sits from
+the losing moves' states relative to the losers' own spread.
+
+The hypothesis made a sharp prediction — the winning move should be *lost among the losers* on the
+positions the agent fails, and stand out on the ones it solves. It does not:
+
+| group | median separation ratio | median rank of the winning move |
+|---|---:|---:|
+| solved (4) | 0.25 | 3.5 of 8 |
+| unsolved (4) | 0.24 | 4.0 of 10 |
+
+Identical. Feature-space separation does not distinguish the positions the agent solves from the
+ones it does not, so it cannot be what decides them.
+
+Two corrections fell out on the way, and both were mine:
+
+* The first version read `entry["spec"]` and **silently skipped the five replay-prefix positions**,
+  which would have drawn a conclusion from three. `learn.delayed.build_entry` handles both kinds.
+* The first version did not dedup options the way the search does, and reported four cases of "the
+  winning move is feature-identical to another option". **Three were two copies of the same card** —
+  true, correct, and not a failure of anything. One survives and is real:
+  `sell-to-afford-the-raid`, where selling *Mandibular Upgrade* and selling *Mantis Blades* produce
+  byte-identical feature vectors, because the hand is described only in aggregate and both are
+  1-cost Gear. That position is solved anyway.
+
+A third correction, recorded above at its source: the Stage 3 claim that the unsolved positions "are
+the horizon-2 ones" is **false**. Two of the four unsolved are horizon-1 and one horizon-2 position
+is solved. Horizon does not predict solvability either.
+
+### What actually goes wrong, to the step and the magnitude
+
+Walking the verified winning line of `two-pieces-of-gear` and scoring every option at each step:
+
+| step | the line's move | value head's rank | margin |
+|---|---|---:|---|
+| 0 — equip the first Gear | `Play(28 → 30)` | **1** of 9 | +0.0035 over selling — a rounding error |
+| 1 — equip the second Gear | `Play(29 → 30)` | **2** of 7 | loses to `Sell` by 0.015 |
+| 2 — Call the Legend | `CallLegend(31)` | **4 of 4, last** | loses to `Attack` by **0.86** |
+
+The head is not blind here. At step 2 it separates the options by a wide margin — it simply values
+them wrongly. **It prefers attacking now (+3.9026) to finishing the setup (+3.0422).** Attacking
+banks a Gig immediately, which every feature describing the board can see; the Call is worth nothing
+until the attack that follows it, and nothing in the vector says "this is worth more in one move".
+
+That is a credit-assignment failure, not a representation failure, and the distinction matters
+because it changes what to build. 0.86 logits is also far too large a bias for search to shop
+around: every rollout's leaf evaluation carries the same preference, so more iterations buy more
+confidence in the wrong move.
+
+### What this changes
+
+The combo-feature work was the plan on the strength of the ceiling story. **It is no longer the
+obvious next step**, because the evidence for it — that the model cannot tell the moves apart —
+turned out to be false where it was checked. The model tells them apart clearly and ranks them
+backwards.
+
+The suspects that survive are the training target and the search, not the inputs:
+
+* the value head is fitted to *eventual* game outcome from sampled positions, which rewards
+  positions that look good now and gives a setup move no credit until its payoff lands;
+* the search evaluates leaves with that same head, so it inherits the bias rather than correcting
+  it — which is consistent with the ES finding no signal, the extra features not helping, and more
+  data not helping. None of those touch the objective being optimised.
+
+Eight hand-picked adversarial positions are a small sample, and this says nothing directly about
+general play. What it does say is that the next experiment should be aimed at the *target*, and
+that the ceiling story should not be repeated as established until something checks it somewhere
+other than where it has now failed.
