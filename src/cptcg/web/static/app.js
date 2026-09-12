@@ -1110,12 +1110,13 @@ function renderCardGrid(q) {
       && (!s || `${c.name} ${c.subtitle || ""} ${c.text} ${c.tags.join(" ")} ${c.keywords.join(" ")} ${c.type} ${c.color}`.toLowerCase().includes(s)))
     .slice(0, 200).forEach(c => {
       const n = cardNode(c);
-      // A plain click opens the guide. cardNode() already wires hover-preview and long-press, and
-      // on a touch-only screen it takes onclick for the preview — so only override where a real
-      // click exists to take, otherwise tapping would lose the ability to read the card at all.
-      if (CAN_HOVER) n.onclick = () => openCardGuide(c.id);
-      else n.ondblclick = () => openCardGuide(c.id);
-      n.title = CAN_HOVER ? "click for the strategy guide" : "double-tap for the strategy guide";
+      // One tap or click opens the guide, on every device. cardNode() takes onclick for the image
+      // preview on a touch-only screen, and leaving that in place cost the feature its front door:
+      // a phone tap opened a picture and the guide needed a double-tap nobody would guess. Nothing
+      // is lost by overriding it here — the guide shows the same face at the same size, and the
+      // long-press preview cardNode installs still works for a quick look without leaving the grid.
+      n.onclick = () => openCardGuide(c.id);
+      n.title = "open the strategy guide";
       grid.append(n);
     });
 }
