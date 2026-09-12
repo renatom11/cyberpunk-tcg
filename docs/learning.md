@@ -1733,3 +1733,49 @@ agent that came after the one it named.
 `tests/learn/test_arena.py` now asserts against the separator *constants* rather than literal
 strings, so a fourth decoration fails on the day it is added rather than five hours into the next
 generation.
+
+
+## The gear-aware feature set, and why it was not shipped
+
+The agent plays Units on 11.5% of the menus that offer them, Programs on 6.9%, Gear on 4.0%, and
+the eight zero-power Units on 3–6%. That is not taste. The feature vector is 114 aggregate numbers
+and **not one of them can see what a card does**: Gear appears as a count and a deck share, and the
+only ability the model can read at all is BLOCKER. A simulator built to playtest a card pool could
+not evaluate two of its four card types.
+
+Eleven features were added to fix it — the power Gear actually contributes, how many bodies are
+equipped, the largest Gear stack (Royce's payoff), Units carrying rules text, and what the hand can
+*do* (draw, removal, pump, Gig manipulation). Every one was validated against hand-counted truth on
+40 real positions rather than trusted, which caught a real bug: Gear equipped to a **face-up
+Legend** was being dropped, because the side scan only walked the field. Cards say "Equip to a
+friendly Unit or face-up Legend", so that was real power going uncounted.
+
+Changing the vector is affordable precisely because games are stored as action sequences: all
+80,000 games of history — the 50,000-game bootstrap and generation 1's 30,000 — were re-featured in
+**five minutes**, with no searching agent replaying anything, into the same 2,147,010 rows.
+
+The result was better prediction and worse play.
+
+| | features | holdout Brier | accuracy | ECE | panel vs the frozen heuristic |
+|---|---:|---:|---:|---:|---|
+| gen-1 | 114 | 0.14420 | 0.7816 | 0.0211 | **87.2%** [83.4–90.3] |
+| gear-aware | 125 | **0.14361** | **0.7825** | **0.0198** | 82.8% [78.5–86.3] |
+
+Both were fitted on identical rows with an identical split, so the Brier comparison is valid for
+once — and it moved the right way on all three measures. The panel moved 4.4 points the wrong way,
+past the 3-point regression tolerance `learn.loop.decide` enforces. The intervals overlap, so this
+does not establish that the extra features *hurt*; it establishes that they did not pay for
+themselves, and that a model can be better calibrated and worse at playing.
+
+It did do what it was built for, though the first measurement said otherwise. Compared against
+plain `ismcts` the Gear play rate looked *down*, 4.0% to 3.4% — but the 4.0% baseline was measured
+with `ismcts-explore`, which samples visit-proportionally and plays more variety by construction.
+Against the same agent the honest number is **4.0% → 5.3%**, a third more often, on ~4,200 offers.
+Units moved +0.3 and Programs not at all.
+
+So the trade on offer was a third more Gear for four points of strength, and it was declined. The
+work is parked rather than deleted, because the diagnosis stands and the next attempt is a better
+one: aggregate counts still cannot express *"I control Royce and two Gear"*, which is where Gear's
+value actually lives. The interaction map in `data/strategy/graph.json` already names those
+relationships — a feature keyed to its tokens ("I hold a card paid for equipped Units, and I have
+equipped Units") can say the thing eleven more counters could not.
