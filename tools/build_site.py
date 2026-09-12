@@ -58,7 +58,7 @@ def build(out: Path, pyodide_url: str = PYODIDE) -> dict:
                 z.write(p, p.relative_to(ROOT / "src"))
 
     # data: cards, decks, replays, art
-    manifest = {"decks": [], "images": [], "replays": []}
+    manifest = {"decks": [], "images": [], "replays": [], "strategy": []}
     (out / "data/cards").mkdir(parents=True)
     shutil.copy(ROOT / "data/cards/wnc.json", out / "data/cards/wnc.json")
     # Derived commentary — the interaction map and the per-card notes. Deliberately NOT under
@@ -69,6 +69,7 @@ def build(out: Path, pyodide_url: str = PYODIDE) -> dict:
         src = ROOT / "data/strategy" / name
         if src.exists():
             shutil.copy(src, out / "data/strategy" / name)
+            manifest["strategy"].append(f"data/strategy/{name}")
     for p in sorted((ROOT / "data/decks").rglob("*.json")):
         rel = p.relative_to(ROOT)
         (out / rel).parent.mkdir(parents=True, exist_ok=True)

@@ -76,6 +76,17 @@
     status("Loading cards and decks…");
     const fetches = [["data/cards/wnc.json", "data/cards/wnc.json"], ...manifest.decks.map(p => [p, p]), ...(manifest.replays || []).map(p => [p, p])];
     await Promise.all(fetches.map(async ([path, url]) => { files[path] = await (await fetch(base + url + V)).text(); }));
+    // The CARDS page's strategy guide reads these through the backend, which means they have to be
+    // inside Pyodide's filesystem and not merely sitting on the server. Missing them is invisible
+    // rather than loud — the guide opens with no connections in it, which is exactly how this
+    // shipped the first time — so they are fetched here and failure is tolerated per file.
+    await Promise.all((manifest.strategy || ["data/strategy/graph.json", "data/strategy/cards.json"])
+      .map(async path => {
+        try {
+          const r = await fetch(base + path + V);
+          if (r.ok) files[path] = await r.text();
+        } catch (e) { /* the pool still browses without the map */ }
+      }));
     Object.assign(files, saved);                       // the user's own decks and reports come back
     status("Starting the engine…");
     main = makeWorker("main", files, manifest.images);

@@ -129,3 +129,44 @@ def test_the_web_backend_serves_the_map_and_the_notes():
     for c in guided:
         if "guide" in c:
             assert c["guide"].get("guide"), c["id"]
+
+
+def test_the_browser_build_stages_the_map_into_its_filesystem():
+    """The static build runs the backend inside Pyodide, which only sees files boot.js fetched into
+    its virtual filesystem. The map shipped once with the files on the server but never staged, so
+    the guide opened on the live site with no connections in it and nothing logged an error.
+
+    Both halves are asserted: the boot fetches them, and the site build lists them in the manifest.
+    """
+    boot = (ROOT / "src" / "cptcg" / "web" / "static" / "boot.js").read_text(encoding="utf-8")
+    assert "data/strategy/graph.json" in boot, "boot.js does not stage the interaction map"
+    assert "manifest.strategy" in boot, "boot.js should prefer the manifest's list"
+    build = (ROOT / "tools" / "build_site.py").read_text(encoding="utf-8")
+    assert 'manifest["strategy"]' in build, "build_site.py does not list the map in the manifest"
+
+
+def test_the_map_path_follows_a_rebased_root():
+    """``bridge.setup()`` repoints ``backend.ROOT`` for the browser. A path resolved at import time
+    would keep pointing at the old root and silently return an empty map."""
+    import shutil
+    import sys
+    import tempfile
+    sys.path.insert(0, str(ROOT / "src"))
+    from cptcg.web import backend as B
+
+    before = len(B.card_links())
+    assert before > 0
+    d = Path(tempfile.mkdtemp())
+    (d / "data" / "strategy").mkdir(parents=True)
+    shutil.copy(GRAPH, d / "data" / "strategy" / "graph.json")
+    old_root = B.ROOT
+    try:
+        B._GRAPH = B._LINKS = None
+        B.ROOT = d
+        assert len(B.card_links()) == before, "a rebased ROOT was ignored"
+        B._GRAPH = B._LINKS = None
+        B.ROOT = Path("/definitely/not/here")
+        assert B.card_links() == {}, "a missing map should degrade to empty, not raise"
+    finally:
+        B.ROOT = old_root
+        B._GRAPH = B._LINKS = None

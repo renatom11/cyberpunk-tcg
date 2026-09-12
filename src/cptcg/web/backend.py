@@ -709,7 +709,10 @@ def replay_views(rel: str) -> list[dict]:
 #: Card-by-card strategy notes, written for the CARDS page. Kept in ``data/`` beside the card text
 #: rather than in the client, so the same file feeds the local server and the Pyodide build, and so
 #: a note can be edited without touching JavaScript.
-GUIDE_PATH = ROOT / "data" / "strategy" / "cards.json"
+#: Resolved against ROOT at call time, not import time. ``bridge.setup()`` rebases ``backend.ROOT``
+#: for the in-browser build, and a path baked in at import would quietly keep pointing at the old
+#: root — the same silent-empty failure that shipped the guide with no connections in it.
+GUIDE_NAME = "cards.json"
 _GUIDE: dict | None = None
 
 
@@ -722,7 +725,8 @@ def guide() -> dict:
     global _GUIDE
     if _GUIDE is None:
         try:
-            _GUIDE = json.loads(GUIDE_PATH.read_text(encoding="utf-8")).get("cards", {})
+            _GUIDE = json.loads((ROOT / "data" / "strategy" / GUIDE_NAME)
+                                .read_text(encoding="utf-8")).get("cards", {})
         except Exception:
             _GUIDE = {}
     return _GUIDE
@@ -730,7 +734,7 @@ def guide() -> dict:
 
 #: The interaction map: ``tools/build_card_graph.py`` output. Served to the CARDS page so a card
 #: can show what it combos with, rather than only what it says.
-GRAPH_PATH = ROOT / "data" / "strategy" / "graph.json"
+GRAPH_NAME = "graph.json"
 _GRAPH: dict | None = None
 _LINKS: dict | None = None
 
@@ -739,7 +743,8 @@ def graph() -> dict:
     global _GRAPH
     if _GRAPH is None:
         try:
-            _GRAPH = json.loads(GRAPH_PATH.read_text(encoding="utf-8"))
+            _GRAPH = json.loads((ROOT / "data" / "strategy" / GRAPH_NAME)
+                                .read_text(encoding="utf-8"))
         except Exception:
             _GRAPH = {"cards": {}, "edges": [], "tribal_edges": [], "co_need": [], "tokens": {}}
     return _GRAPH
