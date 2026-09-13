@@ -45,9 +45,9 @@ Pure stdlib, like everything under ``src/cptcg``: this package is shipped into t
 
 from __future__ import annotations
 
-from cptcg.core.enums import Color, Zone
-from cptcg.core.state import GameState
-from cptcg.core.view import knows_identity
+from cptcg.core.enums import NZONE, Color, Zone
+from cptcg.core.state import NO_INST, GameState
+from cptcg.core.view import PUBLIC_ZONES, knows_identity, legend_identity_known
 
 #: Legends a player has. Every colour bound is capped by this, and the caps are what make one
 #: colour's evidence into another colour's exclusion.
@@ -75,18 +75,50 @@ def legend_ram(reg) -> int:
     return seen.pop()
 
 
-def _public_cards(s: GameState, me: int, rival: int):
-    """Every rival instance this seat may read the identity of, as ``CardDef``.
+def _public_instances(s: GameState, me: int, rival: int):
+    """Every rival instance this seat may read, as ``(instance, is_a_face_up_Legend)``.
 
-    Their hand and deck are excluded by ``knows_identity`` rather than by a zone list here, so an
-    open peek that legitimately showed me a card in hand counts — it is information I have — and a
-    face-down Legend does not.
+    Three sources, and they are split apart for speed rather than taste. The first version asked
+    ``knows_identity`` about every instance the rival owns, including all forty cards of their deck,
+    and cost **42.7 us against the whole feature vector's 46** — it would have doubled the price of
+    every fit and every search leaf. The zones below are already ``PUBLIC_ZONES``, so the answer is
+    known without asking; Legends need the face-up test; and hand or deck can only ever be visible
+    through an open peek, which is a short tuple on the pending choice rather than a zone to scan.
+
+    ``tests/learn/test_opponent.py`` pins the result against ``view.determinize``, so a shortcut
+    that started reading something this seat may not see would fail there rather than here.
     """
-    for zone in (Zone.FIELD, Zone.TRASH, Zone.EDDIES, Zone.LEGENDS, Zone.REMOVED, Zone.LIMBO,
-                 Zone.HAND, Zone.DECK):
-        for i in s.z[rival * len(Zone) + zone]:
-            if knows_identity(s, me, i):
-                yield s.reg.defs[s.i_card[i]]
+    base = rival * NZONE
+    for zone in (Zone.FIELD, Zone.TRASH, Zone.EDDIES, Zone.REMOVED, Zone.LIMBO):
+        for i in s.z[base + zone]:
+            yield i, False
+    for i in s.z[base + Zone.LEGENDS]:
+        if knows_identity(s, me, i):           # Gear on a Legend is public; the Legend may not be
+            yield i, s.i_host[i] == NO_INST    # the Gear is not a Legend, so it proves by RAM
+    ch = s.pending                              # an open peek, and nothing else, reveals hand/deck
+    if ch is not None and ch.revealed and ch.player == me:
+        owner, zones = s.i_owner, s.i_zone
+        for i in ch.revealed:
+            if owner[i] == rival and zones[i] in (Zone.HAND, Zone.DECK):
+                yield i, False
+
+
+#: ``(colour, Legends this card's RAM proves)`` per card index, built once per registry. The loop
+#: below runs on every feature vector, so it reads two flat lists instead of touching four fields of
+#: a dataclass per card — the difference is most of this function's cost.
+_EVIDENCE: dict[int, tuple[tuple[int, ...], tuple[int, ...]]] = {}
+
+
+def _evidence(reg) -> tuple[tuple[int, ...], tuple[int, ...]]:
+    key = id(reg)
+    got = _EVIDENCE.get(key)
+    if got is None:
+        ram = legend_ram(reg)
+        colours = tuple(int(d.color) for d in reg.defs)
+        # A Legend proves itself once it is face-up; anything else proves ceil(ram / 2).
+        needs = tuple(1 if d.is_legend else (-(-d.ram // ram) if d.ram else 0) for d in reg.defs)
+        got = _EVIDENCE[key] = (colours, needs)
+    return got
 
 
 def colour_bounds(s: GameState, me: int) -> list[int]:
@@ -95,22 +127,45 @@ def colour_bounds(s: GameState, me: int) -> list[int]:
     Two independent sources, and the stronger wins: a face-up Legend of colour X is direct evidence
     of one, and a played card of colour X and RAM r is indirect evidence of ``ceil(r / 2)``. Indexed
     by ``Color``.
+
+    Note that the two combine differently: RAM evidence is a **maximum** (one 4-RAM card proves two
+    Legends; a second proves nothing more) while face-up Legends **count**. Getting that backwards
+    would read three 1-RAM Blue cards as three Blue Legends, which is not what they prove.
     """
     rival = 1 - me
-    ram = legend_ram(s.reg)
+    colours, needs = _evidence(s.reg)
+    idx = s.i_card
     by_ram = [0] * NCOLOR
     faceup = [0] * NCOLOR
-    for d in _public_cards(s, me, rival):
-        c = int(d.color)
-        if d.is_legend:
+    for inst, is_legend in _public_instances(s, me, rival):
+        k = idx[inst]
+        c = colours[k]
+        if is_legend:
             faceup[c] += 1
-        elif d.ram:
-            by_ram[c] = max(by_ram[c], -(-d.ram // ram))      # ceil without importing math
+        else:
+            n = needs[k]
+            if n > by_ram[c]:
+                by_ram[c] = n
     bounds = [max(by_ram[c], faceup[c]) for c in range(NCOLOR)]
-    # The bounds compete for three slots. A set that demands more than three is not reachable, which
-    # would mean the evidence is being read wrongly rather than that the rival broke a rule.
-    if sum(bounds) > LEGEND_SLOTS:
-        raise ValueError(f"colour bounds {bounds} need more than {LEGEND_SLOTS} Legends")
+    total = sum(bounds)
+    if total > LEGEND_SLOTS:
+        # The deduction assumes the rival's deck is **legal**: RAM limits are a deck-building rule,
+        # so in a real game the evidence can never demand a fourth Legend. Hand-built boards are not
+        # bound by that — ``learn/delayed.build_position`` places cards directly, and the delayed
+        # suite holds positions that would be illegal to actually construct. It found this by
+        # killing an arena run mid-flight, which is the right answer for an engine invariant and the
+        # wrong one for a feature vector: ``features()`` has to be total, or a synthetic position
+        # takes the whole measurement down with it.
+        #
+        # So the impossible reading is clamped rather than raised on, weakest evidence first, which
+        # keeps the strongest colour claim intact. Real games never reach this branch.
+        order = sorted(range(NCOLOR), key=lambda c: bounds[c])
+        for c in order:
+            while bounds[c] > 0 and total > LEGEND_SLOTS:
+                bounds[c] -= 1
+                total -= 1
+            if total <= LEGEND_SLOTS:
+                break
     return bounds
 
 

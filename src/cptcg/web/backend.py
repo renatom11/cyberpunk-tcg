@@ -55,9 +55,18 @@ class Game:
                       "You" if human_seat == 1 else f"AI ({decks[1].name})")
         self.reset()
 
+    #: Wall-clock a searching AI may spend on one decision here, seconds. Interactive play is one
+    #: decision per click, so a person does not notice a second — but an iteration count is the
+    #: wrong dial in a browser, where the same number is a different amount of work on a phone than
+    #: on a laptop. ``IsmctsAgent.max_seconds`` has documented this as "the browser build sets
+    #: this" since it was written, and until now nothing anywhere set it.
+    THINK_SECONDS = 1.5
+
     def reset(self, actions: list[int] | None = None, pays: dict[int, tuple] | None = None) -> None:
         self.s = new_game(reg(), self.decks, self.seed, record=True)
         self.agent = make_agent(self.agent_name, self.seed)
+        if hasattr(type(self.agent), "max_seconds"):
+            self.agent.max_seconds = self.THINK_SECONDS
         self.agent.new_game(self.seed, 1 - self.human)
         self.lines: list[str] = []
         self.frames: list[dict] = []

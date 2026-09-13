@@ -117,3 +117,19 @@ def test_threats_are_counted_only_over_what_is_still_possible(pool):
     # cannot hold it at all. This is the worked example the module exists for.
     assert mono_blue["unit.spend_rival"] >= 1
     assert mono_red["unit.spend_rival"] == 0
+
+
+def test_an_impossible_board_is_clamped_rather_than_fatal(reg):
+    """A hand-built position need not be deck-legal, and a feature vector has to be total.
+
+    The deduction rests on RAM limits, which are a *deck-building* rule — so in a real game the
+    evidence can never demand a fourth Legend. ``learn/delayed.build_position`` places cards
+    directly and is bound by no such rule, and the delayed suite holds a position whose rival board
+    reads as ``[2, 1, 1, 0]``: four Legends' worth of proof. The first version raised, which killed
+    an arena run mid-flight and taught the difference between an engine invariant and a feature.
+    """
+    s = board(reg, Side(), Side(field=["T-U8", "T-U6"], trash=["T-U5"]))
+    bounds = colour_bounds(s, 0)
+    assert sum(bounds) <= LEGEND_SLOTS, f"{bounds} needs more than {LEGEND_SLOTS} Legends"
+    # Clamping is weakest-first, so the strongest claim survives: T-U8 is Red at 4 RAM.
+    assert bounds[int(Color.RED)] == 2

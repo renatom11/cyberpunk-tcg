@@ -208,3 +208,31 @@ def test_a_card_that_says_it_stops_a_rival_unit_carries_the_token():
     assert not missing, ("these cards say they stop a rival Unit attacking but the interaction map "
                          "does not say so, which makes them invisible to the opponent model:\n  "
                          + "\n  ".join(missing))
+
+
+def test_every_card_has_a_written_guide():
+    """``data/strategy/cards.json`` is judgement, written card by card, and the CARDS page shows it.
+
+    A card with no entry renders as connections-only — mechanically true and useless to a person
+    asking "when do I play this?". That was the state of 124 of the 151 cards for a week, and
+    nothing failed, because a missing key is indistinguishable from a card nobody has got to yet.
+    So the count is pinned: a new card ships with prose or this test names it.
+    """
+    import glob
+
+    guide = json.loads((ROOT / "data" / "strategy" / "cards.json").read_text(encoding="utf-8"))
+    entries = guide["cards"]
+    ids = set()
+    for f in glob.glob(str(ROOT / "data" / "cards" / "*.json")):
+        raw = json.loads(Path(f).read_text(encoding="utf-8"))
+        arr = raw if isinstance(raw, list) else raw.get("cards", raw)
+        for x in (arr if isinstance(arr, list) else []):
+            ids.add(x["id"])
+
+    missing = sorted(ids - set(entries))
+    assert not missing, f"{len(missing)} cards have no written guide: {missing[:8]}"
+    stray = sorted(set(entries) - ids)
+    assert not stray, f"guide entries for cards that do not exist: {stray}"
+    thin = sorted(k for k, v in entries.items()
+                  if not v.get("role") or not v.get("guide") or not v.get("tips"))
+    assert not thin, f"guide entries missing role/guide/tips: {thin[:8]}"

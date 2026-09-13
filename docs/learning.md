@@ -2509,3 +2509,140 @@ not what was in the way.
 The remaining hole is the one both agents share. `mined-166300-77` is 0/16 for `ismcts` and 4/16 for
 both plan agents, against a random floor of 3/16 — a horizon-2 position that neither approach
 touches, and the honest place to point the next experiment.
+
+
+### Frozen panel: ismcts:32@out/learn/v3/weights.json — 2026-09-13 11:39 UTC
+
+Panel `a1832d477c27193f`, decks `1b1799dbc029a6b7`, frozen 2026-09-10: 6 deck pairings whose **decklists are stored verbatim in `data/arena/panel.json`** and are never redrawn from the sampler, 60 games each, no early stopping. Both digests are checked on load, so these numbers are comparable across every generation as long as they read `a1832d477c27193f` / `1b1799dbc029a6b7`.
+
+| opponent | games | win rate | 95% Wilson (these decks) | per-pairing spread | decisive pairs |
+|---|---:|---:|---|---|---|
+| uniform random legal play (`random`) | 360 | 97.2% | 95.0–98.5% | 91.7–100.0% | 170/170 |
+| the frozen one-ply heuristic (`heuristic`) | 360 | 84.7% | 80.6–88.1% | 71.7–91.7% | 125/125 |
+| the generation-0 snapshot (`gen0`) | — | not available yet | — | — | lands with the first trained model; until then this row reads "not available yet" and the panel is two members |
+
+Here the Wilson interval is the right one and the *only* one that changes between generations: the decks are fixed by the panel, so nothing but more games is being sampled. The per-pairing spread is printed beside it as a reminder of what the panel is not — a panel score is a score on these twelve decklists, and generalises no further than they do. For a claim about play in general, use the between-pairing interval from `a-vs-b` or `generalisation`.
+
+
+### Delayed-reward suite: ismcts:32@out/learn/v3/weights.json — 2026-09-13 12:07 UTC
+
+**Solved 4 of 8** (64 of 128 trials won), against a floor of 12 of 128 trials for uniform random play. Every position has a verified winning line that the frozen heuristic does not find on any of these seeds; a position counts as solved only when the agent wins it on every one of them. The suite holds 5 at a horizon of one turn (won inside the searched turn), 3 at a horizon of two turns (the payoff lands after the rival's answer).
+
+| position | source | horizon | trials won | floor | solved |
+|---|---|---:|---:|---:|---|
+| `gear-before-the-raid` | hand-built | 1 | 16/16 | 3/16 | yes |
+| `sell-to-afford-the-raid` | hand-built | 1 | 16/16 | 3/16 | yes |
+| `two-pieces-of-gear` | hand-built | 1 | 0/16 | 0/16 | no |
+| `mined-23767-79` | mined from heuristic self-play | 1 | 16/16 | 3/16 | yes |
+| `mined-23773-81` | mined from heuristic self-play | 1 | 0/16 | 0/16 | no |
+| `mined-166300-77` | mined from heuristic self-play | 2 | 0/16 | 3/16 | no |
+| `mined-166302-115` | mined from heuristic self-play | 2 | 16/16 | 0/16 | yes |
+| `mined-166305-59` | mined from heuristic self-play | 2 | 0/16 | 0/16 | no |
+
+**Horizon** is how far past the searched turn the win may land, counted in the searched player's own turns. At 1 the line wins inside the turn; at 2 the searched turn cannot win by itself and has to leave a board the frozen policy converts on the following turn — a reward that arrives after the move that earned it. Only the searched turn is chosen by the agent either way: the suite measures which line you take *this* turn, not whether you can plan two of them.
+
+**Floor** is uniform random play over the same turn, on the same seeds, stored when the position was qualified. Read the agent's column against it, not against the frozen heuristic's zero: the heuristic scores zero here by construction, because missing these positions on these seeds is how they were selected.
+
+The win is confirmed by playing the turn out and the rival's whole reply with the frozen heuristic in both seats, so a line that reaches seven Gigs and has them stolen back does not count. That reply is one competent defence and one sample of the rival's Gig die, not a proof against every defence.
+
+## Reading the rival, fitted and gated: the seventh flat result — and a pattern worth naming
+
+The previous section built `learn/opponent.py` and argued it was the one untried category: every
+earlier attempt fitted the same 114 numbers better or searched over them better, while this one
+would give the model **information it did not have**. It was fitted, gated, and it does not work.
+
+### The cleanest control this project has run
+
+Games are stored as action sequences, and the bootstrap harvests survived on disk, so gen-1's exact
+corpus was re-featured with the 129-feature vector and refitted with the same width, optimiser and
+by-game split. The two runs agree to the row:
+
+| | gen-1 (114 features) | v3 (129 features) |
+|---|---:|---:|
+| rows / train / holdout | 2,147,010 / 1,716,364 / 430,646 | **identical** |
+| train games / holdout games | 63,996 / 15,999 | **identical** |
+| best epoch | 72 | 72 |
+| held-out Brier | 0.14420 | **0.14298** |
+| held-out log-loss | 0.43604 | **0.43291** |
+| held-out accuracy | 0.78165 | **0.78343** |
+| ECE | 0.02113 | 0.02263 |
+| **frozen panel vs `heuristic`** | **87.2%** [83.4–90.3] | **84.7%** [80.6–88.1] |
+| frozen panel vs `random` | 96.9% | 97.2% |
+| delayed suite | 4 of 8, 64/128 | 4 of 8, 64/128 |
+
+Nothing but the feature vector differs. Brier, log-loss and accuracy all improve. **The panel falls
+2.5 points.**
+
+### It is not that the model ignored the features
+
+That was the first thing to rule out, because a flat result from a feature the model never used says
+nothing about the idea. `tools/opponent_influence.py` scores every sampled position twice — once as
+it is, once with the fifteen rival-facing entries reset to their turn-one "nothing proven" values —
+and reports the difference in logits.
+
+```
+8,885 positions   mean |delta| 0.2669   median 0.2225   p99 0.8915   max 1.2428
+                  mean signed −0.1727   share under 0.01 logits: 7.3%
+turn  0–1  0.0000     turn 6  0.2288     turn 10  0.3232     turn 14  0.5394
+```
+
+Turns 0 and 1 read exactly zero, which is the correctness check: before the rival has played
+anything the ablated vector *is* the real vector. From there the influence grows monotonically with
+what has been revealed, and the mean signed value is negative — learning the rival's colours makes
+the model more pessimistic, which is what knowing a live threat should do. At p99 the effect is 0.89
+logits, the same order as the 0.86-logit misordering that was the largest known evaluation error in
+this project.
+
+So the model uses them, it uses them as a contingency rather than a constant, and it plays worse.
+
+### The pattern, which is the actual finding
+
+This is the **second** time a feature set has improved every offline metric and cost panel points:
+
+| | held-out Brier | frozen panel |
+|---|---|---|
+| gear-aware features (125) | better | **−4.4** |
+| opponent-aware features (129) | better | **−2.5** |
+
+Two independent feature sets, built for different reasons, months of reasoning apart. On both,
+held-out Brier and playing strength moved in **opposite** directions. That is no longer a curiosity
+about one experiment; at the margin where these changes live, **Brier is not a weak proxy for
+strength, it is an anti-correlated one**, and any future feature work that quotes a Brier improvement
+as encouragement is quoting the wrong number.
+
+A plausible mechanism, stated as a hypothesis and not as a result: predicting an outcome and
+*ranking sibling moves* are different jobs. Fifteen features that describe the rival's deck are
+nearly constant across the options of a single decision — they barely move between "attack" and
+"call a Legend" on the same turn — so they add real signal to the prediction task while diluting the
+weights that separate one move from its alternatives. The agent ranks with `raw`, not `value`; a
+vector that is better at the first job and flatter at the second is exactly what both of these
+experiments produced.
+
+### What was kept, and what was reverted
+
+Reverted: the fifteen features. `learn/features.py` is back to 114 and gen-1 remains the shipped
+model, exactly as the gear-aware experiment was handled.
+
+Kept, because it is correct, tested and useful whatever the model does with it:
+`src/cptcg/learn/opponent.py` (the deduction), `src/cptcg/learn/threats.py` and
+`tools/build_threat_table.py` (the precomputed counts), and `tools/opponent_influence.py` (the
+ablation, which is the right instrument for the *next* feature experiment whoever runs it).
+
+### Two bugs the work surfaced
+
+**The deduction assumes a legal deck.** RAM limits are a *deck-building* rule, so in a real game the
+evidence can never demand a fourth Legend — and `colour_bounds` raised when it did. The delayed
+suite's hand-built positions are bound by no such rule: `build_position` places cards directly, and
+one of them reads `[2, 1, 1, 0]`. The exception killed an arena run mid-flight. That is the right
+behaviour for an engine invariant and the wrong one for a feature vector, which has to be total or a
+synthetic position takes the whole measurement down with it. Impossible readings are now clamped
+weakest-evidence-first, and a test builds the illegal board on purpose.
+
+**The first version cost 43 microseconds.** `colour_bounds` asked `view.knows_identity` about every
+instance the rival owns, all forty cards of their deck included — 42.7 us against the whole feature
+vector's 46, which would have made every fit and every search leaf nearly twice as dear for fifteen
+features. Public zones need no such call, hand and deck are only ever visible through a short
+`revealed` tuple, and the per-card attribute reads collapse to two flat lookups. 42.7 us → 5.3 us,
+and the derived counts are memoised on the four colour bounds, of which there are at most 256.
+Worth recording because the honest failure mode was not a crash: it was an experiment that comes
+back flat for a reason that has nothing to do with its hypothesis.

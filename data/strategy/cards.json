@@ -2,6 +2,62 @@
  "version": 1,
  "note": "Hand-written notes on how a card plays. The mechanical connections shown beside these come from graph.json and are generated; this file is judgement and is written card by card.",
  "cards": {
+  "6th-street-recruits": {
+   "role": "Gig-shaping body for a d6 board",
+   "guide": "Six power for four is a fair rate on its own; the trigger is the reason to run it. Every friendly d6 steal lets you push a Gig up by as much as 6, which is how a board of small dice turns into Street Cred without ever drawing a pump card. It wants a wide GANGER board rolling d6s, not a single big attacker.",
+   "tips": [
+    "The trigger is on *any* friendly Unit stealing a d6, not just this one — it is an anthem, so play it before you attack.",
+    "Pushing a Gig to 8+ is what most Braindance and EXTREME payoffs read; this is the cheapest way to get there repeatedly."
+   ]
+  },
+  "adam-smasher-ender-of-legends": {
+   "role": "Top-end finisher with removal",
+   "guide": "Nine Eddies is a real cost and you get a 9-power body that kills something on arrival. This is a closer, not a curve card: play him when the removal and the swing together end the game. In a long, grindy match he is the best single card in the set.",
+   "tips": [
+    "Nine power is one short of 10 — a single pump makes the swing steal two Gigs.",
+    "Kill the blocker with the PLAY trigger, then attack with everything."
+   ]
+  },
+  "adam-smasher-metal-over-meat": {
+   "role": "Board wipe on a 15-power body",
+   "guide": "Nine Eddies and 6 RAM is the whole cost of your deck's colour, and what you get is a reset that leaves only him standing. Play him when you are behind on board and cannot win a fight, not when you are ahead — you are defeating your own Units too. The 15 power then steals essentially any Gig on the table.",
+   "tips": [
+    "6 RAM means all three of your Legends must be Yellow. That is the real price, not the 9 €$.",
+    "Hold him if the rival has a can't-attack answer live: a 15-power body that cannot swing is a very expensive board wipe."
+   ]
+  },
+  "adrenaline-converter": {
+   "role": "Comeback Gear",
+   "guide": "Two Eddies for a 3-power boost and a conditional keyword. The ADRENALINE clause only switches on while you are two or more Gigs behind, so this is a card that is dead while you are winning and excellent while you are losing — which is exactly the profile a Gear slot can afford, because you can sell it when it is dead.",
+   "tips": [
+    "It has a sell tag: if you are ahead, it is a Eddie rather than a dead card.",
+    "Equipping it to a face-up Legend is often better than a Unit — Legends survive board wipes that Units do not."
+   ]
+  },
+  "afterparty-at-lizzies": {
+   "role": "One-Eddie Gig fixer with a draw rider",
+   "guide": "The cheapest way to move a Gig by one, which is more often decisive than it sounds: one pip is the difference between a min Gig, an even Gig, and a value your attacker can actually steal. The draw only fires if you control two Gigs of different values, which almost any real board does.",
+   "tips": [
+    "Use it to set up a *min* Gig the turn you want Chrome Reverie or another min-Gig payoff.",
+    "Also the cheapest way to break an all-same-value board so the draw condition turns on."
+   ]
+  },
+  "all-is-lost": {
+   "role": "Program-deck Unit tutor",
+   "guide": "One Eddie to dig three deep for a Unit. In a Program-heavy list the trash is a resource rather than a cost — recursion cards want cards down there — so this is close to pure gain. It does not find Programs or Gear, so it is a fixer for the one thing a spell-heavy deck runs out of: bodies.",
+   "tips": [
+    "Trashing 3 is an *enabler* for recursion cards, not a drawback. Sequence it before them.",
+    "If you need a Program instead, this is the wrong card — it can only add a Unit."
+   ]
+  },
+  "alt-cunningham-mother-of-daemons": {
+   "role": "Gear-deck engine and Gig protection",
+   "guide": "Two abilities that both want the same deck. The draw fires whenever an equipped friendly Unit *or Legend* is spent, so an equipped board turns every attack into a card. The second half is the rare effect that stops a steal outright, at the cost of discarding a card whose cost matches the Gig's value — expensive, but it is the answer to a board you cannot block.",
+   "tips": [
+    "Equip your face-up Legends, not just Units: spending a Legend to pay a cost also draws.",
+    "Hold a card of each common Gig value (2, 4, 6) if you expect to need the protection clause."
+   ]
+  },
   "alt-cunningham-soulkiller-architect": {
    "role": "Program-deck engine",
    "guide": "Alt turns a Program-heavy list from a pile of Eddie fodder into a real engine. The discount scales with your min Gigs, so she rewards exactly the board a Program deck tends to build — lots of low dice you have not pushed up yet. The trash recursion is the stronger half late: a second copy of your best Program for 1 €$ plus the card's cost is often the whole turn.",
@@ -9,6 +65,198 @@
     "Hold the discount until you can chain two Programs in one turn.",
     "Bottom-decking the recurred Program means you can find it again in a long game.",
     "Do not push your Gigs up early if you are leaning on the discount."
+   ]
+  },
+  "animals-wrecker": {
+   "role": "Vanilla top-end beater",
+   "guide": "Ten power for six with no text at all. It steals essentially any Gig on the board and wins nearly every fight, and that is the whole card. In an aggro list it is the payoff the curve is built toward; in anything slower it is a 6-Eddie brick.",
+   "tips": [
+    "No text means no answer needed beyond removal — respect a rival who has shown the colours that hold it.",
+    "3 RAM means two Red Legends. Check your list actually supports it before slotting it."
+   ]
+  },
+  "appetite-for-destruction": {
+   "role": "Aggro reach",
+   "guide": "Turns one lopsided fight into a second stolen Gig. It needs a 3+ power margin, so it wants your board to be genuinely bigger than theirs rather than merely wider — a pump card and this together is often two Gigs out of nowhere. Dead if the rival has no Units to fight.",
+   "tips": [
+    "Play it *before* the fight, not after; it modifies the next win this turn.",
+    "It pairs with anything that raises one Unit's power — the margin is what it reads, not the power."
+   ]
+  },
+  "arasaka-emergency-radioport": {
+   "role": "Legend accelerator on a cheap Gear",
+   "guide": "A 2-power Gear that turns every spend into a look at a face-down Legend, and a free Call if it is ARASAKA or has GO SOLO. In an ARASAKA list this is how your Legends come out turns ahead of schedule, which matters because a face-up Legend is both a body and a payment source.",
+   "tips": [
+    "The look happens even when the Call does not — free information about your own top Legend.",
+    "Only once per turn for the Call, so do not build a whole turn around spending twice."
+   ]
+  },
+  "augmented-negotiators": {
+   "role": "Defensive body with a discard rider",
+   "guide": "Two power is small, but BLOCKER means it trades up against anything that has to come through it, and every time it blocks the rival loses a card. Against an aggro board it is a tax that compounds; against a Program deck that wants cards in hand it is genuinely painful.",
+   "tips": [
+    "The discard is on *using* BLOCKER, so it rewards blocking early and often rather than holding it back.",
+    "Cheap enough to double up — two of these makes attacking into you a losing proposition."
+   ]
+  },
+  "bonnie-and-clyde": {
+   "role": "Removal that scales when you are losing",
+   "guide": "Three Eddies to defeat a rival Unit of power 4 or less — and two of them if a Rival is two or more Gigs ahead. That condition is the card: it is a fair trick while the game is even and a genuine swing when it is not, which makes it one of the better answers to a board that got away from you.",
+   "tips": [
+    "Check the Gig count before you cast — one more stolen Gig against you can turn this into a 2-for-1.",
+    "Power 4 or less is a real cap; it does not answer the top end."
+   ]
+  },
+  "bootleg-black-sapphire-show": {
+   "role": "Braindance draw at five",
+   "guide": "Sells the top of your deck for Eddies and draws two if you control both an even-valued and an odd-valued Gig — a condition most boards meet by accident but that you can guarantee with any Gig adjuster. Expensive for what it does unless the Braindance tag is doing work elsewhere in your list.",
+   "tips": [
+    "Adjust a Gig by one first if your board is all-even or all-odd; the draw is the whole card.",
+    "The sell is not optional — do not cast it when your top card is one you wanted."
+   ]
+  },
+  "caliber-totentanzs-top-dog": {
+   "role": "Maelstrom removal that punishes twice",
+   "guide": "Kills a cheap Unit on the way down and makes the rival discard when it dies, with a second discard if the discarded card's cost matches one of your Gig values. It is a five-drop that always trades, which is what a grindy MAELSTROM list wants — you are never blanked, only slowed.",
+   "tips": [
+    "The bonus discard reads your Gig values, so a Gig adjuster makes the second trigger far more reliable.",
+    "PLAY only hits cost 2 or less; do not count on it against a real threat."
+   ]
+  },
+  "carnage-at-the-colosseum": {
+   "role": "Scaling removal for a high-Gig board",
+   "guide": "Six Eddies is unaffordable, and it is not meant to be paid — every friendly Gig at 8 or more knocks one off, to a floor of one. In a deck that pushes Gig values up this is a one-Eddie kill on the biggest thing they have, because it only needs a friendly Unit with more power than the target.",
+   "tips": [
+    "Count your 8+ Gigs before you commit; this card is either near-free or unplayable.",
+    "It compares power, not cost, so a pump on your own Unit widens what it can answer."
+   ]
+  },
+  "chrome-fang": {
+   "role": "Defensive lock against small attackers",
+   "guide": "For one turn, rival Units cannot steal Gigs worth more than their own power — which shuts off exactly the cheap-wide boards that win by stealing your high dice. It does nothing against a genuinely big Unit, so it is a tempo answer to a swarm, not an answer to the top end.",
+   "tips": [
+    "Play it on their turn's eve, not early: the effect lasts only until your next turn.",
+    "Combine with pushing your Gigs *up* — the higher your dice, the more of their board it turns off."
+   ]
+  },
+  "chrome-reverie": {
+   "role": "The Blue answer to one attacker",
+   "guide": "Three Eddies to take a rival Unit off the table for a turn, plus a free Legend Call if you control a min Gig. This is the card that punishes a rival who wins on exactly one attacker: it does not kill anything, it just moves the win a turn later, which is usually the turn you need. If you have shown Blue, a good opponent will stop going all-in on one body.",
+   "tips": [
+    "Set up a min Gig first — the free Call turns this from a tempo card into a two-for-one.",
+    "It stops attacking, not blocking or abilities. A BLOCKER is still a BLOCKER."
+   ]
+  },
+  "corpo-security": {
+   "role": "Pure wall",
+   "guide": "Two Eddies for a BLOCKER that cannot attack. It is not trying to win the game; it is buying turns while a slower plan comes together, and at one RAM it fits in any Green list without distorting the deck.",
+   "tips": [
+    "It cannot attack, so it never spends itself — it blocks every single turn.",
+    "Equipping Gear to it is often better than to an attacker: it survives, so the Gear survives."
+   ]
+  },
+  "corporate-surveillance": {
+   "role": "Cheap tempo denial",
+   "guide": "Two Eddies to spend a rival Unit of cost 4 or less, which stops it attacking or blocking this turn without killing it. Against an aggro curve this is close to a Time Walk; against a top-end deck it is a dead card, because the cost cap is strict.",
+   "tips": [
+    "Spending is not defeating — it comes back next turn. Use it to survive a lethal turn, not to answer a threat permanently.",
+    "One RAM and Green: it costs almost nothing to include as a safety valve."
+   ]
+  },
+  "cyberpsychosis": {
+   "role": "Gear-deck finisher, at a price",
+   "guide": "QUICK, so it can come down during their attack. Plus three power per equipped Gear is enormous on a stacked Unit — but if that Unit steals or fights, it dies at end of turn. That makes it a closing card: use it on the turn the extra Gigs win the game, not on a turn where you need the body afterwards.",
+   "tips": [
+    "Stack Gear on one Unit, then this — two Gear is +6, three is +9.",
+    "If the Unit neither steals nor fights, it survives. That is a real line when you only need the power for a block."
+   ]
+  },
+  "deadman-transmitter": {
+   "role": "Removal insurance",
+   "guide": "Three Eddies to make one Unit effectively unkillable once: the Gear dies instead. It is best on whatever your deck is genuinely built around — a stacked Gear carrier, a Legend you have just Called — and worst as a generic combat trick.",
+   "tips": [
+    "It blanks the first removal spell, so it is at its best against the colours with lots of removal.",
+    "It has a sell tag, so it is never a dead draw if you have nothing worth protecting."
+   ]
+  },
+  "delamain-cab": {
+   "role": "Tempo body that pays for itself",
+   "guide": "Four power for four is average; the Eddie back at end of turn is what makes it work in a curve-out deck. Steal with it and the next turn's play is effectively one cheaper. It wants to be attacking every turn, so it is poor on a board that is stalled.",
+   "tips": [
+    "It only readies an Eddie if it actually stole this turn — a blocked attack pays nothing.",
+    "Four power steals mid-range Gigs; push their dice down or yours up to widen what it can take."
+   ]
+  },
+  "delamain-rideshare-ai": {
+   "role": "Draw two on a body",
+   "guide": "A 0-power Unit does not steal Gigs, so this is a three-Eddie Draw 2 that happens to leave something on the table. That body still blocks, still carries Gear, and still counts for anything that reads friendly Units — which is more than a Program that draws two would leave behind.",
+   "tips": [
+    "Equip it: Gear turns the 0-power body into a real attacker and the draw was already paid for.",
+    "It is a fine target for effects that care about Units in play regardless of power."
+   ]
+  },
+  "detonate": {
+   "role": "Cheap Gear removal",
+   "guide": "One Eddie, QUICK, kills a Gear of power 2 or less. Narrow by design — it exists because a Gear deck's whole plan is stacking a Unit, and stripping one piece at instant speed can turn a lethal attack into a bad one. Board it in against Gear; leave it out otherwise.",
+   "tips": [
+    "QUICK means you can wait until they commit to the attack before deciding.",
+    "The power cap is on the Gear, not the Unit carrying it — check the Gear's own printed power."
+   ]
+  },
+  "dexter-deshawn-off-the-grid": {
+   "role": "All-purpose Fixer",
+   "guide": "The cleanest of the choice Fixers: +2 power wins a fight or crosses a threshold, Draw 1 is never dead, and the +2 Gig increase pushes a die toward scoring. Nothing here is exciting and all of it is useful, which is why he shows up in so many lists.",
+   "tips": [
+    "The +2 power and the +2 Gig both push toward the same thing — count before choosing.",
+    "A fine default Legend while you learn the pool."
+   ]
+  },
+  "dexter-deshawn-one-last-chance": {
+   "role": "Repeatable Gig adjuster",
+   "guide": "Adjusts a Gig on play and again on every attack, which is the most reliable one-pip engine in the game. One pip a turn is how you keep a min Gig for the cards that want one, or nudge a Gig into range of your attacker. The death trigger is a bonus you rarely build around.",
+   "tips": [
+    "The ATTACK trigger fires whether or not the attack succeeds — swing even into a bad block if the pip matters.",
+    "It makes every min-Gig and even/odd payoff in your list far more reliable."
+   ]
+  },
+  "dont-fear-the-reaper": {
+   "role": "Seven-Eddie board lock",
+   "guide": "Spends every rival Unit, then kills one of them. That is a skipped turn for them plus a removal spell, which at seven Eddies is a fair rate only in a deck that expects to reach seven. Cast it on the turn you are attacking for the win, so the spend actually costs them the block.",
+   "tips": [
+    "Order matters: everything is spent first, so the defeat can hit whatever was hardest to answer.",
+    "Three RAM Green — it is a real deckbuilding commitment, not a splash."
+   ]
+  },
+  "dum-dum-maelstrom-triggerman": {
+   "role": "Gear sacrifice and pump",
+   "guide": "Draw 2 by eating one of your own Gear is a fine rate when the Gear has already done its job, and the QUICK pump scales with equipment, so he is a second payoff for the Gear archetype. Note the pump is instant speed — it wins fights the rival thought they had.",
+   "tips": [
+    "Sacrifice a Gear that has already been attacked through, not a fresh one.",
+    "Hold 1 €$ open: the QUICK pump is a combat trick."
+   ]
+  },
+  "dying-night-vs-pistol": {
+   "role": "Gig-shrinking Weapon",
+   "guide": "Two power and an attack trigger that pulls a Gig down by up to two, which is how you make a big Gig stealable by a small Unit. The V clause is a build-around: if your Legend or Unit is named V, it also readies two Eddies every turn, which is a real engine.",
+   "tips": [
+    "Decreasing *their* Gig is usually better than decreasing yours — it lowers what they need to defend.",
+    "Check your list for a V before counting on the Eddie half; without one this is a modest Weapon."
+   ]
+  },
+  "el-sombreron-la-venganza-lenta": {
+   "role": "Pay-to-scale attacker",
+   "guide": "Printed 4+ power, and for two Eddies on attack it becomes as big as your largest Gig. In a deck that pushes Gig values up this is a five-drop that hits for 8 or more every turn you can afford it — but it is a *max* Gig, so a board of small dice leaves it a 4-power body you overpaid for.",
+   "tips": [
+    "Increase a Gig before attacking, not after; the pump reads the board at attack time.",
+    "The 2 €$ is optional every turn — do not pay it on a turn where the extra power steals nothing more."
+   ]
+  },
+  "emergency-atlus": {
+   "role": "Efficient vanilla body",
+   "guide": "Four power for three Eddies at one RAM is simply a good rate, with no text to build around and no colour commitment beyond a single Green Legend. It is the card an aggro curve uses to fill the three-slot when nothing cuter is available.",
+   "tips": [
+    "One RAM means it fits in any list with a single Green Legend — the cheapest way to splash real power.",
+    "No text means no downside to trading it off early."
    ]
   },
   "evelyn-parker-beautiful-enigma": {
@@ -19,44 +267,52 @@
     "Forcing an attack can clear a blocker out of the way of your own swing."
    ]
   },
-  "jackie-welles-pour-one-out-for-me": {
-   "role": "Blue tempo, Gig control",
-   "guide": "Decreasing your own Gig sounds backwards until you remember min Gigs draw you a card here. Jackie converts Blue Units and Gear into card advantage every single turn, and the decrease also sets up cards that care about min Gigs. The catch is the Blue requirement — in a two-colour list he can go dead for whole turns.",
+  "evelyn-parker-scheming-siren": {
+   "role": "Card-draw engine that cannot steal",
+   "guide": "A 0-power body draws a card every attack and is never blocked meaningfully because it steals nothing. The discard clause only fires while you are ahead on Street Cred, which is the game's way of taxing the engine exactly when you least want to pay — but a card a turn for two Eddies is a rate worth the tax.",
    "tips": [
-    "Aim the decrease at a Gig you can push back up later, not one you are about to score.",
-    "Sequence your Blue card first each turn so the trigger never goes to waste."
+    "Attack every turn even into a full board: it cannot lose a fight it never wins, and the draw is unconditional.",
+    "While behind on Street Cred the discard does not happen at all — this is at its best when you are losing."
    ]
   },
-  "judy-alvarez-braindance-maestro": {
-   "role": "BRAINDANCE payoff and digger",
-   "guide": "Two halves that want the same deck. The +1 power on a BRAINDANCE Program is small but it is free and it stacks with a swing you were making anyway. The trash-and-take ability is the reason to run her: in a list that is a third Programs it is a real card most turns, and it fills the trash for Alt Cunningham and V — Streetkid.",
+  "field-operator": {
+   "role": "Conditional cantrip body",
+   "guide": "Three Eddies for a 2-power body, and a card if your Street Cred happens to be even. That condition is coin-flippy on its own, which is why it belongs in a list with Gig adjusters — one pip of control turns a maybe into a yes.",
    "tips": [
-    "Use the dig ability early when your deck is dense with Programs.",
-    "The +1 power can be the difference between stealing one Gig and two at a 10-power threshold."
+    "Street Cred is the sum of your Gig values, so any single Gig adjustment flips odd to even.",
+    "ARASAKA and CORPO tags make it a filler that still counts for tribal payoffs."
    ]
   },
-  "sasha-yakovleva-wont-let-you-down": {
-   "role": "GO SOLO body with a variable swing",
-   "guide": "A 5 €$ Legend whose power is whatever you reveal, so she is a gamble that a high-cost card is on top. In a deck with a heavy top end she regularly attacks for 6-9 and draws you the card as well. The DEFEATED discard means trading her off is never pure loss.",
+  "floor-it": {
+   "role": "One-Eddie QUICK cantrip",
+   "guide": "Replaces itself and shrinks a rival Unit by one for the turn. One power rarely matters — except when it does: it is the difference between a Unit stealing your 4-Gig and not, and it is QUICK, so you decide after they commit.",
    "tips": [
-    "Best in a list with an expensive top end — the reveal is the power.",
-    "Revealing a cheap card still nets you the card; the attack is the bonus."
+    "Hold it during their attack rather than casting on your turn; the information is worth more than the tempo.",
+    "It draws regardless, so it is never a dead card in hand."
    ]
   },
-  "v-corporate-exile": {
-   "role": "Clean 5-Eddie beater",
-   "guide": "The most honest Legend in the set: pay 5, get an 8-power Unit that can attack immediately. No conditions, no build-around. Eight power is one short of the 10 that steals a second Gig, so V is a natural home for a single point of pump or a piece of Gear.",
+  "fool-on-the-hill": {
+   "role": "Two-Eddie draw with a rider you do not control",
+   "guide": "Reveal two, and the *rival* decides whether you keep them or trash them and draw two fresh. Either way you get two cards, so the floor is fine; what varies is whether you get the specific cards you revealed. It is worst when the revealed cards are exactly what you need and best when they are blanks.",
    "tips": [
-    "Pair with any +2 power effect to cross the 10-power line.",
-    "Remember it is removed from the game when it leaves the field — there is no second use."
+    "A good rival gives you the worse half, so count on the *weaker* of the two outcomes when planning the turn.",
+    "If you run trash recursion, being forced to trash two is upside rather than a cost."
    ]
   },
-  "wakako-okada-peace-and-harmony": {
-   "role": "Flexible utility Fixer",
-   "guide": "Never spectacular, never dead. The CALL choice covers both halves of a tight game — shrink a blocker to win a fight, or just draw. The Gig adjustment is the quiet one that matters: two points of Gig movement is often exactly the gap between scoring this turn and next.",
+  "gilded-maton": {
+   "role": "Gear-to-removal converter",
+   "guide": "Trades a Gear you no longer need for a dead rival Unit of cost 3 or less. In a Gear deck there is usually a spent or outclassed piece lying around, which makes this a 4-Eddie body-plus-removal. Without Gear it is a 3-power four-drop, which is not a card.",
    "tips": [
-    "Default to Draw 1 unless the -2 power actually changes a fight.",
-    "Use the decrease to set up min-Gig payoffs, not only to protect."
+    "Sacrifice the Gear you were going to sell anyway — the sell tag is not lost value if the removal matters more.",
+    "Cost 3 or less is a tight cap. It answers the curve, not the top end."
+   ]
+  },
+  "gorilla-arms": {
+   "role": "Gig-diversity Gear",
+   "guide": "Once a turn, a steal by this Unit also takes a rival Gig whose value you do not already have. That is two Gigs a turn from one attack, and the diversity clause quietly pushes you toward the spread that even/odd and distinct-value payoffs want.",
+   "tips": [
+    "It steals a value you lack, so it actively builds the diverse board other cards reward.",
+    "Only the first steal each turn triggers it — a second attacker does not double it."
    ]
   },
   "goro-takemura-hands-unclean": {
@@ -67,12 +323,36 @@
     "Seven power still steals a Gig on the swing back."
    ]
   },
+  "goro-takemura-losing-his-way": {
+   "role": "Legend-deck payoff",
+   "guide": "Four power for four, or nine if every one of your Legends is face-up. That is a real build-around: a list that Calls Legends early turns this into a top-end threat at a mid-range price. In a deck that leaves Legends face-down it is filler.",
+   "tips": [
+    "Arasaka Emergency Radioport and other free-Call effects are what make the condition reachable.",
+    "All three Legends must be face-up — two is not enough, so count before you attack."
+   ]
+  },
   "goro-takemura-vengeful-bodyguard": {
    "role": "Cheap-Unit protector",
    "guide": "Turns your smallest Units into blockers at instant speed, which is a much better deal than it reads — QUICK means you decide after the rival commits. The value-pair rider pushes the blocker to a size that actually wins fights. The discard-draw on BLOCKER use keeps your hand moving.",
    "tips": [
     "Hold the Eddie open on the rival's turn; this is a trick, not a proactive play.",
     "Value-pairs of Gigs are worth steering toward for the extra power."
+   ]
+  },
+  "gunpoint-diplomacy": {
+   "role": "Aggro reach with a catch-up clause",
+   "guide": "Both effects if you are ahead on Street Cred, and only one — of their choosing — if you are behind. Attacking ready Units is the rarer mode and the one that breaks a board stall; +3 power is the fight-winner. Note the condition is backwards from most comeback cards: this one rewards you for already being ahead.",
+   "tips": [
+    "Cast it while ahead. Behind, the rival will hand you the effect you least want.",
+    "Attacking ready Units is how you clear a blocker wall that would otherwise hold forever."
+   ]
+  },
+  "hacked-corpo": {
+   "role": "Program tutor on a body",
+   "guide": "Digs three deep for a Program and leaves a 3-power body behind. In a Program list the trashed cards are fuel rather than loss, which makes this one of the more efficient consistency cards available at one RAM.",
+   "tips": [
+    "It finds Programs only — All is Lost is the Unit version if you need bodies.",
+    "One RAM Blue: cheap to splash purely as a finder."
    ]
   },
   "hanako-arasaka-daughter-of-the-emperor": {
@@ -83,12 +363,364 @@
     "Deliberately pairing Gig values turns every upkeep into extra cards."
    ]
   },
+  "hanako-arasaka-in-a-gilded-cage": {
+   "role": "Gig-value tutor",
+   "guide": "Searches four deep and takes every card whose cost matches one of your Gig values. With a spread-out board that is often two or three cards for four Eddies; with a board of identical dice it can be zero. It converts Gig control into card advantage, which is an unusual and powerful axis.",
+   "tips": [
+    "Adjust Gigs *before* casting to widen the set of costs you can hit.",
+    "A diverse Gig board is the whole card — this is a reason to run Gorilla Arms or a Gig adjuster."
+   ]
+  },
+  "heywood-ripperdoc": {
+   "role": "Big body with Gear removal stapled on",
+   "guide": "Eight power for six at one RAM is already fine, and it kills a Gear on the way in — either theirs, or one of your own you wanted gone. The draw rider wants the Gear's cost to match a friendly Gig value, which a Gig adjuster makes far more reachable.",
+   "tips": [
+    "It says *a* Gear, not a rival Gear: sacrificing your own spent piece for a card is a real line.",
+    "One RAM Yellow makes an 8-power body available to almost any list."
+   ]
+  },
+  "industrial-assembly": {
+   "role": "One-Eddie Gig ramp",
+   "guide": "Pushes a Gig up by as much as four for a single Eddie, and draws if you already have an 8+ Gig. Raising Gig values is how you reach Street Cred payoffs and how you make the big-Gig cards live, and no card does it more cheaply.",
+   "tips": [
+    "Sequence it before Carnage at the Colosseum — every 8+ Gig knocks an Eddie off that card's cost.",
+    "Increasing your own Gig also raises what a rival Unit needs to steal it."
+   ]
+  },
+  "jacked-in-voodoo-boy": {
+   "role": "Cheap body with a deck-building tax",
+   "guide": "Two power for two, but it cannot attack unless you have played a Program this turn. In a real Program list that condition is met most turns and this is an efficient body; in anything else it is a wall that never swings.",
+   "tips": [
+    "It can always block — the restriction is on attacking only.",
+    "Count your Program density honestly. Below about a third of the deck this card will sit idle."
+   ]
+  },
   "jackie-welles-mamas-favorite": {
    "role": "Big body plus insurance",
    "guide": "Eight power for 6 €$ is fair, and the redirect is the real text: for 1 €$ Jackie eats a removal spell or a lost fight aimed at your best Unit. Opponents have to play around him being in the Legend area even before you pay.",
    "tips": [
     "Keep 1 €$ open once he is on the field so the redirect is live.",
     "The redirect removes him from the game — it is one use, so spend it on a real threat."
+   ]
+  },
+  "jackie-welles-pour-one-out-for-me": {
+   "role": "Blue tempo, Gig control",
+   "guide": "Decreasing your own Gig sounds backwards until you remember min Gigs draw you a card here. Jackie converts Blue Units and Gear into card advantage every single turn, and the decrease also sets up cards that care about min Gigs. The catch is the Blue requirement — in a two-colour list he can go dead for whole turns.",
+   "tips": [
+    "Aim the decrease at a Gig you can push back up later, not one you are about to score.",
+    "Sequence your Blue card first each turn so the trigger never goes to waste."
+   ]
+  },
+  "jackie-welles-ride-or-die-choom": {
+   "role": "Even-Gig payoff and odd-Gig insurance",
+   "guide": "Eight power base, plus two for every even-valued Gig you control — a board of three evens makes it a 14-power attacker. And when it dies it draws for every odd Gig instead, so a mixed board makes both halves live. It rewards exactly the kind of Gig manipulation a Braindance or gig-control list is doing anyway.",
+   "tips": [
+    "Two evens is +4 and already worth the six Eddies; three makes it a finisher.",
+    "A deliberately mixed board means the death trigger refunds the card — you rarely lose it for nothing."
+   ]
+  },
+  "japantown-jonin": {
+   "role": "Two-Eddie combat trick on a body",
+   "guide": "A 0-power Unit that hands another Unit +2 for the turn. It steals nothing itself, so the whole value is the pump plus a body that blocks and carries Gear. Cheap enough to be the extra power that turns a losing fight into a stolen Gig.",
+   "tips": [
+    "The pump is on play, so it is a one-shot — do not hold it expecting a repeatable effect.",
+    "The leftover 0-power body is still a legal Gear carrier and a legal blocker."
+   ]
+  },
+  "johnny-silverhand-never-stop-fighting": {
+   "role": "Repeatable attacker, CORPO hoser",
+   "guide": "Readies the first time it wins a fight each turn, which means it can fight and then still attack — two actions from one Unit. And it wins every fight against CORPO Units regardless of power, which makes it a hard answer to a CORPO board rather than a merely large one.",
+   "tips": [
+    "Against CORPO it wins fights it should lose; attack into their best blocker deliberately.",
+    "The ready is once per turn, so plan the fight first and the steal second."
+   ]
+  },
+  "johnny-silverhand-rocking-renegade": {
+   "role": "ROCKER aggression enabler",
+   "guide": "Letting a Unit attack spent rival Units the turn it arrives is a way to punish a tapped-out board, and the ROCKER rider makes it a real damage spike. The cost reduction for Gigs at 8+ means he gets cheaper exactly when you are closing the game out.",
+   "tips": [
+    "Push a Gig to 8+ before using him and the ability can be nearly free.",
+    "Best in a ROCKER list where the +2 power rider is usually live."
+   ]
+  },
+  "judy-alvarez-braindance-maestro": {
+   "role": "BRAINDANCE payoff and digger",
+   "guide": "Two halves that want the same deck. The +1 power on a BRAINDANCE Program is small but it is free and it stacks with a swing you were making anyway. The trash-and-take ability is the reason to run her: in a list that is a third Programs it is a real card most turns, and it fills the trash for Alt Cunningham and V — Streetkid.",
+   "tips": [
+    "Use the dig ability early when your deck is dense with Programs.",
+    "The +1 power can be the difference between stealing one Gig and two at a 10-power threshold."
+   ]
+  },
+  "judy-alvarez-nothing-to-doubt": {
+   "role": "Repeatable free-play engine",
+   "guide": "One Eddie and a spend, every turn, to flip the top card: play it free or take it. That is a card a turn at worst and a free expensive card at best, which over three or four turns is a game-winning amount of value. Five RAM is the real cost — it demands most of your Blue Legend slots.",
+   "tips": [
+    "Five RAM means at least three Blue Legends. Check the list before slotting it.",
+    "Playing the card free ignores its cost, so it is at its best in a deck with expensive top-end."
+   ]
+  },
+  "kerry-eurodyne-axe-attitude-audience": {
+   "role": "Dice-luck manipulator",
+   "guide": "A reroll on every Gig you roll in is quietly one of the best abilities in the set, because it turns your worst outcomes into average ones every single game. The min/max draw makes the extreme results good news either way, and drawing 3 off a d20 is a genuine swing.",
+   "tips": [
+    "Reroll aggressively — average outcomes beat bad ones over a game.",
+    "With a d20 in the fixer area the min/max draw is worth chasing."
+   ]
+  },
+  "kerry-eurodyne-the-last-rockerboy": {
+   "role": "Big-Gig draw engine",
+   "guide": "Five power for four is fine on its own, and the spend draws two whenever you control an 8+ Gig. That is a steep condition for most boards and a trivial one for a deck running Industrial Assembly or other Gig-raising effects — the card is a build-around, not a filler.",
+   "tips": [
+    "Pair with Industrial Assembly: one Eddie makes an 8+ Gig and turns this on for the rest of the game.",
+    "It spends itself to draw, so it does not attack that turn. Decide which you need."
+   ]
+  },
+  "kiroshi-optics": {
+   "role": "One-Eddie Gear that sees your Legends",
+   "guide": "Cheapest Gear in the game, a point of power, and a look at one of your face-down Legends on every attack. The information matters more than it sounds: knowing which Legend is where tells you whether a free-Call effect is worth setting up.",
+   "tips": [
+    "It equips to a face-up Legend as well as a Unit — a Legend that attacks then scouts the others.",
+    "It is a Gear for anything that counts equipped Gear, at the lowest possible price."
+   ]
+  },
+  "la-llorona-ghost-of-the-past": {
+   "role": "Blocker that grows your board",
+   "guide": "A 3-power BLOCKER that pushes a Gig up by as much as three every time it blocks. Against an aggressive rival it converts their attacks into your Street Cred, which is an unusually good deal for a three-drop — the more they attack, the further ahead you get.",
+   "tips": [
+    "Increase a rival-facing Gig only if you want it defended; usually push your own toward a payoff value.",
+    "It triggers on using BLOCKER, so it pays every single turn they attack into it."
+   ]
+  },
+  "les-elemens": {
+   "role": "Answer that dodges defeat triggers",
+   "guide": "Bottom-decks their lowest-power Unit rather than defeating it, so it slips past DEFEATED triggers and Deadman Transmitter alike. The catch is the target: you get their *smallest* Unit, which is rarely their best one. It is an answer to a specific problem card only when that card is also small.",
+   "tips": [
+    "Shrink the Unit you actually want gone first — the effect reads current power, not printed.",
+    "Bottom-decking beats defeating against anything with a death trigger."
+   ]
+  },
+  "live-with-the-aftermath": {
+   "role": "Symmetrical removal",
+   "guide": "Each player loses a Unit, chosen by its controller. That is a bad deal when your board is better and a fine one when you are behind — it is a comeback card wearing a removal card's clothes. Best when you have a Unit you want to die anyway.",
+   "tips": [
+    "A 0-power body or a spent Unit is nearly free to give up; the rival has no such out if their board is one threat.",
+    "Do not cast it into a wide rival board — they will give up their worst and you cannot."
+   ]
+  },
+  "lizzy-wizzy-delicate-weapon": {
+   "role": "Program recursion on a BLOCKER",
+   "guide": "Plays a cheap Program free from hand *or trash*, then bottom-decks it. In a Program list that is a free removal spell or cantrip attached to a body that blocks, and the trash access means a Program you already used is not gone. Five Eddies is a lot, so it wants the free Program to be worth two or three of them.",
+   "tips": [
+    "Trash access is the point: Detonate or Floor It cast a second time for free.",
+    "It bottom-decks the Program rather than trashing it, so it will come around again eventually."
+   ]
+  },
+  "maelstrom-goons": {
+   "role": "Gear-deck pressure",
+   "guide": "Three power for three, and every steal makes the rival discard as long as it is equipped. In a Gear deck that condition is met by default, which turns a modest body into a repeating hand-attack engine — the rival runs out of answers rather than out of life.",
+   "tips": [
+    "Equip it with the cheapest Gear you have; the discard does not care which Gear or how many.",
+    "It triggers on stealing, not attacking — a blocked attack pays nothing."
+   ]
+  },
+  "maelstrom-zealots": {
+   "role": "Punishing wall",
+   "guide": "Zero power, so it never steals and it loses every fight — and every fight it loses kills the attacker. That makes it a four-Eddie roadblock that trades up against literally anything: the rival either leaves their board home or feeds it a Unit. One RAM means any Green list can run it.",
+   "tips": [
+    "It wants to lose fights. Block with it every single turn.",
+    "Pair it with Gear that raises power only if you *want* it to survive — usually you do not."
+   ]
+  },
+  "maman-brigitte-spirit-of-death": {
+   "role": "Program-fuelled hard answer",
+   "guide": "Discard two Programs to bottom-deck an unequipped rival Unit — no defeat trigger, no Deadman Transmitter, just gone. In a Program list the discard is affordable, especially with trash recursion. The unequipped clause is the real restriction: a Gear deck's best Unit is immune.",
+   "tips": [
+    "Detonate their Gear first if the target you want is equipped.",
+    "Discarding two Programs is fuel for recursion cards rather than pure loss."
+   ]
+  },
+  "mandibular-upgrade": {
+   "role": "One-Eddie BLOCKER grant",
+   "guide": "Zero power, so it adds nothing to a fight, but it hands BLOCKER to anything — including a face-up Legend. The cheapest way to turn a big attacker into a big defender, and at one Eddie it is close to free.",
+   "tips": [
+    "On a Legend it is often better than on a Unit: Legends survive board wipes.",
+    "It counts as an equipped Gear for Cyberpsychosis and Maelstrom Goons even though it adds no power."
+   ]
+  },
+  "mantis-blades": {
+   "role": "The baseline Gear",
+   "guide": "One Eddie, one RAM, two power, no text. It exists so that Gear-count payoffs have something cheap to count, and so an attacker gets over a steal threshold without a card being spent on it. Unglamorous and correct in every Gear list.",
+   "tips": [
+    "Two power is often exactly the difference between stealing a 4-Gig and not.",
+    "At one RAM it never constrains the Legend line-up."
+   ]
+  },
+  "maxtac-av": {
+   "role": "Body plus a Gig swap",
+   "guide": "Eight power for five is already strong, and the swap lets you trade your worst Gig for their best. That is a two-Gig swing in Street Cred terms and it can strip a value they were building a payoff around, which makes it a tempo card and a disruption card in one.",
+   "tips": [
+    "Swap for their highest-value Gig, not just any — you gain and they lose the same amount.",
+    "The swap is optional, so it is never a drawback on an empty board."
+   ]
+  },
+  "maxtac-heavy": {
+   "role": "Scaling answer to a wide board",
+   "guide": "Seven Eddies falls by one for every Unit the rival controls, to a floor of one. Against a swarm it is a one-Eddie 8-power body; against an empty board it is unplayable. It is the card that punishes going wide, and it should be held rather than curved out.",
+   "tips": [
+    "Do not cast it on turn seven for full price — wait for their board to price it down.",
+    "Three RAM Green is a real commitment; run it only if you expect wide rivals."
+   ]
+  },
+  "maxtac-squadron": {
+   "role": "Legend-readying engine",
+   "guide": "Four power for three is fine, and if you spend it, a face-up Legend readies at end of turn. Legends are payment sources and often bodies too, so readying one is close to an extra Eddie plus an extra block every turn — in a list that Calls Legends early this is a quiet engine.",
+   "tips": [
+    "It must be *spent* at end of turn, so attack or pay with it rather than holding it back.",
+    "Worthless with no face-up Legends. Pair it with free-Call effects."
+   ]
+  },
+  "maxtac-suppression-team": {
+   "role": "Anti-tempo body",
+   "guide": "Seven power for five, and rival Units cannot attack the turn they arrive. That blanks the curve-out plan entirely: everything they play has to wait a turn, which is a turn you get to use. It does nothing about a board already on the table, so land it before they commit.",
+   "tips": [
+    "This is one of only eight cards in the game that stops a rival Unit attacking. If you have shown Yellow, expect them to play around it.",
+    "It does not stop blocking, and it does not stop Units already in play."
+   ]
+  },
+  "memory-relapse": {
+   "role": "Two-turn tempo denial",
+   "guide": "Spends a rival Unit and stops it readying until your next turn — so it misses their turn entirely, not just this one. That is strictly better than a normal spend effect, and the even-Street-Cred draw makes it a cantrip in a deck that controls its Gig values.",
+   "tips": [
+    "Adjust a Gig to make your Street Cred even before casting; the draw is a free roll otherwise.",
+    "Use it on their best blocker on the turn you are attacking for the win."
+   ]
+  },
+  "meredith-stout-stone-cold-corpo": {
+   "role": "Blocker that punishes Gig manipulation",
+   "guide": "A BLOCKER with +2 against Legends, and a trash-recursion trigger whenever the rival adjusts or swaps your Gigs. Against a Braindance or gig-control deck — the archetypes that touch your Gigs constantly — that last clause turns their engine into your card advantage.",
+   "tips": [
+    "It is a sideboard-shaped card: excellent against Gig manipulation, ordinary otherwise.",
+    "The +2 against Legends makes it a genuine answer to a Called Legend attacking."
+   ]
+  },
+  "minotaur": {
+   "role": "Top-end with conditional removal",
+   "guide": "Nine power for seven, and it kills a Unit of power 5 or less if you are ahead on Street Cred. The condition rewards a board that is already winning, so this is a card that closes games rather than one that saves them.",
+   "tips": [
+    "Check Street Cred before casting — behind, this is a vanilla 9-power body for seven.",
+    "Power 5 or less is a curve answer, not an answer to their own top end."
+   ]
+  },
+  "misty-olszewski-mender-of-broken-spirits": {
+   "role": "Filtering engine that never attacks",
+   "guide": "Every end of turn you name a type and flip the top card: hit and you keep it plus ready an Eddie, miss and it goes to the trash. In a deck skewed heavily toward one type the hit rate is high enough to be a card and an Eddie a turn, and the misses feed trash recursion.",
+   "tips": [
+    "Name the type you run most of — the odds are the whole card, so a balanced deck is the wrong home.",
+    "The trashed misses are fuel if you run recursion, which softens the downside considerably."
+   ]
+  },
+  "modded-kusanagi": {
+   "role": "Recurring ADRENALINE threat",
+   "guide": "Eight power with ADRENALINE that returns to hand at end of turn. You pay six every time, which is steep, but it dodges every piece of removal in the game — they simply never get to answer it. Against a removal-heavy rival it is the threat that cannot be dealt with.",
+   "tips": [
+    "It is immune to sorcery-speed removal by construction; save it for a rival who has shown removal colours.",
+    "Six Eddies a turn is the real cost. It competes with the rest of your turn, not with your deck slots."
+   ]
+  },
+  "modded-muramasa": {
+   "role": "Comeback attacker",
+   "guide": "Readies at end of turn while you are behind on Street Cred, so it attacks and still blocks — two jobs from one five-drop, exactly when you need both. Once you pull ahead it stops readying, which is the game telling you it did its job.",
+   "tips": [
+    "It is at its best in the losing half of the game; do not evaluate it on a winning board.",
+    "The ready happens at end of *your* turn, so it is untapped through their whole turn."
+   ]
+  },
+  "mox-inciters": {
+   "role": "Forced-attack blocker",
+   "guide": "Compels a rival Unit to attack next turn and leaves a BLOCKER behind to meet it. That is a way to drag their best defender out of position, or to force a bad fight on your terms. Three Eddies for a controlled combat is a good rate in a defensive list.",
+   "tips": [
+    "Point it at their biggest blocker — pulling it forward is worth more than the fight itself.",
+    "A Unit that cannot attack legally is not forced. Check for restrictions before relying on it."
+   ]
+  },
+  "mtod12-flathead": {
+   "role": "Unblockable comeback threat",
+   "guide": "Seven power that cannot be blocked at all while you are behind on Street Cred. Against a board you cannot get through, this is the card that gets through — and it has a sell tag, so it is not dead once you are ahead. The condition makes it a catch-up card by design.",
+   "tips": [
+    "It turns off the moment you pull ahead, so plan the turn you swing for the most.",
+    "Sell it once the comeback is complete rather than leaving it as a vanilla 7-power body."
+   ]
+  },
+  "muamar-reyes-el-capitan": {
+   "role": "Protective utility Fixer",
+   "guide": "The no-defeat clause is a hard answer to a fight you must not lose, and unlike a pump it works regardless of how much power the rival brings. The 1-point Gig adjustment is small but it is the precise tool for hitting an exact value.",
+   "tips": [
+    "Save the protection for a Unit carrying Gear or an anthem effect.",
+    "One point of adjustment is enough to make or break a value-pair."
+   ]
+  },
+  "nadia-fighting-through-grief": {
+   "role": "Haste attacker when behind",
+   "guide": "Eight power that can hit the Gig area the turn it lands, but only if the rival holds more Gigs than you. That is a burst of reach exactly when you are losing the Gig race — six Eddies for an immediate steal rather than a body that waits a turn.",
+   "tips": [
+    "Count Gigs before casting. Ahead or level, it is a 6-Eddie 8-power body that does nothing this turn.",
+    "It only gets haste against the Gig area, not against Units."
+   ]
+  },
+  "netwatch-netdriver": {
+   "role": "Draw engine Gear",
+   "guide": "Three Eddies, two power, and a card every time the wearer is spent. On a Unit that attacks every turn that is a card a turn; on a face-up Legend used to pay for things it is a card every time you tap it for Eddies. It is the closest thing a Gear deck has to a value engine.",
+   "tips": [
+    "Equip it to a Legend you spend for payment — the draw then costs you nothing at all.",
+    "It triggers on spent, not on attacking, so blocking with a BLOCKER does not draw."
+   ]
+  },
+  "nocturne-op55n1": {
+   "role": "Flexible one-Eddie Program",
+   "guide": "With an empty fixer area it costs one Eddie and offers a Draw 2, a can't-attack effect, or a discounted GO SOLO. The fixer condition ties it to the early game or to a turn where you have spent everything, which is exactly when a cheap flexible answer is worth the most.",
+   "tips": [
+    "Check the fixer area first; at three Eddies the modes are only fine, at one they are excellent.",
+    "The can't-attack mode is a real answer to a lethal swing — remember it before casting for cards."
+   ]
+  },
+  "octant": {
+   "role": "Top-end for a high-Gig board",
+   "guide": "Eight power for seven, minus one for every 8+ friendly Gig, to a floor of one. Same design as Carnage at the Colosseum and the same lesson: in a deck that pushes Gig values this is a one-Eddie 8-power body, and in anything else it is unplayable.",
+   "tips": [
+    "Industrial Assembly into this is a genuine two-card curve-breaker.",
+    "Four RAM Red is a heavy commitment — two Red Legends minimum, and the deck must want them."
+   ]
+  },
+  "offduty-malfini": {
+   "role": "Trade tempo for tempo",
+   "guide": "Five power for four, and it spends itself along with a rival Unit on arrival. That is a fair trade if the rival Unit was going to block or attack and yours was not going to do anything this turn anyway — play it on a turn you were not swinging, and it costs you nothing you wanted.",
+   "tips": [
+    "Cast it on a turn when your attack was blocked anyway; you lose nothing and they lose a turn of a Unit.",
+    "One of the eight cards that stop a rival Unit acting, so it is part of the Yellow threat picture."
+   ]
+  },
+  "over-the-edge": {
+   "role": "d20-scaled removal",
+   "guide": "Kills any Unit whose power is at or below one of your d20's values. A high d20 makes this the best removal spell in the game; without a d20 on the board it is a dead card. It is a payoff for the dice archetype rather than a generic answer.",
+   "tips": [
+    "Raise a d20 before casting — Industrial Assembly and other increasers widen the kill range directly.",
+    "It says a Unit, not a rival Unit. It can clear your own Maelstrom Zealots if that is the play."
+   ]
+  },
+  "overwatch-panams-gift": {
+   "role": "Repeatable QUICK removal",
+   "guide": "A 4-power Gear that, for an Eddie and a discard, kills a spent rival Unit whose cost is at most the discarded card's. QUICK means it happens during their turn, and it is repeatable every turn — which over a long game is more removal than any single spell. The spent requirement means it answers attackers, not blockers.",
+   "tips": [
+    "Discard your most expensive dead card; the cost of the discard is the size of the kill.",
+    "It only hits spent Units, so it punishes attacking rather than clearing a wall."
+   ]
+  },
+  "pacifica-netrunner": {
+   "role": "Conditional lockdown",
+   "guide": "For four Eddies a rival Unit does not ready until your next turn — but only if your Street Cred is even. That is a strong effect with a coin-flip condition, which is why it belongs alongside Gig adjusters rather than on its own.",
+   "tips": [
+    "One Gig adjustment flips odd to even; sequence the adjuster first, always.",
+    "With the condition met it is a full turn off their best Unit — better than a plain spend."
    ]
   },
   "padre-man-of-the-cross": {
@@ -107,36 +739,52 @@
     "Move Gear to a Unit that has already attacked to attack again."
    ]
   },
-  "saburo-arasaka-stubborn-patriarch": {
-   "role": "ARASAKA anthem",
-   "guide": "A flat +1 power while attacking across every ARASAKA Unit, which matters far more than it looks because Units steal an extra Gig per 10 power. Turning 9-power attackers into 10-power attackers doubles their output. Build the deck around the tag or leave him out.",
+  "panam-palmer-strength-through-family": {
+   "role": "Legend engine, and a known trap",
+   "guide": "A free Legend Call every turn plus an attack trigger that draws for each face-up Legend. In a Legends list it is the engine that makes the archetype work. Note the free Call is genuinely free and genuinely optional — declining it does literally nothing, which is a real rules corner the AI in this project had to be taught not to loop on.",
    "tips": [
-    "Count your attackers' power at 9 — Saburo is what turns them into two-Gig swings.",
-    "Stacks with other pump; the 10 and 20 thresholds are where games are decided."
+    "Call early: the ATTACK draw scales with face-up Legends, so the Calls compound.",
+    "The attack trigger costs a discard, so do not swing on an empty hand unless the draw is worth it."
    ]
   },
-  "adam-smasher-ender-of-legends": {
-   "role": "Top-end finisher with removal",
-   "guide": "Nine Eddies is a real cost and you get a 9-power body that kills something on arrival. This is a closer, not a curve card: play him when the removal and the swing together end the game. In a long, grindy match he is the best single card in the set.",
+  "peace-offering": {
+   "role": "One-Eddie Gig-pairing",
+   "guide": "Sets one Gig's value equal to another, then draws if that leaves you a pair. It is the cheapest way to manufacture a value-pair for the cards that read one, and it can also dodge a payoff the rival was setting up by collapsing a value they needed.",
    "tips": [
-    "Nine power is one short of 10 — a single pump makes the swing steal two Gigs.",
-    "Kill the blocker with the PLAY trigger, then attack with everything."
+    "Copying *up* raises Street Cred; copying down makes a Gig harder for their attacker to take. Both are real lines.",
+    "The draw needs a pair after the change, so check what you already control before choosing."
    ]
   },
-  "dexter-deshawn-off-the-grid": {
-   "role": "All-purpose Fixer",
-   "guide": "The cleanest of the choice Fixers: +2 power wins a fight or crosses a threshold, Draw 1 is never dead, and the +2 Gig increase pushes a die toward scoring. Nothing here is exciting and all of it is useful, which is why he shows up in so many lists.",
+  "pepe-najarro-working-doubles": {
+   "role": "MERC Legend readier",
+   "guide": "Six power for four is already a fine rate, and with a value-pair on board every attack readies up to two MERC Legends. Readied Legends are payment sources and often blockers too, so this is an Eddie engine dressed as a beater — in a MERC Legend list it is one of the better four-drops available.",
    "tips": [
-    "The +2 power and the +2 Gig both push toward the same thing — count before choosing.",
-    "A fine default Legend while you learn the pool."
+    "Peace Offering makes the value-pair for one Eddie; the two cards together are the engine.",
+    "No MERC Legends means no trigger. Check the Legend line-up before slotting it."
    ]
   },
-  "johnny-silverhand-rocking-renegade": {
-   "role": "ROCKER aggression enabler",
-   "guide": "Letting a Unit attack spent rival Units the turn it arrives is a way to punish a tapped-out board, and the ROCKER rider makes it a real damage spike. The cost reduction for Gigs at 8+ means he gets cheaper exactly when you are closing the game out.",
+  "placide-voodoo-sentinel": {
+   "role": "Repeatable hard removal",
+   "guide": "Ten power for eight, and on play *and every attack* it can discard a Program to bottom-deck a rival Unit. Bottom-decking dodges death triggers entirely, and doing it every turn is more than most decks can rebuild through. The Program discard is the only brake, so it wants a real Program count behind it.",
    "tips": [
-    "Push a Gig to 8+ before using him and the ability can be nearly free.",
-    "Best in a ROCKER list where the +2 power rider is usually live."
+    "It is PLAY *and* ATTACK, so it answers something immediately and again every turn after.",
+    "Unlike Maman Brigitte it does not care whether the target is equipped."
+   ]
+  },
+  "psycho-squad": {
+   "role": "Cheap big body",
+   "guide": "Six power for four at one RAM with no text. It is the Blue equivalent of a curve filler, and the low RAM means it costs a list nothing to include. Nothing clever, just a good rate.",
+   "tips": [
+    "One RAM Blue makes it a free splash in almost any list with a Blue Legend.",
+    "No text means it is the right card to trade off when you need a body to die."
+   ]
+  },
+  "pyramid-song": {
+   "role": "Modal Braindance removal",
+   "guide": "Minus four power, or bottom-deck a 0-power Unit — and both if a friendly d4 is your min Gig. That condition is buildable rather than accidental, and when it is met this is a three-Eddie two-for-one that also answers the 0-power engine Units that shrug off damage-based removal.",
+   "tips": [
+    "A d4 as your min Gig is the build-around. Gig adjusters and Peace Offering both help set it.",
+    "The minus-four can itself create a 0-power Unit for the second mode to bottom-deck."
    ]
   },
   "rebecca-having-a-moment": {
@@ -146,52 +794,36 @@
     "Marked unverified in the card data; excluded from deckbuilding."
    ]
   },
-  "royce-psycho-on-the-edge": {
-   "role": "Gear-hungry GO SOLO threat",
-   "guide": "Six power base that grows by 2 for every Gear on him during your turn, so two pieces make him a 10-power attacker — a two-Gig swing on his own. He is the reason to build a Gear deck alongside Panam, and he punishes an opponent who lets Gear accumulate.",
+  "reboot-optics": {
+   "role": "QUICK fight protection",
+   "guide": "Two Eddies at instant speed to make the next rival fight non-lethal for your Unit. It is a blowout when they attack into your blocker expecting a trade, and it protects an engine Unit you cannot afford to lose. Narrow, but the QUICK timing means you only spend it when it matters.",
    "tips": [
-    "Two Gear is the magic number: it crosses the 10-power threshold.",
-    "Only your turn — he does not get the bonus defending."
+    "Hold it for their attack rather than casting proactively; the whole value is the surprise.",
+    "It stops the defeat, not the steal — the Gig still goes if they win."
    ]
   },
-  "v-streetkid": {
-   "role": "BRAINDANCE tutor",
-   "guide": "Trash 3 then take a BRAINDANCE Program back is card selection and graveyard filling in one, and the GO SOLO body gives you a 6-power attacker afterwards. In a BRAINDANCE list he finds the piece you are missing; outside one, the CALL does nothing.",
+  "riding-nomad": {
+   "role": "ADRENALINE body",
+   "guide": "Four power that attacks the turn it lands, which converts five Eddies straight into a steal rather than into a threat they get a turn to answer. Four RAM Green is heavy for what it is, so it earns its slot in a NOMAD list and struggles elsewhere.",
    "tips": [
-    "Trashing 3 is a cost but it feeds Alt Cunningham and Judy.",
-    "Check you actually have BRAINDANCE Programs before running him."
+    "Immediate attacks dodge sorcery-speed removal entirely — the value is already banked.",
+    "Four RAM means two Green Legends minimum. Budget for it."
    ]
   },
-  "yorinobu-arasaka-embracing-destruction": {
-   "role": "ARASAKA draw engine",
-   "guide": "A card every turn for attacking with an ARASAKA Unit is a strong rate, and the Street Cred clause means the discard downside switches off as the game goes long. Early it is a real cost — you are effectively rummaging rather than drawing.",
+  "riot-shield": {
+   "role": "Defensive Gear with a GO SOLO tax",
+   "guide": "Grants BLOCKER and makes rival GO SOLO cost two more. Against a Legend-centric deck that tax is real — GO SOLO is how Legends attack, and pricing it up can simply stop it happening. Against a deck with no Legend plan it is a two-Eddie BLOCKER grant, which is still fine.",
    "tips": [
-    "Track your Street Cred: past 20 the draw is unconditional.",
-    "Pairs naturally with Saburo in the same ARASAKA shell."
+    "Equip a big Unit to turn it into a wall without losing its power.",
+    "The GO SOLO tax is the reason to run it over Mandibular Upgrade in a Legend-heavy meta."
    ]
   },
-  "dum-dum-maelstrom-triggerman": {
-   "role": "Gear sacrifice and pump",
-   "guide": "Draw 2 by eating one of your own Gear is a fine rate when the Gear has already done its job, and the QUICK pump scales with equipment, so he is a second payoff for the Gear archetype. Note the pump is instant speed — it wins fights the rival thought they had.",
+  "rita-wheeler-no-stupid-questions": {
+   "role": "Blocker that loots",
+   "guide": "A 4-power BLOCKER that draws and discards the first time it is spent each turn. Looting is not raw card advantage but it is selection, and on a blocker you were spending anyway it is free. It quietly fixes a hand full of the wrong half of your deck.",
    "tips": [
-    "Sacrifice a Gear that has already been attacked through, not a fresh one.",
-    "Hold 1 €$ open: the QUICK pump is a combat trick."
-   ]
-  },
-  "kerry-eurodyne-axe-attitude-audience": {
-   "role": "Dice-luck manipulator",
-   "guide": "A reroll on every Gig you roll in is quietly one of the best abilities in the set, because it turns your worst outcomes into average ones every single game. The min/max draw makes the extreme results good news either way, and drawing 3 off a d20 is a genuine swing.",
-   "tips": [
-    "Reroll aggressively — average outcomes beat bad ones over a game.",
-    "With a d20 in the fixer area the min/max draw is worth chasing."
-   ]
-  },
-  "muamar-reyes-el-capitan": {
-   "role": "Protective utility Fixer",
-   "guide": "The no-defeat clause is a hard answer to a fight you must not lose, and unlike a pump it works regardless of how much power the rival brings. The 1-point Gig adjustment is small but it is the precise tool for hitting an exact value.",
-   "tips": [
-    "Save the protection for a Unit carrying Gear or an anthem effect.",
-    "One point of adjustment is enough to make or break a value-pair."
+    "It triggers on spent — blocking with BLOCKER spends it, so this loots every turn they attack.",
+    "Discarding a Program or Unit into a recursion deck is upside, not a cost."
    ]
   },
   "river-ward-detective-on-the-hunt": {
@@ -202,6 +834,14 @@
     "QUICK means you can equip in response to a fight."
    ]
   },
+  "rockn-rockerboy": {
+   "role": "Vanilla top of the aggro curve",
+   "guide": "Eight power for five at one RAM and no text at all. An excellent rate, and the one-RAM cost means any Yellow-touching list can play it. If your deck wants to attack, this is close to the most power per Eddie available.",
+   "tips": [
+    "One RAM is the headline — this is the cheapest way to put 8 power on the board.",
+    "No text means no protection either; respect rivals who have shown removal colours."
+   ]
+  },
   "rogue-amendiares-preem-solo": {
    "role": "Legend-centric value",
    "guide": "Seven power for 7 €$ is a fair body, and the trigger pays you whichever way the die lands — a card on even, a rival discard on odd. It wants a deck with several GO SOLO Legends so the trigger fires more than once a game.",
@@ -210,12 +850,364 @@
     "In a Legend-heavy list she is a slow but relentless value drain."
    ]
   },
+  "rogue-amendiares-queen-of-the-afterlife": {
+   "role": "Eddie engine plus a QUICK shrink",
+   "guide": "Readies two Eddies whenever another friendly Unit over-steals — takes a Gig worth less than its power — which in a deck of big attackers is nearly every turn. The QUICK ability then strips power equal to her own from a rival Unit, which is a real answer during their attack. Two jobs, both good.",
+   "tips": [
+    "The trigger needs another Unit, not her; she is the engine, not the attacker.",
+    "Equip her to raise her power and the QUICK shrink gets bigger with it."
+   ]
+  },
+  "royce-dont-call-me-simon": {
+   "role": "Maelstrom removal that scales with the lead",
+   "guide": "Kills a 2-power Unit, or a 3-power one if you are ahead on Street Cred. Modest numbers, but it is attached to a 4-power body for five Eddies, so it always does something. It is the card that cleans up the 0-power engine Units other removal struggles with.",
+   "tips": [
+    "Zero-power engines — Evelyn Parker, Misty, Sketchy Ripper — all die to this. That is its best use.",
+    "Check Street Cred: the difference between 2 and 3 power is a lot of the game's cheap bodies."
+   ]
+  },
+  "royce-psycho-on-the-edge": {
+   "role": "Gear-hungry GO SOLO threat",
+   "guide": "Six power base that grows by 2 for every Gear on him during your turn, so two pieces make him a 10-power attacker — a two-Gig swing on his own. He is the reason to build a Gear deck alongside Panam, and he punishes an opponent who lets Gear accumulate.",
+   "tips": [
+    "Two Gear is the magic number: it crosses the 10-power threshold.",
+    "Only your turn — he does not get the bonus defending."
+   ]
+  },
+  "ruthless-lowlife": {
+   "role": "Fight-only beater",
+   "guide": "Four power for two is an excellent rate, paid for by never being able to attack the Gig area. It is a fighter: it clears blockers so your real attackers get through, and it blocks well. Do not count it toward your clock.",
+   "tips": [
+    "It cannot steal, so its whole job is killing the things that stop the Units that can.",
+    "Two Eddies for 4 power makes it the cheapest reliable fight-winner in Red."
+   ]
+  },
+  "saburo-arasaka-stubborn-patriarch": {
+   "role": "ARASAKA anthem",
+   "guide": "A flat +1 power while attacking across every ARASAKA Unit, which matters far more than it looks because Units steal an extra Gig per 10 power. Turning 9-power attackers into 10-power attackers doubles their output. Build the deck around the tag or leave him out.",
+   "tips": [
+    "Count your attackers' power at 9 — Saburo is what turns them into two-Gig swings.",
+    "Stacks with other pump; the 10 and 20 thresholds are where games are decided."
+   ]
+  },
+  "safety-override": {
+   "role": "QUICK fight reversal",
+   "guide": "The next friendly Unit to lose a fight this turn kills the winner anyway. That turns a chump block into a trade and punishes a rival who attacks into what looks like a safe fight. Two Eddies at instant speed for a removal spell conditional on them making a move.",
+   "tips": [
+    "Block with your worst Unit, then cast — their best attacker dies for your cheapest body.",
+    "It does nothing if they never fight, so hold it rather than casting on your own turn."
+   ]
+  },
+  "sandayu-oda-hanakos-guardian": {
+   "role": "Value-pair payoff top end",
+   "guide": "Spends a rival Unit for every value-pair you control, and attacks Units immediately. On a board of two pairs that is two rival Units off the table plus an 8-power fight, which for seven Eddies ends most board stalls outright. Without pairs it is an expensive body with haste against Units.",
+   "tips": [
+    "Peace Offering and Gorilla Arms both manufacture pairs; sequence them before casting.",
+    "Its haste is against Units only, not the Gig area — it clears the way rather than closing."
+   ]
+  },
+  "sandevistan": {
+   "role": "Ready-every-turn Gear",
+   "guide": "Three Eddies to make one Unit or Legend untap at end of every turn. That is attack and block from the same body, permanently — the single best Gear for a Unit that both threatens and defends, and on a Legend it is an extra Eddie every turn forever.",
+   "tips": [
+    "On a face-up Legend it is a repeating payment source, which is often worth more than the combat.",
+    "It stacks with Modded Muramasa's conditional ready — but only one of them is needed."
+   ]
+  },
+  "sasha-yakovleva-wont-let-you-down": {
+   "role": "GO SOLO body with a variable swing",
+   "guide": "A 5 €$ Legend whose power is whatever you reveal, so she is a gamble that a high-cost card is on top. In a deck with a heavy top end she regularly attacks for 6-9 and draws you the card as well. The DEFEATED discard means trading her off is never pure loss.",
+   "tips": [
+    "Best in a list with an expensive top end — the reveal is the power.",
+    "Revealing a cheap card still nets you the card; the attack is the bonus."
+   ]
+  },
+  "satori-sword-of-saburo": {
+   "role": "Cheap Weapon that draws",
+   "guide": "Two Eddies, two power, and a card every time the wearer wins a fight against a rival Unit. On a Unit that fights regularly it is the cheapest repeatable draw in the game, and at one RAM it costs a list nothing.",
+   "tips": [
+    "Put it on a fighter, not a Gig-stealer — the trigger is on winning fights, not stealing.",
+    "One RAM ARASAKA makes it a natural in the tribal list too."
+   ]
+  },
+  "saul-bright-stormrider": {
+   "role": "Eight-Eddie board anthem and untapper",
+   "guide": "Fourteen power, plus two to every other attacking Unit, plus up to three friendly Units readied at end of turn. That last clause is the card: a wide board attacks, then untaps to block, which is the swing that ends games. Eight Eddies is the price of a genuine finisher.",
+   "tips": [
+    "Play it on a board that is already wide — the anthem and the ready both scale with bodies.",
+    "Readying three Units means you attack with everything and still hold the fort."
+   ]
+  },
+  "screw-lovelorn-fool": {
+   "role": "Recursion body",
+   "guide": "Seven power for five, and when it dies it returns another Unit from your trash to hand. It is a threat the rival cannot profitably answer: killing it gives you a card back. In a grindy MAELSTROM list it is the card that makes attrition favour you.",
+   "tips": [
+    "Attack into unfavourable fights deliberately — dying is a card, and they still lose the Unit's time.",
+    "It fetches a Unit only, and not itself. Keep a good Unit in the trash for it."
+   ]
+  },
+  "secondhand-bombus": {
+   "role": "Two-Eddie redirect wall",
+   "guide": "Zero power and BLOCKER, which here means you may spend it to redirect an attack onto itself. That is a clean way to save a real Unit or an unprotected Gig for two Eddies, and it does it every turn it is ready. It never steals, so it is pure defence.",
+   "tips": [
+    "Redirect the attack that would take your highest-value Gig, not merely the biggest attacker.",
+    "It is a legal Gear carrier, so Mandibular Upgrade or Sandevistan on it turns it into a permanent wall."
+   ]
+  },
+  "shattered-memories": {
+   "role": "Symmetrical refill",
+   "guide": "Both players pitch and draw five, with a two-card bonus if the total discarded matches one of your Gig values. It is a comeback card: cast it when your hand is empty and theirs is not, and you gain the difference. Cast it with a good hand and you are handing them a free refill.",
+   "tips": [
+    "Empty your hand first, then cast. The asymmetry is entirely in the sequencing.",
+    "The bonus counts *both* players' discards, so you can often steer it with one Gig adjustment."
+   ]
+  },
+  "sketchy-ripper": {
+   "role": "Gear tutor on a body",
+   "guide": "A 0-power Unit that digs three deep for a Gear on every attack. It never steals, so it attacks freely into anything, and it finds the specific Gear your stacked attacker needs. In a Gear list it is the consistency card the archetype is otherwise missing.",
+   "tips": [
+    "Attack every turn regardless of blocks: it cannot lose anything it was not already giving up.",
+    "It only finds Gear. If you need a Unit or Program this is the wrong card."
+   ]
+  },
+  "swordwise-huscle": {
+   "role": "Conditional cantrip attacker",
+   "guide": "Three power for three, and it draws on attack once it reaches five power. That needs a pump or a Gear, which makes it a natural in a list already stacking a Unit — one piece of Gear turns a filler body into a card a turn.",
+   "tips": [
+    "Mantis Blades alone takes it from 3 to 5 and switches the draw on permanently.",
+    "It checks power at attack time, so a combat trick counts."
+   ]
+  },
+  "synapse-burnout": {
+   "role": "One-Eddie Legend payoff",
+   "guide": "QUICK, one Eddie, and plus one power per face-up Legend while fighting rival Units. In a Legend list with all three flipped that is +3 at instant speed for a single Eddie — the cheapest fight-winner in the game for a deck built that way, and a dead card in a deck that is not.",
+   "tips": [
+    "It only applies while fighting rival Units, not while stealing. It wins fights, not races.",
+    "Cast it after they declare the block for maximum information."
+   ]
+  },
+  "t-bug-amateur-philosopher": {
+   "role": "Legend enabler with a death trigger",
+   "guide": "Four power for four, and when it dies it shows you all your face-down Legends and Calls one free. That makes it a Unit you are happy to trade off — the rival kills it and accelerates your Legend plan for them.",
+   "tips": [
+    "Attack into bad fights deliberately in a Legend list; dying is the point.",
+    "The look happens even if you decline the Call, so the information is free."
+   ]
+  },
+  "take-control": {
+   "role": "One-Eddie steal denial",
+   "guide": "QUICK, and a rival Unit steals one fewer Gig this turn — which against a big attacker taking two or three is a real saving, and against a one-Gig attacker stops the steal outright. The draw rider on AI, DRONE and VEHICLE makes it a clean answer to those tribes specifically.",
+   "tips": [
+    "Against a Unit stealing exactly one Gig this is a hard counter for two Eddies.",
+    "Check their tags: against a VEHICLE deck it replaces itself every time."
+   ]
+  },
+  "tetratronic-rippler": {
+   "role": "One-Eddie filtering Gear",
+   "guide": "A point of power for one Eddie, and every spend lets you look at the top card and bin it if you do not want it. That is not card advantage but it is a smoother draw every single turn, and on a Legend you tap for Eddies it costs nothing at all.",
+   "tips": [
+    "On a payment Legend it filters for free every turn — the best home for it.",
+    "Trashing the miss feeds recursion; it is not pure loss in a list that recurs."
+   ]
+  },
+  "the-heist": {
+   "role": "Gear tutor that can cheat on cost",
+   "guide": "Digs four for a Gear, and if that Gear's cost matches one of your Gig values you play it free instead of taking it. In a Gear list with any Gig control that free clause fires often enough to make this two Eddies for a Gear and its cost — one of the better rates in the set.",
+   "tips": [
+    "Adjust a Gig to match the Gear you want before casting; the free play is the whole card.",
+    "Trashing four is fuel for The Relic and other recursion rather than a real cost."
+   ]
+  },
+  "the-relic-experimental-biochip": {
+   "role": "Recursion Gear",
+   "guide": "When the wearer dies, a Unit costing up to nine comes back from the trash for free and the Relic's host bottom-decks. Put it on something expendable and their removal spell becomes your free top-end. Five Eddies and 4 RAM is steep, so it wants an ARASAKA shell that was going to pay that anyway.",
+   "tips": [
+    "Equip it to your *worst* Unit, not your best — you want the wearer to die.",
+    "Cost 9 or less covers essentially the whole set, including Adam Smasher."
+   ]
+  },
+  "three-mouths-one-desire": {
+   "role": "Min-Gig card selection",
+   "guide": "Two Eddies to look three deep and take one card, plus one more for every min Gig you control. A board built around min Gigs turns this into a two-Eddie Draw 2 or 3 with selection attached, which is a rate no unconditional draw spell in the set matches.",
+   "tips": [
+    "Trust No One and Peace Offering both manufacture min Gigs; sequence them first.",
+    "With no min Gig it is a two-Eddie Draw 1 with filtering — playable, not exciting."
+   ]
+  },
+  "towerfall": {
+   "role": "Comeback board wipe",
+   "guide": "Minus five to every rival Unit, or bottom-deck all their 0-power Units, and *both* if you are behind on Street Cred. Both modes together is a genuine sweeper: the minus-five creates the 0-power Units the second mode then removes permanently. Six Eddies, and worth it on the turn it saves the game.",
+   "tips": [
+    "The two modes combo with each other — order matters, and the game applies the shrink first.",
+    "It is strictly better while losing. Do not cast it from ahead for half the effect."
+   ]
+  },
+  "trauma-team-operatives": {
+   "role": "Late-game discount body",
+   "guide": "Seven power, minus an Eddie for every Unit in your trash down to a floor of one. Early it is a six-drop you cannot afford; after a few trades it is a one-Eddie 7-power body. It rewards exactly the grindy game where you have been losing Units.",
+   "tips": [
+    "Count the trash, not the turn. This gets cheaper the longer the game runs.",
+    "Cards that trash from your deck — All is Lost, Misty — accelerate it as well as combat does."
+   ]
+  },
+  "trust-no-one": {
+   "role": "One-Eddie Gig shrink and min-maker",
+   "guide": "Pulls a Gig down by as much as three and draws if that leaves you with a min Gig. It is the mirror of Industrial Assembly and just as cheap: shrink your own Gig to set up a min-Gig payoff, or shrink theirs to change what their attackers can reach.",
+   "tips": [
+    "Shrinking *your* Gig to create a min is usually the play — the draw and the payoffs both want it.",
+    "Chrome Reverie's free Call and Three Mouths both read min Gigs. This is their enabler."
+   ]
+  },
+  "tygers-whisper": {
+   "role": "Two-Eddie free Legend Call",
+   "guide": "A 0-power body that Calls a Legend for free on arrival. That is a turn of acceleration for two Eddies, and the leftover body still blocks and carries Gear. In a Legends list it is close to an auto-include at one RAM.",
+   "tips": [
+    "Call the Legend you most want as a payment source — a face-up Legend is an Eddie every turn.",
+    "Only one Call per turn, so do not stack it with another free-Call effect on the same turn."
+   ]
+  },
+  "unlikely-bond": {
+   "role": "Symmetrical bounce",
+   "guide": "Bottom-decks one of your ready Units to bottom-deck one of their spent ones. You choose to lose something ready — which usually means something that already attacked or that you no longer need — and they lose something that is tapped out. It answers a threat permanently without a defeat trigger firing.",
+   "tips": [
+    "Give up a Unit that has already done its job this turn; the cost is then nearly nothing.",
+    "Bottom-decking beats defeating against death triggers and Deadman Transmitter alike."
+   ]
+  },
+  "v-corporate-exile": {
+   "role": "Clean 5-Eddie beater",
+   "guide": "The most honest Legend in the set: pay 5, get an 8-power Unit that can attack immediately. No conditions, no build-around. Eight power is one short of the 10 that steals a second Gig, so V is a natural home for a single point of pump or a piece of Gear.",
+   "tips": [
+    "Pair with any +2 power effect to cross the 10-power line.",
+    "Remember it is removed from the game when it leaves the field — there is no second use."
+   ]
+  },
+  "v-roamer-of-the-badlands": {
+   "role": "Gig-growing attacker",
+   "guide": "Every Gig it steals gets pushed up by as much as five, so it does not just take Street Cred, it inflates it. Two Gigs at 8+ then draw a card each turn. It is the engine for a deck that wants big dice, and it pairs directly with Kerry Eurodyne and Octant.",
+   "tips": [
+    "The increase happens on steal, so a blocked attack gets nothing — clear blockers first.",
+    "Also worth running Dying Night if your Legend is named V; the two Vs support each other."
+   ]
+  },
+  "v-streetkid": {
+   "role": "BRAINDANCE tutor",
+   "guide": "Trash 3 then take a BRAINDANCE Program back is card selection and graveyard filling in one, and the GO SOLO body gives you a 6-power attacker afterwards. In a BRAINDANCE list he finds the piece you are missing; outside one, the CALL does nothing.",
+   "tips": [
+    "Trashing 3 is a cost but it feeds Alt Cunningham and Judy.",
+    "Check you actually have BRAINDANCE Programs before running him."
+   ]
+  },
+  "valentino-guerrera": {
+   "role": "Blocker-ignoring aggro",
+   "guide": "Four power for three, and while ahead on Street Cred it can attack ready BLOCKERs — which means their wall no longer stops it. That is a card designed to close out a game you are already winning, and it is exactly average when you are not.",
+   "tips": [
+    "It attacks *into* blockers rather than past them, so bring the power to win those fights.",
+    "Check Street Cred: behind, this is a vanilla 4-power three-drop."
+   ]
+  },
+  "valentino-street-racer": {
+   "role": "ADRENALINE granter",
+   "guide": "Gives another cheap Unit the ability to attack the turn it arrives. Three Eddies to convert a five-cost body into an immediate steal is real reach, and it dodges the removal they were holding for your next turn. The cost-5 cap keeps it off the genuine top end.",
+   "tips": [
+    "Play the target *after* this, and check the cap — cost 5 or less only.",
+    "The granted Unit attacks immediately, which means their sorcery-speed answers never get a window."
+   ]
+  },
+  "viktor-vektor-drop-your-illusions": {
+   "role": "CYBERWARE discount engine",
+   "guide": "Three Eddies off your first CYBERWARE Gear each turn, floor of one. In a Cyberware list that is close to a free Gear every turn, which compounds with every Gear-count payoff you run. The 5-power body means it is not a dead card while you draw the Gear.",
+   "tips": [
+    "It is per turn, so spread your Gear out across turns rather than dumping them in one.",
+    "Most of the good Gear in the set carries the CYBERWARE tag — check before assuming a discount."
+   ]
+  },
   "viktor-vektor-sit-down-and-relax": {
    "role": "Gear tutor",
    "guide": "Digs five deep and takes two cheap Gear, which in a Gear deck is the most reliable way to assemble Royce or Panam's board. Outside a Gear deck it is a blank. This is the card that makes the Gear archetype consistent rather than a gamble.",
    "tips": [
     "Pair with River Ward: he plays for free what Viktor finds.",
     "Only counts Gear with cost 2 or less — build the curve to match."
+   ]
+  },
+  "viktor-vektor-you-might-feel-a-little-pinch": {
+   "role": "Gear recursion on a body",
+   "guide": "Three Eddies for a 3-power body that returns a cheap CYBERWARE Gear from the trash and equips it — to another Unit, not itself. It rebuilds a Gear board after a removal spell, which is the moment a Gear deck usually loses.",
+   "tips": [
+    "The Gear must go on *another* friendly Unit, so have a target before casting.",
+    "Cost 2 or less covers Mantis Blades, Kiroshi Optics, Tetratronic Rippler and Mandibular Upgrade."
+   ]
+  },
+  "wakako-okada-peace-and-harmony": {
+   "role": "Flexible utility Fixer",
+   "guide": "Never spectacular, never dead. The CALL choice covers both halves of a tight game — shrink a blocker to win a fight, or just draw. The Gig adjustment is the quiet one that matters: two points of Gig movement is often exactly the gap between scoring this turn and next.",
+   "tips": [
+    "Default to Draw 1 unless the -2 power actually changes a fight.",
+    "Use the decrease to set up min-Gig payoffs, not only to protect."
+   ]
+  },
+  "we-gotta-live-together": {
+   "role": "Double reanimation when behind",
+   "guide": "Two cheap Units back from the trash for free, and the whole card costs three instead of five if a rival is two or more Gigs ahead. That is a genuine swing from a losing board — two bodies for three Eddies — and it gets cheaper precisely when you need it.",
+   "tips": [
+    "Check the Gig gap before casting; the discount is most of the card's value.",
+    "Cost 3 or less is the cap, so stock the trash with cheap bodies rather than top end."
+   ]
+  },
+  "westbrook-netrunner": {
+   "role": "Anti-Legend defence",
+   "guide": "For a turn, rival Legends cannot steal your Gigs worth less than their power — which shuts off the GO SOLO attacks that a Legend deck wins with. Narrow, and against a Legend-centric rival it is the difference between holding and losing the board.",
+   "tips": [
+    "It hits Legends only, not Units. Against a normal board it does nothing.",
+    "Pair with Riot Shield's GO SOLO tax if you expect Legends to be the rival's plan."
+   ]
+  },
+  "wild-in-the-streets": {
+   "role": "Unconditional removal for spent Units",
+   "guide": "Five Eddies to defeat any spent Unit, with no power or cost cap at all. That is the answer to the top end — Adam Smasher, Saul Bright, anything — as long as you wait for it to attack. Four RAM Green is the real price.",
+   "tips": [
+    "It only hits spent Units, so it punishes attacking. Hold it rather than casting on your turn.",
+    "No cost or power restriction makes it one of the few clean answers to a 14-power body."
+   ]
+  },
+  "wraith-marauders": {
+   "role": "Chain-attack enabler",
+   "guide": "Every Gig it steals readies another friendly Unit whose power equals that Gig's value. Line the values up and one attack becomes two or three, which in a NOMAD list with a spread of Unit sizes is a genuine combo rather than a nice-to-have.",
+   "tips": [
+    "The readied Unit's power must *equal* the Gig value — build the board with that matching in mind.",
+    "Gig adjusters let you tune the stolen value to whichever Unit you want back up."
+   ]
+  },
+  "yorinobu-arasaka-embracing-destruction": {
+   "role": "ARASAKA draw engine",
+   "guide": "A card every turn for attacking with an ARASAKA Unit is a strong rate, and the Street Cred clause means the discard downside switches off as the game goes long. Early it is a real cost — you are effectively rummaging rather than drawing.",
+   "tips": [
+    "Track your Street Cred: past 20 the draw is unconditional.",
+    "Pairs naturally with Saburo in the same ARASAKA shell."
+   ]
+  },
+  "yorinobu-arasaka-steel-dragon": {
+   "role": "ARASAKA top end with a free follow-up",
+   "guide": "Nine power, and it drops a cost-4-or-less Unit from hand or trash for free that can attack Units immediately. That is two bodies and a fight for seven Eddies. The draw-on-ARASAKA-death clause then makes every trade in the mirror favour you.",
+   "tips": [
+    "The free Unit comes from hand *or* trash, so a cheap body you already lost is a live target.",
+    "It gets haste against Units only, not the Gig area — use it to clear the way."
+   ]
+  },
+  "zetatech-berserk": {
+   "role": "Legend-discounted Gear",
+   "guide": "Six Eddies, minus one per face-up Legend, floor of one. With all three flipped it is a three-Eddie 3-power Gear, which is fine but not remarkable — this is a card for a Legends list that already has the Calls, rather than a reason to build one.",
+   "tips": [
+    "Count face-up Legends before casting; at full price it is not worth the slot.",
+    "It is CYBERWARE, so Viktor Vektor's discount stacks on top of the Legend discount."
+   ]
+  },
+  "zetatech-faceplate": {
+   "role": "Gig-tuning Gear with a draw",
+   "guide": "Two Eddies, two power, and every spend adjusts a Gig by one and draws if you hold three Gigs of different values. On a Legend you tap for payment that is a free pip and a free card most turns — the pip itself steers toward the diversity the draw wants, so the card builds its own condition.",
+   "tips": [
+    "Equip a payment Legend: the trigger fires on every spend, not only on attacks.",
+    "The adjustment comes before the check, so you can usually create the third distinct value yourself."
    ]
   }
  }
