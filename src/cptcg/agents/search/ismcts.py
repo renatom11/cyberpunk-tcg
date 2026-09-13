@@ -39,10 +39,12 @@ this budget that is simply not affordable, and the calibrated value head (holdou
 0.022) is what makes skipping it defensible. ``rollout_depth`` keeps the claim testable rather than
 assumed — see the class attribute.
 
-*The prior is the value head, because there is no policy head until Stage 4.* Each child is previewed
-once and scored, and the scores are softmaxed. That is ~107 us per child, so it is computed lazily —
-only when a node is visited a second time and a choice among its children actually has to be made.
-Most nodes in a 200-iteration tree are visited once and never pay it.
+*The prior is a policy head when the weights file carries one, and the value head otherwise.* The
+fallback previews each child once and softmaxes the scores, at ~107 us per child, so it is computed
+lazily — only when a node is visited a second time and a choice among its children actually has to
+be made. Most nodes in a 200-iteration tree are visited once and never pay it. A policy head reads
+the moves directly, with no clone and no preview, which is the whole reason it exists; see
+``_priors`` and ``learn/policy.py``.
 
 Pure stdlib, like everything under ``src/cptcg``: this package is shipped into the browser.
 """
@@ -151,8 +153,16 @@ class IsmctsAgent(NeuralAgent):
     #: Visit-count temperature for the final choice. 0 is argmax, which is what a gate measures.
     temperature = 0.0
 
-    #: The root visit counts of the most recent search, as {action: visits}. Written by
-    #: ``_choose`` and read by the policy trainer; empty until a search has run.
+    #: The root visit counts of the **most recent decision**, as {action: visits}. Written by
+    #: ``_choose`` and read by the policy trainer; empty until a search has run, and empty again
+    #: after any decision that did not search.
+    #:
+    #: The invariant that matters is *staleness*, not the dict: ``act`` clears it on entry, so a
+    #: reader can never be handed the previous decision's visits keyed by actions that are not even
+    #: options here. Before that clear existed, every path that answers without searching — an
+    #: ORDER or MULLIGAN choice, a single-option choice, and ``_choose``'s own empty-root fallback —
+    #: left the prior decision's dict in place, and ``tools/fit_policy.py --target search`` would
+    #: have written those rows as though they were this decision's opinion.
     last_visits: dict = {}
 
     #: Softmax temperature for the *policy-head* prior, when the weights file carries one. Separate
@@ -162,6 +172,7 @@ class IsmctsAgent(NeuralAgent):
 
     # ------------------------------------------------------------------ entry point
     def act(self, s: GameState, choice: Choice) -> int:
+        self.last_visits = {}          # this decision's visits, or nothing. Never the last one's.
         kind = choice.kind
         # Turn order and the mulligan are one-off, pre-board decisions with no sequence to search,
         # and the frozen policies for them are inherited deliberately.
@@ -292,14 +303,6 @@ class IsmctsAgent(NeuralAgent):
         if _same_position(c, s):
             return True
         return position_key(c) in self._seen
-
-    def _is_no_op(self, s: GameState, choice: Choice, a: Action) -> bool:
-        """Does taking this action leave the game in a position indistinguishable from this one?"""
-        c = s.clone()
-        c.rng = Pcg32(self.rng.next_u32(), seq=3)      # never preview the true future
-        apply(c, choice.options.index(a))
-        self._resolve(c, 1)
-        return _same_position(c, s)
 
     def _iterate(self, root: _Node, w: GameState) -> None:
         node = root
@@ -456,11 +459,16 @@ class IsmctsAgent(NeuralAgent):
         return pol
 
     def _priors(self, w: GameState, ch: Choice, idxs: list[int]) -> dict:
-        """One-ply previews, softmaxed, from the perspective of whoever is choosing.
+        """The move prior, from the perspective of whoever is choosing.
 
-        There is no policy head until Stage 4, so this is what a prior can be made of. It costs
-        about 107 us per option, which is why it is computed here — on a node's second visit, when
-        a choice among children actually has to be made — and not at expansion.
+        A policy head if the weights file carries one — a move ordering read straight off the moves.
+        Otherwise one-ply previews, softmaxed, which costs about 107 us per option and is why this
+        is computed here — on a node's second visit, when a choice among children actually has to be
+        made — and not at expansion.
+
+        Note the early return below: a subclass that flattens this prior has to flatten **both**
+        temperatures, because ``prior_temp`` is never read once a head is present. See
+        ``IsmctsFlat``.
         """
         opts = ch.options
         actor = ch.player
@@ -530,9 +538,9 @@ class IsmctsAgent(NeuralAgent):
         counts = [(i, root.children[opts[i]].visits) for i in range(len(opts))
                   if opts[i] in root.children]
         # The search's own answer to "which move is worth looking at", left where a caller can read
-        # it. This is the target a policy head should be fitted to — it is strictly better than the
-        # one-ply prior, because it is what the whole search concluded — and recording it costs a
-        # dict per decision. Nothing in play reads it.
+        # it. This is the target a policy head is fitted to — it is strictly better than the one-ply
+        # prior, because it is what the whole search concluded — and recording it costs a dict per
+        # decision. Nothing *in play* reads it; ``tools/fit_policy.py --target search`` does.
         self.last_visits = {opts[i]: n for i, n in counts}
         if self.temperature > 0.0:
             return self._sample(counts)
@@ -609,8 +617,16 @@ class IsmctsFlat(IsmctsAgent):
     competition was never the value head.
 
     A very large temperature is how the softmax is flattened rather than a separate code path, so
-    the two agents differ in exactly one number and nothing else.
+    the two agents differ in exactly two numbers and nothing else.
+
+    **Both** temperatures have to be flattened, and forgetting the second is a silent failure rather
+    than a loud one. ``_priors`` returns from the policy-head branch before ``prior_temp`` is ever
+    read, so a weights file that carries a policy head turns this agent back into an ordinary
+    opinionated searcher while its name and its docstring still say "control". Nothing would raise;
+    the row would simply stop measuring what it claims to. ``tests/learn/test_policy.py`` pins the
+    uniform prior *with a head present*, which is the case that can regress.
     """
 
     name = "ismcts-flat"
     prior_temp = 1e9
+    policy_temp = 1e9

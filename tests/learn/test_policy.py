@@ -200,3 +200,65 @@ def test_the_search_uses_the_policy_when_the_file_carries_one(tmp_path, reg):
     # fallback being the *old* prior rather than nothing
     assert len(set(round(v, 9) for v in by_policy.values())) == 1
     assert len(set(round(v, 9) for v in by_value.values())) > 1
+
+
+def test_the_flat_control_stays_flat_when_a_policy_head_is_present(tmp_path, reg):
+    """``ismcts-flat`` exists to answer "is the prior worth its price?". It flattens ``prior_temp``
+    — but ``_priors`` returns from the policy branch *before* ``prior_temp`` is read, so a weights
+    file carrying a head would quietly turn the control back into an opinionated searcher while its
+    name still said control. Nothing would raise. This pins both temperatures."""
+    src = __import__("pathlib").Path("src/cptcg/agents/weights.json")
+    dst = tmp_path / "weights.json"
+    dst.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+    write_beside(dst, PolicyModel(hidden=4,
+                                  w1=[[0.9 - 0.3 * i + 0.01 * k for k in range(NAFEAT)]
+                                      for i in range(4)],
+                                  b1=[0.1, -0.2, 0.3, -0.4],
+                                  w2=[1.7, -1.1, 0.6, -0.9], b2=0.2))
+
+    s = _table(reg)
+    idxs = list(range(len(s.pending.options)))
+    assert len(idxs) > 1
+
+    opinionated = make_agent(f"ismcts@{dst}", 3)
+    opinionated.new_game(1, 0)
+    assert opinionated.policy is not None
+    spread = opinionated._priors(s, s.pending, idxs)
+    # the head we just wrote is deliberately *not* uniform, or this test proves nothing
+    assert len(set(round(v, 9) for v in spread.values())) > 1
+
+    flat = make_agent(f"ismcts-flat@{dst}", 3)
+    flat.new_game(1, 0)
+    assert flat.policy is not None                       # it really is going down the policy branch
+    got = flat._priors(s, s.pending, idxs)
+    assert set(got) == set(spread)
+    assert pytest.approx(sum(got.values())) == 1.0
+    assert len(set(round(v, 9) for v in got.values())) == 1
+
+
+def test_visits_are_this_decisions_or_nothing(reg):
+    """``last_visits`` is the policy trainer's only input. Every path that answers *without*
+    searching — ORDER, MULLIGAN, a single-option choice, and ``_choose``'s empty-root fallback —
+    used to leave the previous decision's dict in place, so ``fit_policy --target search`` would
+    have written those rows as though they were this decision's opinion."""
+    from cptcg.core.actions import Choice, ChoiceKind, ChooseOrder
+
+    agent = make_agent("ismcts:8", 5)
+    agent.new_game(1, 0)
+    s = _table(reg)
+    agent.act(s, s.pending)
+    searched = dict(agent.last_visits)
+    assert searched, "the search should have recorded visits for a real multi-option decision"
+
+    # a decision the agent answers without searching must not inherit them
+    one = Choice(kind=ChoiceKind.MAIN, player=0, options=(EndTurn(),))
+    agent.act(s, one)
+    assert agent.last_visits == {}
+
+    # ... and neither must a choice kind that is delegated to the frozen policy
+    agent.act(s, s.pending)
+    assert agent.last_visits
+    order = Choice(kind=ChoiceKind.ORDER, player=0,
+                   options=(ChooseOrder(True), ChooseOrder(False)))
+    agent.act(s, order)
+    assert agent.last_visits == {}

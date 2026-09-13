@@ -171,6 +171,11 @@ def test_a_move_that_changes_nothing_is_not_searched(pool):
     Built rather than found: a fake choice whose first option is a genuine no-op — an EndTurn that
     is applied to a clone and then thrown away — would need engine surgery to construct, so this
     uses the real detector on real options and asserts what it says about each of them.
+
+    The detector is ``_loops``. This test used to call ``_is_no_op``, the one-step-only predecessor
+    that ``_root_actions`` stopped calling when ``_loops`` subsumed it — so it was exercising a
+    method that nothing in the agent ran. A test of the retired detector proves nothing about the
+    live one.
     """
     from cptcg.core.actions import EndTurn
 
@@ -187,11 +192,11 @@ def test_a_move_that_changes_nothing_is_not_searched(pool):
     # Every real move changes something. Ending the turn certainly does.
     for opt in ch.options:
         if isinstance(opt, EndTurn):
-            assert not a._is_no_op(s, ch, opt)
+            assert not a._loops(s, ch, opt)
     kept = a._root_actions(s, ch)
     if kept is not None:
         for opt in kept:
-            assert not a._is_no_op(s, ch, opt), opt
+            assert not a._loops(s, ch, opt), opt
 
 
 def test_the_detector_says_yes_to_an_actual_repeat(pool):
@@ -206,14 +211,19 @@ def test_the_detector_says_yes_to_an_actual_repeat(pool):
 
 def test_when_every_option_does_nothing_one_is_still_offered(pool):
     """Refusing to move is not available. If the filter would empty the menu it keeps it whole,
-    and the engine's Overtime and turn limits are the backstop."""
+    and the engine's Overtime and turn limits are the backstop.
+
+    The patch below has to name the predicate ``_root_actions`` actually calls. It named
+    ``_is_no_op`` for as long as that method existed unused, which made this test vacuous: the
+    filter ran unpatched, kept a normal menu, and the assertion passed for the wrong reason. It is
+    the same failure as a control that silently stops controlling — nothing raises."""
     decks = sample_pair(pool, Pcg32(13, seq=3))
     s = new_game(pool, decks, 21)
     legal_actions(s)
     ch = s.pending
     a = make_agent("ismcts", 2)
     a.new_game(21, ch.player)
-    a._is_no_op = lambda *_: True             # every option is a no-op
+    a._loops = lambda *_: True                # every option is a no-op
     kept = a._root_actions(s, ch)
     left = ch.options if kept is None else kept
     assert len(left) >= 1
