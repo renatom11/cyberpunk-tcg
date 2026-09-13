@@ -2447,3 +2447,65 @@ Unit without carrying the token. Run against the map as it was, it names both ca
 That is the third time this session that a thing which *looked* right was doing nothing — a test
 patching a method nobody called, a control whose flattening was bypassed, and now a classification
 contradicted by the card it classified. None of the three raised.
+
+
+### plan-deep:32 vs ismcts:32 — 2026-09-13 07:23 UTC
+
+`arena a-vs-b plan-deep:32 ismcts:32` over 6 deck pairings sampled from deck seed 20260910, SPRT at delta 0.05.
+
+240 games over 6 deck pairings, 120 paired comparisons — every seed played from both seats and with the deck assignments swapped. Ruleset `149b39c8f55e9d41`, 1310.3s.
+
+| | games | win rate | 95% Wilson (these decks) |
+|---|---:|---:|---|
+| **plan-deep:32** | 240 | 50.4% | 44.1–56.7% |
+| ismcts:32 | 240 | 49.6% | 43.3–55.9% |
+
+The Wilson interval above is **conditional on these 6 deck pairings**: it says what more games on these decks would tell you, and nothing about other decks. Per-pairing rates run 32.5–65.0%; over the deck population the mean is 50.4 [38.8–62.1]% (t5 on 6 pairings). **That second band is the error bar for plan-deep:32's strength**, and a generation-over-generation claim has to clear it rather than the Wilson one — the same protocol on five different deck samples moves several points while nothing about the agents changes. It is estimated from only 6 pairings, so it is itself noisy and can land either side of the Wilson bracket: narrower when the pairings happened to agree, much wider when one of them did not.
+
+Paired test: 16 of 31 decisive pairs (51.6%) — undecided at this sample size.
+
+plan-deep:32 sat in seat 0 in 120 of 240 games — exactly half, by construction. plan-deep:32 on the play: 45.0% [36.4–53.9] (who goes first is the d20 winner's *choice*, so this is description, not balance). Average game length 13.3 turns. End reasons: OVERTIME 83, SEVEN_GIGS 157.
+
+| deck pairing | games | plan-deep:32 win rate |
+|---|---:|---|
+| `sampled-0` built vs built-b | 40 | 50.0% [35.2–64.8] |
+| `sampled-1` built vs explorer | 40 | 57.5% [42.2–71.5] |
+| `sampled-2` Sample Gangers vs random | 40 | 65.0% [49.5–77.9] |
+| `sampled-3` random vs random-b | 40 | 52.5% [37.5–67.1] |
+| `sampled-4` random vs random-b | 40 | 45.0% [30.7–60.2] |
+| `sampled-5` random vs built | 40 | 32.5% [20.1–48.0] |
+
+### The outstanding gate row, and the verdict it forces
+
+The head-to-head above is the row Stage B left open, and it settles the question in the direction
+the panel already hinted at: **50.4%** [44.1–56.7] over 240 games, between-pairing 50.4 [38.8–62.1],
+16 of 31 decisive pairs. SPRT **undecided**. Not a win, not a loss — even.
+
+So the four gate conditions read:
+
+| condition | result |
+|---|---|
+| SPRT accepts H1 | **no** — undecided at 50.4% |
+| between-pairing band clears 50% | **no** — [38.8–62.1] |
+| panel anchor not down more than 3.0 | yes — 86.9% against 87.2%, −0.3 |
+| delayed suite not losing positions | yes — 6 solved against 4, 115/128 against 64/128 |
+
+`decide` returns **reject**, and it is right to. `plan-deep:32` is not a stronger player than the
+incumbent; it is an **equally strong player that can do something the incumbent cannot**. Those are
+different claims and only the second one is supported.
+
+That is worth stating plainly because the temptation is to lead with 6-of-8 and 115/128. The suite
+is a stress test, reclassified as such two sections ago, and a large gain on a stress test with a
+dead-even head-to-head means the ability is real and the situations that reward it are rarer in
+general play than the suite's prominence suggests — which is exactly what "stress test, not progress
+metric" was meant to keep honest.
+
+What it does establish, and this is the part that changes what to build next: **the value head was
+never the binding constraint.** Same weights, no refit, no new data, no new features — and the
+delayed suite nearly doubled while general play held level. Five nights were spent fitting the
+evaluator on the inference that it was near its limit. It may well be near its limit; it simply was
+not what was in the way.
+
+The remaining hole is the one both agents share. `mined-166300-77` is 0/16 for `ismcts` and 4/16 for
+both plan agents, against a random floor of 3/16 — a horizon-2 position that neither approach
+touches, and the honest place to point the next experiment.
