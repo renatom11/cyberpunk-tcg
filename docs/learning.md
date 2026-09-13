@@ -2060,3 +2060,320 @@ features over the same corpus, and a better optimiser over the same corpus all d
 
 **The remaining gains are not in the evaluator.** Further nights spent fitting it are, on this
 evidence, nights spent re-measuring 0.5.
+
+
+### Delayed-reward suite: plan:32 — 2026-09-13 05:10 UTC
+
+**Solved 4 of 8** (110 of 128 trials won), against a floor of 12 of 128 trials for uniform random play. Every position has a verified winning line that the frozen heuristic does not find on any of these seeds; a position counts as solved only when the agent wins it on every one of them. The suite holds 5 at a horizon of one turn (won inside the searched turn), 3 at a horizon of two turns (the payoff lands after the rival's answer).
+
+| position | source | horizon | trials won | floor | solved |
+|---|---|---:|---:|---:|---|
+| `gear-before-the-raid` | hand-built | 1 | 16/16 | 3/16 | yes |
+| `sell-to-afford-the-raid` | hand-built | 1 | 16/16 | 3/16 | yes |
+| `two-pieces-of-gear` | hand-built | 1 | 16/16 | 0/16 | yes |
+| `mined-23767-79` | mined from heuristic self-play | 1 | 13/16 | 3/16 | no |
+| `mined-23773-81` | mined from heuristic self-play | 1 | 15/16 | 0/16 | no |
+| `mined-166300-77` | mined from heuristic self-play | 2 | 4/16 | 3/16 | no |
+| `mined-166302-115` | mined from heuristic self-play | 2 | 16/16 | 0/16 | yes |
+| `mined-166305-59` | mined from heuristic self-play | 2 | 14/16 | 0/16 | no |
+
+**Horizon** is how far past the searched turn the win may land, counted in the searched player's own turns. At 1 the line wins inside the turn; at 2 the searched turn cannot win by itself and has to leave a board the frozen policy converts on the following turn — a reward that arrives after the move that earned it. Only the searched turn is chosen by the agent either way: the suite measures which line you take *this* turn, not whether you can plan two of them.
+
+**Floor** is uniform random play over the same turn, on the same seeds, stored when the position was qualified. Read the agent's column against it, not against the frozen heuristic's zero: the heuristic scores zero here by construction, because missing these positions on these seeds is how they were selected.
+
+The win is confirmed by playing the turn out and the rival's whole reply with the frozen heuristic in both seats, so a line that reaches seven Gigs and has them stolen back does not count. That reply is one competent defence and one sample of the rival's Gig die, not a proof against every defence.
+
+
+### Delayed-reward suite: ismcts:32 — 2026-09-13 05:12 UTC
+
+**Solved 4 of 8** (64 of 128 trials won), against a floor of 12 of 128 trials for uniform random play. Every position has a verified winning line that the frozen heuristic does not find on any of these seeds; a position counts as solved only when the agent wins it on every one of them. The suite holds 5 at a horizon of one turn (won inside the searched turn), 3 at a horizon of two turns (the payoff lands after the rival's answer).
+
+| position | source | horizon | trials won | floor | solved |
+|---|---|---:|---:|---:|---|
+| `gear-before-the-raid` | hand-built | 1 | 16/16 | 3/16 | yes |
+| `sell-to-afford-the-raid` | hand-built | 1 | 16/16 | 3/16 | yes |
+| `two-pieces-of-gear` | hand-built | 1 | 0/16 | 0/16 | no |
+| `mined-23767-79` | mined from heuristic self-play | 1 | 16/16 | 3/16 | yes |
+| `mined-23773-81` | mined from heuristic self-play | 1 | 0/16 | 0/16 | no |
+| `mined-166300-77` | mined from heuristic self-play | 2 | 0/16 | 3/16 | no |
+| `mined-166302-115` | mined from heuristic self-play | 2 | 16/16 | 0/16 | yes |
+| `mined-166305-59` | mined from heuristic self-play | 2 | 0/16 | 0/16 | no |
+
+**Horizon** is how far past the searched turn the win may land, counted in the searched player's own turns. At 1 the line wins inside the turn; at 2 the searched turn cannot win by itself and has to leave a board the frozen policy converts on the following turn — a reward that arrives after the move that earned it. Only the searched turn is chosen by the agent either way: the suite measures which line you take *this* turn, not whether you can plan two of them.
+
+**Floor** is uniform random play over the same turn, on the same seeds, stored when the position was qualified. Read the agent's column against it, not against the frozen heuristic's zero: the heuristic scores zero here by construction, because missing these positions on these seeds is how they were selected.
+
+The win is confirmed by playing the turn out and the rival's whole reply with the frozen heuristic in both seats, so a line that reaches seven Gigs and has them stolen back does not count. That reply is one competent defence and one sample of the rival's Gig die, not a proof against every defence.
+
+
+### Delayed-reward suite: plan — 2026-09-13 05:13 UTC
+
+**Solved 5 of 8** (94 of 128 trials won), against a floor of 12 of 128 trials for uniform random play. Every position has a verified winning line that the frozen heuristic does not find on any of these seeds; a position counts as solved only when the agent wins it on every one of them. The suite holds 5 at a horizon of one turn (won inside the searched turn), 3 at a horizon of two turns (the payoff lands after the rival's answer).
+
+| position | source | horizon | trials won | floor | solved |
+|---|---|---:|---:|---:|---|
+| `gear-before-the-raid` | hand-built | 1 | 16/16 | 3/16 | yes |
+| `sell-to-afford-the-raid` | hand-built | 1 | 16/16 | 3/16 | yes |
+| `two-pieces-of-gear` | hand-built | 1 | 16/16 | 0/16 | yes |
+| `mined-23767-79` | mined from heuristic self-play | 1 | 0/16 | 3/16 | no |
+| `mined-23773-81` | mined from heuristic self-play | 1 | 16/16 | 0/16 | yes |
+| `mined-166300-77` | mined from heuristic self-play | 2 | 4/16 | 3/16 | no |
+| `mined-166302-115` | mined from heuristic self-play | 2 | 16/16 | 0/16 | yes |
+| `mined-166305-59` | mined from heuristic self-play | 2 | 10/16 | 0/16 | no |
+
+**Horizon** is how far past the searched turn the win may land, counted in the searched player's own turns. At 1 the line wins inside the turn; at 2 the searched turn cannot win by itself and has to leave a board the frozen policy converts on the following turn — a reward that arrives after the move that earned it. Only the searched turn is chosen by the agent either way: the suite measures which line you take *this* turn, not whether you can plan two of them.
+
+**Floor** is uniform random play over the same turn, on the same seeds, stored when the position was qualified. Read the agent's column against it, not against the frozen heuristic's zero: the heuristic scores zero here by construction, because missing these positions on these seeds is how they were selected.
+
+The win is confirmed by playing the turn out and the rival's whole reply with the frozen heuristic in both seats, so a line that reaches seven Gigs and has them stolen back does not count. That reply is one competent defence and one sample of the rival's Gig die, not a proof against every defence.
+
+
+### Frozen panel: plan:32 — 2026-09-13 05:13 UTC
+
+Panel `a1832d477c27193f`, decks `1b1799dbc029a6b7`, frozen 2026-09-10: 6 deck pairings whose **decklists are stored verbatim in `data/arena/panel.json`** and are never redrawn from the sampler, 60 games each, no early stopping. Both digests are checked on load, so these numbers are comparable across every generation as long as they read `a1832d477c27193f` / `1b1799dbc029a6b7`.
+
+| opponent | games | win rate | 95% Wilson (these decks) | per-pairing spread | decisive pairs |
+|---|---:|---:|---|---|---|
+| uniform random legal play (`random`) | 360 | 96.9% | 94.6–98.3% | 93.3–100.0% | 169/169 |
+| the frozen one-ply heuristic (`heuristic`) | 360 | 83.3% | 79.1–86.8% | 78.3–86.7% | 122/124 |
+| the generation-0 snapshot (`gen0`) | — | not available yet | — | — | lands with the first trained model; until then this row reads "not available yet" and the panel is two members |
+
+Here the Wilson interval is the right one and the *only* one that changes between generations: the decks are fixed by the panel, so nothing but more games is being sampled. The per-pairing spread is printed beside it as a reminder of what the panel is not — a panel score is a score on these twelve decklists, and generalises no further than they do. For a claim about play in general, use the between-pairing interval from `a-vs-b` or `generalisation`.
+
+
+### Delayed-reward suite: plan:32 — 2026-09-13 05:29 UTC
+
+**Solved 4 of 8** (110 of 128 trials won), against a floor of 12 of 128 trials for uniform random play. Every position has a verified winning line that the frozen heuristic does not find on any of these seeds; a position counts as solved only when the agent wins it on every one of them. The suite holds 5 at a horizon of one turn (won inside the searched turn), 3 at a horizon of two turns (the payoff lands after the rival's answer).
+
+| position | source | horizon | trials won | floor | solved |
+|---|---|---:|---:|---:|---|
+| `gear-before-the-raid` | hand-built | 1 | 16/16 | 3/16 | yes |
+| `sell-to-afford-the-raid` | hand-built | 1 | 16/16 | 3/16 | yes |
+| `two-pieces-of-gear` | hand-built | 1 | 16/16 | 0/16 | yes |
+| `mined-23767-79` | mined from heuristic self-play | 1 | 13/16 | 3/16 | no |
+| `mined-23773-81` | mined from heuristic self-play | 1 | 15/16 | 0/16 | no |
+| `mined-166300-77` | mined from heuristic self-play | 2 | 4/16 | 3/16 | no |
+| `mined-166302-115` | mined from heuristic self-play | 2 | 16/16 | 0/16 | yes |
+| `mined-166305-59` | mined from heuristic self-play | 2 | 14/16 | 0/16 | no |
+
+**Horizon** is how far past the searched turn the win may land, counted in the searched player's own turns. At 1 the line wins inside the turn; at 2 the searched turn cannot win by itself and has to leave a board the frozen policy converts on the following turn — a reward that arrives after the move that earned it. Only the searched turn is chosen by the agent either way: the suite measures which line you take *this* turn, not whether you can plan two of them.
+
+**Floor** is uniform random play over the same turn, on the same seeds, stored when the position was qualified. Read the agent's column against it, not against the frozen heuristic's zero: the heuristic scores zero here by construction, because missing these positions on these seeds is how they were selected.
+
+The win is confirmed by playing the turn out and the rival's whole reply with the frozen heuristic in both seats, so a line that reaches seven Gigs and has them stolen back does not count. That reply is one competent defence and one sample of the rival's Gig die, not a proof against every defence.
+
+
+### Frozen panel: plan:32 — 2026-09-13 05:27 UTC
+
+Panel `a1832d477c27193f`, decks `1b1799dbc029a6b7`, frozen 2026-09-10: 6 deck pairings whose **decklists are stored verbatim in `data/arena/panel.json`** and are never redrawn from the sampler, 60 games each, no early stopping. Both digests are checked on load, so these numbers are comparable across every generation as long as they read `a1832d477c27193f` / `1b1799dbc029a6b7`.
+
+| opponent | games | win rate | 95% Wilson (these decks) | per-pairing spread | decisive pairs |
+|---|---:|---:|---|---|---|
+| uniform random legal play (`random`) | 360 | 97.5% | 95.3–98.7% | 96.7–100.0% | 171/171 |
+| the frozen one-ply heuristic (`heuristic`) | 360 | 83.1% | 78.8–86.6% | 78.3–88.3% | 120/121 |
+| the generation-0 snapshot (`gen0`) | — | not available yet | — | — | lands with the first trained model; until then this row reads "not available yet" and the panel is two members |
+
+Here the Wilson interval is the right one and the *only* one that changes between generations: the decks are fixed by the panel, so nothing but more games is being sampled. The per-pairing spread is printed beside it as a reminder of what the panel is not — a panel score is a score on these twelve decklists, and generalises no further than they do. For a claim about play in general, use the between-pairing interval from `a-vs-b` or `generalisation`.
+
+
+### Frozen panel: plan:32 — 2026-09-13 05:42 UTC
+
+Panel `a1832d477c27193f`, decks `1b1799dbc029a6b7`, frozen 2026-09-10: 6 deck pairings whose **decklists are stored verbatim in `data/arena/panel.json`** and are never redrawn from the sampler, 60 games each, no early stopping. Both digests are checked on load, so these numbers are comparable across every generation as long as they read `a1832d477c27193f` / `1b1799dbc029a6b7`.
+
+| opponent | games | win rate | 95% Wilson (these decks) | per-pairing spread | decisive pairs |
+|---|---:|---:|---|---|---|
+| uniform random legal play (`random`) | 360 | 97.8% | 95.7–98.9% | 95.0–100.0% | 172/172 |
+| the frozen one-ply heuristic (`heuristic`) | 360 | 85.0% | 80.9–88.3% | 78.3–91.7% | 127/128 |
+| the generation-0 snapshot (`gen0`) | — | not available yet | — | — | lands with the first trained model; until then this row reads "not available yet" and the panel is two members |
+
+Here the Wilson interval is the right one and the *only* one that changes between generations: the decks are fixed by the panel, so nothing but more games is being sampled. The per-pairing spread is printed beside it as a reminder of what the panel is not — a panel score is a score on these twelve decklists, and generalises no further than they do. For a claim about play in general, use the between-pairing interval from `a-vs-b` or `generalisation`.
+
+
+### Delayed-reward suite: plan:32 — 2026-09-13 06:11 UTC
+
+**Solved 5 of 8** (113 of 128 trials won), against a floor of 12 of 128 trials for uniform random play. Every position has a verified winning line that the frozen heuristic does not find on any of these seeds; a position counts as solved only when the agent wins it on every one of them. The suite holds 5 at a horizon of one turn (won inside the searched turn), 3 at a horizon of two turns (the payoff lands after the rival's answer).
+
+| position | source | horizon | trials won | floor | solved |
+|---|---|---:|---:|---:|---|
+| `gear-before-the-raid` | hand-built | 1 | 16/16 | 3/16 | yes |
+| `sell-to-afford-the-raid` | hand-built | 1 | 16/16 | 3/16 | yes |
+| `two-pieces-of-gear` | hand-built | 1 | 16/16 | 0/16 | yes |
+| `mined-23767-79` | mined from heuristic self-play | 1 | 16/16 | 3/16 | yes |
+| `mined-23773-81` | mined from heuristic self-play | 1 | 15/16 | 0/16 | no |
+| `mined-166300-77` | mined from heuristic self-play | 2 | 4/16 | 3/16 | no |
+| `mined-166302-115` | mined from heuristic self-play | 2 | 16/16 | 0/16 | yes |
+| `mined-166305-59` | mined from heuristic self-play | 2 | 14/16 | 0/16 | no |
+
+**Horizon** is how far past the searched turn the win may land, counted in the searched player's own turns. At 1 the line wins inside the turn; at 2 the searched turn cannot win by itself and has to leave a board the frozen policy converts on the following turn — a reward that arrives after the move that earned it. Only the searched turn is chosen by the agent either way: the suite measures which line you take *this* turn, not whether you can plan two of them.
+
+**Floor** is uniform random play over the same turn, on the same seeds, stored when the position was qualified. Read the agent's column against it, not against the frozen heuristic's zero: the heuristic scores zero here by construction, because missing these positions on these seeds is how they were selected.
+
+The win is confirmed by playing the turn out and the rival's whole reply with the frozen heuristic in both seats, so a line that reaches seven Gigs and has them stolen back does not count. That reply is one competent defence and one sample of the rival's Gig die, not a proof against every defence.
+
+
+### Frozen panel: plan-deep:32 — 2026-09-13 06:07 UTC
+
+Panel `a1832d477c27193f`, decks `1b1799dbc029a6b7`, frozen 2026-09-10: 6 deck pairings whose **decklists are stored verbatim in `data/arena/panel.json`** and are never redrawn from the sampler, 60 games each, no early stopping. Both digests are checked on load, so these numbers are comparable across every generation as long as they read `a1832d477c27193f` / `1b1799dbc029a6b7`.
+
+| opponent | games | win rate | 95% Wilson (these decks) | per-pairing spread | decisive pairs |
+|---|---:|---:|---|---|---|
+| uniform random legal play (`random`) | 360 | 98.6% | 96.8–99.4% | 96.7–100.0% | 175/175 |
+| the frozen one-ply heuristic (`heuristic`) | 360 | 86.9% | 83.1–90.0% | 81.7–93.3% | 134/135 |
+| the generation-0 snapshot (`gen0`) | — | not available yet | — | — | lands with the first trained model; until then this row reads "not available yet" and the panel is two members |
+
+Here the Wilson interval is the right one and the *only* one that changes between generations: the decks are fixed by the panel, so nothing but more games is being sampled. The per-pairing spread is printed beside it as a reminder of what the panel is not — a panel score is a score on these twelve decklists, and generalises no further than they do. For a claim about play in general, use the between-pairing interval from `a-vs-b` or `generalisation`.
+
+
+### Delayed-reward suite: plan-deep:32 — 2026-09-13 06:57 UTC
+
+**Solved 6 of 8** (115 of 128 trials won), against a floor of 12 of 128 trials for uniform random play. Every position has a verified winning line that the frozen heuristic does not find on any of these seeds; a position counts as solved only when the agent wins it on every one of them. The suite holds 5 at a horizon of one turn (won inside the searched turn), 3 at a horizon of two turns (the payoff lands after the rival's answer).
+
+| position | source | horizon | trials won | floor | solved |
+|---|---|---:|---:|---:|---|
+| `gear-before-the-raid` | hand-built | 1 | 16/16 | 3/16 | yes |
+| `sell-to-afford-the-raid` | hand-built | 1 | 16/16 | 3/16 | yes |
+| `two-pieces-of-gear` | hand-built | 1 | 16/16 | 0/16 | yes |
+| `mined-23767-79` | mined from heuristic self-play | 1 | 16/16 | 3/16 | yes |
+| `mined-23773-81` | mined from heuristic self-play | 1 | 15/16 | 0/16 | no |
+| `mined-166300-77` | mined from heuristic self-play | 2 | 4/16 | 3/16 | no |
+| `mined-166302-115` | mined from heuristic self-play | 2 | 16/16 | 0/16 | yes |
+| `mined-166305-59` | mined from heuristic self-play | 2 | 16/16 | 0/16 | yes |
+
+**Horizon** is how far past the searched turn the win may land, counted in the searched player's own turns. At 1 the line wins inside the turn; at 2 the searched turn cannot win by itself and has to leave a board the frozen policy converts on the following turn — a reward that arrives after the move that earned it. Only the searched turn is chosen by the agent either way: the suite measures which line you take *this* turn, not whether you can plan two of them.
+
+**Floor** is uniform random play over the same turn, on the same seeds, stored when the position was qualified. Read the agent's column against it, not against the frozen heuristic's zero: the heuristic scores zero here by construction, because missing these positions on these seeds is how they were selected.
+
+The win is confirmed by playing the turn out and the rival's whole reply with the frozen heuristic in both seats, so a line that reaches seven Gigs and has them stolen back does not count. That reply is one competent defence and one sample of the rival's Gig die, not a proof against every defence.
+
+## Turn-plan search: it finds the lines, and that is not the same as playing better
+
+Five refuted hypotheses had established that the value head is not the problem. The sixth was
+structural and it is the first one that turned out to be *half* right — which is more interesting
+than either a win or another flat result, because the half that failed says what the previous five
+were really measuring.
+
+### The structural claim
+
+`ismcts._search` builds a fresh tree on **every decision** and throws it away. A player-turn is
+about five of my own multi-option decisions (median; p90 nine, max twelve), so a turn costs five or
+nine separate searches and **never once evaluates a complete turn**. Every leaf the value head is
+shown is mid-turn: after a Gig has been banked, before a setup move has paid for itself. That is
+exactly the shape of the one defect located in the previous section — `CallLegend` ranked last of
+four behind `Attack` by 0.86 logits — and it is not a property of the evaluator at all.
+
+`agents/search/plan.py` asks a different question: not *which move is best here* but *which complete
+turn is best*, with candidates scored where the turn ends. `learn.delayed.turn_search` already walks
+a turn for puzzle verification, so its helpers are shared (`_own_options`, `fixed_policy`,
+`_materialise`, `NodeBudget`) while the walk itself is written out — `turn_search`'s behaviour is
+what `data/arena/delayed.json`'s stored verifications *mean*, and it must not move underneath them.
+
+Two arithmetic facts make it affordable, and one of them corrects a number this document has been
+quoting. **A bare `clone()` is 4.6 us and clone+apply 8.6 us — about 117,000 a second.** The
+"~20,000 clones a second" quoted above is a *search node* including the frozen-heuristic rival
+response, not a state copy, and the difference is a factor of five in how large a turn tree is
+affordable. And inside my own turn there is essentially no chance left: `ops.draw` consumes no
+randomness, so one determinization fixes every future draw, and the Gig die is rolled at the *front*
+of the turn.
+
+### What it does to the suite it was built for
+
+At matched budget 32, against the incumbent shipped this morning:
+
+| position | horizon | random floor | `ismcts:32` | `plan:32` |
+|---|---:|---:|---:|---:|
+| `gear-before-the-raid` | 1 | 3/16 | **16/16** | **16/16** |
+| `sell-to-afford-the-raid` | 1 | 3/16 | **16/16** | **16/16** |
+| `two-pieces-of-gear` | 1 | 0/16 | **0/16** | **16/16** |
+| `mined-23767-79` | 1 | 3/16 | **16/16** | 13/16 |
+| `mined-23773-81` | 1 | 0/16 | 0/16 | 15/16 |
+| `mined-166300-77` | 2 | 3/16 | 0/16 | 4/16 |
+| `mined-166302-115` | 2 | 0/16 | **16/16** | **16/16** |
+| `mined-166305-59` | 2 | 0/16 | 0/16 | 14/16 |
+| **total** | | 12/128 | **64/128**, 4 solved | **110/128**, 4 solved |
+
+`two-pieces-of-gear` is the row that matters. It is the position Stage 3 called "the thesis of this
+stage as a unit test" and then failed: **0 of 16 at 200 iterations**, because 7+2 and 7+1 each steal
+only one Gig and only 7+2+1 crosses the threshold, so no per-decision agent reaches it at any
+strength of evaluation. Planning the turn solves it **16 of 16**. Three positions went from 0/16 to
+14-16/16. At budget 200 the agent solves **5 of 8**, which no agent in this project has done before.
+
+Note also what the "solved" headline hides: both agents solve 4, and the trial counts are 64 against
+110. A metric that requires all sixteen seeds is the right bar for calling a position solved and the
+wrong one for measuring a change, and this table is the case that shows it.
+
+### And then the panel, which is the number that decides
+
+| agent at budget 32 | vs `heuristic` (360 games) | vs `random` |
+|---|---:|---:|
+| `ismcts:32` — the incumbent | **87.2%** [83.4–90.3] | 96.9% |
+| `plan:32`, scored at my turn boundary | 83.3% [79.1–86.8] | 96.9% |
+
+**Four points worse.** Past the promotion gate's 3.0-point regression tolerance, on the one yardstick
+in this project that cannot move. Better at the thing it was built for and worse at playing.
+
+### Two hypotheses, one refuted and one supported, both cheap
+
+**Was it determinization variance?** `ismcts` samples a world per iteration — two hundred a decision
+— and averages. The plan agent sampled *one* world per turn and played the plan that scored best in
+it, which on the suite is invisible (a line either exists or it does not) and in general play means
+choosing the plan that got the friendliest guess about the rival's hand. So proposing and scoring
+were separated: candidates proposed in one world, then re-scored across eight fresh determinizations
+with common random numbers, chosen on the mean. A plan whose actions stop being legal in another
+world is scored *where it breaks*, because fragility is a real cost of a plan.
+
+**83.3% → 83.1%.** Refuted. The variance was not the four points.
+
+**Was it horizon?** `ismcts` has `max_depth = 36` — about my turn, the rival's answer *and* my next
+turn. Scoring at my own turn boundary sees a third of that. So the shortlist is now scored after
+playing the rival's reply out under the frozen policy, the same convention `confirmed_win` uses to
+judge a suite line: a turn that banks seven Gigs and has them stolen back did not win. This is
+affordable only because it runs on eight candidates rather than inside the walk — a played-out rival
+turn costs milliseconds against ~90 us for a value-head leaf.
+
+| plan agent at budget 32 | vs `heuristic` | vs `random` |
+|---|---:|---:|
+| scored at my turn boundary | 83.1% | 97.5% |
+| + the rival's reply played out (`plan`) | **85.0%** | 97.8% |
+| + a second turn out (`plan-deep`) | **86.9%** [83.1–90.0] | **98.6%** [96.8–99.4] |
+| `ismcts:32`, the incumbent, for reference | 87.2% [83.4–90.3] | 96.9% [94.6–98.3] |
+
+**Supported, and monotone.** Each turn of lookahead is worth about two points, and the deficit
+closes almost exactly when the plan agent is allowed to see as much of the game as `ismcts`'s
+`max_depth = 36` already saw. That is the finding, and it is not the one the stage set out to prove:
+**`ismcts`'s advantage over turn-planning was never within-turn quality. It was seeing more of the
+game.** Turn-level coherence on its own is worth −4 points; turn-level coherence *plus* the same
+horizon is worth the table below.
+
+### Where `plan-deep:32` lands against the incumbent
+
+| | `ismcts:32` (shipped this morning) | `plan-deep:32` |
+|---|---:|---:|
+| frozen panel vs `heuristic` | 87.2% [83.4–90.3] | **86.9%** [83.1–90.0] |
+| frozen panel vs `random` | 96.9% [94.6–98.3] | **98.6%** [96.8–99.4] |
+| delayed suite, positions solved | 4 of 8 | **6 of 8** |
+| delayed suite, trials won | 64/128 | **115/128** |
+
+Two of the four rows of the promotion gate are already met: the panel anchor moves by −0.3, far
+inside the 3.0-point regression tolerance and inside either interval, and the delayed count goes up
+rather than down, so nothing was traded away. The head-to-head SPRT is the row still outstanding and
+it is the expensive one — both sides searching — so it is quoted when it exists rather than guessed
+at now. **On the evidence here this is a sideways move on the anchor and a real gain everywhere
+else**, which is a weaker claim than "stronger player" and the one the numbers support.
+
+The one position neither agent touches is `mined-166300-77`: 0/16 for `ismcts`, 4/16 for both plan
+agents against a random floor of 3/16. It is horizon-2 and it is the honest remaining hole.
+
+### What this changes about the previous five results
+
+Five hypotheses were refuted in a row — more data, more features, a better optimiser, a
+representation ceiling, a systematic greedy bias — and the shared conclusion was drawn each time
+that the value head was near its limit. This stage did not touch the value head, the features, the
+corpus or the optimiser, and it moved the delayed suite from 64/128 to 115/128 with the *same
+weights*. So the five results stand individually and their shared reading does not: the binding
+constraint was never how well positions are evaluated, it was **which positions the agent bothers to
+evaluate, and how far ahead it looks when it does**.
+
+That also retires the plan to fit the value head at the turn boundary. Turn-boundary evaluation is
+what the first version did and it was the version that lost four points; the winning configuration
+evaluates one to two turns *past* the boundary, so a target fitted to turn boundaries would be
+fitted to the wrong horizon.
