@@ -1203,14 +1203,16 @@
    "produces": [
     "program.play",
     "program.braindance",
-    "legend.call_free"
+    "legend.call_free",
+    "unit.spend_rival"
    ],
    "rewards": [
     "gig.min"
    ],
    "archetypes": [
     "braindance",
-    "legends"
+    "legends",
+    "defense"
    ],
    "buffs_tags": [],
    "tags": [
@@ -2237,7 +2239,9 @@
    ]
   },
   "maxtac-suppression-team": {
-   "produces": [],
+   "produces": [
+    "unit.spend_rival"
+   ],
    "rewards": [],
    "archetypes": [
     "defense"
@@ -12715,6 +12719,7 @@
    "alt-cunningham-mother-of-daemons",
    "augmented-negotiators",
    "chrome-fang",
+   "chrome-reverie",
    "corpo-security",
    "deadman-transmitter",
    "goro-takemura-hands-unclean",

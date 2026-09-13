@@ -170,3 +170,41 @@ def test_the_map_path_follows_a_rebased_root():
     finally:
         B.ROOT = old_root
         B._GRAPH = B._LINKS = None
+
+
+def test_a_card_that_says_it_stops_a_rival_unit_carries_the_token():
+    """The map is hand-authored, so the card text is the check on it.
+
+    This test exists because the map was wrong exactly here. ``Chrome Reverie`` reads "A rival Unit
+    can't attack until your next turn" and carried no ``unit.spend_rival``; so did ``MaxTac
+    Suppression Team``, which reads "Rival Units can't attack the turn they're played." Both are
+    the archetypal reason to read a rival's colours at all — if they have shown Blue you do not win
+    on exactly one attacker — and an opponent model built over the map would have said the threat
+    was not there.
+
+    Nothing raised. The graph loaded, the site rendered, the counts looked plausible. A hand-written
+    classification can only be checked against the thing it is classifying.
+    """
+    import glob
+    import re
+
+    graph = json.loads(GRAPH.read_text(encoding="utf-8"))
+    cards = {}
+    for f in glob.glob("data/cards/*.json"):
+        raw = json.loads(Path(f).read_text(encoding="utf-8"))
+        arr = raw if isinstance(raw, list) else raw.get("cards", raw)
+        for x in (arr if isinstance(arr, list) else []):
+            cards[x["id"]] = x
+
+    stops = re.compile(r"can'?t attack|cannot attack", re.I)
+    missing = []
+    for cid, x in sorted(cards.items()):
+        text = x.get("text") or ""
+        # "rival Unit(s) can't attack" — not "this Unit can only attack rival Units", which is a
+        # restriction on the card itself rather than something done to me.
+        if re.search(r"rival units? can'?t attack|rival units? cannot attack", text, re.I):
+            if "unit.spend_rival" not in (graph["cards"].get(cid, {}).get("produces") or []):
+                missing.append(f"{cid}: {text[:70]}")
+    assert not missing, ("these cards say they stop a rival Unit attacking but the interaction map "
+                         "does not say so, which makes them invisible to the opponent model:\n  "
+                         + "\n  ".join(missing))

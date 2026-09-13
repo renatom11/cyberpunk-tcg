@@ -2377,3 +2377,73 @@ That also retires the plan to fit the value head at the turn boundary. Turn-boun
 what the first version did and it was the version that lost four points; the winning configuration
 evaluates one to two turns *past* the boundary, so a target fitted to turn boundaries would be
 fitted to the wrong horizon.
+
+## Reading the rival: the one thing the agent was never given
+
+Every hypothesis tested so far has been about how well the agent *evaluates* a position. This one is
+about what it is allowed to *know*, and it came from a player describing how the game is actually
+read: you do not know a rival's Legends at the start, but the moment they play something its colour
+and RAM give the Legends away, and once you know the Legends you know the pool the rest of their
+deck comes from — which tells you whether the card that beats you is live.
+
+The code agrees, and more starkly than expected. `features.py`'s per-colour Legend entries
+(`ram_red/green/blue/yellow`, `legend_red/...`) are emitted **for me only** — the loop runs once,
+over my own RAM. There is **no rival colour feature, and no feature of any kind describing a card
+the rival has not yet played.** Meanwhile `view._hidden_groups` permutes the rival's hand and deck
+*within themselves*, so every sampled world preserves their true decklist multiset: the search is
+handed more information than a person gets and can express none of it. That is the most likely
+reading of the `cheat:ismcts` row, which found hidden information worth 47.5% over 200 games — you
+cannot exploit what you cannot describe.
+
+### The deduction is exact, and it is sharper than the intuition
+
+All twenty-seven Legends in the set are **2 RAM**, and a Legend's RAM counts only toward its own
+colour. So a rival card of colour X and RAM *r* proves they hold at least **⌈r/2⌉** Legends of
+colour X — 1 or 2 RAM proves one, 3 or 4 proves two, 5 or 6 proves all three. The non-Legend pool is
+an even **31 cards per colour, 124 in all**.
+
+The half that is easy to miss is that the three slots *compete*, so evidence for one colour is a
+**cap** on the others, not merely a probability shift:
+
+| what the rival has shown | Red | Green | Blue | Yellow | cards they can still hold |
+|---|---:|---:|---:|---:|---:|
+| nothing | 6 | 6 | 6 | 6 | 124 |
+| one Blue Legend | 4 | 4 | 6 | 4 | 123 |
+| **two Blue** | **2** | **2** | 6 | **2** | **97** |
+| three Blue | 0 | 0 | 6 | 0 | 31 |
+| one Red + two Blue | 2 | 0 | 4 | 0 | 52 |
+
+(The numbers are each colour's largest still-possible cumulative RAM.) Two proven Blue excludes no
+colour outright — a third Legend could still be anything — so a pure colour filter would cut nothing
+at all. The RAM cap cuts 27 cards anyway, because every 3-RAM-or-larger card of every other colour
+is now **impossible** rather than unlikely. `src/cptcg/learn/opponent.py` applies the cap, not just
+the filter, and reads only what `view.knows_identity` permits, so a test pins that a permuted world
+cannot move a single bound.
+
+### Crossing it with the interaction map, which is what the map was drawn for
+
+| what the rival has shown | can't-attack | removal | power-to-zero | discard | die-shrink |
+|---|---:|---:|---:|---:|---:|
+| nothing | 7 | 14 | 8 | 3 | 3 |
+| mono-Blue proven | 1 | **0** | 3 | **0** | 2 |
+| mono-Red proven | **0** | 5 | 1 | **0** | 0 |
+
+A rival who has proven three Blue Legends cannot be holding any of the fourteen removal cards. An
+agent that keeps a blocker home against them is paying a premium for nothing, and one that wins on
+exactly one attacker against a *Blue* rival is the Chrome Reverie case the player described.
+
+### The map was wrong, at exactly the card the example names
+
+**Chrome Reverie** — Blue, 1 RAM, "A rival Unit can't attack until your next turn" — carried no
+`unit.spend_rival` token. Neither did **MaxTac Suppression Team**, "Rival Units can't attack the turn
+they're played." Two of the eight cards in the game that do this thing, and the two whose printed
+text says so in as many words, were invisible to any opponent model built over the map.
+
+Nothing raised. The graph loaded, the website rendered, the counts looked plausible. A hand-authored
+classification can only be checked against the thing it classifies, so
+`tests/cards/test_graph.py` now reads the card text and fails on any card that says it stops a rival
+Unit without carrying the token. Run against the map as it was, it names both cards.
+
+That is the third time this session that a thing which *looked* right was doing nothing — a test
+patching a method nobody called, a control whose flattening was bypassed, and now a classification
+contradicted by the card it classified. None of the three raised.
