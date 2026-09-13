@@ -1978,3 +1978,85 @@ Eight hand-picked adversarial positions are a small sample, and this says nothin
 general play. What it does say is that the next experiment should be aimed at the *target*, and
 that the ceiling story should not be repeated as established until something checks it somewhere
 other than where it has now failed.
+
+## The greedy bias is not systematic either — and that ends the evaluator hunt
+
+The step-2 finding above is one position. The delayed suite is eight *hand-picked adversarial*
+cases, chosen precisely because a greedy agent fails them, so finding greedy failure there is close
+to circular. Before building a new training target on it, the question worth answering is whether
+the bias is general — and the stored example matrices already answer it for almost no compute.
+
+### The measurement
+
+`tools/calibration.py` reads the `.f32` matrices (features + outcome for millions of sampled
+positions, no games, no replay, no search), predicts with gen-1's head, and compares predicted win
+probability against actual win rate — split by **within-turn progress**. For rows where it is my
+turn, bucket by whether I have already committed power this turn (`power_spent_me` zero vs
+non-zero). Indices come from `FEATURE_NAMES.index(...)`, never hard-coded, because the vector has
+already changed once this week.
+
+A greedy bias makes a sharp prediction: positions where **nothing is spent yet** (setup still
+possible, payoff not yet visible) should be systematically **under**-predicted, and positions where
+the power is **already committed** over-predicted.
+
+### The control, first
+
+A calibration measurement is easy to get subtly wrong — labels are per-row perspective, rows are
+sampled from both seats, and mixing them produces a plausible-looking 0.5 everywhere. So the tool
+reuses `fit_eval.split_by_game` and `fit_eval.calibration` rather than reimplementing them, and
+must reproduce the number gen-1 recorded for itself:
+
+| | recorded in `gen-001/weights.json` | reproduced by the tool |
+|---|---:|---:|
+| holdout ECE | 0.02113 | **0.02223** |
+| holdout Brier | 0.14420 | **0.14412** |
+
+Close enough to trust the sub-buckets.
+
+### The result
+
+```
+my turn, nothing spent yet    n=103736  predicted 0.4609  actual 0.4542  gap +0.0067 +/- 0.0030
+my turn, power already spent  n=112172  predicted 0.5595  actual 0.5578  gap +0.0017 +/- 0.0029
+```
+
+**Both gaps are positive.** The hypothesis needs the first negative and the second positive; it gets
+the opposite sign on the bucket it cares about most, and the *fresh* bucket is the one over-predicted
+more. Splitting again by game stage says the same thing — early/nothing-spent +0.0085,
+early/already-spent −0.0002, late/nothing-spent +0.0008, late/already-spent +0.0029. Every gap is
+under 0.9pp, on 100k+ rows each.
+
+`tests/learn/test_calibration.py` proves the tool *could* have found a bias if one were there: a
+planted 8-point bias must show ECE > 0.05, an honest predictor < 0.01, and a 6-point bucket gap on
+100k rows must land far outside the reported interval. All three pass.
+
+### What this costs, stated as the plan stated it in advance
+
+The plan committed to this consequence before the number came back: *"**Well calibrated in both
+buckets** → three nights of 'the model is too greedy' is wrong too, the delayed suite is
+unrepresentative of general play, and the honest next step is to stop tuning the evaluator and say
+so — with the suite reclassified as a stress test rather than a progress metric."*
+
+So: the delayed suite is hereby a **stress test, not a progress metric**. Its 8 positions are
+adversarial by construction and the failure they expose is real but rare; treating its score as the
+headline number is what made three flat results look like three mysteries.
+
+### The cumulative scoreboard
+
+Five hypotheses about why gen-1 stopped improving, five results:
+
+| # | hypothesis | test | outcome |
+|---|---|---|---|
+| 1 | not enough data | +30,000 games, 2.84M rows (gen-2) | 52.5%, flat — **rejected** |
+| 2 | features miss Gear | 114 → 125 features | better Brier/acc/ECE, **−4.4 panel** — reverted |
+| 3 | the optimiser is wrong | evolution strategy aimed at wins | 52.9%, grand mean 0.4971 ± 0.0158 — **zero signal** |
+| 4 | representation ceiling | separation ratio, solved vs unsolved | 0.25 vs 0.24 — **refuted** |
+| 5 | systematic greedy bias | calibration by within-turn progress | both gaps < 0.9pp, wrong sign — **refuted** |
+
+Gen-1's value head is well fitted and well calibrated on the distribution it plays in. The one
+located defect (0.86 logits on `two-pieces-of-gear` step 2) is a credit-assignment error on a
+position type the corpus barely contains — which is exactly why more of the same corpus, more
+features over the same corpus, and a better optimiser over the same corpus all did nothing.
+
+**The remaining gains are not in the evaluator.** Further nights spent fitting it are, on this
+evidence, nights spent re-measuring 0.5.
