@@ -354,12 +354,17 @@ class EffectCtx:
     def choose_gig(self, owners: Iterable[int], cont: Callable[["EffectCtx", int, int], None], *,
                    pred: Callable[[int, int], bool] | None = None, prompt: str = "Choose a Gig",
                    optional: bool = False, player: int | None = None,
-                   after: Callable[["EffectCtx"], None] | None = None) -> None:
+                   after: Callable[["EffectCtx"], None] | None = None,
+                   otherwise: Callable[["EffectCtx"], None] | None = None) -> None:
         """Pick a Gig; ``cont(ctx, owner, index)`` runs with the pick.
 
         ``after(ctx)`` runs **whatever happens**: after the pick, after a decline, and when there
         was no legal Gig to offer in the first place. See :meth:`adjust_up_to` for why that hook
-        exists and what goes wrong without it.
+        exists and what goes wrong without it — and for the one thing it cannot do.
+
+        ``otherwise(ctx)`` runs only on the paths where ``cont`` did not: a decline, or no legal
+        Gig at all. That is the hook to use when ``cont`` itself opens another question, because
+        ``after`` would then fire before the answer to it arrived.
         """
         cands = [(o, i, k, v) for o in owners for i, (k, v) in enumerate(self.gigs(o))
                  if pred is None or pred(k, v)]
@@ -371,8 +376,14 @@ class EffectCtx:
                 cont(c, o, i)
             if after is not None:
                 after(c)
+
+        def _else(c: "EffectCtx") -> None:
+            if after is not None:
+                after(c)
+            if otherwise is not None:
+                otherwise(c)
         self.choose(cands, _do, prompt=prompt, optional=optional, player=player,
-                    otherwise=after, tag=call_site(cont))
+                    otherwise=_else, tag=call_site(cont))
 
     def adjust_up_to(self, owners: Iterable[int], lo: int, hi: int, *, cont: Callable | None = None,
                      after: Callable[["EffectCtx"], None] | None = None,
@@ -391,6 +402,14 @@ class EffectCtx:
         offers the decline explicitly, a Gig already at its face cannot move at all (ruling 037),
         and in both cases a second sentence hung off ``cont`` silently never runs. Six cards in
         this set were written that way.
+
+        **What ``after`` cannot do.** It runs the moment ``cont`` *returns*, and a continuation
+        returns as soon as it asks a further question -- asking pushes a step and comes straight
+        back. So ``after`` is for a ``cont`` that finishes synchronously. Where ``cont`` opens
+        another prompt, the tail belongs on *that* prompt instead, or it is evaluated against the
+        board as it was before the answer. Peace Offering is the worked example: its set is two
+        nested questions, and hanging "then, if you control a value-pair" off the outer one drew
+        before the die had moved.
         """
         cands = []
         for o in owners:

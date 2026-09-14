@@ -407,15 +407,27 @@ def _():
 @script("peace-offering")
 def _():
     def play(c):
+        # "You may set a Gig's value to the value of another Gig. Then, if you control a
+        # value-pair, draw 1." Two sentences: the "may" covers the set, and "Then" sequences the
+        # draw rather than making it conditional -- a player who already controls a pair keeps it
+        # whether or not they move a die. The draw was nested inside the set's continuation, so
+        # declining the "may" (or having no second Gig to copy from) skipped it.
+        def draw_on_pair(c2):
+            if c2.has_value_pair():
+                c2.draw(1)
+
         def pick_target(c2, o, i):
             others = [(o2, j) for o2 in (0, 1) for j in range(len(c2.gigs(o2))) if (o2, j) != (o, i)]
 
             def pick_source(c3, src):
                 c3.set_gig(o, i, c3.gigs(src[0])[src[1]][1])
-                if c3.has_value_pair():
-                    c3.draw(1)
-            c2.choose(others, pick_source, prompt="Copy the value of")
-        c.choose_gig([0, 1], pick_target, prompt="Set which Gig?", optional=True)
+                draw_on_pair(c3)
+            # The set is two nested questions, so the tail hangs off the *inner* one: ``after`` on
+            # the outer would fire the moment ``pick_target`` returns, which is before this second
+            # question has been answered and therefore before any die has moved.
+            c2.choose(others, pick_source, prompt="Copy the value of", otherwise=draw_on_pair)
+        c.choose_gig([0, 1], pick_target, prompt="Set which Gig?", optional=True,
+                     otherwise=draw_on_pair)
     return CardScript(on_play=play)
 
 

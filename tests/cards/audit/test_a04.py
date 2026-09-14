@@ -57,11 +57,13 @@ def test_trust_no_one_draws_when_no_gig_can_be_decreased(pool):
     assert len(s.zone(0, Zone.HAND)) == 1
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-peace-offering-1: the draw is nested inside the optional set, so declining the 'may' skips the separate value-pair draw clause")
 def test_peace_offering_draws_when_the_set_is_declined(pool):
     """'You may set a Gig's value to the value of another Gig. Then, if you control a
     value-pair, draw 1.' The 'may' covers the set only. Declining it leaves the two d-values at
-    2 and 2 — a value-pair the player already controls — so the second sentence still draws."""
+    2 and 2 — a value-pair the player already controls — so the second sentence still draws.
+
+    Fixed: AUD-peace-offering-1.
+    """
     s = board(pool, Side(hand=["peace-offering"], eddies=E, gig=[(6, 2), (8, 2)],
                          deck=["floor-it"]), Side())
     play(s, "peace-offering")
