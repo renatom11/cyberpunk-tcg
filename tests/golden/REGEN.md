@@ -117,3 +117,20 @@ it directly: "plays Peace Offering ... declines ... draws a card".
 heuristic key did not move at all, which fits: this changes the game only when the set is declined
 or impossible, and the heuristic takes it whenever it is offered.
 **5. Two-sided reachability.** Not applicable at G1.
+
+---
+
+## 2026-09-14 — `trust-no-one` (AUD-trust-no-one-1)
+
+**The fix.** "Decrease a Gig by up to 3. **Then, if you control a min Gig, draw 1.**" The draw hung
+off `cont`, so a declined "up to 3" — or a Gig already on its minimum face, which cannot be
+decreased at all under ruling 037 — skipped it. Moved to `after=`, which is safe here because this
+continuation finishes synchronously.
+
+**1. Prediction.** Tier G1, four keys. Observed: two of them, both `random`.
+**2. Localisation.** decisions 29 and 12, with the card first a legal option at 4 and earlier.
+**3. Revert confirmation.** DIFFERENT on exactly those two keys, at exactly actions 29 and 12.
+**4. Aggregate.** 1 of 40 and 3 of 40 games, two winner flips, two end-reason changes. Both
+heuristic keys unmoved: the heuristic takes a decrease whenever one is legal, so the changed path —
+declined or impossible — is one only random play reaches.
+**5. Two-sided reachability.** Not applicable at G1.
