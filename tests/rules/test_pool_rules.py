@@ -10,16 +10,17 @@ top of that.
 So these are the same rules, asserted per card across the pool. Each is one property that must hold
 for **every** card of a kind, which makes each test a statement with a real denominator instead of
 an example. Where a rule has a documented exception, the exception is named here rather than
-excluded silently.
+excluded silently — and named by *reading the printed text*, not by listing ids, so the next card
+that earns the exception is caught the day it is printed rather than the day someone remembers.
 """
 import re
 
 import pytest
 from conftest import Side, board, do, find
 
-from cptcg.core.actions import Attack, CallLegend, GoSolo, Play, Sell
-from cptcg.core.enums import NO_INST, CardType, Keyword, Zone
-from cptcg.core.ops import available, play_cost
+from cptcg.core.actions import Attack, CallLegend, GoSolo, Play, Sell, Target
+from cptcg.core.enums import NO_INST, TARGET_GIG, CardType, Keyword, Zone
+from cptcg.core.ops import ATTACKING, available, play_cost, power, steal_count
 
 #: Enough Eddies to buy anything in the set, and a host for any Gear.
 RICH = 9
@@ -200,3 +201,75 @@ def test_every_gear_needs_a_host_and_lands_on_the_one_it_was_given(pool):
         if s.i_zone[inst] == Zone.FIELD and s.i_host[inst] != host:
             wrong.append(f"{d.id}: equipped to {s.i_host[inst]}, not the chosen host {host}")
     assert not wrong, "Gear did not land on its host:\n  " + "\n  ".join(wrong)
+
+
+#: A Unit whose own printed text takes the Gig area away from it. Three say "This Unit can't attack"
+#: outright (one of them conditionally) and one says it "can only attack rival Units"; read from the
+#: text rather than listed by id, so a fifth is caught the day it is printed.
+_NO_GIG_ATTACK = re.compile(r"this Unit can(?:'|’)?t attack|can only attack rival Units", re.I)
+
+
+def test_the_steal_threshold_holds_for_every_unit_in_the_set(pool):
+    """`steal_count(power)` — 1 die, plus one more per full 10 power — for all sixty-odd Units.
+
+    This is the single most consequential number in the game: it is why a 9-power Unit and a
+    10-power Unit are different cards, and every deck report, every measured card record and every
+    agent's evaluation sits on it. It was pinned on the toy registry, where the largest power is
+    small enough that the second threshold never comes up.
+
+    Each Unit attacks a Gig area holding three dice, from a board with no cost modifiers, no power
+    auras and no protection effects, and the number of dice that change hands must be the number
+    its printed power buys. Both sides hold a real deck, because a Unit whose trigger draws would
+    otherwise deck itself out and steal nothing — which is a fact about the board, not about the
+    rule.
+    """
+    wrong, refused = [], []
+    for d in _units(pool):
+        if d.power is None:
+            continue
+        s = board(pool, Side(field=[d.id], deck=["floor-it"] * 4),
+                  Side(gig=[(4, 1), (6, 2), (8, 3)], deck=["floor-it"] * 4))
+        u = find(s, d.id, Zone.FIELD, player=0)
+        want = steal_count(power(s, u, ATTACKING))
+        if Attack(u) not in s.pending.options:
+            refused.append(d.id)
+            continue
+        do(s, Attack(u))
+        for _ in range(30):                         # answer the target, then whatever the card asks
+            if s.over or s.pending is None or s.pending.kind.name == "MAIN":
+                break
+            opts = list(s.pending.options)
+            gig = [o for o in opts if isinstance(o, Target) and o.kind == TARGET_GIG]
+            do(s, gig[0] if gig else opts[-1])
+        if len(s.gig[0]) != want:
+            wrong.append(f"{d.id}: power {d.power} should steal {want}, stole {len(s.gig[0])}")
+    assert not wrong, "the steal threshold did not hold:\n  " + "\n  ".join(wrong)
+    assert sorted(refused) == sorted(d.id for d in _units(pool) if _NO_GIG_ATTACK.search(d.text or "")), \
+        f"a Unit refused the attack without printing why, or printed why and attacked anyway: {refused}"
+
+
+def test_a_program_is_playable_in_a_reaction_window_exactly_when_it_prints_quick(pool):
+    """QUICK is the whole of the reaction system for Programs, in both directions.
+
+    The rival attacks; the defender holds one Program and enough Eddies for anything in the set.
+    The Program must be offered if and only if it prints QUICK — seven of the thirty-one do. The
+    negative half is the half worth having: a non-QUICK Program that became playable on the rival's
+    turn would hand the defender the whole card pool at instant speed, and nothing else in the
+    repository asserts that it cannot. A window with nothing but Pass in it never opens at all
+    (`steps.ReactionWindowStep`), so "not offered" and "no window" are the same answer here.
+    """
+    wrong = []
+    for d in pool.defs:
+        if d.type is not CardType.PROGRAM:
+            continue
+        s = board(pool, Side(field=[HOST], gig=[(4, 1)], deck=["floor-it"] * 4),
+                  Side(hand=[d.id], eddies=RICH, gig=[(6, 2)], deck=["floor-it"] * 4))
+        do(s, Attack(find(s, HOST, Zone.FIELD, player=0)))
+        if s.pending is not None and s.pending.kind.name == "TARGET":
+            do(s, Target(TARGET_GIG))
+        inst = find(s, d.id, Zone.HAND, player=1)
+        offered = (s.pending is not None and s.pending.kind.name == "REACTION"
+                   and any(isinstance(o, Play) and o.inst == inst for o in s.pending.options))
+        if offered != (Keyword.QUICK in d.keywords):
+            wrong.append(f"{d.id}: QUICK={Keyword.QUICK in d.keywords} but offered={offered}")
+    assert not wrong, "QUICK and reaction-window legality disagree:\n  " + "\n  ".join(wrong)
