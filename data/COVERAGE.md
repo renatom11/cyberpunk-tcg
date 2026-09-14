@@ -32,14 +32,13 @@ The table above counts what exists. This one counts what has been verified, whic
 | Scripted cards | 140 |
 | ... named by at least one test | 140 |
 | ... named by no test at all | 0 |
-| Open audit findings (failing tests, awaiting a fix) | 27 |
+| Open audit findings (failing tests, awaiting a fix) | 26 |
 
 Open findings — each is a `xfail(strict=True)` test under `tests/cards/audit/`, so the suite stays green until a fix makes one pass and pytest reports XPASS:
 
 - `AUD-6th-street-recruits-1`
 - `AUD-alt-cunningham-soulkiller-architect-1`
 - `AUD-cyberpsychosis-1`
-- `AUD-dying-night-vs-pistol-1`
 - `AUD-evelyn-parker-beautiful-enigma-1`
 - `AUD-gorilla-arms-1`
 - `AUD-goro-takemura-losing-his-way-1`
