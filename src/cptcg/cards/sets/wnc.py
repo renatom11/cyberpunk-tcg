@@ -1294,7 +1294,7 @@ def _():
         # "⊡: Adjust a Gig by 1" -- no "up to", unlike all thirteen other adjust effects in the set,
         # so once the ⊡ is paid a die moves. `optional=False` drops the decline the shared helper
         # offers for the "up to" wording.
-        abilities=(Ability(effect=lambda c: c.adjust_up_to([c.player, c.rival], -1, 1,
+        abilities=(Ability(effect=lambda c: c.adjust_up_to([c.player, c.rival], -1, 1, optional=False,
                                                            prompt="Adjust a Gig by 1"),
                            self_spend=True, label="Adjust a Gig by 1"),))
 

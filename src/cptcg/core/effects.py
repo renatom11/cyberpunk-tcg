@@ -386,7 +386,7 @@ class EffectCtx:
                     otherwise=_else, tag=call_site(cont))
 
     def adjust_up_to(self, owners: Iterable[int], lo: int, hi: int, *, cont: Callable | None = None,
-                     after: Callable[["EffectCtx"], None] | None = None,
+                     after: Callable[["EffectCtx"], None] | None = None, optional: bool = True,
                      prompt: str = "Adjust a Gig") -> None:
         """'Increase/decrease/adjust a Gig by up to N' as ONE decision over (owner, index, amount)
         triples, plus a decline option. Fewer, richer decisions keep search trees small.
@@ -410,6 +410,11 @@ class EffectCtx:
         board as it was before the answer. Peace Offering is the worked example: its set is two
         nested questions, and hanging "then, if you control a value-pair" off the outer one drew
         before the die had moved.
+
+        ``optional`` is the "up to" itself. Fourteen cards in this set adjust a Gig and thirteen of
+        them print "up to N", so the decline is the default -- but Muamar Reyes *El Capitán* prints
+        "⊡: Adjust a Gig by 1", with no "up to" and no "may", and there the do-nothing answer is one
+        the card does not offer. Pass ``optional=False`` for a fixed amount.
         """
         cands = []
         for o in owners:
@@ -428,7 +433,7 @@ class EffectCtx:
             if after is not None:
                 after(c)
 
-        self.choose(cands, _do, prompt=prompt, optional=True, otherwise=after,
+        self.choose(cands, _do, prompt=prompt, optional=optional, otherwise=after,
                     tag=call_site(cont) or "adjust_gig")
 
     # ------------------------------------------------------------- legends

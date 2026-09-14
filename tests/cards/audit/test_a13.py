@@ -148,12 +148,13 @@ def test_wakako_up_to_2_may_be_declined(pool):
     assert s.gig[0] == [(6, 3)]                          # declining is a legal answer here
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-muamar-reyes-el-capitan-1: '⊡: Adjust a Gig by 1' is offered with a decline, as if it read 'by up to 1'")
 def test_muamar_adjust_a_gig_by_1_is_not_optional(pool):
     """'⊡: Adjust a Gig by 1.' Muamar is the only adjust effect in the pool that omits 'up to':
     afterparty-at-lizzies, dexter-deshawn-one-last-chance and zetatech-faceplate all print 'up
     to 1', and the two Legends either side of Muamar in this very file print 'up to 2'. Once
     this ability is activated a die moves by 1; there is no do-nothing answer.
+
+    Fixed: AUD-muamar-reyes-el-capitan-1.
     """
     s = board(pool, Side(legends=[("muamar-reyes-el-capitan", {"faceup": True})], gig=[(6, 3)]),
               Side())
