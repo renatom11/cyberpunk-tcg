@@ -298,3 +298,35 @@ And the naive reading is contradicted where it can be checked: swapping V — Co
 Álvarez in The Heist costs 6.2 points, not the 30 the raw win-rates-when-played implied. The gap
 between those two numbers is the confound, measured.
 
+## The card-value store now ships, because it is worth 6 points
+
+For most of this project's life the deck builder's learned card values lived in
+`out/knowledge.json` — a gitignored path. On the machine that had run a league the builder had an
+opinion about every card; on a fresh clone, and in every build of the published site, it had none,
+and nothing anywhere said so.
+
+`tools/knowledge_ab.py` measures what the opinion is worth, paired by construction: each slot builds
+two decks from the **same Legends, the same seed and the same strategy**, differing only in the
+store they consult, and plays them against each other with mirrored seats.
+
+| | |
+|---|---|
+| slots (deck pairs) | 48 |
+| games per slot | 60 |
+| new-store decks won | 1,616 of 2,880 (0.561) |
+| slot-level 95% interval | 0.518 .. 0.604 |
+| slots won / lost | 30 / 15 |
+
+The slot is the unit of evidence and the tool insists on it: sixty games inside one slot are sixty
+samples of one deck pair, and the game-level interval (0.543–0.579) is about twice as tight as the
+evidence supports. At 16 slots the honest interval still crossed 0.5; it took 48 to separate.
+
+So `data/strategy/knowledge.json` is committed — 28,400 games of `tools/playtest.py` self-play,
+every card in the set and every Legend — and `knowledge.default_path()` prefers a league's own store
+when the checkout has one and falls back to the shipped prior when it does not. A league's memory
+knows *this* player's archetypes; the shipped file is a generic prior, and the order says so.
+
+Three things move together in that comparison and it cannot separate them: the new store is bigger
+(28,400 games against 1,440), broader (150 cards against 76, including Legends, which the old store
+structurally could not hold — `record_game` walked only `deck.main`), and current (measured on the
+post-audit engine, which is the engine the games are played on).
