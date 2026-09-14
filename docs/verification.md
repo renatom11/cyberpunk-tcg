@@ -177,3 +177,30 @@ The three cards the sweep cannot drive to target are the interesting output rath
 Chrome Reverie was drawn 2,424 times and played 62 — a 2.6% play rate — and the hand-written note
 for it calls it "the card that punishes a rival who wins on exactly one attacker". Both of those are
 now on the same page of the website, one under the other.
+
+
+## The prior the deck builders were reading
+
+`Knowledge` is the builders' card prior — shrunk IWD per card, fed into the static score so each
+generation of builders starts smarter than the last. It is the cheapest feedback loop in the project
+and it is only as good as the games behind it.
+
+The store the builders had been reading holds **1,440 games over 76 cards**, with effective sample
+sizes small enough to print: Peace Offering at n=10.8, Meredith Stout at n=13.1, median n≈60. Put
+beside the 24,240-game coverage sweep (median n≈636 over 150 cards), the two stores **disagree about
+the direction of 34 of the 76 cards they both have an opinion on — 45%**.
+
+That is not a curiosity about two datasets. Shrinkage was supposed to handle a thin estimate:
+`iwd * n / (n + k)` pulls it toward zero. But shrinkage controls the *magnitude* of a noisy number,
+not its sign, and the sign is what a builder reads when it decides whether a card earns a slot. For
+half the cards the old store had an opinion about, that opinion was noise wearing a preference.
+
+`tools/compare_knowledge.py` is the comparison, kept so it can be re-run rather than remembered.
+
+What has deliberately **not** happened is swapping one store for the other. The newer one was
+measured on coverage-driven decks — built to reach the tail of the card pool, not to be good decks —
+and IWD differences out deck *shape* but not the field a deck faced. Whether the bigger store builds
+better decks is a question for the builder, played head to head against itself with each prior, and
+it is not a question either store can answer about itself. Until that runs, the honest statement is
+narrower and still worth having: **the prior was thin enough that half of it was sign-noise**, which
+is a much better reason to distrust the learned-archetype results than anything in the model.
