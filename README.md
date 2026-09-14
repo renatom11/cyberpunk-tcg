@@ -21,7 +21,7 @@ the rules leave open and what this engine does about them.
 | `src/cptcg/sim/` | Match running, tournaments, statistics, replays |
 | `src/cptcg/learn/` | The training loop: state features, deck sampling, experience capture |
 | `data/` | Card data, card images, decklists |
-| `docs/` | Rules transcription, rulings, authoring guide, [the training loop](docs/learning.md) |
+| `docs/` | Rules transcription, rulings, authoring guide, [the training loop](docs/learning.md), [what is actually checked](docs/verification.md) |
 
 ## Design notes
 
