@@ -1329,11 +1329,19 @@ function matLock() {
 // to come down on the table between two cards. Starting anywhere and sliding onto the cards is the
 // same gesture with the restriction taken off.
 //
-// The two things it must not break: a short swipe still scrolls (the arming timer is cancelled by
-// any real movement before it fires), and a drag-to-play still plays (a hold cancels the pending
-// drag, so holding means read and moving straight off means play).
-const HOLD_MS = 350;
+// The thing it must not break is drag-to-play: the arming timer is cancelled by any real movement
+// before it fires, so moving straight off a card plays it and staying still reads it.
+//
+// Two thresholds, because the press asks two questions and they are not the same question.
+// HOLD_MS is "show me this card", and a reader wants that the moment they press: past about a tenth
+// of a second it stops being a response and starts being a wait. TAP_MS is "and do not play it",
+// which has to clear a real tap, and a deliberate tap is down for longer than a picture should take
+// to appear. Splitting them is what lets the card come up at once without a brisk tap losing its
+// card — the picture shows at HOLD_MS, and the click is only swallowed if the finger was still down
+// at TAP_MS or had slid to another card by then.
+const HOLD_MS = 120, TAP_MS = 260;
 let SCRUB = false, SCRUB_TIMER = null, SCRUB_FROM = null, SCRUB_ATE_CLICK = false;
+let SCRUB_AT = 0, SCRUB_READ = false;
 
 function cardUnder(x, y) {
   const under = document.elementFromPoint(x, y);
@@ -1352,15 +1360,23 @@ function startScrub(x, y) {
   SCRUB = true;
   DRAG = null;                       // a hold is a read, not a drag: drop the pending drag-to-play
   const c = cardUnder(x, y);
+  SCRUB_READ = false;                // not a read yet: a tap this brief still plays the card it hit
   if (c) previewCard(c);             // began on a card; otherwise it arms and waits for the slide
 }
 function endScrub() {
   clearTimeout(SCRUB_TIMER); SCRUB_TIMER = null; SCRUB_FROM = null;
   if (!SCRUB) return;
   SCRUB = false;
-  // The lift that ends a hold must not also play the card it ended on. A touch click follows its
-  // lift within a few milliseconds, so the licence expires quickly — left standing it would eat
-  // the next real click instead, which is the sort of bug that makes a button "randomly" not work.
+  // The lift that ends a *read* must not also play the card it ended on. A brisk tap is not a read
+  // even though it showed the card, so it keeps its click and plays what it touched.
+  if (!(SCRUB_READ || Date.now() - SCRUB_AT >= TAP_MS)) {
+    if (PREVIEW) PREVIEW.classList.remove("scrub");
+    hidePreview();
+    return;
+  }
+  // A touch click follows its lift within a few milliseconds, so the licence expires quickly — left
+  // standing it would eat the next real click instead, which is the sort of bug that makes a button
+  // "randomly" not work.
   SCRUB_ATE_CLICK = true;
   setTimeout(() => { SCRUB_ATE_CLICK = false; }, 400);
   if (PREVIEW) PREVIEW.classList.remove("scrub");
@@ -1371,6 +1387,7 @@ document.addEventListener("touchstart", (e) => {
   SCRUB_ATE_CLICK = false;           // a new touch: whatever the last hold was owed, it is spent
   const t = e.touches[0];
   SCRUB_FROM = { x: t.clientX, y: t.clientY };
+  SCRUB_AT = Date.now();
   clearTimeout(SCRUB_TIMER);
   SCRUB_TIMER = setTimeout(() => { SCRUB_TIMER = null; startScrub(SCRUB_FROM.x, SCRUB_FROM.y); }, HOLD_MS);
 }, { passive: true });
@@ -1388,6 +1405,11 @@ document.addEventListener("touchmove", (e) => {
   // A hold that landed on one of the board's own scrolling panels would otherwise scroll it while
   // reading, so the listener is not passive and this move belongs to the gesture.
   if (e.cancelable) e.preventDefault();
+  // Slid far enough to be aiming at another card: a read whatever the clock says. The threshold
+  // matters — a finger resting on a card jitters a pixel or two, and counting that as a slide would
+  // turn brisk taps into reads at random, which is the failure that looks like a dead button.
+  if (SCRUB_FROM && Math.abs(t.clientX - SCRUB_FROM.x) + Math.abs(t.clientY - SCRUB_FROM.y) > 12)
+    SCRUB_READ = true;
   const c = cardUnder(t.clientX, t.clientY);
   if (c) previewCard(c);
   else hidePreview();                // slid onto the table: nothing to read there

@@ -77,9 +77,17 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .legends .card + .card, .field .card + .card,
 .field .slot + .slot { margin-left: calc(-1 * var(--overlap, 0px)); }
 .hand .card { transition: transform .13s ease; flex: 0 0 auto; }
-/* Only the cards drawn on top of the hovered one have to move out of its way. */
-.hand.mine .card:hover { transform: translateY(-14px); z-index: 6; }
-.hand.mine .card:hover ~ .card { transform: translateX(var(--overlap, 0px)); }
+/* Only the cards drawn on top of the hovered one have to move out of its way.
+
+   Hover is a pointer's state, and a pointer leaves. A finger does not: iOS holds the last tapped
+   element in :hover until something else is tapped, so a card stayed standing out of the hand with
+   nothing touching the screen at all. `hover: hover` asks whether the input can really hover, so
+   every rule below that MOVES something -- the lift, the shove it gives its neighbours, the hint
+   boxes -- is a mouse's, and a finger never enters a state it has no way to leave. */
+@media (hover: hover) {
+  .hand.mine .card:hover { transform: translateY(-14px); z-index: 6; }
+  .hand.mine .card:hover ~ .card { transform: translateX(var(--overlap, 0px)); }
+}
 .hand.mine .card { font-size: 10px; }
 .hand.mine .card .nm { font-size: 12px; } .hand.mine .card .txt { font-size: 9.5px; max-height: 92px; }
 .hand.mine .card .sub { font-size: 10px; } .hand.mine .card .tags { font-size: 9px; }
@@ -98,7 +106,7 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .die.rival svg { stroke: var(--cyan); }
 .die.pick { cursor: pointer; }
 .die.pick svg { stroke: var(--green); filter: drop-shadow(0 0 5px var(--green)); }
-.die.pick:hover { transform: translateY(-2px); }
+@media (hover: hover) { .die.pick:hover { transform: translateY(-2px); } }
 .gigs { display: flex; align-items: center; gap: 8px; min-height: calc(var(--die) + 10px); }
 .gigs .list { flex: 1 1 auto; justify-content: flex-start; }
 /* Gigs held out of seven, over Street Cred: the two numbers the game is won on, in the one box the
@@ -245,9 +253,11 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .card:has(.gearstack) { overflow: visible; isolation: isolate; }
 .card img { border-radius: 6px; }
 .card.can { cursor: pointer; box-shadow: 0 0 0 2px var(--green), 0 0 14px var(--green); }
-.card.can:hover { transform: translateY(-3px); }
-.card.can.spent:hover { transform: rotate(90deg) translateY(-3px); }
-.card.can.lag:hover { transform: translateY(-3px); }
+@media (hover: hover) {
+  .card.can:hover { transform: translateY(-3px); }
+  .card.can.spent:hover { transform: rotate(90deg) translateY(-3px); }
+  .card.can.lag:hover { transform: translateY(-3px); }
+}
 .card.target { box-shadow: 0 0 0 2px var(--red), 0 0 14px var(--red); cursor: pointer; }
 .card.attacking { box-shadow: 0 0 0 2px var(--yellow), 0 0 16px var(--yellow); }
 .slot { width: var(--card-w); height: var(--card-h); border: 1px dashed var(--line); border-radius: 8px; flex: 0 0 auto; }
@@ -376,7 +386,7 @@ table.rep th { color: var(--cyan); }
 .paypanel .opts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .paypanel .opts button { font-size: 11px; }
 .card.payable { cursor: pointer; box-shadow: 0 0 0 2px var(--yellow), 0 0 14px var(--yellow); }
-.card.payable:hover { transform: translateY(-3px); }
+@media (hover: hover) { .card.payable:hover { transform: translateY(-3px); } }
 .card.paypicked { box-shadow: 0 0 0 3px var(--green), 0 0 18px var(--green); filter: brightness(1.2); }
 
 /* ---------------------------------------------------------------- hover hints
@@ -384,17 +394,19 @@ table.rep th { color: var(--cyan); }
    Anything that wants to name itself carries `data-hint` and the board draws it in its own
    colours, above the thing, and never in the way of a click. */
 [data-hint] { position: relative; }
-[data-hint]:hover::after {
-  content: attr(data-hint); position: absolute; left: 50%; bottom: calc(100% + 6px);
-  transform: translateX(-50%); white-space: nowrap; pointer-events: none; z-index: 30;
-  background: #0a1620; border: 1px solid var(--line2); border-radius: 6px; padding: 3px 8px;
-  color: var(--cyan); font-size: 11px; font-weight: 600; letter-spacing: .04em;
-  box-shadow: 0 4px 14px #000a;
-}
-/* the rival's row has nothing above it, so its hints hang below instead */
-.p-opp-fixer [data-hint]:hover::after, .p-opp-gig [data-hint]:hover::after,
-.stacks > .stackbox:first-child[data-hint]:hover::after {
-  bottom: auto; top: calc(100% + 6px);
+@media (hover: hover) {
+  [data-hint]:hover::after {
+    content: attr(data-hint); position: absolute; left: 50%; bottom: calc(100% + 6px);
+    transform: translateX(-50%); white-space: nowrap; pointer-events: none; z-index: 30;
+    background: #0a1620; border: 1px solid var(--line2); border-radius: 6px; padding: 3px 8px;
+    color: var(--cyan); font-size: 11px; font-weight: 600; letter-spacing: .04em;
+    box-shadow: 0 4px 14px #000a;
+  }
+  /* the rival's row has nothing above it, so its hints hang below instead */
+  .p-opp-fixer [data-hint]:hover::after, .p-opp-gig [data-hint]:hover::after,
+  .stacks > .stackbox:first-child[data-hint]:hover::after {
+    bottom: auto; top: calc(100% + 6px);
+  }
 }
 
 /* ---------------------------------------------------------------- looking through a pile */
