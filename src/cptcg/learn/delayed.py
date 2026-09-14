@@ -114,7 +114,7 @@ from cptcg.cards.registry import Registry, cards_digest
 from cptcg.core.actions import Choice, ChoiceKind
 from cptcg.core.config import DEFAULT_CONFIG, RulesConfig
 from cptcg.core.engine import apply, legal_actions, new_game
-from cptcg.core.enums import DICE, Zone
+from cptcg.core.enums import DICE, NO_INST, Zone
 from cptcg.core.legal import main_menu
 from cptcg.core.rng import Pcg32
 from cptcg.core.state import GameState
@@ -471,6 +471,74 @@ def build_position(reg: Registry, spec: dict, cfg: RulesConfig = DEFAULT_CONFIG)
     s.stack.append(EndTurnStep())
     s.pending = Choice(ChoiceKind.MAIN, s.active, tuple(main_menu(s)))
     return s
+
+
+def spec_from_state(s: GameState) -> dict:
+    """The inverse of :func:`build_position`: a live state as the JSON a board position is made of.
+
+    This exists because the other kind of suite entry does not survive the engine. A ``replay``
+    entry stores a seed and a list of action *indices*, so it is rebuilt by replaying a real game --
+    and the moment any card in that prefix gains or loses a prompt, the indices mean something else
+    and the position cannot be rebuilt at all. Five mined positions died exactly that way when Kerry
+    Eurodyne *Axe, Attitude, Audience* stopped drawing for a roll the player had ignored. Freezing
+    them into boards makes them data, which is what every other entry already is.
+
+    What is *not* captured: the mods in flight, the step stack, and anything about how the position
+    was reached. A frozen entry is the board at that decision, which is all `qualify` reads.
+    """
+    reg = s.reg
+    sides = []
+    for p in (0, 1):
+        side: dict = {}
+        for key, zone in (("deck", Zone.DECK), ("hand", Zone.HAND), ("field", Zone.FIELD),
+                          ("legends", Zone.LEGENDS), ("trash", Zone.TRASH)):
+            items = []
+            for i in s.zone(p, zone):
+                if s.i_host[i] != NO_INST:
+                    continue                      # Gear is written under the card it equips
+                opts = {}
+                if s.i_spent[i]:
+                    opts["spent"] = True
+                if s.i_lag[i]:
+                    opts["lag"] = True
+                if s.i_faceup[i]:
+                    opts["faceup"] = True
+                if s.i_flags[i]:
+                    opts["flags"] = s.i_flags[i]
+                gear = [reg.defs[s.i_card[g]].id for g in s.zone(p, zone) if s.i_host[g] == i]
+                if gear:
+                    opts["gear"] = gear
+                cid = reg.defs[s.i_card[i]].id
+                items.append([cid, opts] if opts else cid)
+            if items:
+                side[key] = items
+        eddies = s.zone(p, Zone.EDDIES)
+        if eddies:
+            side["eddies"] = len(eddies)
+            side["spent_eddies"] = sum(1 for i in eddies if s.i_spent[i])
+        side["gig"] = [list(g) for g in s.gig[p]]
+        side["fixer"] = list(s.fixer[p])
+        sides.append(side)
+    return {"seed": s.seed, "turn": s.turn, "active": s.active, "first_player": s.first_player,
+            "turns_taken": list(s.turns_taken), "overtime": bool(s.overtime), "sides": sides}
+
+
+def freeze_replays(reg: Registry, suite: dict, cfg: RulesConfig = DEFAULT_CONFIG) -> list[str]:
+    """Convert every ``replay`` entry in ``suite`` into a ``board`` entry, in place.
+
+    Must be run on a build that can still rebuild them; afterwards they no longer depend on one.
+    """
+    frozen = []
+    for e in suite["positions"]:
+        if e.get("kind") != "replay":
+            continue
+        e["spec"] = spec_from_state(build_from_replay(reg, e, cfg))
+        e["kind"] = "board"
+        e["source"] = f"{e.get('source', 'mined')} (frozen from its replay)"
+        for k in ("prefix", "decks", "seed"):
+            e.pop(k, None)
+        frozen.append(e["id"])
+    return frozen
 
 
 def build_from_replay(reg: Registry, entry: dict, cfg: RulesConfig = DEFAULT_CONFIG) -> GameState:

@@ -1349,14 +1349,19 @@ def _():
         def reroll(c2):
             from cptcg.core.ops import reroll_gig
             reroll_gig(c2.s, c2.player, idx)
-            after(c2)
         if (c.inst, "reroll_offer") in c.s.used:
             after(c)
             return
         c.s.used.add((c.inst, "reroll_offer"))
-        c.maybe(reroll, prompt=f"Reroll the d{sides} ({value})?", )
-        # if declined, the original roll stands: check min/max on it
-        c.later(lambda c2: after(c2) if not c2.s.has_mod("rerolled", c2.inst) else None)
+        # The min/max draw is about the value the Gig ENDS ON: "you may ignore the result", and an
+        # ignored result is not a result you rolled. So it hangs off the reroll question's `after`,
+        # which runs on both answers -- once, and after the die has settled.
+        #
+        # It used to be queued with `c.later(...)`, guarded by a "rerolled" mod that no code in the
+        # repository ever wrote. `later` pushes a step on top of the stack, so it resolved *before*
+        # the player was asked: a d6 rolling 1 drew a card, and reroll-to-6 then drew another. One
+        # roll, two cards, one of them for a face the player had just been allowed to ignore.
+        c.maybe(reroll, after=after, prompt=f"Reroll the d{sides} ({value})?")
     return CardScript(on_event=ev, events=frozenset({"gig_rolled"}))
 
 

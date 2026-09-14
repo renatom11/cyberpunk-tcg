@@ -23,6 +23,18 @@ def suite():
     return delayed.load_suite()
 
 
+def _authored(e) -> bool:
+    """A position someone wrote, as opposed to one found in a real game.
+
+    The two are both ``kind: board`` now — the five mined entries were frozen from their replays,
+    because a replay is a list of action indices and stops rebuilding the moment a card in its
+    prefix gains or loses a prompt. The rules below are sanity checks on *authored* boards (three
+    Legends a side, a solver that exhausts its search), and a real game legitimately breaks them: a
+    Legend can have been spent as an Eddie and gone, and a real mid-game board is wide enough that
+    the node cap bites before the search is exhausted.
+    """
+    return not str(e.get("source", "")).startswith("mined")
+
 # --------------------------------------------------- the position builder is the test helper
 def test_build_position_matches_the_conftest_board_helper(pool):
     """A stored position must be exactly the state ``tests/conftest.board`` would have built.
@@ -112,7 +124,7 @@ def test_hand_built_positions_look_like_real_games(pool, suite):
     generation could score badly here for reasons that have nothing to do with planning.
     """
     for e in suite["positions"]:
-        if e["kind"] != "board":
+        if not _authored(e):
             continue
         for side in e["spec"]["sides"]:
             assert len(side["legends"]) == 3, f"{e['id']}: {len(side['legends'])} Legends"
@@ -231,7 +243,7 @@ def test_the_horizon_is_counted_in_my_own_turns(pool, suite):
 # ------------------------------------------------------------------ the solver
 def test_the_solver_rediscovers_a_win_in_every_hand_built_position(pool, suite):
     for e in suite["positions"]:
-        if e["kind"] != "board":
+        if not _authored(e):
             continue                              # mined positions are covered by their stored line
         s = delayed.build_position(pool, e["spec"])
         h = delayed.entry_horizon(e)

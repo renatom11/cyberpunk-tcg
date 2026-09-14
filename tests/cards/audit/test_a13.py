@@ -91,7 +91,6 @@ def test_kerry_draws_on_a_minimum_the_reroll_is_declined_on(pool):
     assert len(s.zone(0, Zone.HAND)) == 1
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-kerry-eurodyne-axe-attitude-audience-1: a result the card told you to ignore still pays out the min/max draw")
 def test_kerry_draws_nothing_for_a_result_that_was_ignored(pool):
     """'When you roll in a Gig from your fixer area, you may ignore the result and reroll it
     once. When you roll a min or max value on a Gig, draw 1.'
@@ -100,6 +99,8 @@ def test_kerry_draws_nothing_for_a_result_that_was_ignored(pool):
     holds it — and the 3 is neither min nor max, so nothing is drawn. (The script's own comment,
     'if declined, the original roll stands: check min/max on it', reads the card the same way;
     its guard for that, ``has_mod("rerolled", ...)``, is never set anywhere in ``src``.)
+
+    Fixed: AUD-kerry-eurodyne-axe-attitude-audience-1.
     """
     s = board(pool, Side(legends=[("kerry-eurodyne-axe-attitude-audience", {"faceup": True})],
                          deck=["floor-it"] * 6, fixer=[6]), Side())
