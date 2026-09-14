@@ -493,6 +493,55 @@ def test_the_event_filter_lints_can_fire_and_read_named_hooks():
     assert tested - ev == {"start_turn"}, "the named-hook body was not read"
 
 
+# ------------------------------------- one word, two answers: "Unit" and the solo'd Legend
+#: The six places a card script decides Unit-hood by the PRINTED CARD TYPE, which excludes a Legend
+#: standing on the field through GO SOLO. Everywhere else — 48 sites — the question is answered by
+#: zone, through ``c.units()`` / ``c.rival_units()``, which includes it. Both answers cannot be
+#: right, and ``docs/rulings.md`` row 044 records that the word is unsettled. This list is frozen
+#: until it is: a seventh type-gate, or one of these six quietly changing sides, is a decision
+#: nobody made.
+TYPE_GATED_UNIT = {
+    "saburo-arasaka-stubborn-patriarch",      # "Friendly ARASAKA Units have +1 power while attacking"
+    "6th-street-recruits",                    # "When a friendly Unit steals a d6, ..."
+    "satori-sword-of-saburo",                 # "When this Unit wins a fight against a rival Unit, draw 1"
+    "river-ward-detective-on-the-hunt",       # "When a friendly equipped Unit is defeated, ..."
+    "jackie-welles-mamas-favorite",           # "If a friendly Unit would be defeated, ..."
+    "jackie-welles-pour-one-out-for-me",      # "the first time you play a Blue Unit or Blue Gear ..."
+}
+
+
+def test_the_split_over_what_counts_as_a_unit_has_not_moved():
+    """Ruling 044 is Uncertain; this keeps the ambiguity from spreading while it is.
+
+    A solo'd Legend is a Unit everywhere the engine asks the question by *zone* and is not one in the
+    six places it asks by ``CardDef.type``. Seven audit findings turn on the difference and are held
+    open because fixing them one at a time would freeze a guess into six scripts. What this test can
+    check, and what nobody can check by reading, is that the split stays exactly where it is.
+    """
+    src = (SETS_DIR / "wnc.py").read_text(encoding="utf-8")
+    tree = ast.parse(src)
+    gated, zoned = set(), set()
+    for fn in tree.body:
+        if not isinstance(fn, ast.FunctionDef):
+            continue
+        card = next((d.args[0].value for d in fn.decorator_list
+                     if isinstance(d, ast.Call) and getattr(d.func, "id", "") == "script"), None)
+        if card is None:
+            continue
+        body = ast.get_source_segment(src, fn) or ""
+        if "type is UNIT" in body or "type is not UNIT" in body or "type in (UNIT" in body:
+            gated.add(card)
+        if "units()" in body:
+            zoned.add(card)
+    assert gated == TYPE_GATED_UNIT, (
+        "the type-gated set moved; ruling 044 is still Uncertain, so this is a decision somebody "
+        f"made without recording it.\n  added: {sorted(gated - TYPE_GATED_UNIT)}\n  gone: "
+        f"{sorted(TYPE_GATED_UNIT - gated)}")
+    assert len(zoned) >= 35, (
+        f"only {len(zoned)} cards answer 'is it a Unit' by zone; the majority idiom this test "
+        "contrasts with has changed shape")
+
+
 # ------------------------------------------- "the next time ... this turn" must be spent
 #: The printed wording that promises a ONE-SHOT: it fires once and is gone, whether or not the
 #: turn ends first. Four cards in the set say it, and two of them were wrong in different ways --
