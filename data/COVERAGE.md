@@ -32,38 +32,45 @@ The table above counts what exists. This one counts what has been verified, whic
 | Scripted cards | 140 |
 | ... named by at least one test | 140 |
 | ... named by no test at all | 0 |
-| Open audit findings (failing tests, awaiting a fix) | 32 |
+| Open audit findings (failing tests, awaiting a fix) | 39 |
 
 Open findings — each is a `xfail(strict=True)` test under `tests/cards/audit/`, so the suite stays green until a fix makes one pass and pytest reports XPASS:
 
 - `AUD-6th-street-recruits-1`
 - `AUD-afterparty-at-lizzies-1`
-- `AUD-bonnie-and-clyde-1`
 - `AUD-chrome-fang-1`
 - `AUD-cyberpsychosis-1`
 - `AUD-dying-night-vs-pistol-1`
 - `AUD-el-sombreron-la-venganza-lenta-1`
-- `AUD-fool-on-the-hill-1`
+- `AUD-evelyn-parker-beautiful-enigma-1`
 - `AUD-gorilla-arms-1`
 - `AUD-goro-takemura-losing-his-way-1`
 - `AUD-gunpoint-diplomacy-1`
 - `AUD-industrial-assembly-1`
+- `AUD-jackie-welles-mamas-favorite-1`
+- `AUD-jackie-welles-mamas-favorite-2`
+- `AUD-jackie-welles-pour-one-out-for-me-1`
+- `AUD-kerry-eurodyne-axe-attitude-audience-1`
+- `AUD-kerry-eurodyne-the-last-rockerboy-1`
 - `AUD-kiroshi-optics-1`
 - `AUD-maelstrom-zealots-1`
-- `AUD-memory-relapse-1`
+- `AUD-memory-relapse-2`
 - `AUD-misty-olszewski-mender-of-broken-spirits-1`
 - `AUD-mox-inciters-1`
+- `AUD-muamar-reyes-el-capitan-1`
 - `AUD-peace-offering-1`
 - `AUD-placide-voodoo-sentinel-1`
 - `AUD-reboot-optics-1`
+- `AUD-river-ward-detective-on-the-hunt-1`
+- `AUD-rogue-amendiares-queen-of-the-afterlife-1`
 - `AUD-royce-psycho-on-the-edge-1`
 - `AUD-saburo-arasaka-stubborn-patriarch-1`
+- `AUD-safety-override-1`
 - `AUD-satori-sword-of-saburo-1`
 - `AUD-shattered-memories-1`
 - `AUD-sketchy-ripper-1`
 - `AUD-the-relic-experimental-biochip-1`
 - `AUD-trust-no-one-1`
-- `AUD-unlikely-bond-1`
 - `AUD-viktor-vektor-drop-your-illusions-1`
 - `AUD-westbrook-netrunner-1`
 - `AUD-yorinobu-arasaka-steel-dragon-1`
