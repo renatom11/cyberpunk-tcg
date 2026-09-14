@@ -62,9 +62,19 @@ def test_duplicate_copies_of_a_card_are_deduped_like_the_search_does(rows):
     aggregate and both are 1-cost Gear.
     """
     exact = [r["id"] for r in rows if r["nearest"] == 0.0]
-    assert exact == ["sell-to-afford-the-raid"], (
-        f"expected exactly one genuine feature collision, got {exact}. More than one usually means "
-        f"the dedup regressed and same-card copies are being counted as collisions.")
+    assert "sell-to-afford-the-raid" in exact, (
+        "the known genuine collision disappeared, which means the diagnostic stopped measuring "
+        "what it measured before rather than that the feature vector improved")
+    # Not an equality any more. When this was written the suite was eight positions and one
+    # collision; it is 56 now, and a *rate* is the claim that survives growth — a regressed dedup
+    # counts same-card copies everywhere and lights up a large share of the file at once, while a
+    # genuine collision between two different cards described identically in aggregate is rare and
+    # stays rare. Pinning the exact list instead would turn every added position into a failure
+    # here and teach whoever adds one to edit the list.
+    assert len(exact) <= max(2, len(rows) // 10), (
+        f"{len(exact)} of {len(rows)} positions report the winning move as feature-identical to "
+        f"another option: {exact}. At this share the usual cause is the dedup regressing and "
+        f"two copies of the same card being counted as two options.")
 
 
 def test_the_control_can_distinguish_the_two_groups_if_there_is_anything_to_distinguish(rows):
