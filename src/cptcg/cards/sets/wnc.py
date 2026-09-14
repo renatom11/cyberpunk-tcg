@@ -1088,9 +1088,17 @@ def _host_spent(c, e):
 def _():
     def ev(c, e):
         if e[0] == "steal" and e[1] == c.host() and c.once("steal"):
-            from cptcg.core.steps import push_steals
+            from cptcg.core.steps import push_steals, stealable
+            # Through the protection gate, like the set's other effect-driven steal
+            # (appetite-for-destruction). Chrome Fang and Westbrook Netrunner print unqualified
+            # prohibitions -- "rival Units can't steal friendly Gigs with value higher than their
+            # power" -- and a prohibition is a claim about every path that could break it, not only
+            # the attack path. Building the candidate list straight off the rival's Gig area took
+            # exactly the die each card forbids.
             mine = set(c.gig_values())
-            cands = [i for i, (_k, v) in enumerate(c.gigs(c.rival)) if v not in mine]
+            allowed = set(stealable(c.s, c.host(), c.rival))
+            cands = [i for i, (_k, v) in enumerate(c.gigs(c.rival))
+                     if v not in mine and i in allowed]
             c.choose(cands, lambda c2, i: push_steals(c2.s, c2.host(), [i]), prompt="Steal a rival Gig")
     return CardScript(on_event=ev, events=frozenset({"steal"}))
 

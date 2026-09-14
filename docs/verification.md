@@ -180,7 +180,13 @@ steps stay manual: revert the script hunk while keeping the new golden and confi
 DIFFERENT, and — for a G0 card, which the golden cannot see at all — confirm `bench.py fuzz` moves,
 or the fix is a no-op.
 
-**The fuzz rule needs one qualification, learned on the second fix.** A G0 fix must move `fuzz` *or*
+**The fuzz rule needs one qualification, learned on the second fix and confirmed on the Gorilla
+Arms fix.** For the latter, both digests are identical over 200 fuzz games, and the reason is
+measurable: in 400 heuristic games Gorilla Arms is played in 7 and a protection card in 98, but
+both in only 3 — and the fix bites only when the protection is still live at the moment the Gear
+triggers *and* the one die whose value is not already shared is a forbidden one.
+
+ A G0 fix must move `fuzz` *or*
 be a fix to a branch the fuzz demonstrably cannot reach — and "demonstrably" means measured, not
 assumed. Memory Relapse's draw only differs when the rival controls no Units, and the frozen
 heuristic is played 10 times in 300 games and essentially never casts a spend-a-rival-Unit Program

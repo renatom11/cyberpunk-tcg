@@ -363,7 +363,6 @@ def _steal_sites(source: str) -> list[tuple[str, int]]:
     return out
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-gorilla-arms-1: the effect-driven steal builds its candidates straight off the rival's Gig area, so it ignores Chrome Fang and Westbrook Netrunner, whose printed text says a rival Unit *can't* steal those Gigs at all")
 def test_every_effect_driven_steal_goes_through_the_protection_gate(pool):
     """A prohibition is a claim about every path that could break it.
 
@@ -375,7 +374,10 @@ def test_every_effect_driven_steal_goes_through_the_protection_gate(pool):
     ``appetite-for-destruction`` routes its candidates through ``stealable`` and
     ``gorilla-arms`` does not. Nothing in either printed text distinguishes them, and no row of
     docs/rulings.md covers it, which is why the inconsistency is read as a bug rather than a
-    ruling. It goes green when the second one is fixed.
+    ruling.
+
+    Fixed: AUD-gorilla-arms-2. Both effect-driven steals route through the gate now, and this lint
+    is what will catch the third one on the day it is written.
     """
     src = (SETS_DIR / "wnc.py").read_text(encoding="utf-8")
     bad = _steal_sites(src)

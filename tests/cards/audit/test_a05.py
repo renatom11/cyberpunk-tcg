@@ -18,7 +18,6 @@ def play(s, cid):
     return s
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-chrome-fang-1: the protection is only consulted on the attack-steal path (steps.stealable), so an effect-driven steal such as Gorilla Arms takes a Gig with value higher than the rival Unit's power")
 def test_chrome_fang_stops_every_steal_of_a_gig_above_the_thiefs_power(pool):
     """'PLAY: Until your next turn, rival Units can't steal friendly Gigs with value higher
     than their power.'
@@ -29,6 +28,8 @@ def test_chrome_fang_stops_every_steal_of_a_gig_above_the_thiefs_power(pool):
     by a friendly Gig'), so the thief's power is 9. Its attack legitimately takes the d4
     showing 2; Gorilla Arms then hands it the d12 showing 11, which is higher than 9 and which
     Chrome Fang says it can't steal.
+
+    Fixed: AUD-chrome-fang-1.
     """
     s = board(pool, Side(hand=["chrome-fang"], eddies=E, gig=[(4, 2), (12, 11)],
                          deck=["floor-it"] * 8),
@@ -41,7 +42,6 @@ def test_chrome_fang_stops_every_steal_of_a_gig_above_the_thiefs_power(pool):
     assert (12, 11) not in s.gig[1]
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-westbrook-netrunner-1: the protection is only consulted on the attack-steal path (steps.stealable), so an effect-driven steal such as Gorilla Arms takes a Gig with value less than the rival Legend's power")
 def test_westbrook_stops_every_steal_of_a_gig_below_the_legends_power(pool):
     """'PLAY: Until your next turn, rival Legends can't steal friendly Gigs with value less
     than their power.'
@@ -50,6 +50,8 @@ def test_westbrook_stops_every_steal_of_a_gig_below_the_legends_power(pool):
     Its attack legitimately takes the d12 showing 11 (11 is not less than 9). Gorilla Arms
     then hands it the d6 showing 3, which is less than 9 and which Westbrook says it can't
     steal.
+
+    Fixed: AUD-westbrook-netrunner-1.
     """
     s = board(pool, Side(hand=["westbrook-netrunner"], eddies=E, gig=[(6, 3), (12, 11)],
                          deck=["floor-it"] * 8),
