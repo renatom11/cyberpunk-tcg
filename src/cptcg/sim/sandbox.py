@@ -114,7 +114,9 @@ def sandbox_spec(reg: Registry, card_id: str, overrides: dict | None = None) -> 
     seed = zlib.crc32(card_id.encode()) % 1_000_000
 
     # Eddies: the card's cost plus slack. A Legend is reached by Calling it for 1 €$ first and only
-    # then GO SOLO-ing it for its cost, so it needs both amounts, not the larger of them.
+    # then GO SOLO-ing it for its cost, so it needs both amounts, not the larger of them. All of it
+    # is printed Eddies rather than leaning on the Legends area, because most of that area is face
+    # up here and a face-up Legend is only €$ if it carries a Sell Tag (CR 5.7.2.2).
     cost = d.cost or 0
     eddies = cost + SLACK + (1 if d.type is CardType.LEGEND else 0)
 
@@ -150,14 +152,26 @@ def sandbox_spec(reg: Registry, card_id: str, overrides: dict | None = None) -> 
     # face-down, so effects that count or look at face-down cards do too.
     rival["legends"][0] = [rival["legends"][0], {"faceup": True}]
 
+    # Exactly ONE of your Legends is face-down, and it is the card under test.
+    #
+    # This is the whole reason the rest of your Legends area is face-up. "Call a Legend" names no
+    # card — it cannot, because in a real game you do not know which of your face-down Legends you
+    # are turning over — so three face-down Legends produce three identical buttons and a one-in-
+    # three chance of Calling the card you came to try. Calling is once per turn, so getting it
+    # wrong does not just waste a tap: it ends your only route to the card for that turn.
+    #
+    # The card under test stays face-down rather than starting flipped, because Calling it *is*
+    # part of playing it: the flip is what fires its CALL trigger, and GO SOLO needs it face-up
+    # anyway, so a GO SOLO Legend is genuinely two steps (Call, then GO SOLO). With one face-down
+    # Legend there is one Call button and it is unambiguously the right one.
     if d.type is CardType.LEGEND:
-        # A Legend is never in hand. It goes in slot 1 face-down, which is the only orientation it
-        # can be Called from; GO SOLO then needs it face-up, so a GO SOLO Legend is reached in two
-        # taps (Call, then GO SOLO) rather than one — which is the real sequence and worth seeing.
-        mine["legends"] = [card_id, legends[0], legends[1]]
+        mine["legends"] = [card_id, [legends[0], {"faceup": True}], [legends[1], {"faceup": True}]]
         mine["hand"] = _filler_deck(fill, 2, 0)
     else:
-        mine["legends"] = list(legends[:3])
+        # Still one face-down Legend, so Calling one is a move you can try alongside the card, and
+        # still only one — so which Legend a Call turns over is never a guess.
+        mine["legends"] = [legends[0], [legends[1], {"faceup": True}],
+                           [legends[2 % len(legends)], {"faceup": True}]]
         mine["hand"] = [card_id] + _filler_deck(fill, 2, 0)
 
     spec = {"seed": seed, "turn": 3, "active": 0, "first_player": 0,

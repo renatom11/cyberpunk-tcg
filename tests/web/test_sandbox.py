@@ -90,6 +90,28 @@ def test_a_sandbox_is_a_game_and_not_a_diorama(pool, kind):
     assert s.turn >= 9 or s.over, f"{d.id}: stalled at turn {s.turn} after {guard} actions"
 
 
+def test_calling_a_legend_is_never_a_guess(pool):
+    """One face-down Legend per sandbox, and for a Legend it is the card under test.
+
+    This is the bug that made the feature useless for Legends on the first build. "Call a Legend"
+    names no card — it cannot, since in a real game you do not know which of your face-down Legends
+    you are turning over — so three face-down Legends gave three identical buttons and a one-in-
+    three chance. Calling is once per turn, so picking wrong did not merely waste a tap: it closed
+    the only route to the card for that turn, and the try-out was over before it started.
+    """
+    wrong = []
+    for d in pool.defs:
+        s = build_position(pool, sandbox_spec(pool, d.id, OVERRIDES))
+        calls = [o for o in main_menu(s) if isinstance(o, CallLegend)]
+        if len(calls) != 1:
+            wrong.append(f"{d.id}: {len(calls)} Call options")
+        elif d.type is CardType.LEGEND:
+            called = pool.defs[s.i_card[calls[0].inst]].id
+            if called != d.id:
+                wrong.append(f"{d.id}: the only Call turns over {called}")
+    assert not wrong, wrong
+
+
 def test_overrides_only_name_real_cards(pool):
     """A typo'd id in data/sandbox.json would silently do nothing, which is the worst outcome."""
     unknown = [cid for cid in OVERRIDES if cid not in pool.by_id]
