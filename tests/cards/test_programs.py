@@ -1,7 +1,7 @@
 """One scenario per scripted Program."""
 from conftest import Side, board, do, find
 
-from cptcg.core.actions import Attack, Pick, Play, Target
+from cptcg.core.actions import Attack, ChoiceKind, Pick, Play, Target
 from cptcg.core.enums import TARGET_GIG, TARGET_UNIT, Zone
 from cptcg.core.ops import available, power
 
@@ -65,10 +65,18 @@ def test_les_elemens_bottom_decks_lowest_power(pool):
 
 
 def test_unlikely_bond(pool):
+    """'Bottom-deck a ready friendly Unit. If you do, bottom-deck a spent rival Unit.'
+
+    One legal target on each side, and neither sentence prints a "may" — so the card asks nothing
+    at all and both Units go to the bottom. This test used to answer a Pick here: the friendly
+    bottom-deck was scripted ``optional=True``, which manufactured a decline the card never grants
+    (AUD-unlikely-bond-1). With the flag gone, ``AskStep`` resolves a one-option choice inline,
+    which is why the prompt disappears rather than needing a different answer.
+    """
     s = board(pool, Side(hand=["unlikely-bond"], eddies=E, field=["psycho-squad"]),
               Side(field=[("corpo-security", {"spent": True})]))
     play(s, "unlikely-bond")
-    do(s, Pick((0,)))
+    assert s.pending.kind is not ChoiceKind.PICK, "nothing here is a real decision"
     assert s.i_zone[find(s, "psycho-squad")] == Zone.DECK and s.i_zone[find(s, "corpo-security")] == Zone.DECK
 
 

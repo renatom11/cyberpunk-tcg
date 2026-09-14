@@ -42,10 +42,11 @@ def test_bonnie_and_clyde_defeat_is_not_optional(pool):
     assert s.i_zone[find(s, "corpo-security")] == Zone.TRASH
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-unlikely-bond-1: the friendly bottom-deck is scripted optional=True, but the card prints no 'may'")
 def test_unlikely_bond_first_bottom_deck_is_not_optional(pool):
     """'Bottom-deck a ready friendly Unit. If you do, bottom-deck a spent rival Unit.' — no
     printed 'may' (every other card in the set prints 'You may X. If you do, ...'), so with one
+
+    Fixed: AUD-unlikely-bond-1.
     ready friendly Unit on the board the bottom-deck happens without asking."""
     s = board(pool, Side(hand=["unlikely-bond"], eddies=E, field=["psycho-squad"]),
               Side(field=[("corpo-security", {"spent": True})]))

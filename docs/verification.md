@@ -158,8 +158,24 @@ eight golden decks between them reach only 95 of the 151 cards.
 `tools/golden_impact.py predict` writes the permitted key set down from deck membership alone,
 before anything is touched. `verify` runs the check and refuses the result when an observed key
 falls outside it — a hard stop with no regeneration. It prints the aggregate per key (games changed,
-winner flips, end-reason changes, mean turn delta) and replays each first divergence into sentences,
-because the fixed card has to appear in that window or the change there is unexplained. Two evidence
+winner flips, end-reason changes, mean turn delta) and narrates each first divergence.
+
+**Two things about that narration were wrong, and the first G1 fix found both.**
+
+The rule was "the fixed card must appear in the replay window". Too narrow. The frozen heuristic
+scores candidate actions by resolving them a ply deep, so a card that is merely *playable* changes
+what the agent thinks the board is worth — Unlikely Bond was drawn, sat in hand, was never cast, and
+the game still diverged eight decisions after it first became a legal option. The rule is now "a
+named card must have been an **option** before the divergence", which is the claim the evidence can
+support, and `verify` reports when it first was.
+
+The instrument was worse: it narrated by replaying the *golden* action indices on the fixed engine.
+An action index names a position in an option list, not a move. Removing an option changes what
+index *i* means; removing a whole decision — `AskStep` resolves a one-option choice inline, so
+dropping `optional=True` can delete a question outright — shifts every index after it. The replay
+kept succeeding, because the shifted indices stayed in range, and narrated a game that never
+happened. It now narrates the game the current engine actually plays, which needs no such
+assumption. Two evidence
 steps stay manual: revert the script hunk while keeping the new golden and confirm the same keys go
 DIFFERENT, and — for a G0 card, which the golden cannot see at all — confirm `bench.py fuzz` moves,
 or the fix is a no-op.

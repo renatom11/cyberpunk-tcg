@@ -42,6 +42,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 
 from bench import GOLDEN, MATCHUPS, _deck, play_all  # noqa: E402
 from cptcg.cards.registry import load_default  # noqa: E402
+from cptcg.agents.base import make_agent  # noqa: E402
 from cptcg.core.engine import apply, legal_actions  # noqa: E402
 from cptcg.sim.narrate import narrate  # noqa: E402
 from cptcg.sim.runner import new_game  # noqa: E402
@@ -67,26 +68,67 @@ def predict(cards: list[str]) -> tuple[set[str], dict[str, set[str]]]:
     return keys, why
 
 
-def _narrate_around(key: str, game: dict, action: int, window: int) -> list[str]:
-    """The recorded game replayed to ``action``, told as sentences.
+def _narrate_new_game(key: str, game: dict, window: int, cards: set):
+    """The game as the **current** engine plays it, told as sentences, ending at the divergence.
 
-    The streams agree up to the divergence by construction, so replaying the *golden* actions on
-    the current engine reproduces exactly the board the change acted on.
+    The obvious implementation is wrong and was shipped wrong for one commit: replay the *golden*
+    action indices on the fixed engine and narrate that. It reads as sound -- the streams agree up
+    to the divergence, so surely the board does too -- and it is not. An action index identifies a
+    position in an option list, not a move. A fix that removes an option changes what index *i*
+    means, and a fix that removes a whole decision (``AskStep`` resolves a one-option choice inline,
+    so dropping ``optional=True`` can delete a question entirely) shifts every index after it. The
+    replay then keeps succeeding, because the shifted indices stay in range, and narrates a game
+    that never happened. The Unlikely Bond fix produced exactly that: a plausible window with no
+    mention of the card, which read as a hard stop and was an artefact of the instrument.
+
+    So this narrates the game the current engine actually plays, which needs no such assumption.
+    The evidence it supports is correspondingly narrower and still the evidence that matters: the
+    fixed card has to appear in the run-up to the point where the two games part company.
     """
     a, b, agent = key.split("~")
     da, db = _deck(a), _deck(b)
     decks = (da, db) if game["seat"] == 0 else (db, da)
     reg = load_default()
     s = new_game(reg, decks, game["seed"], record=True)
-    # Up to the divergence the two action streams are identical, so replaying the golden indices
-    # here lands on exactly the board the change acted on. The diverging action itself is left
-    # unplayed: on the fixed engine that index may select a different option entirely.
-    for idx in game["actions"][:action]:
+    ags = [make_agent(agent, game["seed"] * 2 + i) for i in (0, 1)]
+    for p, ag in enumerate(ags):
+        ag.new_game(game["seed"], p)
+    played, first_offered = [], None
+    while not s.over and len(played) < len(game["actions"]) + 200:
         legal_actions(s)
-        apply(s, idx)
+        ch = s.pending
+        if ch is None:
+            break
+        if first_offered is None and _offers(s, ch, cards):
+            first_offered = len(played)
+        i = ags[ch.player].act(s, ch)
+        played.append(i)
+        apply(s, i)
+        if len(played) <= len(game["actions"]) and played[-1] != game["actions"][len(played) - 1]:
+            break                                   # the first index at which the two games part
     names = (f"{a} (seat 0)", f"{b} (seat 1)") if game["seat"] == 0 else \
             (f"{b} (seat 0)", f"{a} (seat 1)")
-    return narrate(s, s.log, names)[-window:]
+    return narrate(s, s.log or [], names)[-window:], first_offered, len(played) - 1
+
+
+def _offers(s, ch, cards: set) -> bool:
+    """Was one of the fixed cards an option the agent had to weigh at this decision?
+
+    Not "was it played" — that rule is too narrow and reads a real change as unexplained. The
+    frozen heuristic scores candidate actions by resolving them a ply deep, so a card sitting in
+    hand as a legal Play changes what the agent *thinks the board is worth* whether or not it ends
+    up being cast. Unlikely Bond first became playable eight decisions before the game diverged and
+    was never actually played in it: the fix changed the preview, the preview changed a later
+    tie-break, and the card never touched the table. "Present and actionable" is the claim the
+    evidence can support, so it is the claim this reports.
+    """
+    from cptcg.core.actions import Activate, Attack, CallLegend, GoSolo, Play
+    for o in ch.options:
+        inst = getattr(o, "inst", None)
+        if inst is not None and isinstance(o, (Play, Attack, Activate, CallLegend, GoSolo)) \
+                and s.card(inst).id in cards:
+            return True
+    return False
 
 
 def cmd_predict(a) -> int:
@@ -144,18 +186,27 @@ def cmd_verify(a) -> int:
         print(f"  {key:44s} {len(diffs):>3}/{total} games  winner flips {flips:>2}  "
               f"end-reason {ends:>2}  mean turn delta {dt:+.2f}")
 
-    print("\nFirst divergence in each changed key — the fixed card must appear in this window:")
+    print("\nFirst divergence in each changed key — a named card must have been available before it:")
     for key in sorted(observed):
         i, x, y = detail[key][0]
         at = next((k for k, (p, q) in enumerate(zip(x["actions"], y["actions"])) if p != q),
                   min(len(x["actions"]), len(y["actions"])))
-        print(f"\n  --- {key} game {i} (seed {x['seed']}, seat {x['seat']}), action {at}")
-        for line in _narrate_around(key, x, at, a.window):
+        lines, offered, where = _narrate_new_game(key, x, a.window, set(a.cards))
+        print(f"\n  --- {key} game {i} (seed {x['seed']}, seat {x['seat']}), diverges at "
+              f"decision {where} — shown as the CURRENT engine plays it")
+        if offered is None:
+            print(f"      NO NAMED CARD WAS EVER AN OPTION before the divergence. "
+                  f"The change here is unexplained — stop.")
+        else:
+            print(f"      a named card first became a legal option at decision {offered}, "
+                  f"{where - offered} before the divergence")
+        for line in lines:
             print(f"      {line}")
-    print("\nRead each window. If a named card is not in one of them, the change there is"
-          "\nunexplained and regenerating would freeze it in. That is a stop, not a puzzle —"
-          "\nthough widen --window first: a Gear fires when its *host* is spent, which can be many"
-          "\nturns after the line that names the Gear.")
+    print("\nRead each window. A named card has to have been *available to the agent* before the"
+          "\ndivergence — the line above each window says when it first was. It does not have to"
+          "\nappear in the narration: the frozen heuristic scores candidate actions a ply deep, so a"
+          "\ncard sitting in hand changes its arithmetic without ever being cast. If no named card"
+          "\nwas ever an option, the change is unexplained and regenerating would freeze it in.")
     return 0
 
 

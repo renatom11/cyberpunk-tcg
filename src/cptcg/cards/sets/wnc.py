@@ -87,9 +87,14 @@ def _():
 @script("unlikely-bond")
 def _():
     def play(c):
+        # "Bottom-deck a ready friendly Unit. If you do, bottom-deck a spent rival Unit." The first
+        # sentence prints no "may", so with a legal target it is not declinable -- the cost is the
+        # point of the card. "If you do" is this set's standard guard for an action that can fail to
+        # happen (a friendly Unit may simply not be there), not evidence of an implied "may";
+        # panam-palmer-strength-through-family prints the identical mandatory shape.
         def after(c2, _u):
             bottom_deck_one(c2, [u for u in c2.rival_units() if c2.s.i_spent[u]])
-        bottom_deck_one(c, [u for u in c.units() if not c.s.i_spent[u]], optional=True, then=after)
+        bottom_deck_one(c, [u for u in c.units() if not c.s.i_spent[u]], then=after)
     return CardScript(on_play=play)
 
 
