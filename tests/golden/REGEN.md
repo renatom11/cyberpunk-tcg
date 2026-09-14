@@ -52,3 +52,38 @@ card wants.
 
 **5. Two-sided reachability.** Not applicable at G1 — the golden sees this card directly. (The fuzz
 check exists for the 54 cards no golden deck contains.)
+
+---
+
+## 2026-09-14 — `shattered-memories` (AUD-shattered-memories-1)
+
+**The fix.** "Each player discards their hand and **may** draw 5." The script drew for both players
+unconditionally, with a comment reading `# "may draw 5": always beneficial, auto`. It is not always
+beneficial: `ops.draw` ends the game on an empty deck, so the Program could deck a player out
+against their will — and the Rival's "may" is the Rival's to spend, not the controller's to assume.
+Both players are now asked. `EffectCtx.maybe` gains the same `after=` hook `adjust_up_to`,
+`choose_gig` and `spend_one` have, so the third sentence ("If the total number of discarded cards
+equals the value of a friendly Gig, draw 2") is sequenced after both answers without being made
+conditional on either.
+
+**1. Prediction.** Tier G1, two keys, `the_heist~embracing_power~{heuristic,random}`. Observed:
+exactly those two.
+
+**2. Localisation.** heuristic diverges at decision 17, card first a legal option at 15. random
+diverges at 26, first an option at 11.
+
+**3. Revert confirmation.** Script hunk reverted, new golden kept: DIFFERENT on exactly those two
+keys, at exactly actions 17 and 26.
+
+**4. Aggregate.** heuristic 9/16 games, 1 winner flip, 1 end-reason change, mean turn delta −0.22.
+random 8/40, 2 flips, 2 end-reason changes, −0.62. Turning one unconditional draw into two
+questions changes the decision count in every game that plays the card, so a majority of the
+heuristic games moving is expected; the small turn deltas say the games are otherwise the same
+games.
+
+**5. Two-sided reachability.** Not applicable at G1.
+
+`EffectCtx.maybe` also changed, which is a `core/**` edit and so G2 by the letter of the tier table.
+It is additive — no existing caller passes `after` — and the revert in step 3 reverted only the card
+hunk, leaving the engine change in place; `check` went DIFFERENT on the two card keys and nothing
+else, which is the evidence that the engine change on its own moves nothing.
