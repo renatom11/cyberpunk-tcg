@@ -2699,6 +2699,39 @@ records, and the eight originals set the standard. (Fourteen more were held back
 for the same reason and came back documented, which is the refusal doing its job rather than
 costing anything.)
 
+### What 79 positions say that 8 could not
+
+The first thing worth doing with a bigger instrument is to re-run a comparison the small one could
+not settle. On the full 79, scored against the post-audit engine:
+
+| agent | solved | trials won | horizon 1 | horizon 2 |
+|---|---|---|---|---|
+| frozen heuristic | 0 of 79 | 0 of 1264 | 0 of 55 | 0 of 24 |
+| uniform random (the floor) | — | 85 of 1264 | — | — |
+| `neural` | **25** of 79 | 420 of 1264 | 17 of 55 | 8 of 24 |
+| `ismcts:16` | **25** of 79 | 458 of 1264 | 16 of 55 | 9 of 24 |
+
+A position counts as solved only when the agent wins it on all sixteen seeds, which is why the
+trial counts and the solved counts can disagree: search wins 38 more trials than the value head and
+converts exactly as many positions.
+
+The headline is a tie, and the interesting part is underneath it. **The two agents solve the same
+21 positions and then diverge on eight** — four each. Search's four are all cases where the line has
+to be found rather than recognised (`sell-to-afford-gorilla-arms`, `sell-to-afford-a-late-satori`,
+`sell-to-afford-the-sixth-gig`, `removal-first-bonnie-clears-corpo-security`: sell something to
+afford a piece, then use it). The value head's four are cases where the *board after* the move is
+what tells you the move was right — `recursion-trade-relic-into-kusanagi` throws a Unit into a fight
+it cannot win so that The Relic's DEFEATED clause plays a bigger one, and a one-ply score of the
+position immediately after the swing is exactly what sees that. Sixteen simulations is not much
+search, and this is what little search buys: the tactics it finds are the ones a static evaluation
+of the resulting board cannot see.
+
+None of that could have been read off eight positions. At that size the whole scale is eight steps
+wide, one position is 12.5 points, and the eight positions where these two agents actually differ
+would have shown up as at most one — indistinguishable from the seed noise the gate tables on this
+page were already fighting. The tie is the headline; the disagreement underneath it is the thing
+the bigger suite bought.
+
 `tools/explain_position.py` is what makes that paragraph writable: it prints the starting board as
 a person reads it, the solver's line narrated move by move, and the frozen heuristic's line from the
 same position. The difference between the last two *is* the position, and reading it off a list of
