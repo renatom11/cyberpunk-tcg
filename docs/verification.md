@@ -342,9 +342,11 @@ is why the engine's behaviour is the one left standing rather than the filer's.
 
 ## What the fixes cost, and the two that the verification pass got wrong
 
-Seventeen findings are closed as of this writing, out of the forty-three filed. Six needed a golden
-regeneration and each is a ledger entry in `tests/golden/REGEN.md`; the rest were G0 and the
-unbroken run of IDENTICAL across them is their neutrality proof. Two things came out of landing them
+Twenty-one findings are closed with a fix as of this writing, one was withdrawn as a false
+positive, and `data/COVERAGE.md` — which counts the `xfail(strict=True)` tests rather than trusting
+a number kept by hand — reports 23 still open. Eight of the fixes needed a golden regeneration and
+each is a ledger entry in `tests/golden/REGEN.md`; the rest were G0, and the unbroken run of
+IDENTICAL across them is their neutrality proof. Two things came out of landing them
 that reading alone did not produce.
 
 **A verified finding's *proposed fix* is not verified.** Gunpoint Diplomacy's report ended with a
@@ -378,7 +380,9 @@ rejected every artifact already on disk. Three places now compare it and fail lo
 have fired on a real fix rather than in a drill:
 
 * `tests/learn/test_harvest.py` — the 100-game committed sample replays as exact action indices. Any
-  card that gains or loses a prompt renumbers them. Fired on five of the seventeen fixes.
+  card that gains or loses a prompt renumbers them. Fired on six of the twenty-one fixes, which is
+  about the rate deck membership predicts: a fix only shifts the sample when the card turns up in
+  the hundred games it draws from.
 * `tests/learn/test_delayed_reward.py` — the tactics suite's stored winning lines are action indices
   too, and for most of this project's life the file recorded only the *ruleset*. Twenty-three
   positions were about to be merged carrying a pre-audit digest; `propose_positions.py merge`
