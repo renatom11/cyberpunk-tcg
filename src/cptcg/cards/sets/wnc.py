@@ -1445,7 +1445,7 @@ def _():
         # spent). Alt's own second ability is exactly as vacuous with an empty trash and carries no
         # guard; ruling 037 is the nearest precedent, and it says an impossible Gig effect is
         # activated and fails rather than being unavailable.
-        Ability(effect=discount, self_spend=True, label="Next Program costs less", legal=lambda c: bool(c.min_gigs())),
+        Ability(effect=discount, self_spend=True, label="Next Program costs less"),
         Ability(effect=from_trash, cost=1, self_spend=True, label="Play a Program from trash")))
 
 

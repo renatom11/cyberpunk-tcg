@@ -33,7 +33,11 @@ def test_kerry_the_last_rockerboy_draws_two_only_with_an_eight_plus_gig(pool):
     s = board(pool, Side(field=["kerry-eurodyne-the-last-rockerboy"], gig=[(10, 7)],
                          deck=["floor-it"] * 3), Side())
     u = find(s, "kerry-eurodyne-the-last-rockerboy")
-    assert Activate(u, 0) not in s.pending.options          # 7 is not 8+, so the ability is not offered
+    # 7 is not 8+, so the draw does not happen -- but the ⊡ is still payable, because the condition
+    # is printed after the colon and is part of the effect (AUD-kerry-eurodyne-the-last-rockerboy-1).
+    assert Activate(u, 0) in s.pending.options
+    do(s, Activate(u, 0))
+    assert s.i_spent[u] and len(s.zone(0, Zone.HAND)) == 0
 
 
 def test_judy_alvarez_reveals_the_top_card_and_may_play_it_free(pool):

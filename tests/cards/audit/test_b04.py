@@ -38,11 +38,8 @@ def hand(s, p=0):
 #: script's ``legal=lambda c: bool(c.min_gigs())`` nevertheless removes the ability from the menu,
 #: so Alt cannot be spent at all.  Kerry *The Last Rockerboy* is the same shape one card family
 #: over and was filed by the A15 section pass; Alt sits 300 lines away and was missed.
-@pytest.mark.xfail(strict=True,
-                   reason="AUD-alt-cunningham-soulkiller-architect-1: a printed per-Gig discount "
-                          "of -0 is implemented as an activation restriction, so with no min Gig "
-                          "the ability cannot be used at all")
 def test_alt_discount_is_activatable_without_a_min_gig(pool):
+    """Fixed: AUD-alt-cunningham-soulkiller-architect-1."""
     s = board(pool, Side(legends=[("alt-cunningham-soulkiller-architect",
                                    {"faceup": True, "gear": [NETDRIVER]})],
                          gig=[(6, 3)], deck=["floor-it"] * 2), Side())
