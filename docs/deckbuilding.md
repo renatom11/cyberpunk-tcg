@@ -252,3 +252,49 @@ Early names are provisional — two clusters of four decks each say little — a
 next to each name (how many decks, how many games, the pooled win rate) is there so nobody
 mistakes a young group for an established one. No archetype is claimed to be good until its
 own games say so.
+
+## What a Legend is worth
+
+The Legend row is a third of a deck and had never been measured. `record_game` walks `deck.main`,
+which excludes Legends by construction, so no Legend had a per-card number of any kind until play
+was instrumented — and the first number it produced was misleading, which is the more useful half
+of the story.
+
+`tools/playtest.py` gives every Legend a win rate when played, and for a Legend that statistic is
+almost entirely a fact about its deck. There is no "not drawn" arm to difference against, so unlike
+IWD it is a level rather than a contrast. The first sweep made that unmissable: the six Yellow
+Legends came back at .56–.62 and the six Blue ones at .28–.32, in blocks, with near-identical sample
+sizes, because each block is the same few decks played over and over.
+
+`tools/legend_swap.py` is the causal instrument — the same paired test `hill_climb` uses for
+main-deck cards, applied to the Legend row. Play the deck against a fixed gauntlet on fixed seeds,
+replace exactly one Legend, replay the same seeds against the same opponents, and count only the
+games exactly one arm won. **The median swap is discordant in 11.8% of its games**; the pairing
+removes the other 88%, which is why this resolves two-point effects that raw win rates cannot.
+
+A swap is offered only when the deck stays legal afterwards, and that constraint is the interesting
+part rather than a technicality: a Legend carries 2 RAM of its colour, so removing it can put every
+card of that colour over the cap. The result is not a global ranking — it is, per deck, "this Legend
+against the ones that could actually have taken its slot", which is the question a deckbuilder is
+asking.
+
+Eight decks, 24 slots, 131 legal swaps, 100 seeds × 3 opponents × 2 seats each. 52 swaps are
+significant at p < 0.05, and the median swap costs 1.3 points, which is what you would hope: these
+decks were built deliberately, so the incumbent usually beats its replacements slightly.
+
+**Saburo Arasaka — Stubborn Patriarch is the largest single-card effect this project has measured.**
+Taking him out of `sample_arasaka` costs 18.5 to 19.7 points depending on who replaces him, with
+p < 0.001 on every one of the four legal swaps, and 8.8 to 12.9 points in `embracing_power`. Nothing
+else in the table is close. (His ARASAKA aura has an open audit finding — it skips a Legend played
+as a Unit with GO SOLO — so the number is measured on a slightly wrong implementation and will want
+re-running after that fix.)
+
+**Goro Takemura — Hands Unclean is an upgrade three different decks are not taking**: +6.7 into
+`sample_fixers` over Kerry Eurodyne, +5.0 over Muamar Reyes in the same deck, +4.1 into
+`sample_corpos` over Hanako. Three separate decks each have a slot where swapping in the same Legend
+is a significant gain, which is a stronger signal than any single row.
+
+And the naive reading is contradicted where it can be checked: swapping V — Corporate Exile for Judy
+Álvarez in The Heist costs 6.2 points, not the 30 the raw win-rates-when-played implied. The gap
+between those two numbers is the confound, measured.
+
