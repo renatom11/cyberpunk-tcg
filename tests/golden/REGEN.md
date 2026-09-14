@@ -87,3 +87,33 @@ games.
 It is additive — no existing caller passes `after` — and the revert in step 3 reverted only the card
 hunk, leaving the engine change in place; `check` went DIFFERENT on the two card keys and nothing
 else, which is the evidence that the engine change on its own moves nothing.
+
+---
+
+## 2026-09-14 — `peace-offering` (AUD-peace-offering-1)
+
+**The fix.** "You may set a Gig's value to the value of another Gig. **Then, if you control a
+value-pair, draw 1.**" The draw was nested inside the set's continuation, so declining the "may" —
+or having no second Gig to copy from — skipped a sentence that is about the board rather than about
+the set.
+
+**The interesting part is what the first attempt got wrong.** Hanging the tail off the outer
+prompt's `after=` hook looked right and produced a passing decline test and a *failing* take test:
+with the set taken, no draw happened. `after` runs the moment `cont` returns, and a continuation
+returns as soon as it asks a further question — asking pushes a step and comes straight back. Peace
+Offering's set is two nested questions, so `after` fired before the die had moved and found no pair.
+
+`after` is therefore for a continuation that finishes synchronously; where `cont` opens another
+prompt, the tail belongs on *that* prompt. `choose_gig` gains `otherwise=` for exactly this — the
+paths where `cont` did not run — and the limitation is now written into `adjust_up_to`'s docstring,
+with this card named as the worked example. The three earlier `after=` uses were re-checked and are
+all synchronous continuations.
+
+**1. Prediction.** Tier G1, two keys. Observed: one of them, `sample_corpos~sample_nomads~random`.
+**2. Localisation.** Diverges at decision 37; card first a legal option at 34. The narration shows
+it directly: "plays Peace Offering ... declines ... draws a card".
+**3. Revert confirmation.** DIFFERENT on exactly that one key at exactly action 37.
+**4. Aggregate.** 1 of 40 games, 1 winner flip, 1 end-reason change, mean turn delta −1.00. The
+heuristic key did not move at all, which fits: this changes the game only when the set is declined
+or impossible, and the heuristic takes it whenever it is offered.
+**5. Two-sided reachability.** Not applicable at G1.
