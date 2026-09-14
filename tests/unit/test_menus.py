@@ -63,7 +63,10 @@ def _ref_main_menu(s):
             opts.append(CallLegend(i))
 
     opts += ability_options(s, p, quick_only=False)
-    opts += [Attack(u) for u in s.units(p) if can_attack(s, u)]
+    attackers = [u for u in s.units(p) if can_attack(s, u)]
+    opts += [Attack(u) for u in attackers]
+    if any(s.has_mod("must_attack", u) for u in attackers):    # Mox Inciters, Evelyn Parker
+        opts = [o for o in opts if o != EndTurn()]
     return opts
 
 
@@ -167,7 +170,11 @@ def test_menus_match_reference_in_random_games_on_pool(pool):
     """Random agent on real decks: GO SOLO Legends, QUICK Programs, cost modifiers, unblockable
     attackers and Legends removed when they leave play (cfg.legends_removed_when_leaving)."""
     stats = Counter()
-    for k, (a, b) in enumerate(POOL_MATCHUPS):
+    # Three seeds per matchup rather than one. The rarest thing this test claims to cover is a
+    # Legend leaving play, which happens in a minority of games -- on a single seed per matchup the
+    # coverage assertion below is really an assertion about the RNG, and any engine change that
+    # shifts the action stream makes it fail for a reason that has nothing to do with menus.
+    for k, (a, b) in enumerate(m for m in POOL_MATCHUPS for _ in range(3)):
         seed = 3000 + k
         decks = (Decklist.load(_deck_path(a)), Decklist.load(_deck_path(b)))
         agents = [make_agent("random", seed * 2 + i) for i in range(2)]

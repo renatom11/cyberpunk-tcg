@@ -18,7 +18,6 @@ def play(s, cid):
     return s
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-mox-inciters-1: the 'must attack' mod is written but never read by the engine, so the named rival Unit is under no obligation on the rival's next turn")
 def test_mox_inciters_forces_the_named_rival_unit_to_attack(pool):
     """'PLAY: A rival Unit must attack next turn if it can.'
 
@@ -34,6 +33,8 @@ def test_mox_inciters_forces_the_named_rival_unit_to_attack(pool):
     `tests/cards/test_units.py::test_mox_inciters_forces_attack` asserts
     `s.has_mod("must_attack", ...)`, i.e. that the bookkeeping happened, which is exactly the
     internal that hides this.
+
+    Fixed: AUD-mox-inciters-1.
     """
     s = board(pool, Side(hand=["mox-inciters"], eddies=E, gig=[(4, 1)], deck=["floor-it"] * 4),
               Side(field=["psycho-squad"], deck=["floor-it"] * 4, fixer=[]))

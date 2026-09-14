@@ -156,7 +156,16 @@ def main_menu(s: GameState) -> list:
             opts.append(CallLegend(i))
 
     opts += ability_options(s, p, quick_only=False)
-    opts += [Attack(u) for u in units if can_attack(s, u)]
+    attackers = [u for u in units if can_attack(s, u)]
+    opts += [Attack(u) for u in attackers]
+    # Mox Inciters and Evelyn Parker: "a rival Unit MUST attack next turn IF IT CAN." The mod was
+    # written by both cards and read by nothing, so the obligation existed only as bookkeeping. It
+    # is read here because this is the only place an obligation can bite: while an obligated Unit
+    # can attack, ending the turn is not a legal line. "If it can" is `can_attack`, the same test
+    # that put the Attack in the menu, so the menu is never emptied — and attacking spends the
+    # Unit, which clears the obligation and brings EndTurn back.
+    if attackers and any(s.has_mod("must_attack", u) for u in attackers):
+        opts = [o for o in opts if not isinstance(o, EndTurn)]
     return opts
 
 
