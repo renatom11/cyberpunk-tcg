@@ -1131,10 +1131,13 @@ def _():
 def _():
     def ev(c, e):
         if _host_spent(c, e):
-            def after(c2, _o, _i):
+            # "... adjust a Gig by up to 1. Then, if you control 3 or more Gigs with different
+            # values, draw 1." The sixth and last card written with the tail clause inside the
+            # first clause's continuation; the pool-wide lint goes green with this one.
+            def draw_on_three_values(c2):
                 if len(set(c2.gig_values())) >= 3:
                     c2.draw(1)
-            c.adjust_up_to([c.player, c.rival], -1, 1, cont=after)
+            c.adjust_up_to([c.player, c.rival], -1, 1, after=draw_on_three_values)
     return CardScript(on_event=ev, events=frozenset({"spent"}))
 
 

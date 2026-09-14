@@ -240,19 +240,30 @@ def _method_calls(node: ast.AST, name: str) -> list[ast.Call]:
             and (n.func.attr if isinstance(n.func, ast.Attribute) else getattr(n.func, "id", "")) == name]
 
 
-def _continuation_bodies(fn: ast.FunctionDef) -> list[ast.AST]:
-    """Every lambda or nested def this factory hands to a prompting call as its continuation.
+#: Keyword slots whose callable runs **only if the prompt was answered affirmatively**. A tail
+#: clause hung here is the bug.
+_ONLY_IF_KW = {"cont", "then"}
+#: Keyword slots whose callable runs **whatever happens** — after a decline, and when the prompt was
+#: never offered. A tail clause hung here is the fix.
+_ANYWAY_KW = {"after", "otherwise"}
 
-    Continuations passed **by name** are the common case in these scripts and were what an earlier
-    detector in this file missed entirely, so they are resolved through a scope-local map of nested
-    ``def``s rather than only matching inline lambdas.
+
+def _continuation_bodies(fn: ast.FunctionDef, kinds=None) -> list[ast.AST]:
+    """Every lambda or nested def this factory hands to a prompting call as a continuation.
+
+    ``kinds`` selects which keyword slots count; the positional continuation of a prompting call is
+    always an "only if" slot. Continuations passed **by name** are the common case in these scripts
+    and were what an earlier detector in this file missed entirely, so they are resolved through a
+    scope-local map of nested ``def``s rather than only matching inline lambdas.
     """
+    kinds = CONT_KW if kinds is None else kinds
     named = {n.name: n for n in ast.walk(fn) if isinstance(n, ast.FunctionDef)}
     out = []
     for call in (n for n in ast.walk(fn) if isinstance(n, ast.Call)):
         base = call.func.attr if isinstance(call.func, ast.Attribute) else getattr(call.func, "id", "")
-        cands = [call.args[i] for i in CONT_POS.get(base, []) if i < len(call.args)]
-        cands += [kw.value for kw in call.keywords if kw.arg in CONT_KW]
+        cands = [call.args[i] for i in CONT_POS.get(base, [])
+                 if i < len(call.args) and kinds is not _ANYWAY_KW]
+        cands += [kw.value for kw in call.keywords if kw.arg in kinds]
         for c in cands:
             if isinstance(c, ast.Lambda):
                 out.append(c)
@@ -278,20 +289,23 @@ def _trapped(pool, source: str) -> list[str]:
                 calls = [c for m in methods for c in _method_calls(fn, m)]
                 if not calls:
                     continue                  # unimplemented is a different finding, not this one
-                nested = {id(c) for body in _continuation_bodies(fn) for m in methods
-                          for c in _method_calls(body, m)}
-                if all(id(c) in nested for c in calls):
+                trapped = {id(c) for body in _continuation_bodies(fn, _ONLY_IF_KW) for m in methods
+                           for c in _method_calls(body, m)}
+                # A tail clause reached through an ``after=``/``otherwise=`` hook is correctly
+                # sequenced, not trapped, even though it is lexically inside a continuation. Peace
+                # Offering has to be written that way: its set is two nested questions, so the tail
+                # belongs on the inner one and ``after`` on the outer would fire too early.
+                freed = {id(c) for body in _continuation_bodies(fn, _ANYWAY_KW) for m in methods
+                         for c in _method_calls(body, m)}
+                if all(id(c) in trapped for c in calls) and not (freed & {id(c) for c in calls}):
                     bad.append(f"{d.id}: {sentence}")
     return bad
 
 
-#: The six open findings, each with its own scenario test under ``tests/cards/audit/``. Listed here
-#: so that a *seventh* card acquiring this shape fails loudly today rather than waiting for the six
-#: to be fixed. Delete an entry with its fix.
-TRAPPED_TAIL_CLAUSES_OPEN = {
-    "afterparty-at-lizzies", "industrial-assembly", "trust-no-one", "peace-offering",
-    "memory-relapse", "zetatech-faceplate",
-}
+#: Empty: all six are fixed. It stays here because the *other* test in this pair -- the one that
+#: passes today -- asserts the flagged set is a subset of this, so a seventh card acquiring the
+#: shape fails immediately rather than waiting for anything.
+TRAPPED_TAIL_CLAUSES_OPEN: set[str] = set()
 
 
 def test_no_new_card_traps_a_state_based_tail_clause(pool):
@@ -302,7 +316,6 @@ def test_no_new_card_traps_a_state_based_tail_clause(pool):
         "a card newly traps its tail clause in a continuation: " + ", ".join(sorted(found - TRAPPED_TAIL_CLAUSES_OPEN))
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-tail-clause: six cards implement a separate, state-based printed clause inside the continuation of the previous one, so declining that clause (or having no legal way to perform it) skips this one entirely")
 def test_a_state_based_tail_clause_is_not_trapped_in_a_continuation(pool):
     """A card prints "Adjust a Gig by up to 1. **Then, if you control ... , draw 1.**"
 
@@ -314,7 +327,11 @@ def test_a_state_based_tail_clause_is_not_trapped_in_a_continuation(pool):
 
     This is the detector the Chrome Reverie rule demands: the same error was found by hand on five
     cards in two unrelated audit batches, and running it over all 151 turned up a sixth that no
-    auditor had been assigned. It goes green when the last of the six is fixed.
+    auditor had been assigned.
+
+    Fixed: AUD-tail-clause. All six are done, and `EffectCtx.adjust_up_to`, `choose_gig`,
+    `spend_one` and `maybe` grew an ``after=`` hook that runs whatever happens -- including when
+    the prompt was never offered, which is the case none of the six handled.
     """
     src = (SETS_DIR / "wnc.py").read_text(encoding="utf-8")
     bad = _trapped(pool, src)

@@ -14,11 +14,10 @@ scenario test.
 import pytest
 from conftest import Side, board, do, find
 
-from cptcg.core.actions import Attack, Pick
-from cptcg.core.enums import Zone
+from cptcg.core.actions import Attack, Pick, Target
+from cptcg.core.enums import TARGET_UNIT, Zone
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-zetatech-faceplate-1: the draw is nested in the adjust continuation, so declining the 'up to 1' skips the separate different-values draw clause")
 def test_zetatech_faceplate_draws_when_the_adjust_is_declined(pool):
     """'... adjust a Gig by up to 1. Then, if you control 3 or more Gigs with different values,
     draw 1.'
@@ -31,8 +30,14 @@ def test_zetatech_faceplate_draws_when_the_adjust_is_declined(pool):
     """
     s = board(pool, Side(field=[("psycho-squad", {"gear": ["zetatech-faceplate"]})],
                          gig=[(4, 1), (6, 2), (10, 7)], deck=["floor-it"]),
-              Side(gig=[(8, 3)]))
+              Side(gig=[(8, 3)], field=[("corpo-security", {"spent": True})]))
     do(s, Attack(find(s, "psycho-squad")))
+    do(s, Target(TARGET_UNIT, find(s, "corpo-security", Zone.FIELD, 1)))
     do(s, Pick(()))                                          # decline: adjust by 0
-    assert s.gig[0] == [(4, 1), (6, 2), (10, 7)]             # nothing moved
-    assert len(s.zone(0, Zone.HAND)) == 1                    # ... and the draw still happens
+    # Attacking a Unit rather than the Gig area on purpose. An attack on the Gig area *steals*, and
+    # an earlier version of this test asserted the Gig area was unchanged and so failed on the
+    # steal rather than on the missing draw. A strict xfail proves a test fails; it does not prove
+    # it fails for the reason in its reason string, and that is the one thing the marker cannot
+    # check for you.
+    assert s.gig[0] == [(4, 1), (6, 2), (10, 7)], "nothing moved"
+    assert len(s.zone(0, Zone.HAND)) == 1, "and the draw still happens"
