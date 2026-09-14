@@ -187,3 +187,26 @@ narration shows it attacking one line before.
 **4. Aggregate.** 3 of 16 and 1 of 40 games, no winner flips, no end-reason changes, turn deltas
 0.00. A pure power-number change on one Unit in one deck: the games stay the same games.
 **5. Two-sided reachability.** Not applicable at G1.
+
+---
+
+## 2026-09-14 — `sketchy-ripper` (AUD-sketchy-ripper-1)
+
+**The fix.** "ATTACK: Search the top 3 cards of your deck. **Reveal a Gear and add it to your
+hand.** Bottom-deck the rest." No "may", and Sasha Yakovleva's identical verb phrase is already
+scripted as mandatory. The search ran with a lower bound of zero, so the engine offered a decline.
+`lo=1` is safe with no Gear in the top three: `choose_many` clamps hi to the candidates available
+and then lo to hi, so the search resolves with an empty pick and still bottom-decks all three — a
+control test pins that.
+
+A pre-existing green test answered the Pick that only existed because of the bug. It now asserts
+that nothing is asked, which is the printed behaviour.
+
+**1. Prediction.** Two keys. Observed: both.
+**2. Localisation.** decisions 114 and 82; card first a legal option at 41 and earlier.
+**3. Revert confirmation.** DIFFERENT on exactly those two keys at exactly those actions.
+**4. Aggregate.** 4 of 16 and 13 of 40 games, two winner flips, three end-reason changes, turn
+deltas 0.00 and +0.54. A third of the random games is a large share and an expected one: removing a
+decision from an ATTACK trigger shifts every index after it in any game where the Unit attacks, and
+random attacks with it often.
+**5. Two-sided reachability.** Not applicable at G1.
