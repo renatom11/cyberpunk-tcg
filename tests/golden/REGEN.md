@@ -348,3 +348,29 @@ so a key diverges as soon as the card is *on the board*, not when it is used.
 **5. Two-sided reachability.** Not required at G1; recorded anyway — `fuzz --agent random -n 400
 --seed 1` moves 5e97831a765d264cbf2bd32c → 57d2e94a287e533545144a7f, 32,561 → 32,633 actions, which
 is this fix alone (Kerry's had already been taken).
+
+## 2026-09-14 — `muamar-reyes-el-capitan` (AUD-muamar-reyes-el-capitan-1)
+
+**The fix.** "⊡: Adjust a Gig by 1." The shared `adjust_up_to` helper hard-coded `optional=True`, so
+the menu carried a decline on the one card of fourteen that does not print "up to". The helper gains
+`optional=`, defaulting to the decline because thirteen cards do print it; Muamar's call site passes
+`optional=False`.
+
+**1. Prediction.** Two keys: `sample_arasaka` is the only golden deck holding him. Observed: both,
+and nothing else — which also cleared the other card fix on the tree that night (Royce), whose own
+two predicted keys did not move at all.
+
+**2. Localisation.** `sample_arasaka~sample_fixers~heuristic` game 0 at decision 16, the ability
+first a legal option at 4.
+
+**3. Revert confirmation.** `optional=False` removed against the new golden: DIFFERENT on exactly
+those two keys, at exactly actions 16 and 36.
+
+**4. Aggregate.** 16 of 16 heuristic games and 31 of 40 random ones; no winner flips in the
+heuristic key, two in the random one; turn deltas +0.00 and +0.19. Every heuristic game moving is
+the expected shape for removing an option from a menu the agent reaches every turn — it renumbers
+every action index after it, so the key diverges the first time the ability is available rather than
+the first time the decline would have been taken. The zero turn delta says the games are otherwise
+the same games.
+
+**5. Two-sided reachability.** Not required at G1.
