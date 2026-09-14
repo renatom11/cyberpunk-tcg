@@ -202,6 +202,12 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .turnbar .chip.used { color: var(--dim); border-color: var(--line); text-decoration: line-through;
   opacity: .65; }
 .turnbar button.end { margin-left: auto; padding: 5px 11px; font-size: 11px; }
+/* Armed: one tap in, one to go. It changes colour as well as wording, because the wording is the
+   part a thumb on its way back down does not read. */
+button.armed, button.armed:hover { background: #2a0d12; border-color: var(--red); color: var(--red);
+  animation: arm-pulse 1.1s ease-in-out infinite; }
+@keyframes arm-pulse { 50% { box-shadow: 0 0 0 2px #ff5c6c55; } }
+@media (prefers-reduced-motion: reduce) { button.armed { animation: none; box-shadow: 0 0 0 2px #ff5c6c55; } }
 .opts button { font-size: 12px; }
 .opts button.end { border-color: var(--yellow); color: var(--yellow); }
 .controls { display: flex; gap: 6px; flex-wrap: wrap; }   /* four buttons are wider than the column: wrap rather than push the page sideways */

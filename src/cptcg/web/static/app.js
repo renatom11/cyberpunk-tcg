@@ -93,9 +93,34 @@ function textFace(c) {
 let CLAIM = null;
 function claim(o) { if (CLAIM && o) CLAIM.add(o.index); }
 
+// Ending the turn is the one move with no way back that a thumb can reach by accident: it sits in
+// a fixed place, it is the button a player aims for twenty times a game, and there is no card to
+// tap by mistake instead — the tap either lands on it or it does not. So it asks twice. The first
+// tap arms it and says so; the second ends the turn. Anything else on the page stands it down, and
+// so does a few seconds of nothing, because a button left hot is its own accident waiting.
+let ARMED = null;
+function disarm() { if (ARMED) { const a = ARMED; ARMED = null; a.reset(); } }
+document.addEventListener("click", disarm);
+
+function endTurnButton(end, onAct, cls) {
+  const b = el("button", cls, "END TURN");
+  let timer = null;
+  const reset = () => { clearTimeout(timer); b.classList.remove("armed"); b.textContent = "END TURN"; };
+  b.onclick = (e) => {
+    e.stopPropagation();
+    if (ARMED && ARMED.b === b) { disarm(); onAct(end.index); return; }
+    disarm();
+    b.classList.add("armed"); b.textContent = "END TURN · CONFIRM";
+    timer = setTimeout(() => { if (ARMED && ARMED.b === b) disarm(); }, 5000);
+    ARMED = { b, reset };
+  };
+  return b;
+}
+
 function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = {}) {
   root.innerHTML = "";
   closeCardMenu();
+  disarm();
   endDrag();                          // nothing survives a render: the nodes a drag held are gone
   CLAIM = new Set();
   const me = v.perspective == null ? 0 : v.perspective;   // bottom seat
@@ -158,7 +183,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
   // rather than somewhere in a list of every legal action.
   if (mine && interactive) {
     const end = (pend.options || []).find(o => o.kind === "EndTurn");
-    if (end) { const b = el("button", "endturn", "END TURN"); b.onclick = () => onAct(end.index); phase.append(b); }
+    if (end) phase.append(endTurnButton(end, onAct, "endturn"));
   }
   phase.classList.add("p-banner");
   const myGig = gigPanel(P[me], me); myGig.classList.add("p-my-gig");
@@ -345,11 +370,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
                    chip("CALL LEGEND", P[me].called, "Call a Legend for 1 €$"));
       }
       const end = (pend.options || []).find(o => o.kind === "EndTurn");
-      if (end) {
-        const b = el("button", "end", "END TURN");
-        b.onclick = () => onAct(end.index);
-        bar.append(b); claim(end);
-      }
+      if (end) { bar.append(endTurnButton(end, onAct, "end")); claim(end); }
       prompt.append(bar);
       // Filled at the end of the render, once every panel has had its chance to claim what it can
       // put under a finger. What is left here is what the board has no place for: keep or mulligan,
