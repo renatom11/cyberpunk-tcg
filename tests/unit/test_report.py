@@ -160,14 +160,14 @@ def test_round_trip_and_info(reg, tmp_path):
 
 
 def test_version_1_file_loads_and_renders(reg):
-    path = ROOT / "out/league_demo/gen1/tournament.json"
+    path = ROOT / "tests/fixtures/league_demo/gen1/tournament.json"
     raw = json.loads(path.read_text())
     assert "version" not in raw and "summary" not in raw
     t = Tournament.load(path, siblings=False)
     assert t.n() == 4 and t.info == {} and all(p is None for p in t.paths)
     # By default the sibling builderK.json files complete each deck's meta and path.
     t = Tournament.load(path, rel_to=ROOT)
-    assert t.paths == [f"out/league_demo/gen1/builder{i}.json" for i in (1, 2, 3, 4)]
+    assert t.paths == [f"tests/fixtures/league_demo/gen1/builder{i}.json" for i in (1, 2, 3, 4)]
     assert all(d.meta.get("generated") == "heuristic" for d in t.decks)
     assert all(c.n == 40 for c in t.cells.values()) and t.cells[(0, 1)].turns == round(40 * raw["cells"][0]["avg_turns"])
     rep = render_report(t, reg=reg)
@@ -181,12 +181,12 @@ def test_version_1_file_loads_and_renders(reg):
 
 def test_api_report_upgrades_a_version_1_file():
     from cptcg.web import backend
-    data = backend.report_json(ROOT / "out/league_demo/gen1/tournament.json")
+    data = backend.report_json(ROOT / "tests/fixtures/league_demo/gen1/tournament.json")
     assert data["version"] == 2 and data["summary"] and data["markdown"].startswith("#")
     d0 = data["decks"][0]
     assert d0["meta"]["generated"] == "heuristic"                    # pulled from the sibling builder1.json
-    assert d0["path"] == "out/league_demo/gen1/builder1.json" and d0["profile"]["cards"] == 40
-    assert data["file"] == "out/league_demo/gen1/tournament.json" and "league_series" not in data
+    assert d0["path"] == "tests/fixtures/league_demo/gen1/builder1.json" and d0["profile"]["cards"] == 40
+    assert data["file"] == "tests/fixtures/league_demo/gen1/tournament.json" and "league_series" not in data
     # What the web page prints: the shape sentence per deck, the glossary, and a Markdown text
     # version re-rendered from the loaded run (the old report.md printed raw card ids).
     assert d0["shape"].endswith("sellable") or "% Units" in d0["shape"]
@@ -215,13 +215,13 @@ def test_every_rendered_report_discloses_who_played_the_games(reg):
     assert "**" not in text and "`" not in text          # plain text: the page prints it verbatim
     assert disclosure("random").startswith("Both sides of every game here were played by the random agent")
 
-    t = Tournament.load(ROOT / "out/league_demo/gen1/tournament.json", siblings=False)
+    t = Tournament.load(ROOT / "tests/fixtures/league_demo/gen1/tournament.json", siblings=False)
     rep = render_report(t, reg=reg)
     assert "## Who played these games" in rep and text in rep
     assert rep.index(text) < rep.index("## Standings")    # ahead of the numbers it qualifies
 
     from cptcg.web import backend
-    data = backend.report_json(ROOT / "out/league_demo/gen1/tournament.json")
+    data = backend.report_json(ROOT / "tests/fixtures/league_demo/gen1/tournament.json")
     assert data["disclosure"] == text                      # the page prints the same words
     js = (ROOT / "src/cptcg/web/static/report.js").read_text(encoding="utf-8")
     assert "t.disclosure" in js
@@ -340,7 +340,7 @@ def _cyclic(reg, games=200, rate=0.9):
 
 def test_rock_paper_scissors_is_asserted_only_beyond_two_standard_errors(reg):
     # A 40-game cell 14 points off the model's prediction is under two standard errors: hedged.
-    t = Tournament.load(ROOT / "out/league_demo/gen2/tournament.json", siblings=False)
+    t = Tournament.load(ROOT / "tests/fixtures/league_demo/gen2/tournament.json", siblings=False)
     text = "\n".join(summarize(t, reg))
     assert "more often than their strengths predict, but on 40 games that could still be noise" in text
     assert "rock–paper–scissors" not in text
@@ -351,7 +351,7 @@ def test_rock_paper_scissors_is_asserted_only_beyond_two_standard_errors(reg):
 
 
 def test_top_deck_wording_reconciles_rating_and_blind_pick(reg):
-    t = Tournament.load(ROOT / "out/league_demo/gen2/tournament.json", siblings=False)
+    t = Tournament.load(ROOT / "tests/fixtures/league_demo/gen2/tournament.json", siblings=False)
     lines = summarize(t, reg)
     assert lines[0].startswith("builder1 is rated highest in this run") and "strongest" not in lines[0]
     assert lines[1].startswith("It is rated above builder4 despite losing to it (45% of 40 games)")

@@ -1,0 +1,27 @@
+{
+  "name": "builder3",
+  "legends": [
+    "panam-palmer-nomad-cavalry",
+    "goro-takemura-hands-unclean",
+    "hanako-arasaka-daughter-of-the-emperor"
+  ],
+  "main": {
+    "saul-bright-stormrider": 3,
+    "panam-palmer-strength-through-family": 3,
+    "corpo-security": 3,
+    "we-gotta-live-together": 3,
+    "goro-takemura-losing-his-way": 3,
+    "fool-on-the-hill": 3,
+    "field-operator": 3,
+    "maxtac-av": 3,
+    "synapse-burnout": 3,
+    "pepe-najarro-working-doubles": 3,
+    "overwatch-panams-gift": 3,
+    "corporate-surveillance": 1,
+    "tygers-whisper": 1,
+    "sandevistan": 3,
+    "riot-shield": 2
+  },
+  "generated": "heuristic",
+  "steps": 2
+}

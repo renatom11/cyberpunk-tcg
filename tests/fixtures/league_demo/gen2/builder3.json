@@ -1,0 +1,26 @@
+{
+  "name": "builder3",
+  "legends": [
+    "wakako-okada-peace-and-harmony",
+    "evelyn-parker-beautiful-enigma",
+    "judy-alvarez-braindance-maestro"
+  ],
+  "main": {
+    "rita-wheeler-no-stupid-questions": 3,
+    "mox-inciters": 3,
+    "judy-alvarez-nothing-to-doubt": 3,
+    "modded-kusanagi": 3,
+    "placide-voodoo-sentinel": 3,
+    "unlikely-bond": 3,
+    "mtod12-flathead": 3,
+    "three-mouths-one-desire": 3,
+    "floor-it": 3,
+    "reboot-optics": 1,
+    "dying-night-vs-pistol": 3,
+    "tetratronic-rippler": 3,
+    "rogue-amendiares-queen-of-the-afterlife": 3,
+    "netwatch-netdriver": 2,
+    "westbrook-netrunner": 1
+  },
+  "generated": "heuristic"
+}

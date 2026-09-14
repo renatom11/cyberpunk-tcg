@@ -1,0 +1,28 @@
+{
+  "name": "builder4",
+  "legends": [
+    "royce-psycho-on-the-edge",
+    "dexter-deshawn-off-the-grid",
+    "johnny-silverhand-rocking-renegade"
+  ],
+  "main": {
+    "ruthless-lowlife": 3,
+    "johnny-silverhand-never-stop-fighting": 3,
+    "screw-lovelorn-fool": 3,
+    "kerry-eurodyne-the-last-rockerboy": 3,
+    "la-llorona-ghost-of-the-past": 3,
+    "meredith-stout-stone-cold-corpo": 3,
+    "royce-dont-call-me-simon": 1,
+    "chrome-fang": 2,
+    "valentino-guerrera": 1,
+    "mantis-blades": 3,
+    "appetite-for-destruction": 3,
+    "over-the-edge": 3,
+    "gunpoint-diplomacy": 3,
+    "satori-sword-of-saburo": 3,
+    "detonate": 1,
+    "arasaka-emergency-radioport": 2
+  },
+  "generated": "heuristic",
+  "steps": 1
+}

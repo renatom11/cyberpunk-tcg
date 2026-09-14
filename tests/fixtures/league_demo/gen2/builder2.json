@@ -1,0 +1,28 @@
+{
+  "name": "builder2",
+  "legends": [
+    "river-ward-detective-on-the-hunt",
+    "rogue-amendiares-preem-solo",
+    "kerry-eurodyne-axe-attitude-audience"
+  ],
+  "main": {
+    "maxtac-suppression-team": 3,
+    "alt-cunningham-mother-of-daemons": 3,
+    "the-heist": 3,
+    "jackie-welles-ride-or-die-choom": 3,
+    "cyberpsychosis": 3,
+    "safety-override": 3,
+    "t-bug-amateur-philosopher": 3,
+    "rockn-rockerboy": 3,
+    "augmented-negotiators": 3,
+    "gorilla-arms": 3,
+    "kiroshi-optics": 3,
+    "zetatech-faceplate": 2,
+    "caliber-totentanzs-top-dog": 1,
+    "heywood-ripperdoc": 2,
+    "dexter-deshawn-one-last-chance": 1,
+    "live-with-the-aftermath": 1
+  },
+  "generated": "heuristic",
+  "steps": 1
+}

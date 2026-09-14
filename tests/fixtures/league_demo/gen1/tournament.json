@@ -1,0 +1,650 @@
+{
+ "agent": "heuristic",
+ "seed": 2001,
+ "rules": "194d3a6dbae4d7e5",
+ "decks": [
+  {
+   "name": "builder1",
+   "legends": [
+    "dexter-deshawn-off-the-grid",
+    "royce-psycho-on-the-edge",
+    "rogue-amendiares-preem-solo"
+   ],
+   "main": {
+    "ruthless-lowlife": 3,
+    "screw-lovelorn-fool": 3,
+    "la-llorona-ghost-of-the-past": 3,
+    "dexter-deshawn-one-last-chance": 3,
+    "maelstrom-goons": 3,
+    "meredith-stout-stone-cold-corpo": 3,
+    "valentino-guerrera": 3,
+    "chrome-fang": 1,
+    "the-heist": 3,
+    "gunpoint-diplomacy": 3,
+    "mantis-blades": 3,
+    "kiroshi-optics": 3,
+    "zetatech-faceplate": 2,
+    "shattered-memories": 3,
+    "carnage-at-the-colosseum": 1
+   }
+  },
+  {
+   "name": "builder2",
+   "legends": [
+    "river-ward-detective-on-the-hunt",
+    "rogue-amendiares-preem-solo",
+    "kerry-eurodyne-axe-attitude-audience"
+   ],
+   "main": {
+    "maxtac-suppression-team": 3,
+    "alt-cunningham-mother-of-daemons": 3,
+    "the-heist": 3,
+    "jackie-welles-ride-or-die-choom": 3,
+    "cyberpsychosis": 3,
+    "safety-override": 3,
+    "t-bug-amateur-philosopher": 3,
+    "rockn-rockerboy": 3,
+    "augmented-negotiators": 3,
+    "gorilla-arms": 3,
+    "kiroshi-optics": 3,
+    "zetatech-faceplate": 2,
+    "trauma-team-operatives": 1,
+    "heywood-ripperdoc": 2,
+    "dexter-deshawn-one-last-chance": 1,
+    "live-with-the-aftermath": 1
+   }
+  },
+  {
+   "name": "builder3",
+   "legends": [
+    "panam-palmer-nomad-cavalry",
+    "goro-takemura-hands-unclean",
+    "hanako-arasaka-daughter-of-the-emperor"
+   ],
+   "main": {
+    "saul-bright-stormrider": 3,
+    "panam-palmer-strength-through-family": 3,
+    "corpo-security": 3,
+    "we-gotta-live-together": 3,
+    "goro-takemura-losing-his-way": 3,
+    "fool-on-the-hill": 3,
+    "field-operator": 3,
+    "maxtac-av": 3,
+    "synapse-burnout": 3,
+    "pepe-najarro-working-doubles": 3,
+    "overwatch-panams-gift": 3,
+    "corporate-surveillance": 1,
+    "tygers-whisper": 1,
+    "sandevistan": 3,
+    "riot-shield": 2
+   }
+  },
+  {
+   "name": "builder4",
+   "legends": [
+    "royce-psycho-on-the-edge",
+    "dexter-deshawn-off-the-grid",
+    "johnny-silverhand-rocking-renegade"
+   ],
+   "main": {
+    "ruthless-lowlife": 3,
+    "johnny-silverhand-never-stop-fighting": 3,
+    "screw-lovelorn-fool": 3,
+    "kerry-eurodyne-the-last-rockerboy": 3,
+    "la-llorona-ghost-of-the-past": 3,
+    "meredith-stout-stone-cold-corpo": 3,
+    "chrome-fang": 3,
+    "valentino-guerrera": 1,
+    "mantis-blades": 3,
+    "appetite-for-destruction": 3,
+    "over-the-edge": 3,
+    "gunpoint-diplomacy": 3,
+    "satori-sword-of-saburo": 3,
+    "detonate": 1,
+    "arasaka-emergency-radioport": 2
+   }
+  }
+ ],
+ "cells": [
+  {
+   "i": 0,
+   "j": 1,
+   "wins_i": 32,
+   "n": 40,
+   "verdict": "high",
+   "wilson": [
+    0.6524269352437855,
+    0.8950001032811363
+   ],
+   "q": 0.00036433165951165917,
+   "i_first": [
+    12,
+    20
+   ],
+   "avg_turns": 14.325
+  },
+  {
+   "i": 0,
+   "j": 2,
+   "wins_i": 35,
+   "n": 40,
+   "verdict": "high",
+   "wilson": [
+    0.7388788003201471,
+    0.9454049978360052
+   ],
+   "q": 8.295672159874663e-06,
+   "i_first": [
+    15,
+    20
+   ],
+   "avg_turns": 13.925
+  },
+  {
+   "i": 0,
+   "j": 3,
+   "wins_i": 20,
+   "n": 40,
+   "verdict": "continue",
+   "wilson": [
+    0.35199526826950456,
+    0.6480047317304954
+   ],
+   "q": 1.0,
+   "i_first": [
+    6,
+    20
+   ],
+   "avg_turns": 14.55
+  },
+  {
+   "i": 1,
+   "j": 2,
+   "wins_i": 22,
+   "n": 40,
+   "verdict": "continue",
+   "wilson": [
+    0.39829091686504514,
+    0.6929469228891086
+   ],
+   "q": 0.7629936031545957,
+   "i_first": [
+    10,
+    20
+   ],
+   "avg_turns": 14.325
+  },
+  {
+   "i": 1,
+   "j": 3,
+   "wins_i": 15,
+   "n": 40,
+   "verdict": "continue",
+   "wilson": [
+    0.24222979078963872,
+    0.5296756098249772
+   ],
+   "q": 0.23078991624424444,
+   "i_first": [
+    5,
+    20
+   ],
+   "avg_turns": 14.025
+  },
+  {
+   "i": 2,
+   "j": 3,
+   "wins_i": 6,
+   "n": 40,
+   "verdict": "low",
+   "wilson": [
+    0.07061187676107432,
+    0.29072324495985025
+   ],
+   "q": 2.509375372028378e-05,
+   "i_first": [
+    1,
+    20
+   ],
+   "avg_turns": 13.975
+  }
+ ],
+ "field": [
+  {
+   "wins": 87,
+   "games": 120
+  },
+  {
+   "wins": 45,
+   "games": 120
+  },
+  {
+   "wins": 29,
+   "games": 120
+  },
+  {
+   "wins": 79,
+   "games": 120
+  }
+ ],
+ "bradley_terry": [
+  1.7416974592649863,
+  0.5409641999607406,
+  0.33801131565925235,
+  1.379327025115021
+ ],
+ "residuals": [
+  [
+   0.0,
+   0.03698834112114291,
+   0.037528196127636027,
+   -0.05805312261463247
+  ],
+  [
+   -0.03698834112114288,
+   0.0,
+   -0.06544854247637011,
+   0.09329054213409849
+  ],
+  [
+   -0.037528196127636054,
+   0.06544854247637016,
+   0.0,
+   -0.0468227853731244
+  ],
+  [
+   0.058053122614632524,
+   -0.09329054213409849,
+   0.04682278537312434,
+   0.0
+  ]
+ ],
+ "nash": [
+  0.9998500299940012,
+  4.999000199960008e-05,
+  4.999000199960008e-05,
+  4.999000199960008e-05
+ ],
+ "standings": [
+  0,
+  3,
+  1,
+  2
+ ],
+ "cards": [
+  {
+   "dexter-deshawn-one-last-chance": {
+    "drawn_games": 91,
+    "drawn_wins": 66,
+    "other_games": 29,
+    "other_wins": 21
+   },
+   "maelstrom-goons": {
+    "drawn_games": 85,
+    "drawn_wins": 59,
+    "other_games": 35,
+    "other_wins": 28
+   },
+   "kiroshi-optics": {
+    "drawn_games": 93,
+    "drawn_wins": 68,
+    "other_games": 27,
+    "other_wins": 19
+   },
+   "zetatech-faceplate": {
+    "drawn_games": 67,
+    "drawn_wins": 46,
+    "other_games": 53,
+    "other_wins": 41
+   },
+   "meredith-stout-stone-cold-corpo": {
+    "drawn_games": 93,
+    "drawn_wins": 67,
+    "other_games": 27,
+    "other_wins": 20
+   },
+   "chrome-fang": {
+    "drawn_games": 41,
+    "drawn_wins": 29,
+    "other_games": 79,
+    "other_wins": 58
+   },
+   "ruthless-lowlife": {
+    "drawn_games": 91,
+    "drawn_wins": 68,
+    "other_games": 29,
+    "other_wins": 19
+   },
+   "la-llorona-ghost-of-the-past": {
+    "drawn_games": 93,
+    "drawn_wins": 64,
+    "other_games": 27,
+    "other_wins": 23
+   },
+   "screw-lovelorn-fool": {
+    "drawn_games": 102,
+    "drawn_wins": 71,
+    "other_games": 18,
+    "other_wins": 16
+   },
+   "the-heist": {
+    "drawn_games": 99,
+    "drawn_wins": 73,
+    "other_games": 21,
+    "other_wins": 14
+   },
+   "gunpoint-diplomacy": {
+    "drawn_games": 94,
+    "drawn_wins": 66,
+    "other_games": 26,
+    "other_wins": 21
+   },
+   "carnage-at-the-colosseum": {
+    "drawn_games": 41,
+    "drawn_wins": 30,
+    "other_games": 79,
+    "other_wins": 57
+   },
+   "valentino-guerrera": {
+    "drawn_games": 94,
+    "drawn_wins": 64,
+    "other_games": 26,
+    "other_wins": 23
+   },
+   "mantis-blades": {
+    "drawn_games": 87,
+    "drawn_wins": 59,
+    "other_games": 33,
+    "other_wins": 28
+   },
+   "shattered-memories": {
+    "drawn_games": 89,
+    "drawn_wins": 65,
+    "other_games": 31,
+    "other_wins": 22
+   }
+  },
+  {
+   "augmented-negotiators": {
+    "drawn_games": 106,
+    "drawn_wins": 44,
+    "other_games": 14,
+    "other_wins": 1
+   },
+   "gorilla-arms": {
+    "drawn_games": 107,
+    "drawn_wins": 40,
+    "other_games": 13,
+    "other_wins": 5
+   },
+   "dexter-deshawn-one-last-chance": {
+    "drawn_games": 56,
+    "drawn_wins": 25,
+    "other_games": 64,
+    "other_wins": 20
+   },
+   "maxtac-suppression-team": {
+    "drawn_games": 102,
+    "drawn_wins": 39,
+    "other_games": 18,
+    "other_wins": 6
+   },
+   "kiroshi-optics": {
+    "drawn_games": 100,
+    "drawn_wins": 37,
+    "other_games": 20,
+    "other_wins": 8
+   },
+   "rockn-rockerboy": {
+    "drawn_games": 101,
+    "drawn_wins": 38,
+    "other_games": 19,
+    "other_wins": 7
+   },
+   "zetatech-faceplate": {
+    "drawn_games": 82,
+    "drawn_wins": 30,
+    "other_games": 38,
+    "other_wins": 15
+   },
+   "cyberpsychosis": {
+    "drawn_games": 92,
+    "drawn_wins": 37,
+    "other_games": 28,
+    "other_wins": 8
+   },
+   "heywood-ripperdoc": {
+    "drawn_games": 85,
+    "drawn_wins": 29,
+    "other_games": 35,
+    "other_wins": 16
+   },
+   "jackie-welles-ride-or-die-choom": {
+    "drawn_games": 98,
+    "drawn_wins": 34,
+    "other_games": 22,
+    "other_wins": 11
+   },
+   "safety-override": {
+    "drawn_games": 94,
+    "drawn_wins": 34,
+    "other_games": 26,
+    "other_wins": 11
+   },
+   "alt-cunningham-mother-of-daemons": {
+    "drawn_games": 102,
+    "drawn_wins": 38,
+    "other_games": 18,
+    "other_wins": 7
+   },
+   "the-heist": {
+    "drawn_games": 100,
+    "drawn_wins": 38,
+    "other_games": 20,
+    "other_wins": 7
+   },
+   "t-bug-amateur-philosopher": {
+    "drawn_games": 104,
+    "drawn_wins": 40,
+    "other_games": 16,
+    "other_wins": 5
+   },
+   "live-with-the-aftermath": {
+    "drawn_games": 59,
+    "drawn_wins": 21,
+    "other_games": 61,
+    "other_wins": 24
+   },
+   "trauma-team-operatives": {
+    "drawn_games": 54,
+    "drawn_wins": 17,
+    "other_games": 66,
+    "other_wins": 28
+   }
+  },
+  {
+   "pepe-najarro-working-doubles": {
+    "drawn_games": 98,
+    "drawn_wins": 26,
+    "other_games": 22,
+    "other_wins": 3
+   },
+   "saul-bright-stormrider": {
+    "drawn_games": 95,
+    "drawn_wins": 24,
+    "other_games": 25,
+    "other_wins": 5
+   },
+   "corporate-surveillance": {
+    "drawn_games": 51,
+    "drawn_wins": 14,
+    "other_games": 69,
+    "other_wins": 15
+   },
+   "we-gotta-live-together": {
+    "drawn_games": 99,
+    "drawn_wins": 23,
+    "other_games": 21,
+    "other_wins": 6
+   },
+   "goro-takemura-losing-his-way": {
+    "drawn_games": 101,
+    "drawn_wins": 29,
+    "other_games": 19,
+    "other_wins": 0
+   },
+   "synapse-burnout": {
+    "drawn_games": 91,
+    "drawn_wins": 25,
+    "other_games": 29,
+    "other_wins": 4
+   },
+   "overwatch-panams-gift": {
+    "drawn_games": 97,
+    "drawn_wins": 23,
+    "other_games": 23,
+    "other_wins": 6
+   },
+   "tygers-whisper": {
+    "drawn_games": 50,
+    "drawn_wins": 11,
+    "other_games": 70,
+    "other_wins": 18
+   },
+   "field-operator": {
+    "drawn_games": 93,
+    "drawn_wins": 24,
+    "other_games": 27,
+    "other_wins": 5
+   },
+   "maxtac-av": {
+    "drawn_games": 99,
+    "drawn_wins": 24,
+    "other_games": 21,
+    "other_wins": 5
+   },
+   "sandevistan": {
+    "drawn_games": 96,
+    "drawn_wins": 24,
+    "other_games": 24,
+    "other_wins": 5
+   },
+   "fool-on-the-hill": {
+    "drawn_games": 94,
+    "drawn_wins": 21,
+    "other_games": 26,
+    "other_wins": 8
+   },
+   "corpo-security": {
+    "drawn_games": 107,
+    "drawn_wins": 22,
+    "other_games": 13,
+    "other_wins": 7
+   },
+   "panam-palmer-strength-through-family": {
+    "drawn_games": 101,
+    "drawn_wins": 21,
+    "other_games": 19,
+    "other_wins": 8
+   },
+   "riot-shield": {
+    "drawn_games": 86,
+    "drawn_wins": 24,
+    "other_games": 34,
+    "other_wins": 5
+   }
+  },
+  {
+   "satori-sword-of-saburo": {
+    "drawn_games": 89,
+    "drawn_wins": 56,
+    "other_games": 31,
+    "other_wins": 23
+   },
+   "johnny-silverhand-never-stop-fighting": {
+    "drawn_games": 94,
+    "drawn_wins": 58,
+    "other_games": 26,
+    "other_wins": 21
+   },
+   "kerry-eurodyne-the-last-rockerboy": {
+    "drawn_games": 89,
+    "drawn_wins": 60,
+    "other_games": 31,
+    "other_wins": 19
+   },
+   "meredith-stout-stone-cold-corpo": {
+    "drawn_games": 86,
+    "drawn_wins": 56,
+    "other_games": 34,
+    "other_wins": 23
+   },
+   "over-the-edge": {
+    "drawn_games": 88,
+    "drawn_wins": 55,
+    "other_games": 32,
+    "other_wins": 24
+   },
+   "chrome-fang": {
+    "drawn_games": 93,
+    "drawn_wins": 61,
+    "other_games": 27,
+    "other_wins": 18
+   },
+   "ruthless-lowlife": {
+    "drawn_games": 91,
+    "drawn_wins": 64,
+    "other_games": 29,
+    "other_wins": 15
+   },
+   "la-llorona-ghost-of-the-past": {
+    "drawn_games": 99,
+    "drawn_wins": 69,
+    "other_games": 21,
+    "other_wins": 10
+   },
+   "screw-lovelorn-fool": {
+    "drawn_games": 90,
+    "drawn_wins": 60,
+    "other_games": 30,
+    "other_wins": 19
+   },
+   "appetite-for-destruction": {
+    "drawn_games": 89,
+    "drawn_wins": 59,
+    "other_games": 31,
+    "other_wins": 20
+   },
+   "gunpoint-diplomacy": {
+    "drawn_games": 85,
+    "drawn_wins": 57,
+    "other_games": 35,
+    "other_wins": 22
+   },
+   "detonate": {
+    "drawn_games": 44,
+    "drawn_wins": 28,
+    "other_games": 76,
+    "other_wins": 51
+   },
+   "arasaka-emergency-radioport": {
+    "drawn_games": 66,
+    "drawn_wins": 47,
+    "other_games": 54,
+    "other_wins": 32
+   },
+   "valentino-guerrera": {
+    "drawn_games": 37,
+    "drawn_wins": 27,
+    "other_games": 83,
+    "other_wins": 52
+   },
+   "mantis-blades": {
+    "drawn_games": 89,
+    "drawn_wins": 59,
+    "other_games": 31,
+    "other_wins": 20
+   }
+  }
+ ]
+}

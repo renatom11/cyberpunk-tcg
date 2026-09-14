@@ -1,0 +1,26 @@
+{
+  "name": "builder1",
+  "legends": [
+    "dexter-deshawn-off-the-grid",
+    "royce-psycho-on-the-edge",
+    "rogue-amendiares-preem-solo"
+  ],
+  "main": {
+    "ruthless-lowlife": 3,
+    "screw-lovelorn-fool": 3,
+    "la-llorona-ghost-of-the-past": 3,
+    "dexter-deshawn-one-last-chance": 3,
+    "maelstrom-goons": 3,
+    "meredith-stout-stone-cold-corpo": 3,
+    "valentino-guerrera": 3,
+    "chrome-fang": 1,
+    "the-heist": 3,
+    "gunpoint-diplomacy": 3,
+    "mantis-blades": 3,
+    "kiroshi-optics": 3,
+    "zetatech-faceplate": 2,
+    "shattered-memories": 3,
+    "carnage-at-the-colosseum": 1
+  },
+  "generated": "heuristic"
+}
