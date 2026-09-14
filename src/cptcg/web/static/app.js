@@ -16,8 +16,6 @@ let HAS_BACK = true;       // data/images/_back.jpg exists (cleared on first fai
 // capability as "cannot hover" is what stopped the card preview ever appearing on those machines.
 // any-hover asks whether ANY attached pointer can hover, which is the question that matters here.
 const CAN_HOVER = window.matchMedia("(any-hover: hover)").matches || window.matchMedia("(hover: hover)").matches;
-const CAN_TOUCH = navigator.maxTouchPoints > 0 || window.matchMedia("(hover: none)").matches;
-const TOUCH = CAN_TOUCH && !CAN_HOVER;      // touch only: a tap has to do the work a hover would
 let GAME = null;           // {id, view, log[]}
 let LOG = [];
 
@@ -38,15 +36,11 @@ function cardNode(c, opts = {}) {
   if (def.image) {
     const img = el("img"); img.draggable = false; img.src = `images/${c.id}.jpg`; img.alt = c.name;
     if (CAN_HOVER) { d.onmouseenter = () => showPreview(img.src, c); d.onmouseleave = hidePreview; }
-    if (CAN_TOUCH) {
-      // Touch: a long-press previews any card without acting. On a touch-only screen a plain tap
-      // does it too, since there is no hover to fall back on (decorate() replaces onclick for cards
-      // that can act); where a mouse is also present, tapping is left alone so it can still click.
-      if (!CAN_HOVER) d.onclick = () => showPreview(img.src, c, true);
-      // The hold-and-slide preview is a document-level gesture (see `startScrub`), not a per-card
-      // one: it has to be able to begin on the table between two cards, on the prompt, or during
-      // the mulligan, which is when a player most wants to read what they are holding.
-    }
+    // Touch has no onclick preview: a tap is how you ACT on a card now, and a tap that also threw
+    // the card up full-screen meant every move began by dismissing a picture of the card you had
+    // just moved. Reading is the press-and-hold instead (see `startScrub`), which is a
+    // document-level gesture rather than a per-card one because it has to be able to begin on the
+    // table between two cards, on the prompt, or during the mulligan.
     img.onerror = () => { img.remove(); d.append(...textFace(c)); };
     d.append(img);
   } else {
@@ -93,8 +87,17 @@ function textFace(c) {
 }
 
 // ---------------------------------------------------------------- board
+// What the board has taken responsibility for this render. The prompt is then the REMAINDER: every
+// legal action the board could not put under a finger still gets a button, so no fix here can make
+// a move unreachable and strand a game. Nothing is filtered out of the prompt by name.
+let CLAIM = null;
+function claim(o) { if (CLAIM && o) CLAIM.add(o.index); }
+
 function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = {}) {
   root.innerHTML = "";
+  closeCardMenu();
+  endDrag();                          // nothing survives a render: the nodes a drag held are gone
+  CLAIM = new Set();
   const me = v.perspective == null ? 0 : v.perspective;   // bottom seat
   const opp = 1 - me;
   const P = v.players;
@@ -110,8 +113,11 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
     const opts = byInst[inst];
     if (targets.has(inst)) { node.classList.add("target"); }
     else if (opts && opts.length) { node.classList.add("can"); }
-    // What a click does is *select*: the card's actions are listed in a panel that stays put,
-    // rather than a menu that appears under the cursor and vanishes. Dragging is the fast path.
+    // A card's own moves belong to the card. Once a glowing card can be tapped for them, the prompt
+    // does not list them again — it is a board, not a menu, and a player who knows the game reaches
+    // for the card they mean. Tapping opens the short list of what THAT card can do; dragging it to
+    // the field, the Eddies or a host is the fast path for the three that have a place to go.
+    (opts || []).forEach(claim);
     if (atk && atk.attacker === inst) node.classList.add("attacking");
   };
 
@@ -184,7 +190,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
         n.append(face);
       }
       if (c.spent) n.classList.add("spent");
-      if (c.image) { n.onmouseenter = () => showPreview(`images/${c.id}.jpg`, c); n.onmouseleave = hidePreview; if (TOUCH) n.onclick = () => showPreview(`images/${c.id}.jpg`, c, true); }
+      if (c.image) { n.onmouseenter = () => showPreview(`images/${c.id}.jpg`, c); n.onmouseleave = hidePreview; }
       list.append(n);
     });
     ed.append(list);
@@ -247,6 +253,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
   center.append(oppLeg, oppField, myField, myLeg, oppStacks, myStacks);
 
   // ----- right column
+  let leftovers = null;
   const right = el("div", "col");
   const controls = el("div", "panel controls p-controls");
   controls.append(el("span", "lbl", "ROOM"));
@@ -319,22 +326,40 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
     const b = el("button", "end", "SKIP"); b.onclick = onSkip; opts.append(b);
     prompt.append(opts);
   } else if (pend) {
-    prompt.append(el("div", "q", pend.prompt || pend.phase), el("div", "desc", hintFor(pend)));
+    prompt.append(el("div", "q", pend.prompt || pend.phase));
     if (myTurn) {
-      const opts = el("div", "opts");
-      const seen = new Set();   // identical labels are identical choices (e.g. three face-down Legends)
-      pend.options.forEach(o => {
-        if (seen.has(o.label)) return;
-        seen.add(o.label);
-        const b = el("button", o.kind === "EndTurn" ? "end" : "", o.label);
-        b.onclick = () => onAct(o.index);
-        opts.append(b);
-      });
-      prompt.append(opts);
+      // The turn bar: where you are, what you have not spent yet, and the one move that ends it.
+      // The two once-a-turn rights are the ones a player loses track of, because nothing on the
+      // table shows them going — the sale is a card in the Eddies like any other, and a called
+      // Legend is face up like the rest. So they are said out loud here, and struck through once
+      // they are spent.
+      const bar = el("div", "turnbar");
+      bar.append(el("span", "tn", `TURN ${v.turn}${v.overtime ? " · OVERTIME" : ""}`));
+      if (pend.kind !== "MULLIGAN" && pend.kind !== "ORDER") {
+        const chip = (name, used, what) => {
+          const c = el("span", "chip" + (used ? " used" : ""), name + (used ? " · done" : ""));
+          c.dataset.hint = what + (used ? " — already taken this turn" : " — still yours this turn");
+          return c;
+        };
+        bar.append(chip("SELL", P[me].sold, "One card sold for an Eddie"),
+                   chip("CALL LEGEND", P[me].called, "Call a Legend for 1 €$"));
+      }
+      const end = (pend.options || []).find(o => o.kind === "EndTurn");
+      if (end) {
+        const b = el("button", "end", "END TURN");
+        b.onclick = () => onAct(end.index);
+        bar.append(b); claim(end);
+      }
+      prompt.append(bar);
+      // Filled at the end of the render, once every panel has had its chance to claim what it can
+      // put under a finger. What is left here is what the board has no place for: keep or mulligan,
+      // who goes first, a card effect's choices, passing a reaction.
+      leftovers = el("div", "opts");
+      prompt.append(leftovers, el("div", "desc", hintFor(pend)));
     } else if (interactive) {
-      prompt.append(el("div", "waiting", "Waiting for the AI…"));
+      prompt.append(el("div", "desc", hintFor(pend)), el("div", "waiting", "Waiting for the AI…"));
     } else if (v.next_action) {
-      prompt.append(el("div", "waiting", "Next: " + v.next_action));
+      prompt.append(el("div", "desc", hintFor(pend)), el("div", "waiting", "Next: " + v.next_action));
     }
   }
   right.append(prompt, cardPanel(v, byInst, pend, myTurn, onAct));
@@ -344,17 +369,33 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       if (fresh.has(+n.dataset.inst)) n.classList.add("fresh");
     });
   }
+  if (leftovers) {
+    const seen = new Set();   // identical labels are identical choices (e.g. three face-down Legends)
+    let n = 0;
+    pend.options.forEach(o => {
+      if (CLAIM.has(o.index) || seen.has(o.label)) return;
+      seen.add(o.label); n++;
+      const b = el("button", o.kind === "EndTurn" ? "end" : "", o.label);
+      b.onclick = () => onAct(o.index);
+      leftovers.append(b);
+    });
+    if (!n) leftovers.append(el("div", "none", "Tap a glowing card."));
+  }
   if (myTurn) wireDrag(root, pend, onAct);
   root.querySelectorAll(".hand, .eddies .list, .legends, .field").forEach(fanHand);
   root.querySelectorAll(".card[data-inst]").forEach(n => {
     n.addEventListener("click", (e) => {
       if (n.classList.contains("payable")) return;      // paying: the click means "spend this"
       e.stopPropagation();
-      SELECTED = +n.dataset.inst;
+      const inst = +n.dataset.inst;
+      SELECTED = inst;
       const box = root.querySelector(".p-cardinfo");
       if (box) box.replaceWith(cardPanel(v, byInst, pend, myTurn, onAct));
       root.querySelectorAll(".card.picked").forEach(x => x.classList.remove("picked"));
       n.classList.add("picked");
+      const acts = myTurn ? (byInst[inst] || []) : [];
+      if (acts.length) openCardMenu(n, findOnBoard(v, inst), acts, onAct);
+      else closeCardMenu();
     });
   });
   logp.scrollTop = 0;
@@ -442,19 +483,34 @@ function zoneAt(d, x, y) {
   return best && best.z;
 }
 
-document.addEventListener("pointerup", (e) => {
+// Every way a drag can end runs through here, and it cleans up by SEARCHING rather than by
+// remembering: a ghost is a clone in the body and the lifted card is a node in a board that may
+// have been re-rendered underneath it, so `d.node.classList.remove(...)` can be talking to a node
+// that is no longer on the page. A card left tilted and glowing in mid-air with nothing touching
+// the screen is what that looks like, and it needs a real gesture to clear because the state that
+// would clear it is gone.
+function endDrag() {
   const d = DRAG;
   DRAG = null;
-  if (!d) return;
-  const wasDrag = d.moved;
-  if (d.ghost) d.ghost.remove();
-  d.node.classList.remove("dragging");
-  DRAG_ZONES.forEach(z => { z.el.classList.remove("droptarget", "dropover"); delete z.el.dataset.drop; });
-  if (!wasDrag) return;                       // a click: the node's own handler deals with it
+  document.querySelectorAll(".dragghost").forEach(g => g.remove());
+  document.querySelectorAll(".card.dragging").forEach(n => n.classList.remove("dragging"));
+  document.querySelectorAll(".droptarget, .dropover").forEach(z => {
+    z.classList.remove("droptarget", "dropover"); delete z.dataset.drop;
+  });
+  return d;
+}
+document.addEventListener("pointerup", (e) => {
+  const d = endDrag();
+  if (!d || !d.moved) return;                 // a click: the node's own handler deals with it
   const z = zoneAt(d, e.clientX, e.clientY);
   const opt = z && z.pick(d);
   if (opt) { SUPPRESS_CLICK = true; d.onAct(opt.index); }
 });
+// iOS takes a pointer away whenever something else claims the gesture, and it sends pointercancel
+// rather than pointerup when it does. With nothing listening, the drag never ended: the ghost
+// stayed in the body and the card stayed lifted out of its row for the rest of the game.
+document.addEventListener("pointercancel", endDrag);
+document.addEventListener("touchcancel", endDrag);
 
 // A pointerup that ended a drag is followed by a click on whatever is underneath; swallow it once
 // so dropping a card does not also fire the card's own action menu.
@@ -576,6 +632,48 @@ function markLog(line, who) {
 //: The card the player last clicked. It survives a re-render, the way a selection should.
 let SELECTED = null;
 
+// ---------------------------------------------------------------- what this card can do
+// Tapping a glowing card opens its own short list, at the card. This is the whole of the change
+// the prompt gave up: the prompt used to carry a button for every legal action in the game, so a
+// main phase with a hand of seven and a field of four was thirty buttons of "Play X" and "Sell X"
+// to read through in order to do the thing you were already pointing at. A player who knows the
+// game reaches for the card; the card answers.
+//
+// The list drops the card's name from every label, because the menu is standing on the card — the
+// question it answers is "what", not "which".
+const VERB = { Sell: "SELL", Play: "PLAY", GoSolo: "GO SOLO", Call: "CALL A LEGEND (1 €$)",
+               Attack: "ATTACK", Target: "ATTACK THIS", Block: "BLOCK" };
+function verbFor(o) {
+  if (o.kind === "Activate") { const i = o.label.indexOf(": "); return i < 0 ? o.label : o.label.slice(i + 2); }
+  if (o.kind === "Play" && o.host >= 0) { const i = o.label.indexOf(" on "); return i < 0 ? "EQUIP" : "EQUIP TO" + o.label.slice(i + 3); }
+  return VERB[o.kind] || o.label;
+}
+let CARDMENU = null;
+function closeCardMenu() { if (CARDMENU) { CARDMENU.remove(); CARDMENU = null; } }
+function openCardMenu(node, c, acts, onAct) {
+  closeCardMenu();
+  if (!acts.length) return;
+  const m = el("div", "cardmenu");
+  m.append(el("div", "who", (c && c.name) || ""));
+  acts.forEach(o => {
+    const b = el("button", "", verbFor(o));
+    b.onclick = (e) => { e.stopPropagation(); closeCardMenu(); onAct(o.index); };
+    m.append(b);
+  });
+  m.addEventListener("click", (e) => e.stopPropagation());
+  document.body.append(m);
+  // Above the card if it fits, below if it does not, and never off either edge: on a phone the card
+  // this is hanging off can be twenty pixels from the side of the screen.
+  const r = node.getBoundingClientRect(), mb = m.getBoundingClientRect();
+  const above = r.top - mb.height - 8;
+  m.style.top = (above >= 6 ? above : Math.min(r.bottom + 8, innerHeight - mb.height - 6)) + "px";
+  m.style.left = Math.max(6, Math.min(r.left + r.width / 2 - mb.width / 2, innerWidth - mb.width - 6)) + "px";
+  CARDMENU = m;
+}
+// Anything else on the page closes it. The card's own click stops propagating, so opening one does
+// not immediately close it, and so does the menu's.
+document.addEventListener("click", closeCardMenu);
+
 function findOnBoard(v, inst) {
   for (const p of v.players || []) {
     for (const c of (p.hand || [])) if (c.inst === inst) return c;
@@ -599,16 +697,12 @@ function cardPanel(v, byInst, pend, myTurn, onAct) {
   }
   box.append(el("div", "q", c.name + (c.subtitle ? ` — ${c.subtitle}` : "")));
   if (c.text) box.append(el("div", "ctext", c.text.replace(/\n/g, "<br>")));
-  const acts = myTurn
-    ? (byInst[SELECTED] || []).concat((pend.options || []).filter(o => o.kind === "Target" && o.inst === SELECTED))
-    : [];
-  if (!acts.length) {
-    box.append(el("div", "desc", "This card has no card actions in the current phase."));
-    return box;
-  }
-  const row = el("div", "opts");
-  acts.forEach(o => { const b = el("button", "", o.label); b.onclick = () => onAct(o.index); row.append(b); });
-  box.append(row);
+  // A reader, not a second set of controls. What the card can do is offered at the card itself,
+  // where the hand is — a panel on the far side of the board is a longer trip to the same button.
+  const acts = myTurn ? (byInst[SELECTED] || []) : [];
+  box.append(el("div", "desc", acts.length
+    ? "Tap it again on the board for what it can do, or drag it where it goes."
+    : "This card has no card actions in the current phase."));
   return box;
 }
 
@@ -616,10 +710,10 @@ function hintFor(p) {
   const h = {
     MULLIGAN: "Keep your opening hand, or shuffle it back and draw 6 new cards. You may do this only once.",
     ORDER: "You won the d20 roll-off, so you choose. Going first means the first turn's draw and Gig, but your two left-most Legends start spent and don't ready on that turn.",
-    GIG_DIE: "Start of your turn: take one die from your fixer area, roll it and add it to your Gig area. Click a glowing die, or a button. The d20 can only be taken when it is the last die left.",
-    MAIN: "Your main phase. Do things in any order: play cards (pay their cost in €$ from ready Eddies and Legends), sell one card this turn for an Eddie, Call a Legend for 1 €$ (once per turn), GO SOLO a Legend, use abilities, and attack with ready Units that didn't enter this turn. Glowing cards can act — click them — and every legal action is also a button here. End the turn when you're done.",
-    TARGET: "Declare the target of the attack: a spent rival Unit starts a fight (higher power wins, ties defeat both), or the rival's Gig area lets you steal 1 die plus 1 more per 10 power. The attacker is then spent and its ATTACK effects resolve.",
-    REACTION: "A rival Unit is attacking. You may spend a ready BLOCKER Unit to redirect the attack to it, play a QUICK Program or ability by paying its cost, or Call a Legend for 1 €$ (if you haven't this turn). Pass to let the attack resolve.",
+    GIG_DIE: "Start of your turn: take one die from your fixer area, roll it and add it to your Gig area. Click a glowing die in the fixer. The d20 can only be taken when it is the last die left.",
+    MAIN: "Your main phase. Do things in any order: play cards (pay their cost in €$ from ready Eddies and Legends), sell one card this turn for an Eddie, Call a Legend for 1 €$ (once per turn), GO SOLO a Legend, use abilities, and attack with ready Units that didn't enter this turn. Every one of those belongs to a card: tap a glowing card for what it can do, or drag it to the field, your Eddies or a host. Only what is not a card is a button here.",
+    TARGET: "Declare the target of the attack: tap a glowing rival Unit to start a fight (higher power wins, ties defeat both), or take the Gig area button to steal 1 die plus 1 more per 10 power. The attacker is then spent and its ATTACK effects resolve.",
+    REACTION: "A rival Unit is attacking. You may spend a ready BLOCKER Unit to redirect the attack to it, play a QUICK Program or ability by paying its cost, or Call a Legend for 1 €$ (if you haven't this turn) — all of those are on the glowing cards. Pass to let the attack resolve.",
     PICK: "A card effect is asking you to choose. The buttons list every legal choice; where the choice is a die, the label shows which die and its value.",
   };
   return h[p.kind] || p.prompt || "";
@@ -707,7 +801,11 @@ function diceTray(p, pick, pend, onAct) {
   [4, 6, 8, 10, 12, 20].forEach(k => {
     if (!p.fixer.includes(k)) return;
     const d = dieNode(k, null, "fixer");
-    if (can.has(k)) { d.classList.add("pick"); d.onclick = () => onAct(pend.options.find(o => o.kind === "Die" && o.inst === k).index); }
+    if (can.has(k)) {
+      const o = pend.options.find(x => x.kind === "Die" && x.inst === k);
+      d.classList.add("pick"); d.onclick = () => onAct(o.index);
+      claim(o);                        // the tray is the die's own control; the prompt need not repeat it
+    }
     t.append(d);
   });
   return t;
@@ -1411,7 +1509,7 @@ function previewCard(c) {
 }
 function startScrub(x, y) {
   SCRUB = true;
-  DRAG = null;                       // a hold is a read, not a drag: drop the pending drag-to-play
+  endDrag();                         // a hold is a read, not a drag: drop the pending drag-to-play
   SCRUB_ROWS = cardRows();
   SCRUB_READ = false;                // not a read yet: a tap this brief still plays the card it hit
   const c = cardUnder(x, y) || laneCard(x, y);

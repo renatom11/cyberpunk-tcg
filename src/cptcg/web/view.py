@@ -8,7 +8,7 @@ from cptcg.core.engine import legal_actions
 from cptcg.core.legal import attack_permission
 from cptcg.core.enums import NO_INST, NZONE, TARGET_GIG, CardType, Keyword, Zone
 from cptcg.core.ops import ATTACKING, available, has_keyword, payable_sources, play_cost, power
-from cptcg.core.state import GameState
+from cptcg.core.state import ONCE_CALLED, ONCE_SOLD, GameState
 from cptcg.core.view import hand_visible, knows_identity, legend_identity_known
 
 
@@ -239,6 +239,11 @@ def view_state(s: GameState, perspective: int | None, names: tuple[str, str], lo
             "trash": [card_json(s, i) for i in s.z[base + Zone.TRASH]],
             "removed": [card_json(s, i) for i in s.z[base + Zone.REMOVED]],
             "gigs": gig_rows(s, p), "fixer": list(s.fixer[p]), "cred": s.street_cred(p),
+            # The two things a player gets once a turn. Whether they are still available cannot be
+            # read off the options list -- no Sell offered could equally mean "already sold" or
+            # "nothing in hand carries a sell tag" -- so the flags themselves are sent, and the
+            # board says which of the two it is instead of leaving the player to guess.
+            "sold": bool(s.once[p] & ONCE_SOLD), "called": bool(s.once[p] & ONCE_CALLED),
         }
         players.append(pj)
     pending = None

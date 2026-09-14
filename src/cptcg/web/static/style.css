@@ -191,6 +191,17 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .prompt .q { color: var(--yellow); font-weight: 800; letter-spacing: .08em; margin-bottom: 6px; }
 .prompt .desc { color: var(--dim); font-size: 12px; margin-bottom: 8px; }
 .opts { display: flex; flex-wrap: wrap; gap: 6px; max-height: 260px; overflow-y: auto; }
+/* The turn bar. Where you are in the turn, the two rights you only get once in it, and the one
+   move that ends it — the three things the board itself cannot show you. A spent sale looks
+   exactly like any other card in the Eddies and a called Legend looks exactly like the others, so
+   "done" has to be said rather than shown. */
+.turnbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0 2px; }
+.turnbar .tn { color: var(--dim); font-size: 10px; font-weight: 700; letter-spacing: .14em; }
+.turnbar .chip { border: 1px solid var(--line2); border-radius: 999px; padding: 2px 9px;
+  font-size: 10px; font-weight: 700; letter-spacing: .08em; color: var(--cyan); white-space: nowrap; }
+.turnbar .chip.used { color: var(--dim); border-color: var(--line); text-decoration: line-through;
+  opacity: .65; }
+.turnbar button.end { margin-left: auto; padding: 5px 11px; font-size: 11px; }
 .opts button { font-size: 12px; }
 .opts button.end { border-color: var(--yellow); color: var(--yellow); }
 .controls { display: flex; gap: 6px; flex-wrap: wrap; }   /* four buttons are wider than the column: wrap rather than push the page sideways */
@@ -421,6 +432,22 @@ table.rep th { color: var(--cyan); }
 .stackbox.open { cursor: pointer; }
 .stackbox.open:hover { border-color: var(--cyan); }
 
+/* ------------------------------------------------------- what this card can do, at the card
+   The prompt used to carry a button for every legal action in the game, so a main phase with a
+   hand of seven and a field of four was thirty buttons of "Play X" and "Sell X" to read through in
+   order to do the thing you were already pointing at. The moves belong to the cards; this is where
+   they are offered. Rows are tall because this is aimed at a thumb. */
+.cardmenu { position: fixed; z-index: 60; background: var(--panel); border: 1px solid var(--cyan);
+  border-radius: 9px; padding: 6px; display: flex; flex-direction: column; gap: 4px;
+  box-shadow: 0 12px 34px #000d; min-width: 136px; max-width: min(280px, 92vw); }
+.cardmenu .who { color: var(--yellow); font-size: 10px; font-weight: 800; letter-spacing: .08em;
+  padding: 1px 3px 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cardmenu button { font-size: 12px; padding: 9px 11px; text-align: left; letter-spacing: .06em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* When the board has taken every action onto its own cards, the prompt still says so rather than
+   going blank — an empty box reads as a bug, and this reads as an instruction. */
+.opts .none { color: var(--dim); font-size: 11px; font-style: italic; align-self: center; }
+
 /* ---------------------------------------------------------------- hover preview */
 .preview { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 50; width: 423px; height: 590px; border-radius: 14px; overflow: hidden; border: 2px solid var(--line2); box-shadow: 0 12px 40px #000c; background: #000; display: none; pointer-events: none; }
 .preview.show { display: block; }
@@ -573,11 +600,12 @@ body.mat { position: fixed; inset: 0; width: 100%; }
   .gigs .waiting { font-size: 9px; }
   .score { padding: 1px 5px; } .score .n { font-size: 10px; } .score .c { font-size: 11px; }
 
-  /* the banner has nothing to say here that the prompt does not: END TURN is in the prompt's own
-     list of every legal action, so only the turn and phase survive, folded into the controls row */
+  /* the banner has nothing to say here that the prompt does not: END TURN is not a card, so it is
+     one of the few things still in the prompt, and only the turn and phase survive here, folded
+     into the controls row */
   .p-banner { display: none; }
-  /* likewise the selected-card panel: the prompt lists every action the card could take, and a
-     long press already shows the card's face full size */
+  /* likewise the selected-card panel: a card's moves are offered at the card now, and a long press
+     already shows its face full size */
   .p-cardinfo, .nameplate { display: none; }
 
   .board .panel .lbl { display: none; }
