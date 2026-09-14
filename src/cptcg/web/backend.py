@@ -249,9 +249,9 @@ def build_deck(body: dict) -> Decklist:
 
 def knowledge():
     """Learned card values from past leagues, if a store exists; builders add them to their opinions."""
-    from cptcg.deck.knowledge import DEFAULT_PATH, Knowledge
-    path = ROOT / DEFAULT_PATH
-    return Knowledge.load(path, reg()) if path.exists() else None
+    from cptcg.deck.knowledge import Knowledge, default_path
+    path = default_path(ROOT)
+    return Knowledge.load(path, reg()) if path else None
 
 
 def archetype_store():

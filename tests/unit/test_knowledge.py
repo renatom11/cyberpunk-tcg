@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 
@@ -238,3 +239,42 @@ def test_knowledge_round_trips_play_counters_and_reads_version_one_files(reg, tm
     (tmp_path / "v1.json").write_text(json.dumps(old))
     v1 = Knowledge.load(tmp_path / "v1.json", reg=reg)
     assert v1.cards["a"].to_list() == [10, 6, 10, 4, 0, 0] and v1.cards["a"].iwd == pytest.approx(0.2)
+
+
+def test_a_fresh_clone_gets_the_shipped_prior(tmp_path):
+    """`default_path` is what makes a card-value store exist on a machine that never ran a league.
+
+    The published site builds decks from a clone, where `out/` does not exist at all: before this,
+    the LAB's builder had no learned opinion there while the same code on the machine that ran a
+    league had one, and nothing said so. The order matters as much as the fallback — a checkout
+    that *has* run a league keeps using its own store, because that store knows this player's
+    archetypes and the shipped one is a generic prior.
+    """
+    from cptcg.deck.knowledge import SHIPPED_PATH, default_path
+
+    root = Path(__file__).resolve().parents[2]
+    assert (root / SHIPPED_PATH).exists(), "the shipped prior is missing from the repository"
+    assert default_path(root) is not None
+
+    (tmp_path / "data" / "strategy").mkdir(parents=True)
+    (tmp_path / "data" / "strategy" / "knowledge.json").write_text("{}", encoding="utf-8")
+    assert default_path(tmp_path) == tmp_path / SHIPPED_PATH          # no league store here
+    (tmp_path / "out").mkdir()
+    (tmp_path / "out" / "knowledge.json").write_text("{}", encoding="utf-8")
+    assert default_path(tmp_path) == tmp_path / "out" / "knowledge.json"   # the league's wins
+    assert default_path(tmp_path / "nowhere") is None
+
+
+def test_the_shipped_prior_says_which_cards_it_measured():
+    """Every stored artifact records the card-script fingerprint it was measured against, so a
+    store taken before a card fix can be recognised as describing a different game."""
+    import json
+
+    from cptcg.cards.registry import cards_digest
+    from cptcg.deck.knowledge import SHIPPED_PATH
+
+    raw = json.loads((Path(__file__).resolve().parents[2] / SHIPPED_PATH).read_text(encoding="utf-8"))
+    assert raw["games"] >= 20_000 and len(raw["cards"]) >= 150
+    assert raw["cards_digest"] == cards_digest(), (
+        "the shipped store was measured against another build of the card scripts; re-run "
+        "tools/playtest.py --publish and copy its knowledge.json")

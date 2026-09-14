@@ -25,7 +25,27 @@ from cptcg.deck.decklist import Decklist
 from cptcg.deck.strategies import context_key
 
 DEFAULT_K = 30.0
+#: Where a league writes what it learned. Gitignored, so it does not exist on a fresh clone.
 DEFAULT_PATH = Path("out") / "knowledge.json"
+#: The store that ships with the repository: 28,400 games of `tools/playtest.py` self-play, every
+#: card in the set and every Legend. It is a *prior*, not a league's memory -- nothing writes here.
+SHIPPED_PATH = Path("data") / "strategy" / "knowledge.json"
+
+
+def default_path(root: Path | None = None) -> Path | None:
+    """A league's own store if this checkout has one, else the shipped prior, else nothing.
+
+    A fresh clone had no card values at all, because the only path anything looked at was inside a
+    gitignored directory -- so the deck builder on the published site built with no learned opinion
+    while the same code on the machine that ran a league built with one. `tools/knowledge_ab.py`
+    measures what that is worth: 48 paired deck slots, same Legends and same seed on both sides,
+    and the shipped store's decks win 56.1% (slot-level 95% interval 51.8-60.4).
+    """
+    root = root or Path.cwd()
+    for p in (root / DEFAULT_PATH, root / SHIPPED_PATH):
+        if p.exists():
+            return p
+    return None
 
 
 @dataclass
@@ -138,7 +158,12 @@ class Knowledge:
     def to_json(self) -> dict:
         # version 2 adds the two play counters to the end of every row; a version-1 file loads
         # unchanged because ``Evidence.from_list`` fills the missing tail with zeros.
+        # `cards` is the card-script fingerprint, recorded and never enforced (see
+        # docs/verification.md): a store measured before a card fix describes a different game, and
+        # this is what lets anyone reading the file find that out.
+        from cptcg.cards.registry import cards_digest
         return {"version": 2, "k": self.k, "games": self.games, "tournaments": self.tournaments,
+                "cards_digest": cards_digest(),
                 "cards": {cid: e.to_list() for cid, e in sorted(self.cards.items())},
                 "contexts": {ctx: {cid: e.to_list() for cid, e in sorted(d.items())}
                              for ctx, d in sorted(self.contexts.items())},
