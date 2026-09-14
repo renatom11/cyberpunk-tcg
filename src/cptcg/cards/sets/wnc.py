@@ -1575,8 +1575,14 @@ def _():
 @script("rogue-amendiares-queen-of-the-afterlife")
 def _():
     def ev(c, e):
+        # "...with value less than ITS power" -- the thief's power in the steal that is happening,
+        # which is an attack, so it is read with ATTACKING exactly as the engine reads it on the way
+        # here (`steal_count(power(s, a, ATTACKING))` and `stealable`, both in core/steps.py; the
+        # set's one other value-against-thief comparison, Chrome Fang's, is enforced there). Read
+        # without the flag, a Unit attacking under Saul Bright's "+2 power while attacking" is
+        # measured at its printed power and the clause silently disagrees with the steal it watched.
         if e[0] == "steal" and e[1] != c.inst and c.s.i_owner[e[1]] == c.player \
-                and e[4] < c.power(e[1]) and c.once("ready_eddies"):
+                and e[4] < c.power(e[1], sit=ATTACKING) and c.once("ready_eddies"):
             c.ready_eddies(2)
 
     def drain(c):

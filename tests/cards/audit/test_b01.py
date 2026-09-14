@@ -67,10 +67,6 @@ def test_jackie_fires_when_a_blue_unit_is_played_from_hand(pool):
 
 
 # -------------------------------------- rogue-amendiares-queen-of-the-afterlife
-@pytest.mark.xfail(strict=True, reason="AUD-rogue-amendiares-queen-of-the-afterlife-1: 'value less "
-                                       "than its power' is read with c.power(unit) out of situation, "
-                                       "so a thief stealing on the strength of a 'while attacking' "
-                                       "bonus is compared against the wrong power")
 def test_rogue_queen_readies_when_the_thief_steals_on_its_attacking_power(pool):
     """'The first time another friendly Unit steals a Gig with value less than its power each turn,
     ready 2 Eddies.'
@@ -83,6 +79,8 @@ def test_rogue_queen_readies_when_the_thief_steals_on_its_attacking_power(pool):
     compares a Gig's value against a thief Unit's power, Chrome Fang's "rival Units can't steal
     friendly Gigs with value **higher than their power**", is applied in that same ``stealable``
     with ATTACKING. The d6 it steals shows 5, and 5 < 6, so Rogue's trigger must pay out.
+
+    Fixed: AUD-rogue-amendiares-queen-of-the-afterlife-1.
     """
     s = board(pool, Side(field=["rogue-amendiares-queen-of-the-afterlife",
                                 "saul-bright-stormrider", "emergency-atlus"],
