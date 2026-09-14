@@ -14,7 +14,10 @@ the rules leave open and what this engine does about them.
 All 151 cards are transcribed and all 140 that need one are scripted, but *scripted* is not
 *correct*: [`docs/verification.md`](docs/verification.md) says what has actually been checked, and
 [`data/COVERAGE.md`](data/COVERAGE.md) lists the open findings — each one a failing test waiting on
-a fix rather than a note in a file.
+a fix rather than a note in a file. Every script has now been read against its printed text in both
+directions; [`docs/audit/`](docs/audit/) holds the working papers and
+[`docs/audit-unproven.md`](docs/audit-unproven.md) the observations that could not be turned into a
+failing test, which is a different and more dangerous list.
 
 ## Layout
 
@@ -25,7 +28,7 @@ a fix rather than a note in a file.
 | `src/cptcg/agents/` | Random, heuristic, a learned value/policy net, and two searchers over it |
 | `src/cptcg/sim/` | Match running, tournaments, statistics, replays |
 | `src/cptcg/learn/` | The training loop: state features, deck sampling, experience capture |
-| `data/` | Card data, card images, decklists |
+| `data/` | Card data, card images, decklists, and the measured card records the deck builder and the card guide read |
 | `docs/` | Rules transcription, rulings, authoring guide, [the training loop](docs/learning.md), [what is actually checked](docs/verification.md) |
 
 ## Design notes
