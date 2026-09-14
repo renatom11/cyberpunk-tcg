@@ -70,7 +70,7 @@ function cardNode(c, opts = {}) {
   const def = CARDS[c.id] || {};
   if (def.image) {
     const img = cardImg(`images/${c.id}.jpg`, c.name);
-    if (CAN_HOVER) { d.onmouseenter = () => showPreview(img.src, c); d.onmouseleave = hidePreview; }
+    if (CAN_HOVER) { d.onmouseenter = () => showPreview(img.src, c, false, placeOf(d)); d.onmouseleave = hidePreview; }
     // Touch has no onclick preview: a tap is how you ACT on a card now, and a tap that also threw
     // the card up full-screen meant every move began by dismissing a picture of the card you had
     // just moved. Reading is the press-and-hold instead (see `startScrub`), which is a
@@ -249,7 +249,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
         n.append(face);
       }
       if (c.spent) n.classList.add("spent");
-      if (c.image) { n.onmouseenter = () => showPreview(`images/${c.id}.jpg`, c); n.onmouseleave = hidePreview; }
+      if (c.image) { n.onmouseenter = () => showPreview(`images/${c.id}.jpg`, c, false, placeOf(n)); n.onmouseleave = hidePreview; }
       list.append(n);
     });
     ed.append(list);
@@ -268,7 +268,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       row.append(n);
     });
     const ed = eddiesPanel(p);
-    if (mine) ed.classList.add("p-my-eddies");
+    ed.classList.add(mine ? "p-my-eddies" : "p-opp-eddies");
     band.append(row, ed);
     return band;
   };
@@ -1574,9 +1574,35 @@ function closeCardGuide() { if (GUIDE_OPEN) GUIDE_OPEN.classList.remove("show");
 // ---------------------------------------------------------------- card preview
 // The board draws cards small; hovering any card shows its face at full resolution, like the sim.
 let PREVIEW = null;
-function showPreview(src, c, touch) {
-  if (!PREVIEW) { PREVIEW = el("div", "preview"); PREVIEW.append(el("img")); document.body.append(PREVIEW); PREVIEW.onclick = (e) => { e.stopPropagation(); hidePreview(); }; }
+// Where a card is standing, in the words a player would use. Read off the board rather than out of
+// the view, because the board is where the answer already is — one of these panels is its parent.
+// It matters most for the pair the art cannot tell apart: two identical face-down backs, one of
+// them yours and one of them the opponent's, in two piles at opposite ends of the mat.
+function placeOf(n) {
+  if (!n || !n.closest) return "";
+  if (n.closest(".p-my-eddies"))   return "Your face-down Eddie";
+  if (n.closest(".p-opp-eddies"))  return "Opponent face-down Eddie";
+  if (n.closest(".p-my-hand"))     return "Your card in hand";
+  if (n.closest(".p-opp-hand"))    return "Opponent card in hand";
+  if (n.closest(".p-my-field"))    return "Your Unit";
+  if (n.closest(".p-opp-field"))   return "Opponent Unit";
+  if (n.closest(".p-my-legends"))  return "Your Legend";
+  if (n.closest(".p-opp-legends")) return "Opponent Legend";
+  if (n.closest(".pileview"))      return "In the trash";
+  if (n.closest(".stackbox"))      return "Top of the trash";
+  return "";
+}
+function showPreview(src, c, touch, place) {
+  if (!PREVIEW) {
+    PREVIEW = el("div", "preview");
+    PREVIEW.append(el("div", "cap"), el("img"));
+    document.body.append(PREVIEW);
+    PREVIEW.onclick = (e) => { e.stopPropagation(); hidePreview(); };
+  }
   const img = PREVIEW.querySelector("img"); img.src = src; img.alt = c.name;
+  const cap = PREVIEW.querySelector(".cap");
+  cap.textContent = place || "";
+  cap.classList.toggle("hidden", !place);
   PREVIEW.classList.add("show"); PREVIEW.classList.toggle("touch", !!touch);
   // Centred, not following the cursor: the card lands in the same place every time, so reading it
   // is a glance rather than a chase, and moving along a row of cards swaps one image for another.
@@ -1636,7 +1662,7 @@ function cardUnder(x, y) {
   const under = document.elementFromPoint(x, y);
   const node = under && under.closest && under.closest(".card");
   const c = node && node._card;
-  return (c && c.id && (CARDS[c.id] || {}).image) ? c : null;
+  return (c && c.id && (CARDS[c.id] || {}).image) ? node : null;
 }
 
 // The rows of readable cards on screen, measured once when the hold arms: the board does not move
@@ -1657,32 +1683,37 @@ function cardRows() {
                              > 0.5 * Math.min(q.bottom - q.top, r.height));
     if (!row) rows.push(row = { top: r.top, bottom: r.bottom, items: [] });
     row.top = Math.min(row.top, r.top); row.bottom = Math.max(row.bottom, r.bottom);
-    row.items.push({ c, left: r.left });
+    row.items.push({ n, left: r.left });
   }
   for (const row of rows) row.items.sort((a, b) => a.left - b.left);
   return rows;
 }
-// The lane the finger is in: the nearest row by height, then within it the last card that begins at
-// or before x. That last-one-wins rule is the fan's own geometry — a later card in a row is drawn
-// over the one before it, so the slice of card i you can actually see runs from its left edge to the
-// next card's, which is exactly the lane it should answer to.
+// Lanes belong to your hand and to nothing else. The hand is the one row with open screen below it
+// — the prompt, and the bottom edge — so it is the one row a finger can sit under without sitting on
+// something else, which is what the lane was for: reading a fan of seven forty-pixel slivers
+// without the thumb covering them. Every other row has a row directly above and below it, so a
+// lane there is not a lane, it is a guess about which neighbour was meant; and the answer came
+// back as a card in an Eddies pile two rows away, from a press that was nowhere near it.
+//
+// Within the row it is the last card that begins at or before x. That last-one-wins rule is the
+// fan's own geometry: a later card is drawn over the one before it, so the slice of card i you can
+// actually see runs from its left edge to the next card's, which is exactly the lane it answers to.
 function laneCard(x, y) {
   if (!SCRUB_ROWS || !SCRUB_ROWS.length) return null;
-  let row = null, best = Infinity;
-  for (const q of SCRUB_ROWS) {
-    const d = y < q.top ? q.top - y : (y > q.bottom ? y - q.bottom : 0);
-    if (d < best) { best = d; row = q; }
-  }
-  if (!row) return null;
+  let row = null;
+  for (const q of SCRUB_ROWS) if (!row || q.top > row.top) row = q;   // the lowest row is the hand
+  if (!row || y < row.top) return null;
   let pick = row.items[0];
   for (const it of row.items) if (it.left <= x) pick = it;
-  return pick ? pick.c : null;
+  return pick ? pick.n : null;
 }
-function previewCard(c) {
+function previewCard(node) {
+  const c = node && node._card;
+  if (!c || !c.id) return;
   const src = `images/${c.id}.jpg`;
   const img = PREVIEW && PREVIEW.querySelector("img");
   if (img && PREVIEW.classList.contains("show") && img.getAttribute("src") === src) return;
-  showPreview(src, c, true);
+  showPreview(src, c, true, placeOf(node));
   PREVIEW.classList.add("scrub");
 }
 function startScrub(x, y) {
@@ -1690,8 +1721,8 @@ function startScrub(x, y) {
   endDrag();                         // a hold is a read, not a drag: drop the pending drag-to-play
   SCRUB_ROWS = cardRows();
   SCRUB_READ = false;                // not a read yet: a tap this brief still plays the card it hit
-  const c = cardUnder(x, y) || laneCard(x, y);
-  if (c) previewCard(c);
+  const n = cardUnder(x, y) || laneCard(x, y);
+  if (n) previewCard(n);
 }
 function endScrub() {
   clearTimeout(SCRUB_TIMER); SCRUB_TIMER = null; SCRUB_FROM = null;
@@ -1740,8 +1771,8 @@ document.addEventListener("touchmove", (e) => {
   // turn brisk taps into reads at random, which is the failure that looks like a dead button.
   if (SCRUB_FROM && Math.abs(t.clientX - SCRUB_FROM.x) + Math.abs(t.clientY - SCRUB_FROM.y) > 12)
     SCRUB_READ = true;
-  const c = cardUnder(t.clientX, t.clientY) || laneCard(t.clientX, t.clientY);
-  if (c) previewCard(c);             // and if there is nothing at all, what is up stays up
+  const n = cardUnder(t.clientX, t.clientY) || laneCard(t.clientX, t.clientY);
+  if (n) previewCard(n);             // and if there is nothing at all, what is up stays up
 }, { passive: false });
 document.addEventListener("touchend", endScrub);
 document.addEventListener("touchcancel", endScrub);

@@ -491,9 +491,16 @@ table.rep th { color: var(--cyan); }
 .opts .none { color: var(--dim); font-size: 11px; font-style: italic; align-self: center; }
 
 /* ---------------------------------------------------------------- hover preview */
-.preview { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 50; width: 423px; height: 590px; border-radius: 14px; overflow: hidden; border: 2px solid var(--line2); box-shadow: 0 12px 40px #000c; background: #000; display: none; pointer-events: none; }
-.preview.show { display: block; }
-.preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.preview { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 50; width: 423px; height: 616px; border-radius: 14px; overflow: hidden; border: 2px solid var(--line2); box-shadow: 0 12px 40px #000c; background: #000; display: none; pointer-events: none; flex-direction: column; }
+.preview.show { display: flex; }
+.preview img { flex: 1 1 auto; min-height: 0; width: 100%; object-fit: contain; display: block; }
+/* What the card is and whose it is, above the art rather than over it. Two face-down backs are the
+   same picture — the only thing that tells your Eddie from the opponent's is which pile it was
+   standing in, and once the card is filling the screen that pile is no longer on it. */
+.preview .cap { flex: 0 0 auto; padding: 5px 10px; background: #050810; color: var(--cyan);
+  font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+  text-align: center; border-bottom: 1px solid var(--line2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* iOS turns a long press on an <img> into its own Share / Save to Photos sheet, which lands on top
    of the card the long press was meant to show. The card art is a UI element here, not a picture
    the page is offering, so the callout is switched off on every image the board draws.
@@ -540,7 +547,7 @@ body.mat { position: fixed; inset: 0; width: 100%; }
   .card.back.flipdown { animation: none; }
   .card.back.flipdown .eddieface { animation: eddie-face 1.5s steps(2, end) both; }
 }
-@media (max-height: 700px) { .preview { width: 300px; height: 418px; } }
+@media (max-height: 700px) { .preview { width: 300px; height: 444px; } .preview .cap { font-size: 11px; padding: 4px 8px; } }
 
 .logbtn { display: none; }
 
