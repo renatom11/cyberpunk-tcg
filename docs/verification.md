@@ -105,6 +105,16 @@ reason the pass is worth running at all. The second is told the finding is presu
 kill it: a ruling covers it, the engine already handles it somewhere the filer did not look, the
 test's board is unreachable, the test asserts internals, or the expectation misreads a word.
 
+**The blind leg has one structural blind spot, and it is worth naming rather than patching.** A
+*prohibition* — "rival Units can't steal friendly Gigs with value higher than their power" — is not
+verifiable from the card that prints it. That script only *records* the protection; whether it is
+*consulted* is a fact about every other card that steals. The blind reader for Chrome Fang returned
+"every clause matches", correctly, having read Chrome Fang, `EffectCtx.mod`, the expiry rule and the
+protection gate — and the bug is in Gorilla Arms, which it was never shown. Findings of this shape
+are adjudicated against the whole pool instead, and the adjudication is what the detector is built
+from: the set contains two effect-driven steals, one routes its candidates through the protection
+gate and one does not, and nothing in either printed text distinguishes them.
+
 ## The cards digest
 
 `RulesConfig.digest()` exists so that changing a ruling *visibly* invalidates comparisons with older

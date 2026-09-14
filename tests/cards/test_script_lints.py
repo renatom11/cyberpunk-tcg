@@ -337,3 +337,47 @@ def test_the_tail_clause_lint_separates_back_references_from_state_conditions():
     assert _MODIFIES.search("that Rival discards 1 more.")
     assert _MODIFIES.search("If you have less ★ than a Rival, choose both instead.")
     assert not _MODIFIES.search("If you control a Gig with 8+ value, draw 1.")
+
+
+# ------------------------------------------------- a steal that no protection effect can see
+def _steal_sites(source: str) -> list[tuple[str, int]]:
+    """``(card id, line)`` for every ``push_steals`` call in a card script whose candidate indices
+    did not come from ``stealable``.
+
+    ``steps.stealable`` is where the two protection effects in this set are applied — Chrome Fang's
+    "rival Units can't steal friendly Gigs with value higher than their power" and Westbrook
+    Netrunner's mirror of it for Legends. The attack path goes through it. An effect that pushes a
+    steal of its own has to as well, or the prohibition is enforced on one path out of several and
+    the printed text is simply false on the others.
+
+    The check is deliberately crude: within each ``@script`` block, if ``push_steals`` is called and
+    ``stealable`` is never called, the card steals without consulting protection. A card that calls
+    both and then ignores the result would slip through, but nothing in the set does that, and a
+    lint that is easy to read is worth more here than one that is hard to fool.
+    """
+    out = []
+    for cid, fn in _script_defs(source).items():
+        pushes = _method_calls(fn, "push_steals")
+        if pushes and not _method_calls(fn, "stealable"):
+            out.append((cid, pushes[0].lineno))
+    return out
+
+
+@pytest.mark.xfail(strict=True, reason="AUD-gorilla-arms-1: the effect-driven steal builds its candidates straight off the rival's Gig area, so it ignores Chrome Fang and Westbrook Netrunner, whose printed text says a rival Unit *can't* steal those Gigs at all")
+def test_every_effect_driven_steal_goes_through_the_protection_gate(pool):
+    """A prohibition is a claim about every path that could break it.
+
+    "Rival Units can't steal friendly Gigs with value higher than their power" is not verifiable
+    from Chrome Fang's own script — that script only *records* the protection. Whether it is
+    *consulted* is a fact about the cards that steal, and this is the check that asks them.
+
+    The set contains exactly two effect-driven steals and they disagree with each other:
+    ``appetite-for-destruction`` routes its candidates through ``stealable`` and
+    ``gorilla-arms`` does not. Nothing in either printed text distinguishes them, and no row of
+    docs/rulings.md covers it, which is why the inconsistency is read as a bug rather than a
+    ruling. It goes green when the second one is fixed.
+    """
+    src = (SETS_DIR / "wnc.py").read_text(encoding="utf-8")
+    bad = _steal_sites(src)
+    assert not bad, ("cards that steal without consulting the protection gate:\n  "
+                     + "\n  ".join(f"{cid} (wnc.py:{line})" for cid, line in bad))
