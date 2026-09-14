@@ -181,6 +181,18 @@ def _pick_struct(s: GameState, v, me: int | None):
     between "your d4=3 -2" and "rival d12=10 -1" is a die and a number, and a list of sentences is
     the worst way to show either — so the client gets the die and the number.
     """
+    if isinstance(v, int) and not isinstance(v, bool) and 0 <= v < len(s.i_card):
+        # A card, as the thing it is rather than as a sentence about it. Through the same gate as
+        # every other identity: a card the chooser may not read comes back with no id, so the client
+        # can draw a back and still let them pick it.
+        if knows_identity(s, me, v):
+            d = s.card(v)
+            return {"t": "card", "inst": v, "id": d.id, "name": d.name, "subtitle": d.subtitle,
+                    "cost": d.cost, "power": (f"{d.power}+" if d.power_variable else d.power),
+                    "type": d.type.name.title(), "color": d.color.name.title(), "text": d.text}
+        return {"t": "card", "inst": v, "id": None, "name": _anon(s, v, me)}
+    if isinstance(v, bool):
+        return {"t": "bool", "value": v}
     if isinstance(v, tuple) and all(isinstance(x, int) for x in v):
         if len(v) == 5:                                   # (owner, index, amount, sides, value)
             o, i, a, k, val = v
@@ -350,8 +362,16 @@ def view_state(s: GameState, perspective: int | None, names: tuple[str, str], lo
                  ChoiceKind.GIG_DIE: "Start phase", ChoiceKind.MAIN: "Main phase",
                  ChoiceKind.TARGET: "Attack", ChoiceKind.REACTION: "Rival reacts",
                  ChoiceKind.PICK: "Choose"}.get(ch.kind, ch.kind.name.replace("_", " ").title())
+        # What this question has SHOWN the person answering it. `Choice.revealed` is the engine's
+        # declared mechanism for "you have seen these" -- `core.view._pinned` reads exactly what a
+        # choice declares and guesses nothing -- and it was never shipped, so the client could not
+        # draw them. Viktor Vektor looks at the top 5 and may take 2 of them: the player was offered
+        # the 2 and never shown the other 3 they had just looked at. Fool on the Hill asks a Rival
+        # to decide the fate of 2 revealed cards, and worked around the gap by pasting their names
+        # into the prompt string. Only ever to the seat being asked.
         pending = {"kind": ch.kind.name, "player": ch.player, "prompt": ch.prompt, "phase": phase,
-                   "options": opts, "mine": mine}
+                   "options": opts, "mine": mine,
+                   "revealed": [card_json(s, i) for i in ch.revealed] if mine else []}
     return {"turn": s.turn, "active": s.active, "first_player": s.first_player, "overtime": s.overtime,
             "over": s.over, "winner": s.winner if s.over else None,
             "end_reason": s.end_reason.name if s.over else None, "perspective": perspective,

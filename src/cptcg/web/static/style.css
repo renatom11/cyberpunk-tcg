@@ -224,6 +224,25 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 /* Adjusting a Gig: the dice, then the amount, then confirm. A decision that is a die and a number
    was being asked as a list of sentences, one per combination — seven buttons to read in order to
    say "that one, down two". */
+/* Cards you have been shown, laid out to be read and chosen from. Bigger than the board's cards
+   because this is the moment you are being asked to READ them — and it scrolls sideways rather
+   than shrinking them, because five cards on a phone at a size you can read is wider than a phone. */
+.reveal { margin: 6px 0 2px; }
+.reveal .shown { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 4px;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.reveal .shown::-webkit-scrollbar { display: none; }
+.reveal .shown .card { flex: 0 0 auto; width: 104px; height: 147px; cursor: default; }
+.reveal .shown .card.can { cursor: pointer; }
+.reveal .shown .card.idle { opacity: .45; }
+.reveal .count { color: var(--dim); font-size: 11px; letter-spacing: .06em; margin: 2px 0 0; }
+.reveal .opts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+.reveal .opts button { font-size: 12px; padding: 8px 12px; letter-spacing: .06em; }
+@media (max-width: 700px) {
+  .reveal .shown .card { width: 92px; height: 130px; }
+  /* the prompt is short on a phone; a reveal needs room, so it takes it */
+  .board .p-prompt:has(.reveal) { max-height: 46vh; }
+}
+
 .gigadj { margin: 6px 0 2px; }
 .gigadj .dicerow { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
 .gigadj .pick { display: flex; flex-direction: column; align-items: center; gap: 2px;

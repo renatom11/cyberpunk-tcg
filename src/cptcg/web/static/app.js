@@ -410,8 +410,12 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       // lit and the d20 shown but out of reach until it is the last one left, which is the rule
       // and is worth seeing rather than being told.
       if (pend.kind === "PICK") {
-        const picker = adjustPicker(pend, onAct, me);
-        if (picker) { prompt.append(picker); (pend.options || []).forEach(claim); }
+        const shownPicker = revealPicker(pend, onAct);
+        if (shownPicker) { prompt.append(shownPicker); (pend.options || []).forEach(claim); }
+        else {
+          const picker = adjustPicker(pend, onAct, me);
+          if (picker) { prompt.append(picker); (pend.options || []).forEach(claim); }
+        }
       }
       if (pend.kind === "GIG_DIE") {
         const tray = el("div", "gigpick");
@@ -465,7 +469,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       leftovers.append(b);
     });
     // ... and nothing to say when the prompt is already holding the thing to tap.
-    if (!n && !leftovers.parentNode.querySelector(".gigpick"))
+    if (!n && !leftovers.parentNode.querySelector(".gigpick, .gigadj, .reveal"))
       leftovers.append(el("div", "none", "Tap a lit card to act on it."));
   }
   // The attack, drawn on the board instead of described in the prompt. "React?" over a wall of
@@ -1130,6 +1134,89 @@ function gigPanel(p, meSeat) {
   g.append(el("div", "tag", p.seat === meSeat ? "FRIENDLY GIGS" : "OPPONENT GIGS"));
   return g;
 }
+// ---------------------------------------------------------------- resolving with the cards up
+// Some questions are about CARDS, and a row of buttons reading their names is the wrong shape for
+// them: the cards are the thing, and on a phone the names are also the longest labels the prompt
+// ever has to carry. So when the engine says this question has SHOWN the asker some cards
+// (Choice.revealed), they are laid out in the middle of the screen at a size you can read, and the
+// choice is made on the cards themselves.
+//
+// It also fixes a real gap rather than only looking better. Viktor Vektor looks at the top 5 and
+// may take 2 Gears from them; the client was offering the 2 and never showing the other 3 the
+// player had just looked at, because `revealed` was never sent. Fool on the Hill asks your RIVAL to
+// send two revealed cards to your hand or your trash, and had to paste both names into its prompt
+// string to be answerable at all.
+function revealPicker(pend, onAct) {
+  const shown = pend.revealed || [];
+  if (!shown.length) return null;
+  const opts = pend.options || [];
+  if (!opts.length || !opts.every(o => Array.isArray(o.pick))) return null;
+
+  // Which revealed cards each option takes. An option whose picks are not cards (a yes/no, say)
+  // still belongs here -- it is a decision ABOUT the revealed cards -- it just selects none of them.
+  const rows = opts.map(o => ({
+    o,
+    insts: o.pick.filter(x => x && x.t === "card").map(x => x.inst),
+    bools: o.pick.filter(x => x && x.t === "bool").map(x => x.value),
+  }));
+  const selectable = new Set();
+  rows.forEach(r => r.insts.forEach(i => selectable.add(i)));
+  const anyCards = selectable.size > 0;
+  if (!anyCards && !rows.some(r => r.bools.length)) return null;
+
+  const box = el("div", "reveal");
+  const row = el("div", "shown");
+  let chosen = [];
+
+  const match = () => rows.find(r =>
+    r.insts.length === chosen.length && r.insts.every(i => chosen.includes(i)));
+
+  const go = el("button", "primary hidden", "CONFIRM");
+  const paint = () => {
+    row.querySelectorAll(".card").forEach(n => {
+      const i = +n.dataset.inst;
+      n.classList.toggle("paypicked", chosen.includes(i));
+      n.classList.toggle("can", selectable.has(i) && !chosen.includes(i));
+      n.classList.toggle("idle", anyCards && !selectable.has(i));
+    });
+    const m = match();
+    go.classList.toggle("hidden", !m);
+    go.textContent = chosen.length ? `TAKE ${chosen.length}` : "CONFIRM";
+    count.textContent = anyCards
+      ? `${chosen.length} of ${shown.length} chosen` + (match() ? "" : " \u2014 not a legal set")
+      : "";
+  };
+  const count = el("div", "count", "");
+
+  shown.forEach(c => {
+    const n = cardNode(c);
+    n.dataset.inst = c.inst;
+    n.onclick = (e) => {
+      e.stopPropagation();
+      if (!selectable.has(c.inst)) return;              // shown, but not one you may take
+      const at = chosen.indexOf(c.inst);
+      if (at >= 0) chosen.splice(at, 1); else chosen.push(c.inst);
+      paint();
+    };
+    row.append(n);
+  });
+
+  const buttons = el("div", "opts");
+  go.onclick = (e) => { e.stopPropagation(); const m = match(); if (m) onAct(m.o.index); };
+  buttons.append(go);
+  // Everything that is not "take exactly this set of cards" keeps a button, because a yes/no about
+  // the revealed cards is still a sentence: "to their hand" / "to the trash", "Decline".
+  rows.forEach(r => {
+    if (r.insts.length) return;
+    const b = el("button", "", r.o.label);
+    b.onclick = (e) => { e.stopPropagation(); onAct(r.o.index); };
+    buttons.append(b);
+  });
+  box.append(row, count, buttons);
+  paint();
+  return box;
+}
+
 // ---------------------------------------------------------------- adjusting a Gig
 // "Decrease a Gig" used to be seven buttons reading "your d4=3 -2", "your d4=3 -1", "rival d12=10
 // -2" and so on: every (die, amount) pair in the game written out as a sentence, for a decision
