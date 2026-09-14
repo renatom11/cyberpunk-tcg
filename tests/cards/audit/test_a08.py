@@ -19,18 +19,29 @@ TARGET_UNIT = 0
 
 
 # --------------------------------------------------------------- kiroshi-optics
-@pytest.mark.xfail(strict=True, reason="AUD-kiroshi-optics-1: text allows equipping to any Unit (incl. rival); legal.gear_hosts offers friendly Units only")
-def test_kiroshi_optics_may_equip_to_any_unit(pool):
-    """'(Equip to a Unit or friendly face-up Legend.)' — 'a Unit' is unqualified, unlike the
-    other 9 Gear in the set, which all read '(Equip to a friendly Unit or face-up Legend.)'."""
+def test_kiroshi_optics_equips_friendly_only_like_every_other_gear(pool):
+    """Withdrawn: AUD-kiroshi-optics-1 was a false positive, and this is what it leaves behind.
+
+    The finding read Kiroshi's "(Equip to a Unit or friendly face-up Legend.)" as unqualified,
+    since the other nine Gear print "(Equip to a **friendly** Unit or face-up Legend.)". Killed on
+    the parse: taking "friendly" as conjunct-local here, but as distributing on the other nine,
+    is inconsistent — and the conjunct-local reading would also let those nine equip a *rival*
+    face-up Legend, which nobody filed and nobody believes. docs/rules.md fixes the template as
+    "a friendly Unit or Legend", and seven Gear print no equip line at all yet host identically,
+    so the parenthetical is reminder text. Reminder text nowhere in this set grants an exception.
+
+    The residue is a transcription doubt, not a script defect: Kiroshi's word order differs from
+    every sibling, which is what a slip looks like. Settling it needs the card face, so it is
+    recorded in data/COVERAGE.md rather than guessed at here.
+    """
     s = board(pool, Side(hand=["kiroshi-optics"], field=["psycho-squad"], eddies=9),
               Side(field=["corpo-security"]))
     k = find(s, "kiroshi-optics")
     mine = find(s, "psycho-squad", Zone.FIELD, 0)
     theirs = find(s, "corpo-security", Zone.FIELD, 1)
     opts = options(s)
-    assert Play(k, mine) in opts                       # friendly Unit: offered
-    assert Play(k, theirs) in opts                     # rival Unit: the card text allows it
+    assert Play(k, mine) in opts, "a friendly Unit is a legal host"
+    assert Play(k, theirs) not in opts, "a rival Unit is not, here or on any other Gear"
 
 
 # ---------------------------------------------------------- dying-night-vs-pistol

@@ -295,3 +295,47 @@ grant is written as an until-end-of-turn modifier where the card says "the next 
 attacks this turn". Those play rates are measurements of the bug, not of the card, for both agents.
 They have to be re-measured after the fixes land, and until then the right reading of the ±11 and
 ±14 point gaps is "the two agents disagree about a card that is not yet the printed card".
+
+
+## What the verification pass actually returned
+
+Twenty-four findings, forty-eight agents, two per finding. Every one of the twenty-four came back
+with both legs run.
+
+| | |
+|---|---|
+| survives | 23 |
+| killed | 1 |
+| blind reader independently found an error | 21 of 24 |
+| tests judged sound (printed-text outcome, reachable board) | 23 of 24 |
+
+Class: 17 scope-or-condition, 4 missing-clause, 1 wrong-effect, 1 genuinely ambiguous, 1 false
+positive.
+
+**The three cases where the blind reader found nothing are the interesting ones, and they are
+exactly the three you would want.** Two are Chrome Fang and Westbrook Netrunner — the prohibition
+blind spot described above, where the bug lives in a card the reader was never shown. The third is
+the one real false positive, and the blind reader agreeing with the killer there is the
+anti-anchoring leg doing precisely its job: it saw the card, found it faithful, and said so.
+
+**The false positive.** Kiroshi Optics prints "(Equip to a Unit or friendly face-up Legend.)" where
+the other nine Gear print "(Equip to a **friendly** Unit or face-up Legend.)", and the finding read
+the difference as permission to equip a rival's Unit. Killed on the parse: taking "friendly" as
+conjunct-local on Kiroshi but as distributing on the other nine is inconsistent, and the
+conjunct-local reading would also let those nine equip a *rival* face-up Legend, which nobody filed
+and nobody believes. `docs/rules.md` fixes the template as "a friendly Unit or Legend", and seven
+Gear print no equip line at all yet host identically — the parenthetical is reminder text, and
+reminder text nowhere in this set grants an exception. The withdrawn finding leaves a passing test
+behind rather than nothing, which is the right residue.
+
+What it also leaves is a **transcription doubt**: Kiroshi's word order differs from every sibling,
+which is what a slip looks like rather than a design decision. Settling it needs the card face, so
+it is recorded rather than guessed at.
+
+**The ambiguity.** Goro Takemura — Losing His Way reads "If all friendly Legends are face-up" and
+the engine additionally requires at least one. With an empty Legends area — reachable, and
+deck-legal — "all" over an empty set is vacuously true on one reading and unsatisfied on the other.
+Both defensible; the card does not say. It is `docs/rulings.md` row 042, **Uncertain**, left as the
+engine has it, with the failing test for the other reading still in place. Ruling 038 (Street Cred
+with no Gigs is *null*, not 0) is the nearest precedent and leans against the vacuous reading, which
+is why the engine's behaviour is the one left standing rather than the filer's.
