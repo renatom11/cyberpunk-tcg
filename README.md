@@ -11,13 +11,18 @@ Early. See [`docs/rules.md`](docs/rules.md) for the transcribed official rules, 
 authoritative reference for the engine, and [`docs/rulings.md`](docs/rulings.md) for the situations
 the rules leave open and what this engine does about them.
 
+All 151 cards are transcribed and all 140 that need one are scripted, but *scripted* is not
+*correct*: [`docs/verification.md`](docs/verification.md) says what has actually been checked, and
+[`data/COVERAGE.md`](data/COVERAGE.md) lists the open findings — each one a failing test waiting on
+a fix rather than a note in a file.
+
 ## Layout
 
 | Path | What |
 |---|---|
 | `src/cptcg/core/` | The rules engine: state, step machine, combat, legal moves |
 | `src/cptcg/cards/` | Card definitions — static data in JSON, behaviour scripted by card ID |
-| `src/cptcg/agents/` | Random, heuristic and (later) search-based players |
+| `src/cptcg/agents/` | Random, heuristic, a learned value/policy net, and two searchers over it |
 | `src/cptcg/sim/` | Match running, tournaments, statistics, replays |
 | `src/cptcg/learn/` | The training loop: state features, deck sampling, experience capture |
 | `data/` | Card data, card images, decklists |
@@ -42,7 +47,8 @@ small tournaments, on desktop or phone, nothing to install. Built from this repo
 
 ```bash
 pip install -e '.[dev]'
-pytest                                   # ~330 tests: rules, properties, one scenario per card
+pytest                                   # ~870 tests: rules, properties, a scenario per card,
+                                         # pool-wide lints, and the open audit findings as strict xfails
 
 # play 1000 mirrored games between two decks and report win rates with 95% intervals
 python -m cptcg sim --deck-a data/decks/the_heist.json \
