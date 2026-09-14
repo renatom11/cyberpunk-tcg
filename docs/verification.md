@@ -427,6 +427,14 @@ evidence about what a **one-ply heuristic** does with them; the same fixes chang
 a searching agent can find, and what a person at the board is allowed to do, none of which this
 panel measures.
 
+**A correction, and what it is evidence of.** The commit that landed `AUD-memory-relapse-2` said the
+heuristic fuzz digest moved. It did not: both fuzz digests are unchanged
+(31579a79b6d69293b372a7ea and e5b6084fdeaa99c52fe15ff6), and so is `bench.py check`. Neither
+instrument reaches the bug, because reaching it needs a card that readies another card *and* a rider
+forbidding that card to ready — Memory Relapse or Pacifica Netrunner into Johnny Silverhand — inside
+one turn. The scenario test is the only evidence, which is exactly the situation the G0 rule
+anticipates and the reason "demonstrably unreachable" has to be measured rather than assumed.
+
 ## The staleness alarms, and what they caught
 
 `cards_digest()` was added record-only, because enforcing it on the day it was introduced would have
