@@ -391,6 +391,16 @@ have fired on a real fix rather than in a drill:
 * The card guide on the website compares the digest stamped into the published measurement and says,
   in as many words, that those numbers describe the game as it behaved before the fixes.
 
+## The working papers
+
+[`docs/audit/`](audit/) holds the twenty batch reports and the twenty-four verification records from
+the first round, verbatim. They were written into a gitignored directory on an ephemeral machine,
+and the clause-by-clause expectation in them — Leg B — is the part that cannot be reconstructed from
+the test that survives in the repository. They are working papers: agent-written, occasionally
+disagreeing with each other, and one of them is a finding that was filed, verified and then killed,
+with the kill sitting in the file next to the claim. Where a paper and the code disagree, the code
+is the answer.
+
 ## The other output: what could not be proved
 
 [`docs/audit-unproven.md`](audit-unproven.md) holds the 45 bucketed observations the audit could not
