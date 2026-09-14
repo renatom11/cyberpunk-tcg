@@ -29,7 +29,6 @@ def test_memory_relapse_draws_on_even_cred_with_no_rival_units(pool):
     assert len(s.zone(0, Zone.HAND)) == 1
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-bonnie-and-clyde-1: choose_many(lo=0) lets you defeat nothing; the printed 'may' covers only the second Unit")
 def test_bonnie_and_clyde_defeat_is_not_optional(pool):
     """'Defeat a rival Unit with power 4 or less. You may defeat 2 instead if a Rival controls at
     least 2 Gigs more than you.' — the 'may' buys the second Unit only; defeating one is

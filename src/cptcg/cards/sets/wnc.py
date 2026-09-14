@@ -23,8 +23,14 @@ def _():
 def _():
     def play(c):
         n = 2 if len(c.gigs(c.rival)) >= len(c.gigs()) + 2 else 1
-        c.choose_many(c.rival_units(power_le(c, 4)), 0, n,
-                      lambda c2, us: [c2.defeat(u) for u in us], prompt="Defeat up to %d" % n)
+        # "Defeat a rival Unit with power 4 or less." is a bare imperative -- with a legal target
+        # you must defeat one. The "may" belongs to the *upgrade*: "You may defeat 2 **instead**",
+        # and "instead" presupposes the thing it replaces, so declining it leaves the first
+        # sentence standing. That is hi, not lo. choose_many clamps hi to what is available and
+        # calls the continuation with [] when nothing is legal, so lo=1 is safe on an empty board.
+        c.choose_many(c.rival_units(power_le(c, 4)), 1, n,
+                      lambda c2, us: [c2.defeat(u) for u in us],
+                      prompt="Defeat a rival Unit" if n == 1 else "Defeat 1 or 2 rival Units")
     return CardScript(on_play=play)
 
 
