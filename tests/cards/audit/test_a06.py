@@ -44,7 +44,6 @@ def test_mox_inciters_forces_the_named_rival_unit_to_attack(pool):
     assert EndTurn() not in s.pending.options                        # ... so it must
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-yorinobu-arasaka-steel-dragon-1: the defeated-ARASAKA draw is restricted to the controller's own Units, but the printed clause names no side")
 def test_yorinobu_draws_when_a_rival_arasaka_unit_is_defeated(pool):
     """'The first time an ARASAKA Unit is defeated each turn, draw 1.'
 
@@ -58,6 +57,8 @@ def test_yorinobu_draws_when_a_rival_arasaka_unit_is_defeated(pool):
     (`ops.defeat` dispatches `("defeated", inst, owner, was_equipped)`), so only friendly
     ARASAKA deaths ever draw. The friendly half works — the same board with Minotaur on
     Yorinobu's own field does draw 1 — so this is scope, not a dead hook.
+
+    Fixed: AUD-yorinobu-arasaka-steel-dragon-1.
     """
     s = board(pool, Side(field=["yorinobu-arasaka-steel-dragon"], deck=["floor-it"] * 3),
               Side(field=["minotaur"]))

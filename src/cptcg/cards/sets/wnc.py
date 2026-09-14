@@ -634,7 +634,11 @@ def _():
                  prompt="Play a Unit for free?", optional=True)
 
     def ev(c, e):
-        if e[0] == "defeated" and e[2] == c.player and "ARASAKA" in c.d(e[1]).tags and c.once("arasaka_defeated"):
+        # "The first time an ARASAKA Unit is defeated each turn, draw 1." No side qualifier, and
+        # this set says so when it means one: River Ward reads "a *friendly* equipped Unit", and
+        # Yorinobu's own first paragraph says "rival Units". The gate read e[2] -- the owner of the
+        # defeated card -- against the controller, so only friendly ARASAKA deaths ever drew.
+        if e[0] == "defeated" and "ARASAKA" in c.d(e[1]).tags and c.once("arasaka_defeated"):
             c.draw(1)
     return CardScript(on_play=play, on_event=ev, events=frozenset({"defeated"}))
 
