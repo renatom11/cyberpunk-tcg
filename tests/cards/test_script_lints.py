@@ -11,11 +11,18 @@ can't attack" in their printed text and carried no such token in the interaction
 raised for weeks. The durable fix there was not correcting two entries; it was adding a test that
 reads the printed text and fails on any card that says so. Same idea here.
 
-Three of them pass over all 151 cards. The fourth, added last, does not: it reads the printed text
-for a second sentence with its own board condition and finds six cards that implement it inside the
+Three of them pass over all 151 cards. The fourth, added last, did not: it reads the printed text
+for a second sentence with its own board condition and found six cards that implement it inside the
 first sentence's continuation, where a declined or impossible first sentence skips it. Five of those
 six were found by hand first, in two unrelated audit batches; the detector then found the sixth,
-which is the whole argument for writing detectors instead of filing fixes.
+which is the whole argument for writing detectors instead of filing fixes. All six are fixed and it
+passes now.
+
+Two more read the ``events=`` filter against the hook it guards: a kind the engine never dispatches
+is a trigger that is dead for the life of the card, and a filter narrower than the branches its body
+handles is half a card. Neither has a runtime signal — no exception, no warning, the script loads —
+so the only place either can be caught is a scan like this one. Both report zero over the pool
+today, and the self-test plants one of each to show they would not.
 
 A lint that has never fired is only worth having if it *can* fire, so each one's docstring says what
 it would catch, the ctx lint has an explicit self-test that plants violations, and the tail-clause
@@ -354,6 +361,137 @@ def test_the_tail_clause_lint_separates_back_references_from_state_conditions():
     assert _MODIFIES.search("that Rival discards 1 more.")
     assert _MODIFIES.search("If you have less ★ than a Rival, choose both instead.")
     assert not _MODIFIES.search("If you control a Gig with 8+ value, draw 1.")
+
+
+# ----------------------------------------------- a trigger that filters out its own event
+#: Every event kind `ops.dispatch` can deliver, read off the dispatch sites rather than kept by
+#: hand — a vocabulary kept by hand is the thing that goes stale. `_dispatched_kinds` fails loudly
+#: if the scan finds nothing, because an empty vocabulary would make the lint below vacuous.
+def _dispatched_kinds() -> set[str]:
+    kinds = set()
+    for path in sorted((SETS_DIR.parents[1] / "core").glob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for n in ast.walk(tree):
+            if (isinstance(n, ast.Call) and getattr(n.func, "id", "") == "dispatch"
+                    and len(n.args) >= 2 and isinstance(n.args[1], ast.Tuple)
+                    and n.args[1].elts and isinstance(n.args[1].elts[0], ast.Constant)):
+                kinds.add(n.args[1].elts[0].value)
+    assert kinds, "found no dispatch sites: the scan is broken, not the pool"
+    return kinds
+
+
+def _event_hooks(source: str):
+    """(card id, the events= filter, the kinds the hook body tests e[0] against) for every card.
+
+    The hook is usually a named inner ``def``, so a version that only reads inline lambdas would
+    check almost nothing — the same trap the ctx lint above fell into first.
+    """
+    tree = ast.parse(source)
+    out = []
+    for fn in tree.body:
+        if not isinstance(fn, ast.FunctionDef):
+            continue
+        card = next((d.args[0].value for d in fn.decorator_list
+                     if isinstance(d, ast.Call) and getattr(d.func, "id", "") == "script"), None)
+        if card is None:
+            continue
+        events, hook = None, None
+        for n in ast.walk(fn):
+            if isinstance(n, ast.Call) and getattr(n.func, "id", "") == "CardScript":
+                for kw in n.keywords:
+                    if kw.arg == "events":
+                        events = {c.value for c in ast.walk(kw.value)
+                                  if isinstance(c, ast.Constant) and isinstance(c.value, str)}
+                    elif kw.arg == "on_event":
+                        hook = kw.value
+        if events is None and hook is None:
+            continue
+        if isinstance(hook, ast.Name):
+            hook = next((n for n in ast.walk(fn)
+                         if isinstance(n, ast.FunctionDef) and n.name == hook.id), None)
+        tested = set()
+        for n in ast.walk(hook) if hook is not None else ():
+            if not isinstance(n, ast.Compare):
+                continue
+            left = n.left
+            if (isinstance(left, ast.Subscript) and isinstance(left.slice, ast.Constant)
+                    and left.slice.value == 0):
+                for op, cmp in zip(n.ops, n.comparators):
+                    if isinstance(op, (ast.Eq, ast.In)):
+                        tested |= {c.value for c in ast.walk(cmp)
+                                   if isinstance(c, ast.Constant) and isinstance(c.value, str)}
+        out.append((card, events or set(), tested))
+    return out
+
+
+def _pool_hooks():
+    rows = []
+    for path in sorted(SETS_DIR.glob("*.py")):
+        rows += _event_hooks(path.read_text(encoding="utf-8"))
+    return rows
+
+
+def test_every_event_kind_a_card_listens_for_is_one_the_engine_dispatches():
+    """A typo'd kind never fires and nothing errors — the trigger is simply dead for the life of
+    the card, and every test that does not exercise that trigger passes.
+
+    `dispatch` filters on ``kinds`` before calling the hook, so ``events=frozenset({"defated"})``
+    is a card whose DEFEATED clause silently does not exist. There is no runtime signal at all:
+    no exception, no warning, and the script still loads.
+    """
+    kinds = _dispatched_kinds()
+    bad = [f"{card} listens for {sorted(ev - kinds)}" for card, ev, _ in _pool_hooks() if ev - kinds]
+    assert not bad, ("cards listening for an event the engine never dispatches:\n  "
+                     + "\n  ".join(bad) + f"\n(the engine dispatches {sorted(kinds)})")
+
+
+def test_no_hook_body_tests_for_an_event_its_filter_screens_out():
+    """The narrower failure, and the one that survives review: the filter is a subset of what the
+    body handles, so one branch of a two-branch hook is unreachable.
+
+    ``events=frozenset({"end_turn"})`` on a hook whose body reads
+    ``if e[0] == "start_turn": ... elif e[0] == "end_turn": ...`` implements half the card. The
+    body looks complete to a reader, the filter looks harmless, and only the pair is wrong — which
+    is exactly the shape no single-card review catches.
+    """
+    bad = [f"{card}: body tests {sorted(t - ev)} but events= is {sorted(ev)}"
+           for card, ev, t in _pool_hooks() if t - ev]
+    assert not bad, "hooks with an unreachable branch:\n  " + "\n  ".join(bad)
+
+
+def test_the_event_filter_lints_can_fire_and_read_named_hooks():
+    """Both lints above report zero over the pool, so they are only worth having if shown to bite —
+    and the census is part of the claim: 38 cards carry a hook, 32 of them re-test ``e[0]``, which
+    is what the second lint reads. A detector that quietly matched nothing would report the same
+    zero."""
+    import textwrap
+
+    rows = _pool_hooks()
+    assert len(rows) >= 30, f"only {len(rows)} hooks found; the scan is broken"
+    assert sum(1 for _, _, t in rows if t) >= 25, "almost no hook bodies were parsed"
+
+    planted = textwrap.dedent('''
+        @script("typo-card")
+        def _():
+            def ev(c, e):
+                if e[0] == "defated":
+                    c.draw(1)
+            return CardScript(on_event=ev, events=frozenset({"defated"}))
+
+
+        @script("half-dead-card")
+        def _():
+            def ev(c, e):
+                if e[0] == "start_turn":
+                    c.draw(1)
+                elif e[0] == "end_turn":
+                    c.draw(2)
+            return CardScript(on_event=ev, events=frozenset({"end_turn"}))
+        ''')
+    rows = {card: (ev, t) for card, ev, t in _event_hooks(planted)}
+    assert rows["typo-card"][0] - _dispatched_kinds() == {"defated"}
+    ev, tested = rows["half-dead-card"]
+    assert tested - ev == {"start_turn"}, "the named-hook body was not read"
 
 
 # ------------------------------------------------- a steal that no protection effect can see
