@@ -390,3 +390,16 @@ have fired on a real fix rather than in a drill:
   Re-deriving all 79 against the post-audit engine dropped none of them.
 * The card guide on the website compares the digest stamped into the published measurement and says,
   in as many words, that those numbers describe the game as it behaved before the fixes.
+
+## The other output: what could not be proved
+
+[`docs/audit-unproven.md`](audit-unproven.md) holds the 45 bucketed observations the audit could not
+turn into a failing test, verbatim from the batch reports, plus the cross-cutting batches' reasons
+for dropping a whole shape of suspicion. They were written into `out/audit/`, which is gitignored
+and lived in an ephemeral container, so they were one machine away from being lost.
+
+The most valuable bucket in it is **S-SUSPICION** — the auditor thought the script was wrong, wrote
+the scenario, and watched it *pass*. A passing test says the engine is right on that board and
+nothing more; it is not a refutation, and it is not a licence to fix. Thirteen of those are
+recorded. Twelve more are branches that are genuinely wrong and that no card in this set can reach,
+which is a note for whoever adds the set that makes them reachable rather than a bug today.
