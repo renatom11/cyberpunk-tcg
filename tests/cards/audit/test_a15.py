@@ -33,10 +33,8 @@ def ready_eddies(s, p=0):
 #: it simply draws nothing.  Alt Cunningham *Mother of Daemons* ("When a friendly equipped Unit or
 #: Legend is spent, draw 1") is what makes that line worth taking, and the script's ``legal=`` gate
 #: removes it from the menu entirely.
-@pytest.mark.xfail(strict=True,
-                   reason="AUD-kerry-eurodyne-the-last-rockerboy-1: a printed resolution condition "
-                          "is implemented as an activation restriction, so the ability cannot be used at all")
 def test_kerry_may_be_spent_without_an_eight_plus_gig(pool):
+    """Fixed: AUD-kerry-eurodyne-the-last-rockerboy-1."""
     s = board(pool, Side(field=[("kerry-eurodyne-the-last-rockerboy", {"gear": ["kiroshi-optics"]}),
                                 "alt-cunningham-mother-of-daemons"],
                          gig=[(10, 4)], deck=["floor-it"] * 3), Side())
@@ -68,7 +66,10 @@ def test_kerry_draws_two_with_an_eight_plus_gig_and_only_counts_your_own(pool):
 
     s = board(pool, Side(field=["kerry-eurodyne-the-last-rockerboy"], gig=[(10, 4)],
                          deck=["floor-it"] * 3), Side(gig=[(10, 9)]))
-    assert Activate(find(s, "kerry-eurodyne-the-last-rockerboy"), 0) not in options(s)
+    u = find(s, "kerry-eurodyne-the-last-rockerboy")
+    assert Activate(u, 0) in options(s), "the ⊡ is payable whatever the Gigs show"
+    do(s, Activate(u, 0))
+    assert s.i_spent[u] and len(s.zone(0, Zone.HAND)) == 0, "a rival's 8+ Gig is not yours"
 
 
 # ------------------------------------------------- rogue-amendiares-queen-of-the-afterlife

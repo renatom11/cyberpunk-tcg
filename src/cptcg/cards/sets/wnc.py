@@ -1438,6 +1438,13 @@ def _():
             play_card(c2.s, c2.player, i, cost=play_cost(c2.s, c2.player, i))
         c.choose(cands, go, prompt="Play a Program from trash")
     return CardScript(abilities=(
+        # No `legal=`: "⊡: Your next Program this turn plays for -1 €$ for each friendly min Gig, to
+        # a minimum of 1 €$" states no condition on the activation. With no min Gig the discount is
+        # 0 and the ability does nothing -- which is a legal play, not an illegal one, and a real
+        # one while something watches for the spend (NetWatch NetDriver draws when its host is
+        # spent). Alt's own second ability is exactly as vacuous with an empty trash and carries no
+        # guard; ruling 037 is the nearest precedent, and it says an impossible Gig effect is
+        # activated and fails rather than being unavailable.
         Ability(effect=discount, self_spend=True, label="Next Program costs less", legal=lambda c: bool(c.min_gigs())),
         Ability(effect=from_trash, cost=1, self_spend=True, label="Play a Program from trash")))
 
@@ -1549,8 +1556,12 @@ def _():
 
 @script("kerry-eurodyne-the-last-rockerboy")
 def _():
-    return CardScript(abilities=(Ability(effect=lambda c: c.draw(2) if gigs_8plus(c) else None, self_spend=True,
-                                         legal=lambda c: gigs_8plus(c) > 0, label="Draw 2"),))
+    # "⊡: If you control a Gig with 8+ value, draw 2." The condition is printed *after* the colon,
+    # so it is part of the effect and not part of the cost: the ⊡ may be paid with no 8+ Gig on the
+    # board and the draw simply does not happen. A `legal=` guard deleted a real line -- spend an
+    # equipped Kerry for someone else's "when spent" trigger and knowingly draw nothing.
+    return CardScript(abilities=(Ability(effect=lambda c: c.draw(2) if gigs_8plus(c) else None,
+                                         self_spend=True, label="Draw 2"),))
 
 
 @script("rogue-amendiares-queen-of-the-afterlife")
