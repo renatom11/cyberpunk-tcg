@@ -11,14 +11,22 @@ can't attack" in their printed text and carried no such token in the interaction
 raised for weeks. The durable fix there was not correcting two entries; it was adding a test that
 reads the printed text and fails on any card that says so. Same idea here.
 
-All three currently pass over all 151 cards. A lint that has never fired is only worth having if it
-*can* fire, so each one's docstring says what it would catch, and the ctx lint has an explicit
-self-test below that plants violations and checks they are detected.
+Three of them pass over all 151 cards. The fourth, added last, does not: it reads the printed text
+for a second sentence with its own board condition and finds six cards that implement it inside the
+first sentence's continuation, where a declined or impossible first sentence skips it. Five of those
+six were found by hand first, in two unrelated audit batches; the detector then found the sixth,
+which is the whole argument for writing detectors instead of filing fixes.
+
+A lint that has never fired is only worth having if it *can* fire, so each one's docstring says what
+it would catch, the ctx lint has an explicit self-test that plants violations, and the tail-clause
+lint has one pinning the exclusions that keep it from reporting noise.
 """
 import ast
 import re
 import sys
 from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
@@ -179,3 +187,153 @@ def test_that_lint_can_actually_fire():
     ]
     for src in violations:
         assert _leaks(textwrap.dedent(src)), f"lint failed to catch:\n{src}"
+
+
+# ------------------------------------------------- the second sentence that never runs
+#: Effects a tail clause can name, as (printed phrasing -> the EffectCtx methods that perform it).
+#: Deliberately a short, explicit table rather than a guess: a phrasing that is not here is not
+#: checked, and the coverage assertion below pins how many of the pool's tail clauses that leaves.
+TAIL_EFFECT = {
+    ("draw",): r"\bdraw \d",
+    ("discard",): r"\bdiscards? \d",
+    ("offer_call_free", "call_free"): r"Call a Legend for free",
+}
+
+#: A sentence that opens a *state-based* condition: "If you control ...", "Then, if your ★ ...".
+_COND = re.compile(r"^(?:then,?\s*)?if\b", re.I)
+
+#: ... unless its subject refers back to what the previous sentence did. "If **it** becomes a min
+#: Gig" and "If **its** cost equals ..." genuinely have nothing to test when the first sentence did
+#: nothing, so nesting them in its continuation is correct. Getting this exclusion wrong in either
+#: direction is how this detector turns into noise: too loose and Jackie Welles and the Heywood
+#: Ripperdoc are false positives, too tight and the six real ones are missed.
+_BACKREF = re.compile(r"^(?:then,?\s*)?if\s+(?:it|its|it's|that|the card'?s?|they|those|this|these)\b",
+                      re.I)
+
+#: ... and a clause that *modifies* the first sentence rather than adding to it belongs inside it.
+_MODIFIES = re.compile(r"\b(you do|you did|you don'?t|this way|you trash them|you add them|"
+                       r"instead|also|(?:\d+|a|an|one) more)\b", re.I)
+
+
+def _sentences(text: str) -> list[str]:
+    """Printed sentences, with the timing label ("PLAY:") stripped off the front of each line."""
+    t = re.sub(r"^[A-Z][A-Z /]*:\s*", "", text or "", flags=re.M)
+    return [s.strip() for s in re.split(r"(?<=[.!?])\s+", t.replace("\n", " ")) if s.strip()]
+
+
+def _script_defs(source: str) -> dict[str, ast.FunctionDef]:
+    """``card id -> the @script-decorated factory``."""
+    out = {}
+    for node in ast.parse(source).body:
+        if not isinstance(node, ast.FunctionDef):
+            continue
+        for dec in node.decorator_list:
+            if isinstance(dec, ast.Call) and getattr(dec.func, "id", "") == "script":
+                for a in dec.args:
+                    if isinstance(a, ast.Constant):
+                        out[a.value] = node
+    return out
+
+
+def _method_calls(node: ast.AST, name: str) -> list[ast.Call]:
+    return [n for n in ast.walk(node) if isinstance(n, ast.Call)
+            and (n.func.attr if isinstance(n.func, ast.Attribute) else getattr(n.func, "id", "")) == name]
+
+
+def _continuation_bodies(fn: ast.FunctionDef) -> list[ast.AST]:
+    """Every lambda or nested def this factory hands to a prompting call as its continuation.
+
+    Continuations passed **by name** are the common case in these scripts and were what an earlier
+    detector in this file missed entirely, so they are resolved through a scope-local map of nested
+    ``def``s rather than only matching inline lambdas.
+    """
+    named = {n.name: n for n in ast.walk(fn) if isinstance(n, ast.FunctionDef)}
+    out = []
+    for call in (n for n in ast.walk(fn) if isinstance(n, ast.Call)):
+        base = call.func.attr if isinstance(call.func, ast.Attribute) else getattr(call.func, "id", "")
+        cands = [call.args[i] for i in CONT_POS.get(base, []) if i < len(call.args)]
+        cands += [kw.value for kw in call.keywords if kw.arg in CONT_KW]
+        for c in cands:
+            if isinstance(c, ast.Lambda):
+                out.append(c)
+            elif isinstance(c, ast.Name) and c.id in named:
+                out.append(named[c.id])
+    return out
+
+
+def _trapped(pool, source: str) -> list[str]:
+    """Cards whose state-based tail clause is implemented *only* inside a continuation."""
+    defs = _script_defs(source)
+    bad = []
+    for d in pool.defs:
+        fn = defs.get(d.id)
+        if fn is None:
+            continue
+        for sentence in _sentences(d.text)[1:]:
+            if not _COND.match(sentence) or _BACKREF.match(sentence) or _MODIFIES.search(sentence):
+                continue
+            for methods, phrasing in TAIL_EFFECT.items():
+                if not re.search(phrasing, sentence, re.I):
+                    continue
+                calls = [c for m in methods for c in _method_calls(fn, m)]
+                if not calls:
+                    continue                  # unimplemented is a different finding, not this one
+                nested = {id(c) for body in _continuation_bodies(fn) for m in methods
+                          for c in _method_calls(body, m)}
+                if all(id(c) in nested for c in calls):
+                    bad.append(f"{d.id}: {sentence}")
+    return bad
+
+
+#: The six open findings, each with its own scenario test under ``tests/cards/audit/``. Listed here
+#: so that a *seventh* card acquiring this shape fails loudly today rather than waiting for the six
+#: to be fixed. Delete an entry with its fix.
+TRAPPED_TAIL_CLAUSES_OPEN = {
+    "afterparty-at-lizzies", "industrial-assembly", "trust-no-one", "peace-offering",
+    "memory-relapse", "zetatech-faceplate",
+}
+
+
+def test_no_new_card_traps_a_state_based_tail_clause(pool):
+    """Nothing beyond the six already found. This one passes today and guards the boundary."""
+    src = (SETS_DIR / "wnc.py").read_text(encoding="utf-8")
+    found = {line.split(":")[0] for line in _trapped(pool, src)}
+    assert found <= TRAPPED_TAIL_CLAUSES_OPEN, \
+        "a card newly traps its tail clause in a continuation: " + ", ".join(sorted(found - TRAPPED_TAIL_CLAUSES_OPEN))
+
+
+@pytest.mark.xfail(strict=True, reason="AUD-tail-clause: six cards implement a separate, state-based printed clause inside the continuation of the previous one, so declining that clause (or having no legal way to perform it) skips this one entirely")
+def test_a_state_based_tail_clause_is_not_trapped_in_a_continuation(pool):
+    """A card prints "Adjust a Gig by up to 1. **Then, if you control ... , draw 1.**"
+
+    Those are two sentences. The second has its own condition, tested against the board, and "Then"
+    sequences them rather than making the draw conditional on a die having moved. But the scripts
+    implement the second inside the continuation of the first, and every one of these first clauses
+    can decline to happen — "up to N" includes zero, "you may" can be refused, and a prompt with no
+    legal candidate is skipped. So the printed second sentence never runs at all.
+
+    This is the detector the Chrome Reverie rule demands: the same error was found by hand on five
+    cards in two unrelated audit batches, and running it over all 151 turned up a sixth that no
+    auditor had been assigned. It goes green when the last of the six is fixed.
+    """
+    src = (SETS_DIR / "wnc.py").read_text(encoding="utf-8")
+    bad = _trapped(pool, src)
+    assert not bad, "state-based tail clauses trapped in a continuation:\n  " + "\n  ".join(bad)
+
+
+def test_the_tail_clause_lint_separates_back_references_from_state_conditions():
+    """The exclusions are the whole detector; without them it reports noise.
+
+    "If **it** becomes a min Gig" has nothing to test when no Gig was decreased, so nesting it is
+    right. "If **you control** a min Gig" is about the board and is wrong to nest. Both live in
+    this pool — Jackie Welles and Trust No One — and only the second is a bug.
+    """
+    assert _BACKREF.match("If it becomes a min Gig, draw 1.")
+    assert _BACKREF.match("If its cost equals the value of a friendly Gig, draw 1.")
+    assert _BACKREF.match("If the card's cost equals the value of a friendly Gig, draw 1.")
+    assert not _BACKREF.match("If you control a min Gig, draw 1.")
+    assert not _BACKREF.match("Then, if you control a value-pair, draw 1.")
+    assert not _BACKREF.match("If your ★ (Street Cred) is an even number, draw 1.")
+    assert _MODIFIES.search("that Rival discards 1 more.")
+    assert _MODIFIES.search("If you have less ★ than a Rival, choose both instead.")
+    assert not _MODIFIES.search("If you control a Gig with 8+ value, draw 1.")
