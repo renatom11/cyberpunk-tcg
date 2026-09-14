@@ -953,25 +953,29 @@ function closeCardMenu() {
   if (PREVIEW) { PREVIEW.classList.remove("sheet"); hidePreview(); }
 }
 // A face-down card has nothing to read, so blowing it up full screen shows a card back the size of
-// the phone — all of the room and none of the answer. What it has is what it can do, and that is
-// all it gets: a short list standing on the card, the way every card's list used to work.
+// the screen — all of the room and none of the answer. What it has is what it can do, and that is
+// all it gets: no card art, just the question and the answers.
+//
+// It is CENTRED, though, not pinned to the card. Anchoring put the list against the card it came
+// from, and your own Legends sit along the bottom edge of the board — so "what can this Legend do"
+// opened as a small strip in the bottom corner of the screen, reading as a leftover of the old
+// bottom bar rather than as the game asking you something. Same treatment as the face-up sheet:
+// the middle of the screen, over a dimmed board, with a title saying which card is asking.
 function openCardPopover(node, c, acts, onAct) {
   if (!acts.length) return;
-  const m = el("div", "cardmenu");
+  const back = el("div", "cardmenuback");
+  back.onclick = () => closeCardMenu();
+  const m = el("div", "cardmenu centred");
+  m.append(el("div", "cmtitle", placeOf(node) || "This card"));
   acts.forEach(o => {
     const b = el("button", "", verbFor(o));
     b.onclick = (e) => { e.stopPropagation(); closeCardMenu(); onAct(o.index); };
     m.append(b);
   });
   m.addEventListener("click", (e) => e.stopPropagation());
-  document.body.append(m);
-  // Above the card if it fits, below if it does not, and never off either edge: on a phone the card
-  // this is hanging off can be twenty pixels from the side of the screen.
-  const r = node.getBoundingClientRect(), mb = m.getBoundingClientRect();
-  const above = r.top - mb.height - 8;
-  m.style.top = (above >= 6 ? above : Math.min(r.bottom + 8, innerHeight - mb.height - 6)) + "px";
-  m.style.left = Math.max(6, Math.min(r.left + r.width / 2 - mb.width / 2, innerWidth - mb.width - 6)) + "px";
-  CARDMENU = m;
+  back.append(m);
+  document.body.append(back);
+  CARDMENU = back;
   SHEET_INST = c.inst;
 }
 // What a Unit's power is made of. Each piece of Gear contributes its own printed power and nothing

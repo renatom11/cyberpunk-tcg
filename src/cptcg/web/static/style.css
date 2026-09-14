@@ -580,6 +580,18 @@ table.rep th { color: var(--cyan); }
 .cardmenu { position: fixed; z-index: 60; background: var(--panel); border: 1px solid var(--cyan);
   border-radius: 9px; padding: 6px; display: flex; flex-direction: column; gap: 4px;
   box-shadow: 0 12px 34px #000d; min-width: 136px; max-width: min(280px, 92vw); }
+/* The dimmed board behind a centred box: it is what makes this read as the game asking a question
+   rather than as a menu that happened to appear somewhere. Tapping it closes, like the sheet. */
+.cardmenuback { position: fixed; inset: 0; z-index: 60; background: rgba(4, 6, 10, .72);
+  display: flex; align-items: center; justify-content: center; }
+.cardmenu.centred { position: static; min-width: min(300px, 86vw); max-width: min(380px, 92vw);
+  padding: 10px; gap: 6px; }
+.cardmenu .cmtitle { color: var(--cyan); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  text-align: center; padding: 2px 2px 6px; border-bottom: 1px solid var(--line); margin-bottom: 2px; }
+/* Wrapping, not ellipsis: in the middle of the screen there is room for the whole label, and a
+   truncated one ("Alt Cunningham (Soulkiller Archi…") is the thing the box exists to avoid. */
+.cardmenu.centred button { font-size: 13px; padding: 11px 12px; text-align: center;
+  white-space: normal; overflow: visible; }
 .cardmenu button { font-size: 12px; padding: 9px 11px; text-align: left; letter-spacing: .06em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
