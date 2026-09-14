@@ -134,3 +134,19 @@ continuation finishes synchronously.
 heuristic keys unmoved: the heuristic takes a decrease whenever one is legal, so the changed path —
 declined or impossible — is one only random play reaches.
 **5. Two-sided reachability.** Not applicable at G1.
+
+---
+
+## 2026-09-14 — `industrial-assembly` (AUD-industrial-assembly-1)
+
+**The fix.** "Increase a Gig by up to 4. **If you control a Gig with 8+ value, draw 1.**" Same shape
+as Trust No One and sharper in one respect: a d10 already showing 10 cannot be raised at all
+(ruling 037), so the engine asks nothing and the continuation is never scheduled — and that d10 is
+exactly the 8+ Gig the second sentence is asking about.
+
+**1. Prediction.** Tier G1, four keys. Observed: two, both `random`.
+**2. Localisation.** decisions 16 and 27, card first a legal option at 4 and earlier.
+**3. Revert confirmation.** DIFFERENT on exactly those two keys at exactly those actions.
+**4. Aggregate.** 3 of 40 and 1 of 40, no winner flips, one end-reason change. Both heuristic keys
+unmoved, same reason as Trust No One: the heuristic takes an increase whenever one is legal.
+**5. Two-sided reachability.** Not applicable at G1.
