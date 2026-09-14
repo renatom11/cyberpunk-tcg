@@ -291,3 +291,32 @@ game ended a turn earlier, which is what a Unit dying when it should have is wor
 **5. Two-sided reachability.** Not required at G1 reach. The card-level test is the evidence, and it
 now pins both halves — the first fight spends the shield even though it protected nobody, and the
 second fight kills the Unit that used to be saved.
+
+## 2026-09-14 — `mox-inciters` / `evelyn-parker-beautiful-enigma` (AUD-mox-inciters-1)
+
+**The fix.** "A rival Unit must attack next turn if it can." Two cards wrote the `must_attack` mod
+and nothing in `src/` read it, so the obligation was bookkeeping. `legal.main_menu` now drops
+EndTurn while an obligated Unit can attack. G2 by file and unlocalisable by construction: a card
+script cannot remove an option from a menu the engine builds.
+
+**1. Prediction.** Four keys — `sample_gangers` holds Mox Inciters, `sample_fixers` holds Evelyn
+Parker. Observed: all four, and nothing else.
+
+**2. Localisation.** `sample_arasaka~sample_fixers~heuristic` game 4 diverges at decision 157, and
+the line immediately before it is `sample_fixers activates Evelyn Parker — Beautiful Enigma: A rival
+Unit must attack`. The rival's next turn then opens with an attack. The other three keys diverge in
+the forties, where Mox Inciters lands early.
+
+**3. Revert confirmation.** Old `legal.py` against the new golden: DIFFERENT on exactly those four
+keys.
+
+**4. Aggregate.** 22/40 and 24/40 random games, 2/16 and 12/16 heuristic games, ten winner flips,
+turn deltas +0.00 to +0.32. Much the largest regeneration in this ledger, and the size is the point:
+an obligation that was inert on two cards across two golden decks changes every game in which either
+card is played, and removing an option renumbers every index after it. An unchanged golden here
+would have meant the fix did nothing.
+
+**5. Two-sided reachability.** `fuzz --agent random -n 400 --seed 1` moves
+3b4932720efc3f3b2354f268 → 739dfb303644a4bcbad64a06 (32335 → 32481 actions) and the default
+heuristic fuzz moves 8a1e68700fe9fd617d05d0df → 399958ef4d06ba064c0411b6 (8601 → 8634). Both
+instruments see it, which no other fix in this ledger has managed.
