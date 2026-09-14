@@ -420,6 +420,13 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
         chip.dataset.hint = "the card this sandbox board was built around";
         bar.append(chip);
       }
+      // Why this board is not the default one. Half the pool does something only under a board
+      // condition — a Rival Gig lead, a min Gig, every Legend face-up — so those boards are built
+      // to satisfy it. Unsaid, the difference reads as a bug rather than as the point.
+      if (v.sandbox && v.sandbox.why) {
+        const w = el("div", "sandwhy", `BOARD SET UP FOR: ${v.sandbox.why}`);
+        bar.append(w);
+      }
       // Not during the mulligan, the roll-off, or the Gig die: none of them is a moment where
       // selling or calling is on offer, and a struck-through right you could not have taken yet
       // reads as one you have spent.

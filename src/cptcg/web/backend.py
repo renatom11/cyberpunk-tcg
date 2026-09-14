@@ -22,7 +22,7 @@ from cptcg.deck.decklist import Decklist
 from cptcg.deck.validate import validate
 from cptcg.learn.delayed import build_position, spec_from_state
 from cptcg.sim.budget import Tracker
-from cptcg.sim.sandbox import load_overrides, sandbox_spec
+from cptcg.sim.sandbox import CONDITIONS, load_overrides, sandbox_spec
 from cptcg.sim.narrate import narrate
 from cptcg.sim.record import Replay
 from cptcg.web.view import card_json, view_state
@@ -60,6 +60,10 @@ class Game:
         #: unchanged, because a spec is as deterministic a starting point as a seed and a decklist.
         self.spec = spec
         self.card = card
+        #: The clause of the card this board was shaped to reach, when it was shaped at all. Shown
+        #: on the board: a try-out board that quietly differs from the default is confusing, and a
+        #: player who does not know the Rival's Gig lead is deliberate reads it as a bug.
+        self.why = CONDITIONS.get(card, {}).get("why", "") if card else ""
         self.names = ("You" if human_seat == 0 else f"AI ({decks[0].name})",
                       "You" if human_seat == 1 else f"AI ({decks[1].name})")
         self.reset()
@@ -178,6 +182,8 @@ class Game:
         v = view_state(self.s, self.human, self.names, self.lines[since:])
         v["log_total"] = len(self.lines)
         v["human"] = self.human
+        if self.spec is not None:
+            v["sandbox"] = {"card": self.card, "why": self.why}
         if frames and self.frames:
             v["frames"] = self.frames
             v["rival"] = self.names[1 - self.human]

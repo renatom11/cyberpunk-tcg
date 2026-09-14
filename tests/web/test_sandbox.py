@@ -20,10 +20,10 @@ sys.path.insert(0, str(ROOT / "src"))
 from cptcg.agents.base import make_agent  # noqa: E402
 from cptcg.core.actions import CallLegend, GoSolo, Play  # noqa: E402
 from cptcg.core.engine import apply, legal_actions  # noqa: E402
-from cptcg.core.enums import CardType  # noqa: E402
+from cptcg.core.enums import CardType, Zone  # noqa: E402
 from cptcg.core.legal import main_menu  # noqa: E402
 from cptcg.learn.delayed import build_position  # noqa: E402
-from cptcg.sim.sandbox import load_overrides, sandbox_spec  # noqa: E402
+from cptcg.sim.sandbox import CONDITIONS, load_overrides, sandbox_spec  # noqa: E402
 
 OVERRIDES = load_overrides(ROOT / "data" / "sandbox.json")
 
@@ -103,13 +103,104 @@ def test_calling_a_legend_is_never_a_guess(pool):
     for d in pool.defs:
         s = build_position(pool, sandbox_spec(pool, d.id, OVERRIDES))
         calls = [o for o in main_menu(s) if isinstance(o, CallLegend)]
-        if len(calls) != 1:
-            wrong.append(f"{d.id}: {len(calls)} Call options")
+        if len(calls) > 1:
+            wrong.append(f"{d.id}: {len(calls)} Call options, so Calling is a guess")
         elif d.type is CardType.LEGEND:
-            called = pool.defs[s.i_card[calls[0].inst]].id
-            if called != d.id:
-                wrong.append(f"{d.id}: the only Call turns over {called}")
+            # A Legend's own sandbox must always offer its Call: that is the only way in.
+            if not calls:
+                wrong.append(f"{d.id}: a Legend with no way to Call it")
+            elif pool.defs[s.i_card[calls[0].inst]].id != d.id:
+                wrong.append(f"{d.id}: the only Call turns over "
+                             f"{pool.defs[s.i_card[calls[0].inst]].id}")
     assert not wrong, wrong
+    # Zero is legitimate only where the card itself asked for it: the four cards that need every
+    # friendly Legend face-up have nothing left to Call, which is the condition working, not a gap.
+    none_callable = [d.id for d in pool.defs
+                     if not [o for o in main_menu(build_position(
+                         pool, sandbox_spec(pool, d.id, OVERRIDES))) if isinstance(o, CallLegend)]]
+    assert all(CONDITIONS.get(c, {}).get("legends_faceup") for c in none_callable), none_callable
+
+
+# What each condition in CONDITIONS is supposed to have produced, expressed against the built
+# board rather than against the table that built it. Written from the engine's own definitions —
+# min Gig is a die showing 1, a max Gig is a die showing its own maximum, a value-pair is two dice
+# sharing a value, and ★ is the sum of the values — because those are exactly the things a table of
+# dice literals gets quietly wrong.
+CONDITION_CHECKS = {
+    "rival_gig_lead": lambda s: len(s.gig[1]) - len(s.gig[0]) >= 2,
+    "more_cred": lambda s: s.street_cred(0) - s.street_cred(1) >= 10,
+    "less_cred": lambda s: s.street_cred(1) - s.street_cred(0) >= 10,
+    "min_gig": lambda s: any(v == 1 for _k, v in s.gig[0]),
+    "value_pair": lambda s: len({v for _k, v in s.gig[0]}) < len(s.gig[0]),
+    "high_gig": lambda s: any(v >= 8 for _k, v in s.gig[0]),
+    "all_rolled": lambda s: not s.fixer[0] and any(k == 20 for k, _v in s.gig[0]),
+    "reducible": lambda s: any(k == 4 and 1 < v <= 3 for k, v in s.gig[0]),
+    # Every value low enough to be some Gear's cost, which is what "cost equals the value of a
+    # friendly Gig" needs in order ever to be true.
+    "cheap_values": lambda s: all(v <= 3 for _k, v in s.gig[0]),
+}
+
+
+def test_every_gig_condition_actually_holds_on_its_board(pool):
+    """The board a card asked for is the board it got.
+
+    A table of dice literals is the easiest thing in this change to get wrong — a Gig set that no
+    longer sums to a 10-point Street Cred gap, or that loses its pair when a value is edited, fails
+    silently and the card goes back to being untestable without anything saying so.
+    """
+    bad = []
+    for card_id, cond in CONDITIONS.items():
+        name = cond.get("gigs")
+        if name is None:
+            continue
+        s = build_position(pool, sandbox_spec(pool, card_id, OVERRIDES))
+        if not CONDITION_CHECKS[name](s):
+            bad.append(f"{card_id}: gig set {name!r} does not satisfy {cond['why']!r}")
+    assert not bad, bad
+
+
+def test_board_conditions_put_real_material_on_the_board(pool):
+    """The non-Gig knobs produced what they promise: Gear, tagged Units, trash, extra rival Units."""
+    bad = []
+    for card_id, cond in CONDITIONS.items():
+        s = build_position(pool, sandbox_spec(pool, card_id, OVERRIDES))
+        mine, rival = 0, 1
+        if cond.get("equip"):
+            geared = sum(1 for u in s.units(mine)
+                         if any(s.i_host[g] == u for g in range(len(s.i_card))))
+            if geared < cond["equip"]:
+                bad.append(f"{card_id}: wanted {cond['equip']} equipped Units, got {geared}")
+        if cond.get("legends_faceup") and not all(s.i_faceup[i] for i in s.legends(mine)):
+            bad.append(f"{card_id}: not every friendly Legend is face-up")
+        if "weak_rival" in cond and not any((pool.defs[s.i_card[u]].power or 99) <= cond["weak_rival"]
+                                            for u in s.units(rival)):
+            bad.append(f"{card_id}: no rival Unit with power <= {cond['weak_rival']}")
+        if "rival_units" in cond and len(s.units(rival)) < cond["rival_units"]:
+            bad.append(f"{card_id}: only {len(s.units(rival))} rival Units")
+        if "trash_units" in cond:
+            n = sum(1 for i in s.zone(mine, Zone.TRASH) if pool.defs[s.i_card[i]].type is CardType.UNIT)
+            if n < cond["trash_units"]:
+                bad.append(f"{card_id}: only {n} Units in trash")
+        if "hand_programs" in cond:
+            n = sum(1 for i in s.zone(mine, Zone.HAND)
+                    if pool.defs[s.i_card[i]].type is CardType.PROGRAM)
+            if n < cond["hand_programs"]:
+                bad.append(f"{card_id}: only {n} Programs in hand")
+        if "my_tag" in cond and not any(cond["my_tag"] in pool.defs[s.i_card[u]].tags
+                                        for u in s.units(mine)):
+            bad.append(f"{card_id}: no friendly {cond['my_tag']} Unit")
+        if "rival_tag" in cond and not any(set(cond["rival_tag"]) & pool.defs[s.i_card[u]].tags
+                                           for u in s.units(rival)):
+            bad.append(f"{card_id}: no rival Unit tagged {cond['rival_tag']}")
+    assert not bad, bad
+
+
+def test_every_condition_says_which_clause_it_is_for(pool):
+    """A board with no `why` is a magic number: nobody can later tell what it was reaching for."""
+    missing = [c for c, cond in CONDITIONS.items() if not cond.get("why", "").strip()]
+    assert not missing, missing
+    unknown = [c for c in CONDITIONS if c not in pool.by_id]
+    assert not unknown, unknown
 
 
 def test_overrides_only_name_real_cards(pool):

@@ -1080,6 +1080,9 @@ body.mat { position: fixed; inset: 0; width: 100%; }
    phone layout, where the room panel's prose is hidden. Accented, because after two taps of NEXT
    CARD it is the only thing on screen that says what you are looking at. */
 .turnbar .chip.trying { border-color: var(--yellow, #ffe600); color: var(--yellow, #ffe600); }
+/* Full width so it wraps under the chips rather than squeezing them; it is a sentence, not a chip. */
+.turnbar .sandwhy { flex-basis: 100%; font-size: 10.5px; letter-spacing: .04em; color: var(--dim);
+  margin-top: 2px; }
 .guideview .gbody { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 16px; padding: 14px; }
 .guideview .gleft img { width: 100%; border-radius: 6px; display: block; }
 .guideview .gstats { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 8px; font-size: .78rem; }
