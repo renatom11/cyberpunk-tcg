@@ -2304,6 +2304,3558 @@
     "seconds": 1.09,
     "when": "2026-09-10 21:10 UTC"
    }
+  },
+  {
+   "id": "steal-threshold-call-johnny-then-spend-him",
+   "kind": "board",
+   "player": 1,
+   "max_turns": 1,
+   "source": "proposed",
+   "why": "The second seat, five Gigs, Rock'n Rockerboy ready at 8 power, three Eddies, and Johnny Silverhand: Rocking Renegade face-down in the Legends area. Greedy attacks at 8: one Gig, six on the board, done. The winning line is two moves that put nothing anywhere \u2014 Call a Legend for 1 \u20ac$ (the other two are already face-up, so the blind flip is Johnny), then pay 2 \u20ac$ and spend him for '+2 power if it's a ROCKER Unit'. One move turns a card over; the other turns it sideways. None of my Gig values reach 8, so the discount on his ability does not apply and the three Eddies are exactly consumed. The Rockerboy attacks at 10, steal_count(10) is two, and five plus two is seven.",
+   "spec": {
+    "turn": 12,
+    "active": 1,
+    "seed": 79,
+    "turns_taken": [
+     6,
+     5
+    ],
+    "sides": [
+     {
+      "legends": [
+       "saburo-arasaka-stubborn-patriarch",
+       "padre-man-of-the-cross",
+       "hanako-arasaka-daughter-of-the-emperor"
+      ],
+      "deck": [
+       "goro-takemura-losing-his-way",
+       "emergency-atlus",
+       "pacifica-netrunner",
+       "maxtac-squadron",
+       "maxtac-heavy",
+       "emergency-atlus",
+       "riot-shield",
+       "saul-bright-stormrider",
+       "fool-on-the-hill",
+       "zetatech-berserk",
+       "maxtac-heavy",
+       "field-operator",
+       "memory-relapse",
+       "sandayu-oda-hanakos-guardian",
+       "maxtac-av",
+       "maxtac-squadron",
+       "sandayu-oda-hanakos-guardian",
+       "zetatech-berserk",
+       "sandevistan",
+       "field-operator",
+       "sandevistan",
+       "memory-relapse",
+       "sandayu-oda-hanakos-guardian",
+       "valentino-street-racer",
+       "corporate-surveillance",
+       "pacifica-netrunner"
+      ],
+      "eddies": 2,
+      "gig": [
+       [
+        4,
+        5
+       ],
+       [
+        6,
+        2
+       ],
+       [
+        10,
+        7
+       ]
+      ],
+      "fixer": [
+       8,
+       12,
+       20
+      ]
+     },
+     {
+      "field": [
+       [
+        "rockn-rockerboy",
+        {}
+       ]
+      ],
+      "hand": [
+       "secondhand-bombus"
+      ],
+      "legends": [
+       "johnny-silverhand-rocking-renegade",
+       [
+        "kerry-eurodyne-axe-attitude-audience",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "muamar-reyes-el-capitan",
+        {
+         "faceup": true
+        }
+       ]
+      ],
+      "deck": [
+       "caliber-totentanzs-top-dog",
+       "maxtac-suppression-team",
+       "gilded-maton",
+       "meredith-stout-stone-cold-corpo",
+       "detonate",
+       "mantis-blades",
+       "secondhand-bombus",
+       "sketchy-ripper",
+       "maelstrom-goons",
+       "adrenaline-converter",
+       "adrenaline-converter",
+       "gorilla-arms",
+       "afterparty-at-lizzies",
+       "ruthless-lowlife",
+       "gorilla-arms",
+       "viktor-vektor-drop-your-illusions",
+       "maxtac-suppression-team",
+       "industrial-assembly",
+       "screw-lovelorn-fool",
+       "zetatech-faceplate",
+       "ruthless-lowlife",
+       "over-the-edge",
+       "adrenaline-converter",
+       "ruthless-lowlife",
+       "minotaur",
+       "zetatech-faceplate"
+      ],
+      "eddies": 3,
+      "gig": [
+       [
+        4,
+        1
+       ],
+       [
+        6,
+        4
+       ],
+       [
+        8,
+        7
+       ],
+       [
+        10,
+        3
+       ],
+       [
+        12,
+        5
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 1,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "gigs_before": 5,
+    "line": [
+     1,
+     1,
+     1,
+     0,
+     1,
+     0,
+     0
+    ],
+    "nodes": 11,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       4,
+       2,
+       1,
+       1,
+       1,
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       4,
+       2,
+       1,
+       1,
+       1,
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       4,
+       2,
+       1,
+       1,
+       1,
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       4,
+       2,
+       1,
+       1,
+       1,
+       0,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 0,
+    "floor_trials": 16,
+    "floor_rate": 0.0,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "seconds": 0.04,
+    "when": "2026-09-14 06:49 UTC"
+   }
+  },
+  {
+   "id": "steal-threshold-chrome-royce-before-he-goes-solo",
+   "kind": "board",
+   "player": 0,
+   "max_turns": 1,
+   "source": "proposed",
+   "why": "My field is empty. Royce: Psycho on the Edge is face-up in the Legends area with GO SOLO, and in hand is a single Mantis Blades. The greedy line pays 6 to bring Royce down as a ready Unit and attacks at 6 power for one Gig \u2014 a whole Legend deployed and a Gig taken, which is far and away the biggest one-ply swing on the board \u2014 finishing on six. The winning line equips the Gear to Royce while he is still a Legend, which is about as close to a null move as this game has: a 1-cost card attached to a card that is not in the field, on a turn where every Eddie is wanted elsewhere. Gear travels with its host, so when Royce goes solo he arrives at 6 + 2 (the Gear's power) + 2 (his own '+2 power for each of its equipped Gear during your turn') = 10, and 10 steals two for seven.",
+   "spec": {
+    "turn": 11,
+    "active": 0,
+    "seed": 89,
+    "turns_taken": [
+     5,
+     5
+    ],
+    "sides": [
+     {
+      "field": [],
+      "hand": [
+       "mantis-blades"
+      ],
+      "legends": [
+       [
+        "royce-psycho-on-the-edge",
+        {
+         "faceup": true
+        }
+       ],
+       "rebecca-having-a-moment",
+       "adam-smasher-ender-of-legends"
+      ],
+      "deck": [
+       "appetite-for-destruction",
+       "el-sombreron-la-venganza-lenta",
+       "satori-sword-of-saburo",
+       "meredith-stout-stone-cold-corpo",
+       "yorinobu-arasaka-steel-dragon",
+       "swordwise-huscle",
+       "chrome-fang",
+       "minotaur",
+       "valentino-guerrera",
+       "industrial-assembly",
+       "over-the-edge",
+       "6th-street-recruits",
+       "over-the-edge",
+       "swordwise-huscle",
+       "carnage-at-the-colosseum",
+       "detonate",
+       "minotaur",
+       "appetite-for-destruction",
+       "ruthless-lowlife",
+       "royce-dont-call-me-simon",
+       "satori-sword-of-saburo",
+       "el-sombreron-la-venganza-lenta",
+       "deadman-transmitter",
+       "mantis-blades",
+       "meredith-stout-stone-cold-corpo",
+       "chrome-fang"
+      ],
+      "eddies": 5,
+      "gig": [
+       [
+        4,
+        4
+       ],
+       [
+        6,
+        1
+       ],
+       [
+        8,
+        2
+       ],
+       [
+        10,
+        9
+       ],
+       [
+        12,
+        3
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "legends": [
+       "wakako-okada-peace-and-harmony",
+       "hanako-arasaka-daughter-of-the-emperor",
+       "padre-man-of-the-cross"
+      ],
+      "deck": [
+       "trust-no-one",
+       "lizzy-wizzy-delicate-weapon",
+       "goro-takemura-losing-his-way",
+       "dying-night-vs-pistol",
+       "zetatech-berserk",
+       "westbrook-netrunner",
+       "zetatech-berserk",
+       "field-operator",
+       "lizzy-wizzy-delicate-weapon",
+       "modded-kusanagi",
+       "saul-bright-stormrider",
+       "goro-takemura-losing-his-way",
+       "jacked-in-voodoo-boy",
+       "modded-muramasa",
+       "riding-nomad",
+       "delamain-cab",
+       "tygers-whisper",
+       "valentino-street-racer",
+       "maxtac-av",
+       "nadia-fighting-through-grief",
+       "maxtac-av",
+       "emergency-atlus",
+       "netwatch-netdriver",
+       "synapse-burnout",
+       "chrome-reverie",
+       "corpo-security"
+      ],
+      "eddies": 1,
+      "gig": [
+       [
+        4,
+        6
+       ],
+       [
+        6,
+        8
+       ],
+       [
+        8,
+        2
+       ]
+      ],
+      "fixer": [
+       10,
+       12,
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "gigs_before": 5,
+    "line": [
+     2,
+     1,
+     1,
+     0,
+     0
+    ],
+    "nodes": 71,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       3,
+       4,
+       1,
+       3,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       3,
+       4,
+       1,
+       3,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       3,
+       4,
+       1,
+       3,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       3,
+       4,
+       1,
+       3,
+       1,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 4,
+    "floor_trials": 16,
+    "floor_rate": 0.25,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "seconds": 0.04,
+    "when": "2026-09-14 06:49 UTC"
+   }
+  },
+  {
+   "id": "steal-threshold-cyberpsychosis-needs-chrome",
+   "kind": "board",
+   "player": 1,
+   "max_turns": 1,
+   "source": "proposed",
+   "why": "The second seat with five Gigs, a bare MaxTac Suppression Team at 7 power, and two cards: Kiroshi Optics and Cyberpsychosis. Cyberpsychosis is the payoff \u2014 +3 power for each of the Unit's equipped Gears \u2014 and on a Unit with no Gear at all it is three Eddies for nothing. Greedy never has to find that out: it attacks at 7 for one Gig and finishes on six. The winning line equips the 1-cost Optics first, which is worth exactly +1 and takes the attacker to 8 \u2014 still one Gig, still nothing \u2014 and only then is Cyberpsychosis worth +3, for 11 power and two Gigs. Five plus two is seven. The cheap Gear is not the pump; it is the thing that makes the pump exist.",
+   "spec": {
+    "turn": 12,
+    "active": 1,
+    "seed": 59,
+    "turns_taken": [
+     6,
+     5
+    ],
+    "sides": [
+     {
+      "legends": [
+       "hanako-arasaka-daughter-of-the-emperor",
+       "padre-man-of-the-cross",
+       "panam-palmer-nomad-cavalry"
+      ],
+      "deck": [
+       "take-control",
+       "synapse-burnout",
+       "corpo-security",
+       "overwatch-panams-gift",
+       "valentino-street-racer",
+       "overwatch-panams-gift",
+       "riding-nomad",
+       "dont-fear-the-reaper",
+       "corporate-surveillance",
+       "tygers-whisper",
+       "fool-on-the-hill",
+       "riding-nomad",
+       "memory-relapse",
+       "peace-offering",
+       "tygers-whisper",
+       "nadia-fighting-through-grief",
+       "zetatech-berserk",
+       "zetatech-berserk",
+       "saul-bright-stormrider",
+       "riot-shield",
+       "take-control",
+       "sandevistan",
+       "overwatch-panams-gift",
+       "nadia-fighting-through-grief",
+       "tygers-whisper",
+       "nadia-fighting-through-grief"
+      ],
+      "eddies": 2,
+      "gig": [
+       [
+        4,
+        3
+       ],
+       [
+        6,
+        7
+       ],
+       [
+        12,
+        5
+       ]
+      ],
+      "fixer": [
+       8,
+       10,
+       20
+      ]
+     },
+     {
+      "field": [
+       [
+        "maxtac-suppression-team",
+        {}
+       ]
+      ],
+      "hand": [
+       "kiroshi-optics",
+       "cyberpsychosis"
+      ],
+      "legends": [
+       [
+        "kerry-eurodyne-axe-attitude-audience",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "muamar-reyes-el-capitan",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "rebecca-having-a-moment",
+        {
+         "faceup": true
+        }
+       ]
+      ],
+      "deck": [
+       "jackie-welles-ride-or-die-choom",
+       "mantis-blades",
+       "kerry-eurodyne-the-last-rockerboy",
+       "mandibular-upgrade",
+       "caliber-totentanzs-top-dog",
+       "afterparty-at-lizzies",
+       "minotaur",
+       "over-the-edge",
+       "augmented-negotiators",
+       "swordwise-huscle",
+       "viktor-vektor-drop-your-illusions",
+       "royce-dont-call-me-simon",
+       "trauma-team-operatives",
+       "the-relic-experimental-biochip",
+       "shattered-memories",
+       "over-the-edge",
+       "arasaka-emergency-radioport",
+       "arasaka-emergency-radioport",
+       "heywood-ripperdoc",
+       "satori-sword-of-saburo",
+       "mandibular-upgrade",
+       "royce-dont-call-me-simon",
+       "safety-override",
+       "mandibular-upgrade",
+       "dexter-deshawn-one-last-chance",
+       "la-llorona-ghost-of-the-past"
+      ],
+      "eddies": 4,
+      "gig": [
+       [
+        4,
+        2
+       ],
+       [
+        6,
+        1
+       ],
+       [
+        8,
+        6
+       ],
+       [
+        10,
+        9
+       ],
+       [
+        12,
+        4
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 1,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "gigs_before": 5,
+    "line": [
+     3,
+     2,
+     1,
+     0,
+     1,
+     0,
+     0
+    ],
+    "nodes": 3985,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       9,
+       1,
+       2,
+       5,
+       1,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       9,
+       1,
+       2,
+       5,
+       6,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       9,
+       1,
+       2,
+       5,
+       2,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       9,
+       1,
+       1,
+       2,
+       6,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 0,
+    "floor_trials": 16,
+    "floor_rate": 0.0,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "seconds": 0.16,
+    "when": "2026-09-14 06:49 UTC"
+   }
+  },
+  {
+   "id": "steal-threshold-dexter-call-second-seat",
+   "kind": "board",
+   "player": 1,
+   "max_turns": 1,
+   "source": "proposed",
+   "why": "The second seat, five Gigs, Johnny Silverhand ready at 8. Two Legends are already face-up, so Calling a Legend is not a gamble here \u2014 it flips Dexter DeShawn: Off the Grid, whose CALL is a choice between +2 power to a friendly Unit and drawing a card. Greedy attacks first: 8 power, one Gig, six on the board, and then flips Dexter and takes the card, because a card in hand scores and a +2 on a spent Unit does not. The winning line Calls first and takes the power: Johnny at 10 steals two and that is seven. The tell is that the pump must be chosen over the draw, and taken before the attack \u2014 after the attack it is worth exactly nothing, which is how the greedy agent spends it.",
+   "spec": {
+    "turn": 12,
+    "active": 1,
+    "seed": 43,
+    "turns_taken": [
+     6,
+     5
+    ],
+    "sides": [
+     {
+      "legends": [
+       "hanako-arasaka-daughter-of-the-emperor",
+       "padre-man-of-the-cross",
+       "goro-takemura-vengeful-bodyguard"
+      ],
+      "deck": [
+       "memory-relapse",
+       "corporate-surveillance",
+       "maxtac-heavy",
+       "maxtac-heavy",
+       "tygers-whisper",
+       "field-operator",
+       "saul-bright-stormrider",
+       "tygers-whisper",
+       "we-gotta-live-together",
+       "we-gotta-live-together",
+       "valentino-street-racer",
+       "maxtac-av",
+       "sandayu-oda-hanakos-guardian",
+       "maxtac-squadron",
+       "corpo-security",
+       "synapse-burnout",
+       "emergency-atlus",
+       "emergency-atlus",
+       "take-control",
+       "overwatch-panams-gift",
+       "memory-relapse",
+       "we-gotta-live-together",
+       "maxtac-av",
+       "pepe-najarro-working-doubles",
+       "fool-on-the-hill",
+       "overwatch-panams-gift"
+      ],
+      "eddies": 1,
+      "gig": [
+       [
+        4,
+        2
+       ],
+       [
+        6,
+        6
+       ],
+       [
+        8,
+        4
+       ],
+       [
+        10,
+        5
+       ]
+      ],
+      "fixer": [
+       12,
+       20
+      ]
+     },
+     {
+      "field": [
+       [
+        "johnny-silverhand-never-stop-fighting",
+        {}
+       ]
+      ],
+      "hand": [
+       "ruthless-lowlife",
+       "psycho-squad",
+       "mox-inciters"
+      ],
+      "legends": [
+       "dexter-deshawn-off-the-grid",
+       [
+        "rebecca-having-a-moment",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "evelyn-parker-beautiful-enigma",
+        {
+         "faceup": true
+        }
+       ]
+      ],
+      "deck": [
+       "tetratronic-rippler",
+       "floor-it",
+       "japantown-jonin",
+       "v-roamer-of-the-badlands",
+       "modded-kusanagi",
+       "psycho-squad",
+       "octant",
+       "trust-no-one",
+       "over-the-edge",
+       "japantown-jonin",
+       "royce-dont-call-me-simon",
+       "all-is-lost",
+       "bonnie-and-clyde",
+       "animals-wrecker",
+       "unlikely-bond",
+       "satori-sword-of-saburo",
+       "nocturne-op55n1",
+       "mantis-blades",
+       "westbrook-netrunner",
+       "over-the-edge",
+       "arasaka-emergency-radioport",
+       "rogue-amendiares-queen-of-the-afterlife",
+       "chrome-reverie",
+       "psycho-squad",
+       "dying-night-vs-pistol",
+       "chrome-reverie"
+      ],
+      "eddies": 2,
+      "gig": [
+       [
+        4,
+        5
+       ],
+       [
+        6,
+        3
+       ],
+       [
+        8,
+        2
+       ],
+       [
+        10,
+        6
+       ],
+       [
+        12,
+        8
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 1,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "gigs_before": 5,
+    "line": [
+     1,
+     2,
+     0,
+     0,
+     1,
+     0,
+     1,
+     0,
+     0
+    ],
+    "nodes": 24,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       6,
+       1,
+       2,
+       1,
+       0,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       6,
+       1,
+       2,
+       1,
+       0,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       6,
+       1,
+       2,
+       1,
+       0,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       6,
+       1,
+       2,
+       1,
+       0,
+       1,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 3,
+    "floor_trials": 16,
+    "floor_rate": 0.188,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "seconds": 0.04,
+    "when": "2026-09-14 06:49 UTC"
+   }
+  },
+  {
+   "id": "steal-threshold-dumdum-second-gear",
+   "kind": "board",
+   "player": 0,
+   "max_turns": 1,
+   "source": "proposed",
+   "why": "Psycho Squad is on the field at 6 printed power wearing Mantis Blades, so 8 on the board \u2014 one Gig a swing. In hand is Kiroshi Optics, +1, and face-up in the Legends area is Dum Dum: Maelstrom Triggerman, whose QUICK ability is 1 \u20ac$ and spending him for +1 power per equipped Gear. Neither half gets there: the Optics alone makes 9, Dum Dum alone (one Gear) makes 9, and 9 steals exactly what 8 steals. Together the Optics makes the second Gear that Dum Dum is counting, 8 + 1 + 2 = 11, and the attack takes two Gigs for seven. The greedy line attacks at 8 and then equips the Gear onto a spent Unit, which is the correct one-ply move and loses the game.",
+   "spec": {
+    "turn": 13,
+    "active": 0,
+    "seed": 61,
+    "turns_taken": [
+     6,
+     6
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "psycho-squad",
+        {
+         "gear": [
+          "mantis-blades"
+         ]
+        }
+       ]
+      ],
+      "hand": [
+       "kiroshi-optics"
+      ],
+      "legends": [
+       [
+        "dum-dum-maelstrom-triggerman",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "jackie-welles-pour-one-out-for-me",
+        {
+         "faceup": true
+        }
+       ],
+       "rebecca-having-a-moment"
+      ],
+      "deck": [
+       "chrome-fang",
+       "gilded-maton",
+       "zetatech-faceplate",
+       "dexter-deshawn-one-last-chance",
+       "maelstrom-goons",
+       "caliber-totentanzs-top-dog",
+       "chrome-fang",
+       "sketchy-ripper",
+       "all-is-lost",
+       "caliber-totentanzs-top-dog",
+       "afterparty-at-lizzies",
+       "heywood-ripperdoc",
+       "rockn-rockerboy",
+       "jacked-in-voodoo-boy",
+       "arasaka-emergency-radioport",
+       "jacked-in-voodoo-boy",
+       "satori-sword-of-saburo",
+       "hanako-arasaka-in-a-gilded-cage",
+       "mox-inciters",
+       "augmented-negotiators",
+       "la-llorona-ghost-of-the-past",
+       "augmented-negotiators",
+       "rita-wheeler-no-stupid-questions",
+       "meredith-stout-stone-cold-corpo",
+       "la-llorona-ghost-of-the-past",
+       "rogue-amendiares-queen-of-the-afterlife"
+      ],
+      "eddies": 2,
+      "gig": [
+       [
+        4,
+        8
+       ],
+       [
+        6,
+        3
+       ],
+       [
+        8,
+        4
+       ],
+       [
+        10,
+        1
+       ],
+       [
+        12,
+        5
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "legends": [
+       "saburo-arasaka-stubborn-patriarch",
+       "goro-takemura-vengeful-bodyguard",
+       "padre-man-of-the-cross"
+      ],
+      "deck": [
+       "panam-palmer-strength-through-family",
+       "wraith-marauders",
+       "saul-bright-stormrider",
+       "sandevistan",
+       "field-operator",
+       "maxtac-heavy",
+       "corpo-security",
+       "pacifica-netrunner",
+       "corporate-surveillance",
+       "riding-nomad",
+       "pacifica-netrunner",
+       "emergency-atlus",
+       "peace-offering",
+       "synapse-burnout",
+       "zetatech-berserk",
+       "goro-takemura-losing-his-way",
+       "maxtac-squadron",
+       "wild-in-the-streets",
+       "we-gotta-live-together",
+       "valentino-street-racer",
+       "maxtac-av",
+       "memory-relapse",
+       "dont-fear-the-reaper",
+       "sandevistan",
+       "maxtac-av",
+       "peace-offering"
+      ],
+      "eddies": 1,
+      "gig": [
+       [
+        4,
+        6
+       ],
+       [
+        6,
+        2
+       ],
+       [
+        8,
+        7
+       ]
+      ],
+      "fixer": [
+       10,
+       12,
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "gigs_before": 5,
+    "line": [
+     2,
+     1,
+     1,
+     1,
+     0,
+     0
+    ],
+    "nodes": 91,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       7,
+       2,
+       5,
+       6,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       7,
+       2,
+       5,
+       6,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       7,
+       2,
+       5,
+       6,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       7,
+       2,
+       5,
+       6,
+       1,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 2,
+    "floor_trials": 16,
+    "floor_rate": 0.125,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "seconds": 0.04,
+    "when": "2026-09-14 06:49 UTC"
+   }
+  },
+  {
+   "id": "steal-threshold-gorilla-arms-clean-sweep",
+   "kind": "board",
+   "player": 0,
+   "max_turns": 1,
+   "source": "proposed",
+   "why": "Four Gigs against the Rival's three, a 7-power MaxTac Suppression Team ready, and Gorilla Arms \u2014 a 4-cost, 3-power Gear \u2014 in hand. Greedy attacks at 7, steals one, and sits on five with the Rival still holding two. The winning line pays four Eddies to bolt the Gear on first. 7 + 3 = 10, so steal_count is two, and then the Gear's own rider fires: 'the first time this Unit steals 1 or more Gigs each turn, steal a rival Gig with a value not shared by a friendly Gig' \u2014 my dice all read odd and theirs all read even, so the last one always qualifies. Three Gigs in one attack, four plus three is seven, and the Rival's area is empty. The Gear is the whole game and on the board it is just a card that costs four.",
+   "spec": {
+    "turn": 9,
+    "active": 0,
+    "seed": 71,
+    "turns_taken": [
+     4,
+     4
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "maxtac-suppression-team",
+        {}
+       ]
+      ],
+      "hand": [
+       "gorilla-arms",
+       "ruthless-lowlife",
+       "corpo-security"
+      ],
+      "legends": [
+       "kerry-eurodyne-axe-attitude-audience",
+       "muamar-reyes-el-capitan",
+       "rebecca-having-a-moment"
+      ],
+      "deck": [
+       "live-with-the-aftermath",
+       "trauma-team-operatives",
+       "adrenaline-converter",
+       "kerry-eurodyne-the-last-rockerboy",
+       "satori-sword-of-saburo",
+       "the-heist",
+       "gorilla-arms",
+       "meredith-stout-stone-cold-corpo",
+       "6th-street-recruits",
+       "viktor-vektor-you-might-feel-a-little-pinch",
+       "caliber-totentanzs-top-dog",
+       "viktor-vektor-you-might-feel-a-little-pinch",
+       "heywood-ripperdoc",
+       "meredith-stout-stone-cold-corpo",
+       "heywood-ripperdoc",
+       "minotaur",
+       "meredith-stout-stone-cold-corpo",
+       "royce-dont-call-me-simon",
+       "sketchy-ripper",
+       "bootleg-black-sapphire-show",
+       "zetatech-faceplate",
+       "adrenaline-converter",
+       "detonate",
+       "live-with-the-aftermath",
+       "maelstrom-goons",
+       "maxtac-suppression-team"
+      ],
+      "eddies": 4,
+      "gig": [
+       [
+        4,
+        1
+       ],
+       [
+        6,
+        3
+       ],
+       [
+        8,
+        5
+       ],
+       [
+        12,
+        7
+       ]
+      ],
+      "fixer": [
+       10,
+       20
+      ]
+     },
+     {
+      "legends": [
+       "padre-man-of-the-cross",
+       "hanako-arasaka-daughter-of-the-emperor",
+       "jackie-welles-pour-one-out-for-me"
+      ],
+      "deck": [
+       "we-gotta-live-together",
+       "modded-kusanagi",
+       "chrome-reverie",
+       "wraith-marauders",
+       "maxtac-heavy",
+       "hacked-corpo",
+       "emergency-atlus",
+       "lizzy-wizzy-delicate-weapon",
+       "corpo-security",
+       "synapse-burnout",
+       "zetatech-berserk",
+       "riot-shield",
+       "valentino-street-racer",
+       "take-control",
+       "maxtac-heavy",
+       "delamain-cab",
+       "wraith-marauders",
+       "hacked-corpo",
+       "lizzy-wizzy-delicate-weapon",
+       "corpo-security",
+       "modded-kusanagi",
+       "corpo-security",
+       "placide-voodoo-sentinel",
+       "rogue-amendiares-queen-of-the-afterlife",
+       "overwatch-panams-gift",
+       "dying-night-vs-pistol"
+      ],
+      "eddies": 2,
+      "gig": [
+       [
+        4,
+        2
+       ],
+       [
+        6,
+        4
+       ],
+       [
+        8,
+        6
+       ]
+      ],
+      "fixer": [
+       10,
+       12,
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "gigs_before": 4,
+    "line": [
+     2,
+     1,
+     1,
+     1,
+     0,
+     0,
+     0
+    ],
+    "nodes": 23373,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       8,
+       2,
+       3,
+       4,
+       3,
+       1,
+       2,
+       2,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       8,
+       2,
+       4,
+       4,
+       3,
+       1,
+       1,
+       1,
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       8,
+       2,
+       3,
+       4,
+       3,
+       1,
+       1,
+       1,
+       4,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       8,
+       2,
+       3,
+       4,
+       3,
+       1,
+       1,
+       1,
+       11,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 1,
+    "floor_trials": 16,
+    "floor_rate": 0.062,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "seconds": 0.78,
+    "when": "2026-09-14 06:50 UTC"
+   }
+  },
+  {
+   "id": "steal-threshold-gunpoint-next-turn",
+   "kind": "board",
+   "player": 0,
+   "max_turns": 2,
+   "source": "proposed",
+   "why": "Horizon 2: this turn cannot win, and the line has to leave a board the greedy continuation converts. My fixer area is already empty \u2014 the d20 is in my Gig area, so there is no die left to roll in \u2014 and I hold four Gigs against the Rival's four. Greedy attacks with Meredith Stout at 5 power for one Gig, reaching five, and then burns Gunpoint Diplomacy on a spent Unit; next turn it steals one more and stops at six, and the horizon closes. The winning line spends before it swings: Mantis Blades (1 \u20ac$) makes Meredith 7, Gunpoint Diplomacy (4 \u20ac$) \u2014 I have more Street Cred, so I take both modes \u2014 makes her 10, and 10 steals two. The turn ends on SIX Gigs, not seven: there is nothing on the board for a one-ply agent to score, and the seventh Gig arrives next turn from an ordinary greedy attack. The reward lands a full turn after the move that earned it.",
+   "spec": {
+    "turn": 13,
+    "active": 0,
+    "seed": 47,
+    "turns_taken": [
+     6,
+     6
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "meredith-stout-stone-cold-corpo",
+        {}
+       ]
+      ],
+      "hand": [
+       "mantis-blades",
+       "gunpoint-diplomacy",
+       "ruthless-lowlife"
+      ],
+      "legends": [
+       "rebecca-having-a-moment",
+       "yorinobu-arasaka-embracing-destruction",
+       "adam-smasher-ender-of-legends"
+      ],
+      "deck": [
+       "v-roamer-of-the-badlands",
+       "valentino-guerrera",
+       "swordwise-huscle",
+       "octant",
+       "minotaur",
+       "satori-sword-of-saburo",
+       "carnage-at-the-colosseum",
+       "arasaka-emergency-radioport",
+       "arasaka-emergency-radioport",
+       "octant",
+       "v-roamer-of-the-badlands",
+       "swordwise-huscle",
+       "minotaur",
+       "gunpoint-diplomacy",
+       "chrome-fang",
+       "carnage-at-the-colosseum",
+       "screw-lovelorn-fool",
+       "shattered-memories",
+       "meredith-stout-stone-cold-corpo",
+       "la-llorona-ghost-of-the-past",
+       "bonnie-and-clyde",
+       "detonate",
+       "royce-dont-call-me-simon",
+       "el-sombreron-la-venganza-lenta",
+       "arasaka-emergency-radioport",
+       "detonate"
+      ],
+      "eddies": 5,
+      "gig": [
+       [
+        4,
+        4
+       ],
+       [
+        6,
+        6
+       ],
+       [
+        12,
+        12
+       ],
+       [
+        20,
+        15
+       ]
+      ],
+      "fixer": []
+     },
+     {
+      "legends": [
+       "wakako-okada-peace-and-harmony",
+       "jackie-welles-pour-one-out-for-me",
+       "alt-cunningham-soulkiller-architect"
+      ],
+      "deck": [
+       "westbrook-netrunner",
+       "placide-voodoo-sentinel",
+       "psycho-squad",
+       "modded-kusanagi",
+       "maman-brigitte-spirit-of-death",
+       "delamain-rideshare-ai",
+       "floor-it",
+       "floor-it",
+       "placide-voodoo-sentinel",
+       "maman-brigitte-spirit-of-death",
+       "hacked-corpo",
+       "chrome-reverie",
+       "modded-kusanagi",
+       "unlikely-bond",
+       "chrome-reverie",
+       "delamain-rideshare-ai",
+       "jacked-in-voodoo-boy",
+       "delamain-cab",
+       "les-elemens",
+       "towerfall",
+       "netwatch-netdriver",
+       "jacked-in-voodoo-boy",
+       "placide-voodoo-sentinel",
+       "towerfall",
+       "modded-muramasa",
+       "judy-alvarez-nothing-to-doubt"
+      ],
+      "eddies": 1,
+      "gig": [
+       [
+        4,
+        1
+       ],
+       [
+        6,
+        2
+       ],
+       [
+        8,
+        3
+       ],
+       [
+        10,
+        4
+       ]
+      ],
+      "fixer": [
+       8,
+       10,
+       12,
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 2,
+    "reward_is_late": true,
+    "gigs_before": 4,
+    "line": [
+     3,
+     2,
+     1,
+     1,
+     1,
+     0,
+     0
+    ],
+    "nodes": 3656,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       9,
+       3,
+       5,
+       6,
+       6,
+       1,
+       3,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       9,
+       3,
+       5,
+       8,
+       6,
+       1,
+       3,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       9,
+       3,
+       5,
+       7,
+       6,
+       1,
+       3,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       9,
+       3,
+       5,
+       7,
+       6,
+       1,
+       3,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 0,
+    "floor_trials": 16,
+    "floor_rate": 0.0,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "seconds": 8.7,
+    "when": "2026-09-14 06:50 UTC"
+   }
+  },
+  {
+   "id": "steal-threshold-jonin-a-turn-early",
+   "kind": "board",
+   "player": 0,
+   "max_turns": 2,
+   "source": "proposed",
+   "why": "Horizon 2, and the fixer area is already empty on my side \u2014 the d20 sits in my Gig area \u2014 so no die is coming to round the count up. Four Gigs against the Rival's three, Rock'n Rockerboy ready at 8, and exactly one card in hand: Japantown Jonin. Greedy attacks at 8, steals one, reaches five, then plays the Jonin after the attack, where its PLAY pump lands on a spent Unit and is gone; next turn the Rockerboy takes one more and stops at six. The winning line plays the Jonin first \u2014 a 0-power body that cannot attack this turn and could never steal anything \u2014 for 8 + 2 = 10 and two Gigs. The turn still ends on SIX: nothing on the board is a win, the Jonin is a blank, and the seventh Gig is taken next turn by an ordinary greedy attack the position has already set up.",
+   "spec": {
+    "turn": 15,
+    "active": 0,
+    "seed": 83,
+    "turns_taken": [
+     7,
+     7
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "rockn-rockerboy",
+        {}
+       ]
+      ],
+      "hand": [
+       "japantown-jonin"
+      ],
+      "legends": [
+       "rebecca-having-a-moment",
+       "kerry-eurodyne-axe-attitude-audience",
+       "muamar-reyes-el-capitan"
+      ],
+      "deck": [
+       "maxtac-suppression-team",
+       "valentino-guerrera",
+       "johnny-silverhand-never-stop-fighting",
+       "t-bug-amateur-philosopher",
+       "augmented-negotiators",
+       "safety-override",
+       "johnny-silverhand-never-stop-fighting",
+       "screw-lovelorn-fool",
+       "offduty-malfini",
+       "viktor-vektor-drop-your-illusions",
+       "valentino-guerrera",
+       "viktor-vektor-drop-your-illusions",
+       "augmented-negotiators",
+       "gilded-maton",
+       "trauma-team-operatives",
+       "safety-override",
+       "trauma-team-operatives",
+       "safety-override",
+       "viktor-vektor-drop-your-illusions",
+       "maxtac-suppression-team",
+       "viktor-vektor-you-might-feel-a-little-pinch",
+       "viktor-vektor-you-might-feel-a-little-pinch",
+       "all-is-lost",
+       "viktor-vektor-you-might-feel-a-little-pinch",
+       "valentino-guerrera",
+       "maxtac-suppression-team"
+      ],
+      "eddies": 2,
+      "gig": [
+       [
+        4,
+        3
+       ],
+       [
+        8,
+        5
+       ],
+       [
+        12,
+        2
+       ],
+       [
+        20,
+        17
+       ]
+      ],
+      "fixer": []
+     },
+     {
+      "legends": [
+       "padre-man-of-the-cross",
+       "goro-takemura-vengeful-bodyguard",
+       "evelyn-parker-beautiful-enigma"
+      ],
+      "deck": [
+       "misty-olszewski-mender-of-broken-spirits",
+       "unlikely-bond",
+       "we-gotta-live-together",
+       "maxtac-heavy",
+       "floor-it",
+       "corpo-security",
+       "corporate-surveillance",
+       "unlikely-bond",
+       "take-control",
+       "modded-muramasa",
+       "misty-olszewski-mender-of-broken-spirits",
+       "overwatch-panams-gift",
+       "pepe-najarro-working-doubles",
+       "unlikely-bond",
+       "hacked-corpo",
+       "nocturne-op55n1",
+       "modded-muramasa",
+       "synapse-burnout",
+       "peace-offering",
+       "netwatch-netdriver",
+       "valentino-street-racer",
+       "dying-night-vs-pistol",
+       "dying-night-vs-pistol",
+       "reboot-optics",
+       "fool-on-the-hill",
+       "take-control"
+      ],
+      "eddies": 1,
+      "gig": [
+       [
+        6,
+        4
+       ],
+       [
+        10,
+        6
+       ],
+       [
+        4,
+        8
+       ]
+      ],
+      "fixer": [
+       6,
+       8,
+       10,
+       12,
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 2,
+    "reward_is_late": true,
+    "gigs_before": 4,
+    "line": [
+     1,
+     0,
+     1,
+     1,
+     0,
+     0
+    ],
+    "nodes": 9,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       5,
+       2,
+       4,
+       1,
+       1,
+       1,
+       1,
+       3,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       5,
+       2,
+       4,
+       1,
+       1,
+       1,
+       1,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       5,
+       2,
+       4,
+       1,
+       1,
+       1,
+       1,
+       7,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       5,
+       2,
+       4,
+       1,
+       1,
+       1,
+       1,
+       7,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 3,
+    "floor_trials": 16,
+    "floor_rate": 0.188,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "seconds": 0.27,
+    "when": "2026-09-14 06:50 UTC"
+   }
+  },
+  {
+   "id": "steal-threshold-jonin-pump",
+   "kind": "board",
+   "player": 0,
+   "max_turns": 1,
+   "source": "proposed",
+   "why": "Five Gigs, one ready Heywood Ripperdoc at 8 power, and a Japantown Jonin in hand. The greedy line is the obvious one: attack, steal_count(8) is one Gig, end the turn on six and drop the Jonin afterwards for a body. The winning line plays the Jonin FIRST. It is a 0-power Unit \u2014 it enters with Lag, it cannot attack this turn, and at 0 power it could never steal a Gig even if it could; on every board-shape reading it is the emptiest card in the game. But its PLAY gives the Ripperdoc +2, 8 becomes 10, and steal_count(10) is two. Five plus two is seven and the win check fires at the start of the next turn. The whole position is the difference between 9 and 10 power, and the move that supplies it is worth nothing on the board until the attack that follows it.",
+   "spec": {
+    "turn": 9,
+    "active": 0,
+    "seed": 31,
+    "turns_taken": [
+     4,
+     4
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "heywood-ripperdoc",
+        {}
+       ]
+      ],
+      "hand": [
+       "japantown-jonin"
+      ],
+      "legends": [
+       "rebecca-having-a-moment",
+       "kerry-eurodyne-axe-attitude-audience",
+       "muamar-reyes-el-capitan"
+      ],
+      "deck": [
+       "arasaka-emergency-radioport",
+       "viktor-vektor-drop-your-illusions",
+       "heywood-ripperdoc",
+       "jackie-welles-ride-or-die-choom",
+       "satori-sword-of-saburo",
+       "kiroshi-optics",
+       "maxtac-suppression-team",
+       "gilded-maton",
+       "dexter-deshawn-one-last-chance",
+       "meredith-stout-stone-cold-corpo",
+       "all-is-lost",
+       "alt-cunningham-mother-of-daemons",
+       "kerry-eurodyne-the-last-rockerboy",
+       "la-llorona-ghost-of-the-past",
+       "dexter-deshawn-one-last-chance",
+       "maxtac-suppression-team",
+       "screw-lovelorn-fool",
+       "viktor-vektor-you-might-feel-a-little-pinch",
+       "cyberpsychosis",
+       "royce-dont-call-me-simon",
+       "swordwise-huscle",
+       "the-heist",
+       "offduty-malfini",
+       "dexter-deshawn-one-last-chance",
+       "over-the-edge",
+       "gorilla-arms",
+       "royce-dont-call-me-simon",
+       "gilded-maton"
+      ],
+      "eddies": 2,
+      "gig": [
+       [
+        4,
+        1
+       ],
+       [
+        6,
+        4
+       ],
+       [
+        8,
+        7
+       ],
+       [
+        10,
+        2
+       ],
+       [
+        12,
+        9
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "legends": [
+       "padre-man-of-the-cross",
+       "panam-palmer-nomad-cavalry",
+       "goro-takemura-vengeful-bodyguard"
+      ],
+      "deck": [
+       "peace-offering",
+       "we-gotta-live-together",
+       "overwatch-panams-gift",
+       "peace-offering",
+       "sandayu-oda-hanakos-guardian",
+       "nadia-fighting-through-grief",
+       "panam-palmer-strength-through-family",
+       "we-gotta-live-together",
+       "maelstrom-zealots",
+       "sandayu-oda-hanakos-guardian",
+       "take-control",
+       "riot-shield",
+       "maxtac-squadron",
+       "goro-takemura-losing-his-way",
+       "sandayu-oda-hanakos-guardian",
+       "take-control",
+       "panam-palmer-strength-through-family",
+       "sandevistan",
+       "goro-takemura-losing-his-way",
+       "wild-in-the-streets",
+       "nadia-fighting-through-grief",
+       "pacifica-netrunner",
+       "we-gotta-live-together",
+       "overwatch-panams-gift",
+       "corporate-surveillance",
+       "corporate-surveillance",
+       "pacifica-netrunner",
+       "goro-takemura-losing-his-way"
+      ],
+      "eddies": 1,
+      "gig": [
+       [
+        4,
+        6
+       ],
+       [
+        6,
+        1
+       ],
+       [
+        8,
+        8
+       ]
+      ],
+      "fixer": [
+       10,
+       12,
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "gigs_before": 5,
+    "line": [
+     1,
+     0,
+     1,
+     1,
+     0,
+     0
+    ],
+    "nodes": 9,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       5,
+       2,
+       4,
+       1,
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       5,
+       2,
+       4,
+       1,
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       5,
+       2,
+       4,
+       1,
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       5,
+       2,
+       4,
+       1,
+       2,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 3,
+    "floor_trials": 16,
+    "floor_rate": 0.188,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "seconds": 0.04,
+    "when": "2026-09-14 06:50 UTC"
+   }
+  },
+  {
+   "id": "steal-threshold-last-legend-face-up",
+   "kind": "board",
+   "player": 0,
+   "max_turns": 1,
+   "source": "proposed",
+   "why": "Goro Takemura: Losing His Way reads 4 power, with ATTACK: if ALL friendly Legends are face-up, +5 this turn. Two are face-up and one is not, so right now he is a 4-power Unit and greedy attacks with him for one Gig and six on the board. The winning line buys the fifth power with a blind flip: Call a Legend for 1 \u20ac$ \u2014 the card that comes up is Kerry Eurodyne, whose text is about rerolling dice from the fixer area and does nothing whatsoever this turn \u2014 and then equips Kiroshi Optics for 1 \u20ac$, worth +1. Two Eddies for +1 visible power. Then the attack: the clause turns on, 4 + 1 + 5 = 10, steal_count is two, and five Gigs become seven. Drop either move and it is 9, which steals the same one Gig that 4 did.",
+   "spec": {
+    "turn": 10,
+    "active": 0,
+    "seed": 67,
+    "turns_taken": [
+     5,
+     4
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "goro-takemura-losing-his-way",
+        {}
+       ]
+      ],
+      "hand": [
+       "kiroshi-optics"
+      ],
+      "legends": [
+       [
+        "panam-palmer-nomad-cavalry",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "goro-takemura-vengeful-bodyguard",
+        {
+         "faceup": true
+        }
+       ],
+       "kerry-eurodyne-axe-attitude-audience"
+      ],
+      "deck": [
+       "saul-bright-stormrider",
+       "viktor-vektor-you-might-feel-a-little-pinch",
+       "maelstrom-goons",
+       "field-operator",
+       "emergency-atlus",
+       "corpo-security",
+       "cyberpsychosis",
+       "maelstrom-zealots",
+       "maelstrom-zealots",
+       "augmented-negotiators",
+       "valentino-street-racer",
+       "pacifica-netrunner",
+       "corporate-surveillance",
+       "secondhand-bombus",
+       "offduty-malfini",
+       "we-gotta-live-together",
+       "t-bug-amateur-philosopher",
+       "pacifica-netrunner",
+       "riot-shield",
+       "emergency-atlus",
+       "corpo-security",
+       "pacifica-netrunner",
+       "the-heist",
+       "the-heist",
+       "we-gotta-live-together",
+       "zetatech-berserk"
+      ],
+      "eddies": 2,
+      "gig": [
+       [
+        4,
+        2
+       ],
+       [
+        6,
+        9
+       ],
+       [
+        8,
+        3
+       ],
+       [
+        10,
+        8
+       ],
+       [
+        12,
+        6
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "legends": [
+       "rebecca-having-a-moment",
+       "evelyn-parker-beautiful-enigma",
+       "wakako-okada-peace-and-harmony"
+      ],
+      "deck": [
+       "pyramid-song",
+       "delamain-cab",
+       "trust-no-one",
+       "rita-wheeler-no-stupid-questions",
+       "modded-kusanagi",
+       "maman-brigitte-spirit-of-death",
+       "satori-sword-of-saburo",
+       "westbrook-netrunner",
+       "mantis-blades",
+       "floor-it",
+       "unlikely-bond",
+       "kerry-eurodyne-the-last-rockerboy",
+       "reboot-optics",
+       "swordwise-huscle",
+       "jacked-in-voodoo-boy",
+       "screw-lovelorn-fool",
+       "industrial-assembly",
+       "placide-voodoo-sentinel",
+       "placide-voodoo-sentinel",
+       "dying-night-vs-pistol",
+       "les-elemens",
+       "chrome-reverie",
+       "satori-sword-of-saburo",
+       "jacked-in-voodoo-boy",
+       "dying-night-vs-pistol",
+       "mtod12-flathead"
+      ],
+      "eddies": 1,
+      "gig": [
+       [
+        4,
+        4
+       ],
+       [
+        6,
+        1
+       ],
+       [
+        8,
+        5
+       ]
+      ],
+      "fixer": [
+       10,
+       12,
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "gigs_before": 5,
+    "line": [
+     2,
+     1,
+     1,
+     1,
+     0,
+     0
+    ],
+    "nodes": 91,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       7,
+       2,
+       5,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       7,
+       2,
+       5,
+       1,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       7,
+       2,
+       5,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       7,
+       2,
+       5,
+       1,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 2,
+    "floor_trials": 16,
+    "floor_rate": 0.125,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "seconds": 0.04,
+    "when": "2026-09-14 06:50 UTC"
+   }
+  },
+  {
+   "id": "steal-threshold-oda-under-saburo",
+   "kind": "board",
+   "player": 0,
+   "max_turns": 1,
+   "source": "proposed",
+   "why": "Sandayu Oda is on the field at 8 power and is ARASAKA; Saburo Arasaka \u2014 'Friendly ARASAKA Units have +1 power while attacking' \u2014 is the one Legend still face-down, so Calling a Legend flips him and nothing else. Greedy attacks at 8 for a single Gig and finishes on six. The winning line spends two Eddies on two moves that change no card's printed numbers: Call the Legend (1 \u20ac$), which turns a face-down card face-up, and equip Kiroshi Optics (1 \u20ac$), a 1-power Gear whose own text only lets you peek at a face-down Legend. 8 + 1 (Gear) + 1 (aura, and only while attacking, so the field never shows it) = 10, and 10 steals two. Either move alone leaves the attacker at 9, which is the same as 8 for every purpose that matters.",
+   "spec": {
+    "turn": 11,
+    "active": 0,
+    "seed": 41,
+    "turns_taken": [
+     5,
+     5
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "sandayu-oda-hanakos-guardian",
+        {}
+       ]
+      ],
+      "hand": [
+       "kiroshi-optics",
+       "maxtac-suppression-team"
+      ],
+      "legends": [
+       "saburo-arasaka-stubborn-patriarch",
+       [
+        "kerry-eurodyne-axe-attitude-audience",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "muamar-reyes-el-capitan",
+        {
+         "faceup": true
+        }
+       ]
+      ],
+      "deck": [
+       "secondhand-bombus",
+       "safety-override",
+       "valentino-street-racer",
+       "kiroshi-optics",
+       "corpo-security",
+       "maxtac-av",
+       "safety-override",
+       "synapse-burnout",
+       "gorilla-arms",
+       "cyberpsychosis",
+       "caliber-totentanzs-top-dog",
+       "offduty-malfini",
+       "dexter-deshawn-one-last-chance",
+       "trauma-team-operatives",
+       "viktor-vektor-you-might-feel-a-little-pinch",
+       "afterparty-at-lizzies",
+       "maelstrom-goons",
+       "corporate-surveillance",
+       "cyberpsychosis",
+       "bootleg-black-sapphire-show",
+       "corpo-security",
+       "heywood-ripperdoc",
+       "corporate-surveillance",
+       "we-gotta-live-together",
+       "riot-shield",
+       "the-relic-experimental-biochip",
+       "pepe-najarro-working-doubles"
+      ],
+      "eddies": 2,
+      "gig": [
+       [
+        4,
+        4
+       ],
+       [
+        6,
+        2
+       ],
+       [
+        8,
+        8
+       ],
+       [
+        10,
+        9
+       ],
+       [
+        12,
+        6
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "legends": [
+       "padre-man-of-the-cross",
+       "evelyn-parker-beautiful-enigma",
+       "panam-palmer-nomad-cavalry"
+      ],
+      "deck": [
+       "maxtac-av",
+       "zetatech-berserk",
+       "modded-muramasa",
+       "corpo-security",
+       "zetatech-berserk",
+       "goro-takemura-losing-his-way",
+       "emergency-atlus",
+       "placide-voodoo-sentinel",
+       "overwatch-panams-gift",
+       "reboot-optics",
+       "wild-in-the-streets",
+       "maxtac-av",
+       "chrome-reverie",
+       "valentino-street-racer",
+       "mox-inciters",
+       "overwatch-panams-gift",
+       "maelstrom-zealots",
+       "nadia-fighting-through-grief",
+       "panam-palmer-strength-through-family",
+       "sandevistan",
+       "corpo-security",
+       "nocturne-op55n1",
+       "field-operator",
+       "tygers-whisper",
+       "riot-shield",
+       "fool-on-the-hill",
+       "maxtac-heavy"
+      ],
+      "eddies": 2,
+      "gig": [
+       [
+        4,
+        7
+       ],
+       [
+        6,
+        4
+       ],
+       [
+        8,
+        1
+       ]
+      ],
+      "fixer": [
+       10,
+       12,
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "gigs_before": 5,
+    "line": [
+     2,
+     1,
+     1,
+     0,
+     1,
+     0,
+     0
+    ],
+    "nodes": 1298,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       8,
+       0,
+       5,
+       1,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       8,
+       0,
+       5,
+       1,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       8,
+       0,
+       5,
+       1,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       8,
+       0,
+       5,
+       1,
+       1,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 0,
+    "floor_trials": 16,
+    "floor_rate": 0.0,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "seconds": 0.1,
+    "when": "2026-09-14 06:50 UTC"
+   }
+  },
+  {
+   "id": "steal-threshold-one-flip-of-dexter",
+   "kind": "board",
+   "player": 0,
+   "max_turns": 2,
+   "source": "proposed",
+   "why": "Horizon 2 with an empty fixer area: four Gigs, no die left to roll in, a 7-power MaxTac Suppression Team, one Kiroshi Optics in hand, and Dexter DeShawn: Off the Grid as the only face-down Legend, so a Call flips him and nothing else. Neither piece reaches the threshold alone \u2014 the Gear makes 8, Dexter's +2 makes 9 \u2014 and Dexter can only be flipped once in the game, so the greedy line destroys the position by spending him after its attack (or taking the Draw 1 instead). Greedy: attack at 7, one Gig, five, then burn the flip; next turn 8 power steals one more and stops at six. The winning line equips and Calls before swinging, 7 + 1 + 2 = 10, takes two Gigs and ends the turn on SIX \u2014 no win on the board \u2014 and the seventh arrives next turn off a plain greedy attack.",
+   "spec": {
+    "turn": 17,
+    "active": 0,
+    "seed": 97,
+    "turns_taken": [
+     8,
+     8
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "maxtac-suppression-team",
+        {}
+       ]
+      ],
+      "hand": [
+       "kiroshi-optics"
+      ],
+      "legends": [
+       "dexter-deshawn-off-the-grid",
+       [
+        "kerry-eurodyne-axe-attitude-audience",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "rebecca-having-a-moment",
+        {
+         "faceup": true
+        }
+       ]
+      ],
+      "deck": [
+       "viktor-vektor-drop-your-illusions",
+       "all-is-lost",
+       "offduty-malfini",
+       "viktor-vektor-you-might-feel-a-little-pinch",
+       "augmented-negotiators",
+       "augmented-negotiators",
+       "gilded-maton",
+       "rockn-rockerboy",
+       "valentino-guerrera",
+       "t-bug-amateur-philosopher",
+       "augmented-negotiators",
+       "screw-lovelorn-fool",
+       "offduty-malfini",
+       "viktor-vektor-drop-your-illusions",
+       "maxtac-suppression-team",
+       "t-bug-amateur-philosopher",
+       "valentino-guerrera",
+       "t-bug-amateur-philosopher",
+       "viktor-vektor-you-might-feel-a-little-pinch",
+       "offduty-malfini",
+       "viktor-vektor-drop-your-illusions",
+       "viktor-vektor-you-might-feel-a-little-pinch",
+       "maxtac-suppression-team",
+       "screw-lovelorn-fool",
+       "valentino-guerrera",
+       "screw-lovelorn-fool"
+      ],
+      "eddies": 2,
+      "gig": [
+       [
+        6,
+        2
+       ],
+       [
+        10,
+        7
+       ],
+       [
+        12,
+        9
+       ],
+       [
+        20,
+        13
+       ]
+      ],
+      "fixer": []
+     },
+     {
+      "legends": [
+       "saburo-arasaka-stubborn-patriarch",
+       "hanako-arasaka-daughter-of-the-emperor",
+       "padre-man-of-the-cross"
+      ],
+      "deck": [
+       "panam-palmer-strength-through-family",
+       "sandayu-oda-hanakos-guardian",
+       "zetatech-berserk",
+       "valentino-street-racer",
+       "nadia-fighting-through-grief",
+       "maxtac-av",
+       "dont-fear-the-reaper",
+       "pepe-najarro-working-doubles",
+       "sandayu-oda-hanakos-guardian",
+       "sandevistan",
+       "take-control",
+       "field-operator",
+       "panam-palmer-strength-through-family",
+       "maelstrom-zealots",
+       "wild-in-the-streets",
+       "tygers-whisper",
+       "zetatech-berserk",
+       "panam-palmer-strength-through-family",
+       "wraith-marauders",
+       "emergency-atlus",
+       "riding-nomad",
+       "riding-nomad",
+       "overwatch-panams-gift",
+       "maelstrom-zealots",
+       "corpo-security",
+       "saul-bright-stormrider"
+      ],
+      "eddies": 1,
+      "gig": [
+       [
+        4,
+        6
+       ],
+       [
+        8,
+        1
+       ],
+       [
+        4,
+        3
+       ]
+      ],
+      "fixer": [
+       6,
+       8,
+       10,
+       12,
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 2,
+    "reward_is_late": true,
+    "gigs_before": 4,
+    "line": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     0,
+     0
+    ],
+    "nodes": 204,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       6,
+       0,
+       5,
+       0,
+       6,
+       1,
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       6,
+       0,
+       5,
+       1,
+       6,
+       1,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       6,
+       0,
+       5,
+       1,
+       6,
+       5,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       6,
+       0,
+       5,
+       1,
+       6,
+       1,
+       1,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 1,
+    "floor_trials": 16,
+    "floor_rate": 0.062,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "seconds": 0.94,
+    "when": "2026-09-14 06:50 UTC"
+   }
+  },
+  {
+   "id": "steal-threshold-swap-for-an-even-gig",
+   "kind": "board",
+   "player": 0,
+   "max_turns": 1,
+   "source": "proposed",
+   "why": "Jackie Welles: Ride or Die Choom is on the field with ATTACK: +2 power for each friendly Gig with an EVEN value. All five of my Gigs are odd \u2014 3, 5, 1, 7, 9 \u2014 so Jackie attacks at a printed 8 and steals one. That is the greedy line and it ends the turn on six. The winning line spends Hanako Arasaka (\u22a1: swap a friendly Gig with a rival Gig) to trade one of my odd dice for the Rival's d4 showing 2. The swap moves no Gig count at all \u2014 I had five before and five after, they had three and have three \u2014 and it LOWERS my Street Cred. It is the single most worthless-looking action available. Then Jackie's ATTACK counts one even Gig, 8 + 2 = 10, and steal_count(10) takes two. Five plus two is seven.",
+   "spec": {
+    "turn": 13,
+    "active": 0,
+    "seed": 53,
+    "turns_taken": [
+     6,
+     6
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "jackie-welles-ride-or-die-choom",
+        {}
+       ]
+      ],
+      "hand": [],
+      "legends": [
+       [
+        "hanako-arasaka-daughter-of-the-emperor",
+        {
+         "faceup": true
+        }
+       ],
+       "kerry-eurodyne-axe-attitude-audience",
+       "muamar-reyes-el-capitan"
+      ],
+      "deck": [
+       "viktor-vektor-you-might-feel-a-little-pinch",
+       "saul-bright-stormrider",
+       "maxtac-av",
+       "take-control",
+       "maelstrom-zealots",
+       "adrenaline-converter",
+       "jackie-welles-ride-or-die-choom",
+       "adrenaline-converter",
+       "field-operator",
+       "corpo-security",
+       "the-relic-experimental-biochip",
+       "pepe-najarro-working-doubles",
+       "synapse-burnout",
+       "wraith-marauders",
+       "field-operator",
+       "t-bug-amateur-philosopher",
+       "memory-relapse",
+       "pepe-najarro-working-doubles",
+       "dexter-deshawn-one-last-chance",
+       "caliber-totentanzs-top-dog",
+       "viktor-vektor-you-might-feel-a-little-pinch",
+       "kiroshi-optics",
+       "maelstrom-goons",
+       "maxtac-av",
+       "augmented-negotiators"
+      ],
+      "eddies": 1,
+      "gig": [
+       [
+        4,
+        3
+       ],
+       [
+        6,
+        5
+       ],
+       [
+        8,
+        1
+       ],
+       [
+        10,
+        7
+       ],
+       [
+        12,
+        9
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "legends": [
+       "rebecca-having-a-moment",
+       "johnny-silverhand-rocking-renegade",
+       "yorinobu-arasaka-embracing-destruction"
+      ],
+      "deck": [
+       "minotaur",
+       "gunpoint-diplomacy",
+       "yorinobu-arasaka-steel-dragon",
+       "shattered-memories",
+       "royce-dont-call-me-simon",
+       "valentino-guerrera",
+       "6th-street-recruits",
+       "japantown-jonin",
+       "arasaka-emergency-radioport",
+       "bonnie-and-clyde",
+       "carnage-at-the-colosseum",
+       "minotaur",
+       "johnny-silverhand-never-stop-fighting",
+       "v-roamer-of-the-badlands",
+       "appetite-for-destruction",
+       "bonnie-and-clyde",
+       "over-the-edge",
+       "v-roamer-of-the-badlands",
+       "bonnie-and-clyde",
+       "carnage-at-the-colosseum",
+       "appetite-for-destruction",
+       "shattered-memories",
+       "6th-street-recruits",
+       "deadman-transmitter",
+       "kerry-eurodyne-the-last-rockerboy"
+      ],
+      "eddies": 1,
+      "gig": [
+       [
+        4,
+        2
+       ],
+       [
+        6,
+        3
+       ],
+       [
+        8,
+        5
+       ]
+      ],
+      "fixer": [
+       10,
+       12,
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "gigs_before": 5,
+    "line": [
+     1,
+     1,
+     0,
+     0,
+     1,
+     0,
+     0
+    ],
+    "nodes": 10,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       4,
+       2,
+       2,
+       1,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       4,
+       2,
+       2,
+       1,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       4,
+       2,
+       2,
+       1,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       4,
+       2,
+       2,
+       1,
+       1,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 3,
+    "floor_trials": 16,
+    "floor_rate": 0.188,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "seconds": 0.04,
+    "when": "2026-09-14 06:50 UTC"
+   }
   }
  ]
 }

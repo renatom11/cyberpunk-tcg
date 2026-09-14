@@ -26,15 +26,29 @@ def rows():
     return diagnose_features.run("ismcts", "out/learn/gen-001/weights.json")
 
 
+#: The four the gen-1 agent solved when this diagnostic was written and the suite was eight
+#: positions. It is a fixed historical set, not a live score: the suite has grown since, and
+#: re-measuring which positions the agent solves is the arena's job, not this file's.
 SOLVED = {"gear-before-the-raid", "sell-to-afford-the-raid", "mined-23767-79",
           "mined-166302-115"}
+
+
+def _suite_size() -> int:
+    import json
+    suite = json.loads((ROOT / "data/arena/delayed.json").read_text(encoding="utf-8"))
+    return len(suite["positions"])
 
 
 def test_it_covers_every_verified_position(rows):
     """Both kinds — hand-built board specs and mined replay prefixes. The first version read
     ``entry["spec"]`` and silently skipped the five replay positions, which would have drawn a
-    conclusion from three."""
-    assert len(rows) == 8, [r["id"] for r in rows]
+    conclusion from three.
+
+    Counted against the suite file rather than a literal, because the suite grows: a hard-coded
+    eight turns every future position added into a failing test here, which trains whoever adds
+    one to edit this number instead of asking whether the diagnostic still covers everything.
+    """
+    assert len(rows) == _suite_size(), [r["id"] for r in rows]
 
 
 def test_duplicate_copies_of_a_card_are_deduped_like_the_search_does(rows):
@@ -64,7 +78,8 @@ def test_the_control_can_distinguish_the_two_groups_if_there_is_anything_to_dist
     """
     solved = [r for r in rows if r["id"] in SOLVED]
     unsolved = [r for r in rows if r["id"] not in SOLVED]
-    assert len(solved) == 4 and len(unsolved) == 4
+    assert len(solved) == len(SOLVED), [r["id"] for r in solved]
+    assert len(unsolved) == len(rows) - len(SOLVED) and unsolved
     for r in rows:
         assert r["ratio"] >= 0.0 and r["options"] > 1
         assert 1 <= r["value_rank"] <= r["options"]

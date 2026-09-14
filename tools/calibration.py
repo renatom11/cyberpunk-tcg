@@ -2,7 +2,7 @@
 
 ``tools/diagnose_features.py`` found that on ``two-pieces-of-gear`` the head ranks the winning move
 last of four, preferring ``Attack`` (+3.9026) to ``CallLegend`` (+3.0422) — a 0.86-logit preference
-with the sign wrong. But the delayed suite is eight positions hand-picked *because* a greedy agent
+with the sign wrong. But the delayed suite is positions hand-picked *because* a greedy agent
 fails them, so finding greedy failure there is close to circular.
 
 This asks the same question of millions of real positions, using data already on disk: for rows

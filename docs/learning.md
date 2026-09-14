@@ -2037,9 +2037,10 @@ buckets** → three nights of 'the model is too greedy' is wrong too, the delaye
 unrepresentative of general play, and the honest next step is to stop tuning the evaluator and say
 so — with the suite reclassified as a stress test rather than a progress metric."*
 
-So: the delayed suite is hereby a **stress test, not a progress metric**. Its 8 positions are
+So: the delayed suite is hereby a **stress test, not a progress metric**. Its positions are
 adversarial by construction and the failure they expose is real but rare; treating its score as the
-headline number is what made three flat results look like three mysteries.
+headline number is what made three flat results look like three mysteries. (It held 8 positions
+when that was written; see "The suite is 21 positions now" below.)
 
 ### The cumulative scoreboard
 
@@ -2646,3 +2647,31 @@ features. Public zones need no such call, hand and deck are only ever visible th
 and the derived counts are memoised on the four colour bounds, of which there are at most 256.
 Worth recording because the honest failure mode was not a crash: it was an experiment that comes
 back flat for a reason that has nothing to do with its hypothesis.
+
+
+## The suite is 21 positions now
+
+Every agent comparison above was bottlenecked by the same number. "4 of 8" against "6 of 8" is a
+two-position difference on a sample of eight, and half the entries in the tables on this page are
+scored on it. Growing the suite is the cheapest way to make every *future* measurement on this page
+more sensitive, and it costs no modelling insight at all.
+
+`tools/propose_positions.py` turns that into a loop where a wrong idea is free. A proposal is a JSON
+board; `learn.delayed.qualify` decides. It runs an **exhaustive** turn search over the acting
+player's own decisions and requires all of: the solver proves a winning line exists inside the
+horizon; the frozen one-ply heuristic misses it on every qualifying seed; uniform random wins at
+most a quarter of the scoring seeds; and at horizon 2 the winning Gig count is still off the board
+when the searched turn ends, or it is a within-turn puzzle wearing a "delayed" label. A bad proposal
+comes back `ok: false` with the reason and the only cost is the seconds the solver spent refuting
+it. The output is correct by construction; the open question was only yield.
+
+Thirteen proposals from a "steal threshold" theme qualified and are merged, taking the suite from 8
+to **21**. `tests/learn/test_delayed_reward.py` re-derives every stored claim, and passes.
+
+The `merge` step refuses more than the solver does, and deliberately. A verification block must be
+present and `ok`; it must carry the same ruleset digest the suite is stamped with, or the stored
+claim is about a different game; the board must not repeat one already in the file, because a
+re-skin qualifies just as happily as a new idea and the solver has no opinion about novelty; and the
+entry must explain itself in a paragraph. Fourteen further positions qualified and are **not** in
+the file, because they arrived with `why` set to "placeholder". A verified row nobody can read is a
+correct answer to a question the file no longer records, and the eight originals set the standard.

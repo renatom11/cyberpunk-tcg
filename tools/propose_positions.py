@@ -3,12 +3,14 @@
     python tools/propose_positions.py check out/positions/my-idea.json
     python tools/propose_positions.py check out/positions/*.json --quiet
     python tools/propose_positions.py template            # a skeleton spec to start from
+    python tools/propose_positions.py merge out/positions/*.verified.json [--apply]
 
 Why this exists
 ---------------
-``data/arena/delayed.json`` holds **8** positions, and every agent comparison in this project is
-bottlenecked by that number: "4 of 8" against "6 of 8" is a two-position difference on a tiny
-sample. Growing the suite is the cheapest way to make every future measurement more sensitive.
+``data/arena/delayed.json`` held **8** positions for most of this project's life, and every agent
+comparison was bottlenecked by that number: "4 of 8" against "6 of 8" is a two-position difference
+on a tiny sample. Growing the suite is the cheapest way to make every future measurement more
+sensitive. It is 21 as of the first merge through this tool.
 
 The loop is propose-and-verify, and the verifier is not a matter of opinion. ``learn.delayed.qualify``
 runs an **exhaustive** ``turn_search`` over the acting player's own decisions and requires all of:
@@ -169,6 +171,63 @@ def check(paths: list[str], quiet: bool) -> int:
     return 0
 
 
+#: A ``why`` that says nothing. The suite's eight originals each carry a paragraph explaining what
+#: the greedy line is, what the winning line is, and why the winning line looks worth nothing until
+#: its last move -- and that paragraph is most of what makes the suite readable a month later. A
+#: position that qualifies but arrives undocumented is a correct row nobody can check, so merge
+#: refuses it rather than letting the file fill up with verified mysteries.
+_EMPTY_WHY = ("", "placeholder", "todo", "tbd", "n/a", "none")
+MIN_WHY = 200
+
+
+def merge(paths: list[str], apply: bool) -> int:
+    """Fold verified candidates into ``data/arena/delayed.json``, refusing anything unchecked.
+
+    Everything here is a refusal the suite would otherwise have to trust a proposer about: the
+    verification block must be present and ``ok``; it must have been produced under the ruleset the
+    suite is stamped with, or the stored claim is about a different game; the board must not repeat
+    one already in the file; and the position must explain itself.
+    """
+    suite = json.loads(SUITE.read_text(encoding="utf-8"))
+    seen = _existing()
+    ids = {e["id"] for e in suite["positions"]}
+    added, refused = [], []
+    for path in paths:
+        entry = json.loads(Path(path).read_text(encoding="utf-8"))
+        cid = entry.get("id", path)
+        v = entry.get("verified") or {}
+        why = (entry.get("why") or "").strip()
+        if not v.get("ok"):
+            refused.append((cid, "no verification block, or it did not qualify"))
+        elif v.get("rules") != suite.get("rules"):
+            refused.append((cid, f"verified under ruleset {v.get('rules')!r}, suite is "
+                                 f"{suite.get('rules')!r} — the claim is about a different game"))
+        elif cid in ids:
+            refused.append((cid, "an entry with this id is already in the suite"))
+        elif _signature(entry) in seen:
+            refused.append((cid, f"same board as existing {seen[_signature(entry)]!r}"))
+        elif why.lower() in _EMPTY_WHY or len(why) < MIN_WHY:
+            refused.append((cid, f"why is {len(why)} characters; the suite documents its positions"))
+        else:
+            seen[_signature(entry)] = cid
+            ids.add(cid)
+            added.append(entry)
+    for cid, reason in refused:
+        print(f"  REFUSED  {cid}  {reason}")
+    for e in added:
+        print(f"  MERGED   {e['id']}  horizon {entry_horizon(e)}  "
+              f"floor {e['verified']['floor_wins']}/{e['verified']['floor_trials']}")
+    print(f"\n{len(added)} merged, {len(refused)} refused; suite goes "
+          f"{len(suite['positions'])} -> {len(suite['positions']) + len(added)}")
+    if not apply:
+        print("dry run — pass --apply to write the file")
+        return 0
+    suite["positions"].extend(added)
+    SUITE.write_text(json.dumps(suite, indent=1) + "\n", encoding="utf-8")
+    print(f"wrote {SUITE.relative_to(ROOT)}")
+    return 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="tools/propose_positions.py",
                                  description=__doc__.splitlines()[0])
@@ -177,11 +236,16 @@ def main(argv=None) -> int:
     c.add_argument("paths", nargs="+")
     c.add_argument("--quiet", action="store_true", help="do not write .verified.json beside a pass")
     sub.add_parser("template", help="print a skeleton spec")
+    m = sub.add_parser("merge", help="fold verified candidates into the committed suite")
+    m.add_argument("paths", nargs="+")
+    m.add_argument("--apply", action="store_true", help="write the file (default: dry run)")
     a = ap.parse_args(argv)
     if a.cmd == "template":
         print(json.dumps(TEMPLATE, indent=1))
         return 0
     paths = [p for pat in a.paths for p in sorted(glob.glob(pat))] or a.paths
+    if a.cmd == "merge":
+        return merge(paths, a.apply)
     return check(paths, a.quiet)
 
 
