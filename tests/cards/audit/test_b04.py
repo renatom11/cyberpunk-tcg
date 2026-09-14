@@ -83,20 +83,27 @@ def test_alts_other_ability_is_offered_with_an_empty_trash(pool):
 #: of the Cross* prints the same shape — "⊡: Set a player's Gig to the same value as another
 #: player's Gig" also needs a die on each side of the table — and has no guard: with no dice at all
 #: he is offered, spent, and does nothing.  Two Legends, one printed shape, opposite treatment.
-@pytest.mark.xfail(strict=True,
-                   reason="AUD-hanako-arasaka-daughter-of-the-emperor-1: an absent swap target is "
-                          "implemented as an activation restriction, so Hanako cannot be spent "
-                          "while the rival Gig area is empty")
-def test_hanako_is_activatable_with_no_rival_gig(pool):
+def test_hanako_is_not_activatable_with_no_rival_gig(pool):
+    """"⊡: Swap a friendly Gig with a rival Gig."
+
+    **Withdrawn: AUD-hanako-arasaka-daughter-of-the-emperor-1**, and the engine's behaviour pinned
+    instead. The finding was that `legal=lambda c: bool(c.gigs()) and bool(c.gigs(c.rival))` adds an
+    activation condition the card does not print, and that Padre *Man of the Cross* prints the same
+    two-sided shape with no guard. The killer conceded. The blind reader, which was never shown the
+    finding, read the same lambda and called it the minimum for a swap to be performable at all —
+    "it does not add a restriction the text lacks" — and a finding an independent reader contradicts
+    is not a finding.
+
+    The question it raises is real and larger than this card, so it went to `docs/rulings.md` row
+    045 (may an ability with no legal target be activated?) rather than into a fix. This test now
+    says what the engine does, so that a change of mind has to be deliberate.
+    """
     s = board(pool, Side(legends=[("hanako-arasaka-daughter-of-the-emperor",
                                    {"faceup": True, "gear": [NETDRIVER]})],
                          gig=[(6, 3)], deck=["floor-it"] * 2), Side())
     h = find(s, "hanako-arasaka-daughter-of-the-emperor")
-    assert Activate(h, 0) in options(s)
-    do(s, Activate(h, 0))
-    assert s.i_spent[h]
-    assert s.gig[0] == [(6, 3)] and s.gig[1] == []      # there was nothing to swap with
-    assert hand(s) == 1                                  # ... but the card was still spent
+    assert Activate(h, 0) not in options(s)             # nothing to swap with: not offered
+    assert hand(s) == 0                                 # ... so the Netdriver on her draws nothing
 
 
 def test_padre_is_activatable_with_no_dice_on_the_board_at_all(pool):

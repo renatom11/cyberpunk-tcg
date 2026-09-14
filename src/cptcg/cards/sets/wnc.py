@@ -1368,7 +1368,12 @@ def _():
 @script("evelyn-parker-beautiful-enigma")
 def _():
     def ev(c, e):
-        if e[0] == "steal" and c.s.i_owner[e[1]] == c.player and c.d(e[1]).tags & {"CORPO", "GANGER"}:
+        # "steals 1 OR MORE Gigs, ready 1 Eddie" -- one Eddie for the steal, not one per die. The
+        # engine dispatches one ("steal", ...) event per die, and e[5] is the die's position in the
+        # steal that queued it, so the trigger takes the first and ignores the rest. The phrase
+        # "1 or more" is in the printed text precisely to make the count irrelevant.
+        if e[0] == "steal" and e[5] == 0 and c.s.i_owner[e[1]] == c.player \
+                and c.d(e[1]).tags & {"CORPO", "GANGER"}:
             c.ready_eddies(1)
     return CardScript(on_event=ev, events=frozenset({"steal"}), abilities=(Ability(
         effect=lambda c: c.choose(c.rival_units(), lambda c2, u: c2.mod("must_attack", u, until_my_next_turn=True),

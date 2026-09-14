@@ -60,7 +60,6 @@ def test_evelyn_readies_an_eddie_when_a_ganger_steals(pool):
     assert _ready_eddies(s, 0) == 1
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-evelyn-parker-beautiful-enigma-1: readies 1 Eddie per die stolen; the text says 1 Eddie for a steal of '1 or more Gigs'")
 def test_evelyn_readies_one_eddie_for_a_multi_die_steal(pool):
     """'When a friendly CORPO or GANGER Unit steals 1 or more Gigs, ready 1 Eddie.'
 
@@ -68,6 +67,8 @@ def test_evelyn_readies_one_eddie_for_a_multi_die_steal(pool):
     (``ops.steal_count`` is ``1 + power // 10``). 'steals 1 or more Gigs' is one trigger for the
     whole steal — that phrase is there precisely to make the count irrelevant — so exactly one
     Eddie readies, not one per die.
+
+    Fixed: AUD-evelyn-parker-beautiful-enigma-1.
     """
     s = board(pool, Side(legends=[("evelyn-parker-beautiful-enigma", {"faceup": True})],
                          field=["animals-wrecker"], eddies=4, spent_eddies=4),

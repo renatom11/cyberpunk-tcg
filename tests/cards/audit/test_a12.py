@@ -21,7 +21,6 @@ from cptcg.core.ops import power
 
 
 # ------------------------------------------------------------------ gorilla-arms
-@pytest.mark.xfail(strict=True, reason="AUD-gorilla-arms-1: the extra steal resolves ahead of the attack's remaining queued steal and invalidates its die index, so the attack's second steal silently fizzles — 2 Gigs instead of 3")
 def test_gorilla_arms_steal_is_extra_not_a_replacement(pool):
     """'The first time this Unit steals 1 or more Gigs each turn, steal a rival Gig with a value
     not shared by a friendly Gig.'
@@ -31,6 +30,8 @@ def test_gorilla_arms_steal_is_extra_not_a_replacement(pool):
     dice of distinct value. Gorilla Arms triggers on the first of those two steals and adds a third
     die. Nothing in the text lets it cancel one of the attack's own steals, so all three dice change
     hands. The same board with no Gear at all keeps both of the attack's steals — see findings.md.
+
+    Fixed: AUD-gorilla-arms-1.
     """
     s = board(pool, Side(field=[("animals-wrecker", {"gear": ["gorilla-arms"]})], gig=[]),
               Side(gig=[(4, 1), (6, 2), (8, 3)]))

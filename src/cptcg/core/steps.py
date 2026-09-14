@@ -276,24 +276,54 @@ def stealable(s: GameState, thief_unit: int, victim: int) -> list[int]:
 
 
 def push_steals(s: GameState, thief_unit: int, indices) -> None:
-    """Queue stealing the given dice (indices of the victim's Gig area), one step per die."""
+    """Queue stealing the named dice, one step per die — by the die, not by its position.
+
+    A queued step used to hold a bare index into the victim's Gig list, and `ops.steal_gig` pops by
+    index, so anything that removed a die in between made the remaining steps point somewhere else.
+    Gorilla Arms is the card that does exactly that: its bonus steal is queued from inside the
+    dispatch of the attack's *first* steal, resolves on top of the stack, and shifted the attack's
+    own second steal onto a different die or off the end of the list entirely. A three-die attack
+    moved two dice, and the printed line ("steal a rival Gig") is purely additive.
+
+    So a step carries the die it named. At resolution it finds that die again; if it is gone, that
+    steal does nothing, which is the right answer for a die somebody else already took.
+    """
     thief = s.i_owner[thief_unit]
-    for i in sorted(indices):                            # LIFO: highest index steals first
-        s.stack.append(StealOneStep(thief_unit, thief, i))
+    gig = s.gig[1 - thief]
+    idxs = sorted(indices)
+    for n, i in enumerate(idxs):                         # LIFO: highest index steals first, so the
+        die = gig[i] if i < len(gig) else None           # ordinal counts in RESOLUTION order
+        s.stack.append(StealOneStep(thief_unit, thief, i, die, len(idxs) - 1 - n))
 
 
 class StealOneStep(Step):
-    __slots__ = ("unit", "thief", "index")
+    __slots__ = ("unit", "thief", "index", "die", "ordinal")
 
-    def __init__(self, unit: int, thief: int, index: int) -> None:
+    def __init__(self, unit: int, thief: int, index: int, die=None, ordinal: int = 0) -> None:
         self.unit, self.thief, self.index = unit, thief, index
+        self.die, self.ordinal = die, ordinal
 
     def key(self) -> tuple:
-        return ("StealOneStep", self.unit, self.thief, self.index)
+        return ("StealOneStep", self.unit, self.thief, self.index, self.die, self.ordinal)
+
+    def _locate(self, s: GameState, victim: int) -> int | None:
+        """Where the die this step named is now, or None if it has left the Gig area."""
+        gig = s.gig[victim]
+        if self.die is None:                             # queued before this change, or unknown
+            return self.index if self.index < len(gig) else None
+        if self.index < len(gig) and gig[self.index] == self.die:
+            return self.index                            # the common case: nothing moved
+        for j, d in enumerate(gig):
+            if d == self.die:
+                return j
+        return None
 
     def run(self, s: GameState) -> None:
         victim = 1 - self.thief
-        if self.index >= len(s.gig[victim]) or s.over:
+        if s.over:
+            return
+        index = self._locate(s, victim)
+        if index is None:
             return
         act = s._active
         if act is None:
@@ -301,15 +331,18 @@ class StealOneStep(Step):
         ws = act[7]
         # The victim's replacement effects first; the tuples are a snapshot of the index.
         for i, h in ws[victim] + ws[1 - victim]:
-            if h(_ctx(s, i), self.unit, victim, self.index):
+            if h(_ctx(s, i), self.unit, victim, index):
                 return
-        do_steal(s, self.unit, self.thief, self.index)
+        do_steal(s, self.unit, self.thief, index, self.ordinal)
 
 
-def do_steal(s: GameState, unit: int, thief: int, index: int) -> None:
+def do_steal(s: GameState, unit: int, thief: int, index: int, ordinal: int = 0) -> None:
+    """Move one die. ``ordinal`` is this die's position in the steal that queued it, counting in
+    resolution order, so a card whose trigger reads "steals **1 or more** Gigs" can fire once for
+    the whole steal instead of once per die."""
     sides, value = steal_gig(s, thief, index)
     s.used.add(("stole", unit))
-    dispatch(s, ("steal", unit, thief, sides, value))
+    dispatch(s, ("steal", unit, thief, sides, value, ordinal))
 
 
 class ResolveAttackStep(Step):
