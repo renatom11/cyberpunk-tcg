@@ -399,17 +399,27 @@ def fight(s: GameState, a: int, t: int) -> None:
     if s.has_mod("next_fight_no_defeat", oa):
         defeat_a = False
         s.mods = [m for m in s.mods if not (m[0] == "next_fight_no_defeat" and m[1] == oa)]
+    # Ruling 010 / CR 9.17.3: a tie is a loss for BOTH Units, and this function already says so in
+    # its own defeat bookkeeping (`defeat_t = a_wins or not t_wins`). It used to say the opposite to
+    # every card that listens: "fight_lost" was dispatched only inside the two decisive branches, so
+    # a tie told nobody they had lost. Three cards read that event and all three were silently wrong
+    # on a tie -- Maelstrom Zealots ("When this Unit loses a fight, defeat the opposing rival Unit"),
+    # Safety Override, and Cyberpsychosis ("If that Unit steals or fights, defeat it at the end of
+    # this turn"). Losing is `not won`, which is what the rest of the function already means by it.
     if a_wins:
         dispatch(s, ("fight_won", a, t, pa - pt))
-        dispatch(s, ("fight_lost", t, a))
-    elif t_wins:
+    if t_wins:
         dispatch(s, ("fight_won", t, a, pt - pa))
+    if not a_wins:
         dispatch(s, ("fight_lost", a, t))
-    # Safety Override: the next time a friendly Unit loses a fight, defeat the opposing Unit.
-    if a_wins and s.has_mod("next_loss_defeats_winner", ot):
+    if not t_wins:
+        dispatch(s, ("fight_lost", t, a))
+    # Safety Override: the next time a friendly Unit loses a fight, defeat the opposing Unit. The
+    # same reading of "loses": a tie fires it for both sides, and spends both one-shots.
+    if not t_wins and s.has_mod("next_loss_defeats_winner", ot):
         s.mods = [m for m in s.mods if not (m[0] == "next_loss_defeats_winner" and m[1] == ot)]
         defeat_a = True
-    if t_wins and s.has_mod("next_loss_defeats_winner", oa):
+    if not a_wins and s.has_mod("next_loss_defeats_winner", oa):
         s.mods = [m for m in s.mods if not (m[0] == "next_loss_defeats_winner" and m[1] == oa)]
         defeat_t = True
     if defeat_t:

@@ -91,10 +91,6 @@ def test_memory_relapse_is_honoured_by_the_rivals_ready_step(pool):
 
 
 # ----------------------------------------------------------------------------- safety-override
-@pytest.mark.xfail(strict=True, reason="AUD-safety-override-1: 'the next time a friendly Unit loses "
-                                       "a fight' is read only in the a_wins/t_wins branches of "
-                                       "steps.fight, so a tie — which ruling 010 calls a loss for "
-                                       "both — neither fires the effect nor consumes it")
 def test_safety_override_fires_on_a_tied_fight(pool):
     """'QUICK: The next time a friendly Unit loses a fight this turn, defeat the opposing rival
     Unit.'
@@ -103,6 +99,8 @@ def test_safety_override_fires_on_a_tied_fight(pool):
     fight. The same ruling stops a 0-power Unit defeating anything (CR 9.19.2), which is why both
     0-power Units are still standing afterwards and why Safety Override's own defeat is the only
     thing that can send the attacker to the trash.
+
+    Fixed: AUD-safety-override-1.
     """
     s = board(pool, Side(field=["delamain-rideshare-ai"], gig=[(4, 1)]),
               Side(hand=["safety-override"], eddies=4,

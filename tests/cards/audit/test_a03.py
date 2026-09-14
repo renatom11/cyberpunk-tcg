@@ -49,9 +49,6 @@ def test_reboot_optics_shield_covers_only_the_next_fight(pool):
 
 
 # --------------------------------------------------------------------------- AUD-cyberpsychosis-1
-@pytest.mark.xfail(strict=True, reason=(
-    "AUD-cyberpsychosis-1: 'if that Unit ... fights' is implemented as fight_won/fight_lost, and a "
-    "tied fight dispatches neither, so a Unit that survives a tie is never defeated at end of turn"))
 def test_cyberpsychosis_defeats_a_unit_that_fought_to_a_tie(pool):
     """"QUICK: Give an equipped Unit +3 power this turn for each of its equipped Gears. If that
     Unit steals or fights, defeat it at the end of this turn."
@@ -60,6 +57,8 @@ def test_cyberpsychosis_defeats_a_unit_that_fought_to_a_tie(pool):
     Ruling 010 / CR 9.17.3: on a tie both are defeated — the Gear takes our Unit's defeat instead
     (Deadman Transmitter), so the Unit survives the fight it fought. It fought, so it must be
     defeated at the end of the turn.
+
+    Fixed: AUD-cyberpsychosis-1.
     """
     s = board(pool, Side(hand=["cyberpsychosis"], eddies=E,
                          field=[("psycho-squad", {"gear": ["deadman-transmitter"]})],

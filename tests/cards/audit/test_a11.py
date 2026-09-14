@@ -54,9 +54,6 @@ def test_6th_street_recruits_fires_for_a_plain_friendly_unit(pool):
 
 
 # -------------------------------------------------------------- maelstrom-zealots
-@pytest.mark.xfail(strict=True, reason="AUD-maelstrom-zealots-1: a tied fight is a fight this Unit lost "
-                                       "(ruling 010: 'Ties: both lose and both are defeated'), but the "
-                                       "engine dispatches fight_lost only on a decisive result")
 def test_maelstrom_zealots_defeats_the_winner_of_a_tied_fight(pool):
     """'When this Unit loses a fight, defeat the opposing rival Unit.'
 
@@ -64,6 +61,8 @@ def test_maelstrom_zealots_defeats_the_winner_of_a_tied_fight(pool):
     are defeated"; docs/rules.md: "on a tie they defeat each other". Zealots lost that fight, so
     its trigger must defeat the opposing Unit — which matters here precisely because ruling 010
     also stops the tie itself from defeating either 0-power Unit.
+
+    Fixed: AUD-maelstrom-zealots-1.
     """
     s = board(pool, Side(field=["maelstrom-zealots"]),
               Side(field=[("delamain-rideshare-ai", {"spent": True})], gig=[(4, 1)]))
