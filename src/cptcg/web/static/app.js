@@ -1126,11 +1126,14 @@ function renderCardGrid(q) {
 // from data/strategy/graph.json — each of the 151 cards hand-tagged with what it CREATES and what
 // it is PAID FOR — so "works with" is a fact about the two texts rather than an opinion.
 let LINKS = {}, TOKENS = {}, ARCHES = {}, GUIDE_OPEN = null;
+let MEASURED_NOTE = "", MEASURED_GAMES = 0, MEASURED_AGENT = "", MEASURED_STALE = false;
 
 async function loadCardLinks() {
   try {
     const d = await api("/api/cardlinks");
     LINKS = d.links || {}; TOKENS = d.tokens || {}; ARCHES = d.archetypes || {};
+    MEASURED_NOTE = d.measured_note || ""; MEASURED_GAMES = d.measured_games || 0;
+    MEASURED_AGENT = d.measured_agent || ""; MEASURED_STALE = !!d.measured_stale;
   } catch (e) { LINKS = {}; }                    // the pool still browses without the map
   const sel = $("#cardArch");
   if (sel && Object.keys(ARCHES).length) {
@@ -1202,23 +1205,29 @@ function openCardGuide(id) {
   if (!c.verified) right.append(el("div", "warn", "This card is unverified — its printed face was never captured, so the values shown are placeholders."));
 
   const L = LINKS[c.id];
+  if (L && L.archetypes && L.archetypes.length) {
+    const a = el("div", "garch");
+    a.append(el("span", "dim", "plays in: "));
+    L.archetypes.forEach(k => a.append(el("span", "tag", k)));
+    right.append(a);
+  }
+  const guide = c.guide;
+  if (guide && guide.guide) {
+    right.append(el("h4", "", "HOW IT PLAYS"));
+    right.append(el("p", "", guide.guide));
+    if (guide.tips && guide.tips.length) {
+      const ul = el("ul", "tips");
+      guide.tips.forEach(tp => ul.append(el("li", "", tp)));
+      right.append(ul);
+    }
+  }
+  // Straight under the written notes, and above the interaction lists: the whole point of putting a
+  // measurement on this page is that it can disagree with the paragraph directly above it, and a
+  // reader who has to scroll past thirty combo chips to find it will never notice when it does.
+  // Hoisted out of the links block for the same reason it is worth showing at all — a card with no
+  // interactions still has a record, and for those cards the record is the only thing to say.
+  if (c.measured) measuredPanel(right, c.measured);
   if (L) {
-    if (L.archetypes && L.archetypes.length) {
-      const a = el("div", "garch");
-      a.append(el("span", "dim", "plays in: "));
-      L.archetypes.forEach(k => a.append(el("span", "tag", k)));
-      right.append(a);
-    }
-    const guide = c.guide;
-    if (guide && guide.guide) {
-      right.append(el("h4", "", "HOW IT PLAYS"));
-      right.append(el("p", "", guide.guide));
-      if (guide.tips && guide.tips.length) {
-        const ul = el("ul", "tips");
-        guide.tips.forEach(tp => ul.append(el("li", "", tp)));
-        right.append(ul);
-      }
-    }
     const sections = [["WHAT THIS TURNS ON", L.enables, "sets up"],
                       ["WHAT SETS THIS UP", L.enabled_by, "needs"],
                       ["WANTS THE SAME BOARD", L.co_need, "both want"],
@@ -1236,6 +1245,54 @@ function openCardGuide(id) {
   sheet.append(body);
   GUIDE_OPEN.classList.add("show");
   sheet.scrollTop = 0;
+}
+
+// What the card actually did, from tools/playtest.py. Shown beside the written notes on purpose:
+// the two can disagree, and when they do that is the interesting thing on the page rather than an
+// embarrassment to hide. Every number carries its sample size, because a rate without one invites
+// exactly the reading it cannot support.
+function pct(x) { return x == null ? "—" : `${(100 * x).toFixed(1)}%`; }
+
+function measuredPanel(right, m) {
+  right.append(el("h4", "", `MEASURED <span class=dim>· ${MEASURED_GAMES.toLocaleString()} ` +
+    `${MEASURED_AGENT || "self-play"} games</span>`));
+  if (MEASURED_STALE) {
+    right.append(el("div", "warn", "The card scripts have changed since this run, so these " +
+      "numbers describe the game as it behaved before that change. Re-run tools/playtest.py."));
+  }
+  const grid = el("div", "gmeas");
+  const rows = [
+    ["played", `${m.played.toLocaleString()}`, "games where this copy reached the table"],
+    ["play rate", pct(m.play_rate), "of the games where it was drawn"],
+    ["won when played", pct(m.gip), "a level, not a contrast — partly about the decks it was in"],
+    ["won when drawn", pct(m.gih), `over ${m.drawn.toLocaleString()} draws`],
+    ["IWD", m.iwd == null ? "—" : `${m.iwd >= 0 ? "+" : ""}${(100 * m.iwd).toFixed(1)}pp`,
+     "won when drawn minus won when not — the contrast"],
+  ];
+  rows.forEach(([k, v, why]) => {
+    const cell = el("div", "mcell");
+    cell.append(el("div", "mk", k));
+    cell.append(el("div", "mv", v));
+    cell.append(el("div", "mw", why));
+    grid.append(cell);
+  });
+  right.append(grid);
+  if (m.play_rate != null && m.play_rate < 0.25 && m.drawn >= 200) {
+    right.append(el("div", "warn",
+      `The agent held this card and played something else ${pct(1 - m.play_rate)} of the time it ` +
+      `drew it. Every rate above is measured on the ${m.played.toLocaleString()} games where it ` +
+      `did play it, so read them narrowly.`));
+  }
+  // Folded away by default. It is the same paragraph on all 151 cards, and printed open it is the
+  // largest block on the page — but it must be *reachable*, because every rate above it is
+  // conditional on how the run was built and a number without that context is the one that gets
+  // quoted back years later as a fact about the game.
+  if (MEASURED_NOTE) {
+    const d = el("details", "mnote");
+    d.append(el("summary", "", "how this was measured"));
+    d.append(el("p", "dim small", MEASURED_NOTE));
+    right.append(d);
+  }
 }
 
 function closeCardGuide() { if (GUIDE_OPEN) GUIDE_OPEN.classList.remove("show"); }

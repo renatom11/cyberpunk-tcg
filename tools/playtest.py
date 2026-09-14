@@ -209,7 +209,51 @@ def run(a) -> int:
                    f"drawn {dg}, played {pg} — the agent declines it")
             print(f"  {c:44s} {why}")
     _report(reg, kn, out / "playtest.json", a.target)
+    if a.publish:
+        _publish(reg, kn, a)
     return 0
+
+
+PUBLISHED = ROOT / "data" / "strategy" / "measured.json"
+
+NOTE = (
+    "Measured by tools/playtest.py: legal decks built from the coverage table so that every card in "
+    "the set gets games, then heuristic self-play. Read these as facts about how the frozen "
+    "one-ply agent plays the card, not as a power ranking. 'played' counts the games where this "
+    "deck's copy actually reached the table -- cast, replayed from the trash, or for a Legend "
+    "Called or sent GO SOLO -- which is why a Legend has numbers here for the first time. "
+    "'play rate' is of the games where it was drawn; a low one means the agent had it in hand and "
+    "chose something else. 'when played' has no 'not drawn' arm to difference against, so it is a "
+    "level rather than a contrast and is partly a fact about the decks the card appeared in; "
+    "tools/legend_swap.py is the paired instrument for that question. IWD is the contrast and is "
+    "the more trustworthy of the two, but draw order confounds it too."
+)
+
+
+def _publish(reg, kn: Knowledge, a) -> None:
+    """A small file the card guide can render beside the hand-written notes.
+
+    Deliberately carries its own provenance -- how many games, which agent, and both digests. A
+    measurement on the site with no statement of what produced it is the kind of number that
+    outlives the run that made it and gets quoted years later as if it were a rule of the game.
+    """
+    from cptcg.cards.registry import cards_digest
+    from cptcg.core.config import DEFAULT_CONFIG
+    cards = {}
+    for d in reg.defs:
+        e = kn.cards.get(d.id)
+        if e is None or not (e.drawn_games or e.played_games):
+            continue
+        cards[d.id] = {"drawn": e.drawn_games, "played": e.played_games,
+                       "gih": round(e.gih, 4) if e.gih is not None else None,
+                       "gip": round(e.gip, 4) if e.gip is not None else None,
+                       "play_rate": round(e.play_rate, 4) if e.play_rate is not None else None,
+                       "iwd": round(e.iwd, 4) if e.iwd is not None else None}
+    PUBLISHED.write_text(json.dumps(
+        {"version": 1, "games": kn.games, "agent": a.agent, "target": a.target,
+         "rules": DEFAULT_CONFIG.digest(), "cards_digest": cards_digest(),
+         "note": NOTE, "cards": cards}, indent=1) + "\n", encoding="utf-8")
+    print(f"wrote {PUBLISHED.relative_to(ROOT)}: {len(cards)} cards, {kn.games:,} games")
 
 
 def _report(reg, kn: Knowledge, path: Path, target: int) -> None:
@@ -240,6 +284,8 @@ def main(argv=None) -> int:
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--workers", type=int, default=None)
     ap.add_argument("--out", default="out/playtest")
+    ap.add_argument("--publish", action="store_true",
+                    help="also write data/strategy/measured.json for the card guide")
     return run(ap.parse_args(argv))
 
 

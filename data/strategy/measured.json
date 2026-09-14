@@ -1,0 +1,1211 @@
+{
+ "version": 1,
+ "games": 24240,
+ "agent": "heuristic",
+ "target": 500,
+ "rules": "149b39c8f55e9d41",
+ "cards_digest": "f69b30b70fddb367",
+ "note": "Measured by tools/playtest.py: legal decks built from the coverage table so that every card in the set gets games, then heuristic self-play. Read these as facts about how the frozen one-ply agent plays the card, not as a power ranking. 'played' counts the games where this deck's copy actually reached the table -- cast, replayed from the trash, or for a Legend Called or sent GO SOLO -- which is why a Legend has numbers here for the first time. 'play rate' is of the games where it was drawn; a low one means the agent had it in hand and chose something else. 'when played' has no 'not drawn' arm to difference against, so it is a level rather than a contrast and is partly a fact about the decks the card appeared in; tools/legend_swap.py is the paired instrument for that question. IWD is the contrast and is the more trustworthy of the two, but draw order confounds it too.",
+ "cards": {
+  "6th-street-recruits": {
+   "drawn": 1784,
+   "played": 1547,
+   "gih": 0.5959,
+   "gip": 0.6044,
+   "play_rate": 0.8672,
+   "iwd": 0.1227
+  },
+  "adam-smasher-ender-of-legends": {
+   "drawn": 0,
+   "played": 3840,
+   "gih": null,
+   "gip": 0.4276,
+   "play_rate": null,
+   "iwd": null
+  },
+  "adam-smasher-metal-over-meat": {
+   "drawn": 3610,
+   "played": 533,
+   "gih": 0.6634,
+   "gip": 0.7148,
+   "play_rate": 0.1476,
+   "iwd": -0.0408
+  },
+  "adrenaline-converter": {
+   "drawn": 2682,
+   "played": 1551,
+   "gih": 0.5884,
+   "gip": 0.6093,
+   "play_rate": 0.5783,
+   "iwd": -0.0472
+  },
+  "afterparty-at-lizzies": {
+   "drawn": 3775,
+   "played": 1558,
+   "gih": 0.6538,
+   "gip": 0.6354,
+   "play_rate": 0.4127,
+   "iwd": -0.0179
+  },
+  "all-is-lost": {
+   "drawn": 4006,
+   "played": 1550,
+   "gih": 0.4466,
+   "gip": 0.409,
+   "play_rate": 0.3869,
+   "iwd": -0.0176
+  },
+  "alt-cunningham-mother-of-daemons": {
+   "drawn": 2290,
+   "played": 1571,
+   "gih": 0.5939,
+   "gip": 0.5652,
+   "play_rate": 0.686,
+   "iwd": -0.0455
+  },
+  "alt-cunningham-soulkiller-architect": {
+   "drawn": 0,
+   "played": 880,
+   "gih": null,
+   "gip": 0.2852,
+   "play_rate": null,
+   "iwd": null
+  },
+  "animals-wrecker": {
+   "drawn": 1945,
+   "played": 1551,
+   "gih": 0.508,
+   "gip": 0.528,
+   "play_rate": 0.7974,
+   "iwd": 0.0505
+  },
+  "appetite-for-destruction": {
+   "drawn": 8918,
+   "played": 512,
+   "gih": 0.4381,
+   "gip": 0.2559,
+   "play_rate": 0.0574,
+   "iwd": -0.0494
+  },
+  "arasaka-emergency-radioport": {
+   "drawn": 3473,
+   "played": 1546,
+   "gih": 0.4175,
+   "gip": 0.3965,
+   "play_rate": 0.4451,
+   "iwd": -0.0395
+  },
+  "augmented-negotiators": {
+   "drawn": 1799,
+   "played": 1560,
+   "gih": 0.7021,
+   "gip": 0.7,
+   "play_rate": 0.8671,
+   "iwd": 0.0448
+  },
+  "bonnie-and-clyde": {
+   "drawn": 3055,
+   "played": 1555,
+   "gih": 0.4714,
+   "gip": 0.4463,
+   "play_rate": 0.509,
+   "iwd": -0.0103
+  },
+  "bootleg-black-sapphire-show": {
+   "drawn": 4802,
+   "played": 788,
+   "gih": 0.56,
+   "gip": 0.3756,
+   "play_rate": 0.1641,
+   "iwd": -0.0271
+  },
+  "caliber-totentanzs-top-dog": {
+   "drawn": 2284,
+   "played": 1573,
+   "gih": 0.6296,
+   "gip": 0.6325,
+   "play_rate": 0.6887,
+   "iwd": -0.0162
+  },
+  "carnage-at-the-colosseum": {
+   "drawn": 4614,
+   "played": 1550,
+   "gih": 0.4523,
+   "gip": 0.5,
+   "play_rate": 0.3359,
+   "iwd": -0.0016
+  },
+  "chrome-fang": {
+   "drawn": 2150,
+   "played": 1552,
+   "gih": 0.4619,
+   "gip": 0.4549,
+   "play_rate": 0.7219,
+   "iwd": -0.0106
+  },
+  "chrome-reverie": {
+   "drawn": 2424,
+   "played": 62,
+   "gih": 0.3177,
+   "gip": 0.3871,
+   "play_rate": 0.0256,
+   "iwd": -0.0288
+  },
+  "corporate-surveillance": {
+   "drawn": 4390,
+   "played": 1542,
+   "gih": 0.3647,
+   "gip": 0.214,
+   "play_rate": 0.3513,
+   "iwd": -0.0465
+  },
+  "corpo-security": {
+   "drawn": 1746,
+   "played": 1560,
+   "gih": 0.3402,
+   "gip": 0.3135,
+   "play_rate": 0.8935,
+   "iwd": -0.075
+  },
+  "cyberpsychosis": {
+   "drawn": 7548,
+   "played": 608,
+   "gih": 0.6288,
+   "gip": 0.4819,
+   "play_rate": 0.0806,
+   "iwd": -0.0552
+  },
+  "deadman-transmitter": {
+   "drawn": 7453,
+   "played": 1304,
+   "gih": 0.4335,
+   "gip": 0.3382,
+   "play_rate": 0.175,
+   "iwd": -0.043
+  },
+  "delamain-cab": {
+   "drawn": 813,
+   "played": 555,
+   "gih": 0.3456,
+   "gip": 0.3477,
+   "play_rate": 0.6827,
+   "iwd": 0.0753
+  },
+  "delamain-rideshare-ai": {
+   "drawn": 831,
+   "played": 572,
+   "gih": 0.3237,
+   "gip": 0.3182,
+   "play_rate": 0.6883,
+   "iwd": -0.038
+  },
+  "detonate": {
+   "drawn": 3993,
+   "played": 1546,
+   "gih": 0.4453,
+   "gip": 0.3978,
+   "play_rate": 0.3872,
+   "iwd": -0.0046
+  },
+  "dexter-deshawn-off-the-grid": {
+   "drawn": 0,
+   "played": 3840,
+   "gih": null,
+   "gip": 0.4414,
+   "play_rate": null,
+   "iwd": null
+  },
+  "dexter-deshawn-one-last-chance": {
+   "drawn": 1797,
+   "played": 1554,
+   "gih": 0.6845,
+   "gip": 0.6911,
+   "play_rate": 0.8648,
+   "iwd": 0.0261
+  },
+  "dont-fear-the-reaper": {
+   "drawn": 2522,
+   "played": 690,
+   "gih": 0.6487,
+   "gip": 0.5348,
+   "play_rate": 0.2736,
+   "iwd": -0.0768
+  },
+  "dum-dum-maelstrom-triggerman": {
+   "drawn": 0,
+   "played": 4319,
+   "gih": null,
+   "gip": 0.6075,
+   "play_rate": null,
+   "iwd": null
+  },
+  "dying-night-vs-pistol": {
+   "drawn": 1467,
+   "played": 561,
+   "gih": 0.289,
+   "gip": 0.2513,
+   "play_rate": 0.3824,
+   "iwd": -0.0565
+  },
+  "el-sombreron-la-venganza-lenta": {
+   "drawn": 2677,
+   "played": 1559,
+   "gih": 0.4688,
+   "gip": 0.4753,
+   "play_rate": 0.5824,
+   "iwd": -0.0066
+  },
+  "emergency-atlus": {
+   "drawn": 1861,
+   "played": 1567,
+   "gih": 0.5357,
+   "gip": 0.5265,
+   "play_rate": 0.842,
+   "iwd": 0.0975
+  },
+  "evelyn-parker-beautiful-enigma": {
+   "drawn": 0,
+   "played": 880,
+   "gih": null,
+   "gip": 0.317,
+   "play_rate": null,
+   "iwd": null
+  },
+  "evelyn-parker-scheming-siren": {
+   "drawn": 753,
+   "played": 555,
+   "gih": 0.328,
+   "gip": 0.3063,
+   "play_rate": 0.7371,
+   "iwd": 0.004
+  },
+  "field-operator": {
+   "drawn": 2058,
+   "played": 1569,
+   "gih": 0.484,
+   "gip": 0.4767,
+   "play_rate": 0.7624,
+   "iwd": 0.0727
+  },
+  "floor-it": {
+   "drawn": 855,
+   "played": 561,
+   "gih": 0.2854,
+   "gip": 0.2317,
+   "play_rate": 0.6561,
+   "iwd": 0.0216
+  },
+  "fool-on-the-hill": {
+   "drawn": 2416,
+   "played": 939,
+   "gih": 0.6639,
+   "gip": 0.5442,
+   "play_rate": 0.3887,
+   "iwd": -0.0327
+  },
+  "gilded-maton": {
+   "drawn": 2625,
+   "played": 1575,
+   "gih": 0.6789,
+   "gip": 0.6629,
+   "play_rate": 0.6,
+   "iwd": 0.0196
+  },
+  "gorilla-arms": {
+   "drawn": 4702,
+   "played": 1222,
+   "gih": 0.5715,
+   "gip": 0.5933,
+   "play_rate": 0.2599,
+   "iwd": 0.0088
+  },
+  "goro-takemura-hands-unclean": {
+   "drawn": 0,
+   "played": 2480,
+   "gih": null,
+   "gip": 0.471,
+   "play_rate": null,
+   "iwd": null
+  },
+  "goro-takemura-losing-his-way": {
+   "drawn": 2201,
+   "played": 1510,
+   "gih": 0.7106,
+   "gip": 0.7338,
+   "play_rate": 0.6861,
+   "iwd": 0.0676
+  },
+  "goro-takemura-vengeful-bodyguard": {
+   "drawn": 0,
+   "played": 2480,
+   "gih": null,
+   "gip": 0.4758,
+   "play_rate": null,
+   "iwd": null
+  },
+  "gunpoint-diplomacy": {
+   "drawn": 7500,
+   "played": 945,
+   "gih": 0.434,
+   "gip": 0.3217,
+   "play_rate": 0.126,
+   "iwd": -0.042
+  },
+  "hacked-corpo": {
+   "drawn": 793,
+   "played": 557,
+   "gih": 0.3455,
+   "gip": 0.3591,
+   "play_rate": 0.7024,
+   "iwd": 0.0642
+  },
+  "hanako-arasaka-daughter-of-the-emperor": {
+   "drawn": 0,
+   "played": 2520,
+   "gih": null,
+   "gip": 0.4897,
+   "play_rate": null,
+   "iwd": null
+  },
+  "hanako-arasaka-in-a-gilded-cage": {
+   "drawn": 2673,
+   "played": 1564,
+   "gih": 0.673,
+   "gip": 0.6816,
+   "play_rate": 0.5851,
+   "iwd": -0.0082
+  },
+  "heywood-ripperdoc": {
+   "drawn": 1945,
+   "played": 1559,
+   "gih": 0.6411,
+   "gip": 0.6369,
+   "play_rate": 0.8015,
+   "iwd": -0.0404
+  },
+  "industrial-assembly": {
+   "drawn": 2256,
+   "played": 1555,
+   "gih": 0.4699,
+   "gip": 0.4469,
+   "play_rate": 0.6893,
+   "iwd": -0.0492
+  },
+  "jacked-in-voodoo-boy": {
+   "drawn": 683,
+   "played": 577,
+   "gih": 0.3499,
+   "gip": 0.3466,
+   "play_rate": 0.8448,
+   "iwd": 0.0322
+  },
+  "jackie-welles-mamas-favorite": {
+   "drawn": 0,
+   "played": 2519,
+   "gih": null,
+   "gip": 0.5403,
+   "play_rate": null,
+   "iwd": null
+  },
+  "jackie-welles-pour-one-out-for-me": {
+   "drawn": 0,
+   "played": 879,
+   "gih": null,
+   "gip": 0.3163,
+   "play_rate": null,
+   "iwd": null
+  },
+  "jackie-welles-ride-or-die-choom": {
+   "drawn": 2044,
+   "played": 1557,
+   "gih": 0.6991,
+   "gip": 0.7238,
+   "play_rate": 0.7617,
+   "iwd": 0.0851
+  },
+  "japantown-jonin": {
+   "drawn": 1831,
+   "played": 1566,
+   "gih": 0.4921,
+   "gip": 0.4777,
+   "play_rate": 0.8553,
+   "iwd": -0.0147
+  },
+  "johnny-silverhand-never-stop-fighting": {
+   "drawn": 2055,
+   "played": 1550,
+   "gih": 0.4599,
+   "gip": 0.4497,
+   "play_rate": 0.7543,
+   "iwd": -0.0425
+  },
+  "johnny-silverhand-rocking-renegade": {
+   "drawn": 0,
+   "played": 3800,
+   "gih": null,
+   "gip": 0.4205,
+   "play_rate": null,
+   "iwd": null
+  },
+  "judy-alvarez-braindance-maestro": {
+   "drawn": 0,
+   "played": 879,
+   "gih": null,
+   "gip": 0.3072,
+   "play_rate": null,
+   "iwd": null
+  },
+  "judy-alvarez-nothing-to-doubt": {
+   "drawn": 818,
+   "played": 549,
+   "gih": 0.2836,
+   "gip": 0.2987,
+   "play_rate": 0.6711,
+   "iwd": -0.0544
+  },
+  "kerry-eurodyne-axe-attitude-audience": {
+   "drawn": 0,
+   "played": 4355,
+   "gih": null,
+   "gip": 0.5986,
+   "play_rate": null,
+   "iwd": null
+  },
+  "kerry-eurodyne-the-last-rockerboy": {
+   "drawn": 1841,
+   "played": 1551,
+   "gih": 0.5921,
+   "gip": 0.6074,
+   "play_rate": 0.8425,
+   "iwd": 0.0959
+  },
+  "kiroshi-optics": {
+   "drawn": 2443,
+   "played": 1562,
+   "gih": 0.6472,
+   "gip": 0.6492,
+   "play_rate": 0.6394,
+   "iwd": -0.0163
+  },
+  "la-llorona-ghost-of-the-past": {
+   "drawn": 1727,
+   "played": 1558,
+   "gih": 0.5727,
+   "gip": 0.5847,
+   "play_rate": 0.9021,
+   "iwd": 0.1057
+  },
+  "les-elemens": {
+   "drawn": 1769,
+   "played": 535,
+   "gih": 0.3166,
+   "gip": 0.3981,
+   "play_rate": 0.3024,
+   "iwd": -0.0181
+  },
+  "live-with-the-aftermath": {
+   "drawn": 4636,
+   "played": 1536,
+   "gih": 0.5695,
+   "gip": 0.5085,
+   "play_rate": 0.3313,
+   "iwd": -0.0125
+  },
+  "lizzy-wizzy-delicate-weapon": {
+   "drawn": 749,
+   "played": 575,
+   "gih": 0.2977,
+   "gip": 0.2609,
+   "play_rate": 0.7677,
+   "iwd": 0.0409
+  },
+  "maelstrom-goons": {
+   "drawn": 2195,
+   "played": 1572,
+   "gih": 0.6743,
+   "gip": 0.6877,
+   "play_rate": 0.7162,
+   "iwd": 0.067
+  },
+  "maelstrom-zealots": {
+   "drawn": 4601,
+   "played": 1558,
+   "gih": 0.371,
+   "gip": 0.2709,
+   "play_rate": 0.3386,
+   "iwd": -0.04
+  },
+  "maman-brigitte-spirit-of-death": {
+   "drawn": 848,
+   "played": 554,
+   "gih": 0.4021,
+   "gip": 0.4693,
+   "play_rate": 0.6533,
+   "iwd": 0.1095
+  },
+  "mandibular-upgrade": {
+   "drawn": 2502,
+   "played": 1574,
+   "gih": 0.6459,
+   "gip": 0.6252,
+   "play_rate": 0.6291,
+   "iwd": -0.0325
+  },
+  "mantis-blades": {
+   "drawn": 2562,
+   "played": 1548,
+   "gih": 0.4528,
+   "gip": 0.4348,
+   "play_rate": 0.6042,
+   "iwd": -0.0425
+  },
+  "maxtac-av": {
+   "drawn": 1879,
+   "played": 1546,
+   "gih": 0.4774,
+   "gip": 0.478,
+   "play_rate": 0.8228,
+   "iwd": 0.0148
+  },
+  "maxtac-heavy": {
+   "drawn": 1895,
+   "played": 1514,
+   "gih": 0.6322,
+   "gip": 0.6063,
+   "play_rate": 0.7989,
+   "iwd": -0.1072
+  },
+  "maxtac-squadron": {
+   "drawn": 2019,
+   "played": 1510,
+   "gih": 0.7211,
+   "gip": 0.7371,
+   "play_rate": 0.7479,
+   "iwd": 0.0975
+  },
+  "maxtac-suppression-team": {
+   "drawn": 2070,
+   "played": 1576,
+   "gih": 0.6816,
+   "gip": 0.677,
+   "play_rate": 0.7614,
+   "iwd": 0.0491
+  },
+  "memory-relapse": {
+   "drawn": 3695,
+   "played": 1553,
+   "gih": 0.3654,
+   "gip": 0.2486,
+   "play_rate": 0.4203,
+   "iwd": -0.032
+  },
+  "meredith-stout-stone-cold-corpo": {
+   "drawn": 1718,
+   "played": 1558,
+   "gih": 0.5681,
+   "gip": 0.5777,
+   "play_rate": 0.9069,
+   "iwd": 0.1092
+  },
+  "minotaur": {
+   "drawn": 2526,
+   "played": 1556,
+   "gih": 0.445,
+   "gip": 0.4531,
+   "play_rate": 0.616,
+   "iwd": -0.0283
+  },
+  "misty-olszewski-mender-of-broken-spirits": {
+   "drawn": 1441,
+   "played": 559,
+   "gih": 0.2783,
+   "gip": 0.195,
+   "play_rate": 0.3879,
+   "iwd": -0.0598
+  },
+  "modded-kusanagi": {
+   "drawn": 733,
+   "played": 555,
+   "gih": 0.2797,
+   "gip": 0.2396,
+   "play_rate": 0.7572,
+   "iwd": -0.1177
+  },
+  "modded-muramasa": {
+   "drawn": 1083,
+   "played": 558,
+   "gih": 0.3176,
+   "gip": 0.2778,
+   "play_rate": 0.5152,
+   "iwd": 0.0087
+  },
+  "mox-inciters": {
+   "drawn": 669,
+   "played": 555,
+   "gih": 0.3782,
+   "gip": 0.3766,
+   "play_rate": 0.8296,
+   "iwd": 0.0519
+  },
+  "mtod12-flathead": {
+   "drawn": 1004,
+   "played": 565,
+   "gih": 0.3436,
+   "gip": 0.3664,
+   "play_rate": 0.5627,
+   "iwd": -0.0251
+  },
+  "muamar-reyes-el-capitan": {
+   "drawn": 0,
+   "played": 4320,
+   "gih": null,
+   "gip": 0.5968,
+   "play_rate": null,
+   "iwd": null
+  },
+  "nadia-fighting-through-grief": {
+   "drawn": 2060,
+   "played": 1564,
+   "gih": 0.4015,
+   "gip": 0.3939,
+   "play_rate": 0.7592,
+   "iwd": -0.0305
+  },
+  "netwatch-netdriver": {
+   "drawn": 2211,
+   "played": 521,
+   "gih": 0.3166,
+   "gip": 0.2726,
+   "play_rate": 0.2356,
+   "iwd": -0.0379
+  },
+  "nocturne-op55n1": {
+   "drawn": 1105,
+   "played": 562,
+   "gih": 0.3186,
+   "gip": 0.258,
+   "play_rate": 0.5086,
+   "iwd": -0.0179
+  },
+  "octant": {
+   "drawn": 2197,
+   "played": 1549,
+   "gih": 0.4547,
+   "gip": 0.4726,
+   "play_rate": 0.7051,
+   "iwd": -0.0476
+  },
+  "offduty-malfini": {
+   "drawn": 1857,
+   "played": 1568,
+   "gih": 0.6871,
+   "gip": 0.6773,
+   "play_rate": 0.8444,
+   "iwd": -0.0018
+  },
+  "over-the-edge": {
+   "drawn": 7661,
+   "played": 1524,
+   "gih": 0.4385,
+   "gip": 0.4514,
+   "play_rate": 0.1989,
+   "iwd": -0.0329
+  },
+  "overwatch-panams-gift": {
+   "drawn": 3184,
+   "played": 524,
+   "gih": 0.6156,
+   "gip": 0.6775,
+   "play_rate": 0.1646,
+   "iwd": -0.0748
+  },
+  "pacifica-netrunner": {
+   "drawn": 3056,
+   "played": 1554,
+   "gih": 0.4437,
+   "gip": 0.3719,
+   "play_rate": 0.5085,
+   "iwd": 0.012
+  },
+  "padre-man-of-the-cross": {
+   "drawn": 0,
+   "played": 2520,
+   "gih": null,
+   "gip": 0.4536,
+   "play_rate": null,
+   "iwd": null
+  },
+  "panam-palmer-nomad-cavalry": {
+   "drawn": 0,
+   "played": 2519,
+   "gih": null,
+   "gip": 0.5089,
+   "play_rate": null,
+   "iwd": null
+  },
+  "panam-palmer-strength-through-family": {
+   "drawn": 2376,
+   "played": 1387,
+   "gih": 0.6301,
+   "gip": 0.5703,
+   "play_rate": 0.5838,
+   "iwd": -0.1118
+  },
+  "peace-offering": {
+   "drawn": 2785,
+   "played": 1560,
+   "gih": 0.3935,
+   "gip": 0.3641,
+   "play_rate": 0.5601,
+   "iwd": -0.0553
+  },
+  "pepe-najarro-working-doubles": {
+   "drawn": 1758,
+   "played": 1548,
+   "gih": 0.4835,
+   "gip": 0.4981,
+   "play_rate": 0.8805,
+   "iwd": 0.0833
+  },
+  "placide-voodoo-sentinel": {
+   "drawn": 1415,
+   "played": 555,
+   "gih": 0.3336,
+   "gip": 0.3099,
+   "play_rate": 0.3922,
+   "iwd": 0.0088
+  },
+  "psycho-squad": {
+   "drawn": 677,
+   "played": 570,
+   "gih": 0.3368,
+   "gip": 0.3439,
+   "play_rate": 0.8419,
+   "iwd": 0.0365
+  },
+  "pyramid-song": {
+   "drawn": 1118,
+   "played": 563,
+   "gih": 0.3247,
+   "gip": 0.2131,
+   "play_rate": 0.5036,
+   "iwd": -0.0373
+  },
+  "reboot-optics": {
+   "drawn": 2333,
+   "played": 332,
+   "gih": 0.3292,
+   "gip": 0.2169,
+   "play_rate": 0.1423,
+   "iwd": 0.0235
+  },
+  "riding-nomad": {
+   "drawn": 2473,
+   "played": 1031,
+   "gih": 0.6607,
+   "gip": 0.6809,
+   "play_rate": 0.4169,
+   "iwd": -0.0384
+  },
+  "riot-shield": {
+   "drawn": 3608,
+   "played": 1554,
+   "gih": 0.3786,
+   "gip": 0.352,
+   "play_rate": 0.4307,
+   "iwd": -0.0145
+  },
+  "rita-wheeler-no-stupid-questions": {
+   "drawn": 632,
+   "played": 574,
+   "gih": 0.3639,
+   "gip": 0.3589,
+   "play_rate": 0.9082,
+   "iwd": 0.0202
+  },
+  "river-ward-detective-on-the-hunt": {
+   "drawn": 0,
+   "played": 4357,
+   "gih": null,
+   "gip": 0.5625,
+   "play_rate": null,
+   "iwd": null
+  },
+  "rockn-rockerboy": {
+   "drawn": 1855,
+   "played": 1565,
+   "gih": 0.6474,
+   "gip": 0.6415,
+   "play_rate": 0.8437,
+   "iwd": -0.0035
+  },
+  "rogue-amendiares-preem-solo": {
+   "drawn": 0,
+   "played": 4318,
+   "gih": null,
+   "gip": 0.5973,
+   "play_rate": null,
+   "iwd": null
+  },
+  "rogue-amendiares-queen-of-the-afterlife": {
+   "drawn": 1117,
+   "played": 556,
+   "gih": 0.316,
+   "gip": 0.3381,
+   "play_rate": 0.4978,
+   "iwd": 0.0207
+  },
+  "royce-dont-call-me-simon": {
+   "drawn": 2209,
+   "played": 1561,
+   "gih": 0.4862,
+   "gip": 0.5227,
+   "play_rate": 0.7067,
+   "iwd": 0.052
+  },
+  "royce-psycho-on-the-edge": {
+   "drawn": 0,
+   "played": 3839,
+   "gih": null,
+   "gip": 0.4381,
+   "play_rate": null,
+   "iwd": null
+  },
+  "ruthless-lowlife": {
+   "drawn": 1711,
+   "played": 1546,
+   "gih": 0.5389,
+   "gip": 0.5388,
+   "play_rate": 0.9036,
+   "iwd": 0.0536
+  },
+  "saburo-arasaka-stubborn-patriarch": {
+   "drawn": 0,
+   "played": 2520,
+   "gih": null,
+   "gip": 0.5028,
+   "play_rate": null,
+   "iwd": null
+  },
+  "safety-override": {
+   "drawn": 5543,
+   "played": 531,
+   "gih": 0.5598,
+   "gip": 0.4218,
+   "play_rate": 0.0958,
+   "iwd": -0.044
+  },
+  "sandayu-oda-hanakos-guardian": {
+   "drawn": 2523,
+   "played": 1546,
+   "gih": 0.4784,
+   "gip": 0.4968,
+   "play_rate": 0.6128,
+   "iwd": 0.0117
+  },
+  "sandevistan": {
+   "drawn": 3319,
+   "played": 531,
+   "gih": 0.6174,
+   "gip": 0.4557,
+   "play_rate": 0.16,
+   "iwd": -0.0817
+  },
+  "sasha-yakovleva-wont-let-you-down": {
+   "drawn": 0,
+   "played": 880,
+   "gih": null,
+   "gip": 0.3375,
+   "play_rate": null,
+   "iwd": null
+  },
+  "satori-sword-of-saburo": {
+   "drawn": 3674,
+   "played": 1557,
+   "gih": 0.4486,
+   "gip": 0.4123,
+   "play_rate": 0.4238,
+   "iwd": -0.0346
+  },
+  "saul-bright-stormrider": {
+   "drawn": 4110,
+   "played": 1556,
+   "gih": 0.3659,
+   "gip": 0.338,
+   "play_rate": 0.3786,
+   "iwd": -0.0481
+  },
+  "screw-lovelorn-fool": {
+   "drawn": 1997,
+   "played": 1561,
+   "gih": 0.4527,
+   "gip": 0.4375,
+   "play_rate": 0.7817,
+   "iwd": -0.0373
+  },
+  "secondhand-bombus": {
+   "drawn": 1841,
+   "played": 1565,
+   "gih": 0.6415,
+   "gip": 0.6179,
+   "play_rate": 0.8501,
+   "iwd": -0.0092
+  },
+  "shattered-memories": {
+   "drawn": 7380,
+   "played": 1438,
+   "gih": 0.4309,
+   "gip": 0.3296,
+   "play_rate": 0.1949,
+   "iwd": -0.0497
+  },
+  "sketchy-ripper": {
+   "drawn": 2219,
+   "played": 1555,
+   "gih": 0.6593,
+   "gip": 0.6232,
+   "play_rate": 0.7008,
+   "iwd": 0.01
+  },
+  "swordwise-huscle": {
+   "drawn": 1978,
+   "played": 1550,
+   "gih": 0.5607,
+   "gip": 0.5639,
+   "play_rate": 0.7836,
+   "iwd": 0.1533
+  },
+  "synapse-burnout": {
+   "drawn": 4221,
+   "played": 1551,
+   "gih": 0.3712,
+   "gip": 0.3082,
+   "play_rate": 0.3674,
+   "iwd": -0.0428
+  },
+  "take-control": {
+   "drawn": 6305,
+   "played": 937,
+   "gih": 0.3513,
+   "gip": 0.2391,
+   "play_rate": 0.1486,
+   "iwd": -0.0504
+  },
+  "t-bug-amateur-philosopher": {
+   "drawn": 2177,
+   "played": 1553,
+   "gih": 0.6417,
+   "gip": 0.6381,
+   "play_rate": 0.7134,
+   "iwd": 0.0245
+  },
+  "tetratronic-rippler": {
+   "drawn": 951,
+   "played": 569,
+   "gih": 0.3365,
+   "gip": 0.3076,
+   "play_rate": 0.5983,
+   "iwd": -0.0265
+  },
+  "the-heist": {
+   "drawn": 7512,
+   "played": 1240,
+   "gih": 0.6376,
+   "gip": 0.6315,
+   "play_rate": 0.1651,
+   "iwd": -0.0252
+  },
+  "the-relic-experimental-biochip": {
+   "drawn": 4751,
+   "played": 808,
+   "gih": 0.5668,
+   "gip": 0.4802,
+   "play_rate": 0.1701,
+   "iwd": -0.0037
+  },
+  "three-mouths-one-desire": {
+   "drawn": 1520,
+   "played": 553,
+   "gih": 0.3263,
+   "gip": 0.3002,
+   "play_rate": 0.3638,
+   "iwd": 0.0107
+  },
+  "towerfall": {
+   "drawn": 1239,
+   "played": 558,
+   "gih": 0.3204,
+   "gip": 0.1685,
+   "play_rate": 0.4504,
+   "iwd": -0.0185
+  },
+  "trauma-team-operatives": {
+   "drawn": 2209,
+   "played": 1570,
+   "gih": 0.6202,
+   "gip": 0.5987,
+   "play_rate": 0.7107,
+   "iwd": 0.0036
+  },
+  "trust-no-one": {
+   "drawn": 994,
+   "played": 564,
+   "gih": 0.327,
+   "gip": 0.2766,
+   "play_rate": 0.5674,
+   "iwd": -0.0475
+  },
+  "tygers-whisper": {
+   "drawn": 2001,
+   "played": 1545,
+   "gih": 0.4273,
+   "gip": 0.4026,
+   "play_rate": 0.7721,
+   "iwd": 0.0399
+  },
+  "unlikely-bond": {
+   "drawn": 2403,
+   "played": 181,
+   "gih": 0.3159,
+   "gip": 0.2376,
+   "play_rate": 0.0753,
+   "iwd": -0.048
+  },
+  "v-corporate-exile": {
+   "drawn": 0,
+   "played": 880,
+   "gih": null,
+   "gip": 0.3602,
+   "play_rate": null,
+   "iwd": null
+  },
+  "v-roamer-of-the-badlands": {
+   "drawn": 2150,
+   "played": 1552,
+   "gih": 0.4865,
+   "gip": 0.4897,
+   "play_rate": 0.7219,
+   "iwd": 0.0177
+  },
+  "v-streetkid": {
+   "drawn": 0,
+   "played": 3800,
+   "gih": null,
+   "gip": 0.5013,
+   "play_rate": null,
+   "iwd": null
+  },
+  "valentino-guerrera": {
+   "drawn": 1838,
+   "played": 1553,
+   "gih": 0.5876,
+   "gip": 0.5918,
+   "play_rate": 0.8449,
+   "iwd": 0.1522
+  },
+  "valentino-street-racer": {
+   "drawn": 2060,
+   "played": 1553,
+   "gih": 0.5422,
+   "gip": 0.5299,
+   "play_rate": 0.7539,
+   "iwd": 0.1065
+  },
+  "viktor-vektor-drop-your-illusions": {
+   "drawn": 2390,
+   "played": 1566,
+   "gih": 0.613,
+   "gip": 0.6105,
+   "play_rate": 0.6552,
+   "iwd": 0.0025
+  },
+  "viktor-vektor-sit-down-and-relax": {
+   "drawn": 0,
+   "played": 4358,
+   "gih": null,
+   "gip": 0.6166,
+   "play_rate": null,
+   "iwd": null
+  },
+  "viktor-vektor-you-might-feel-a-little-pinch": {
+   "drawn": 2117,
+   "played": 1565,
+   "gih": 0.6953,
+   "gip": 0.6901,
+   "play_rate": 0.7393,
+   "iwd": 0.0804
+  },
+  "wakako-okada-peace-and-harmony": {
+   "drawn": 0,
+   "played": 880,
+   "gih": null,
+   "gip": 0.2852,
+   "play_rate": null,
+   "iwd": null
+  },
+  "we-gotta-live-together": {
+   "drawn": 6264,
+   "played": 847,
+   "gih": 0.3568,
+   "gip": 0.2255,
+   "play_rate": 0.1352,
+   "iwd": -0.029
+  },
+  "westbrook-netrunner": {
+   "drawn": 771,
+   "played": 570,
+   "gih": 0.3632,
+   "gip": 0.3702,
+   "play_rate": 0.7393,
+   "iwd": 0.0687
+  },
+  "wild-in-the-streets": {
+   "drawn": 2843,
+   "played": 598,
+   "gih": 0.6286,
+   "gip": 0.5552,
+   "play_rate": 0.2103,
+   "iwd": -0.0518
+  },
+  "wraith-marauders": {
+   "drawn": 2511,
+   "played": 1549,
+   "gih": 0.4552,
+   "gip": 0.4216,
+   "play_rate": 0.6169,
+   "iwd": -0.0211
+  },
+  "yorinobu-arasaka-embracing-destruction": {
+   "drawn": 0,
+   "played": 3839,
+   "gih": null,
+   "gip": 0.448,
+   "play_rate": null,
+   "iwd": null
+  },
+  "yorinobu-arasaka-steel-dragon": {
+   "drawn": 2427,
+   "played": 1554,
+   "gih": 0.4574,
+   "gip": 0.462,
+   "play_rate": 0.6403,
+   "iwd": -0.0328
+  },
+  "zetatech-berserk": {
+   "drawn": 5280,
+   "played": 1536,
+   "gih": 0.3598,
+   "gip": 0.2943,
+   "play_rate": 0.2909,
+   "iwd": -0.041
+  },
+  "zetatech-faceplate": {
+   "drawn": 3269,
+   "played": 1559,
+   "gih": 0.6461,
+   "gip": 0.644,
+   "play_rate": 0.4769,
+   "iwd": -0.0503
+  }
+ }
+}

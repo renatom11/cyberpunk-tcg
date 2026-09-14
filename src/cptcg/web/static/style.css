@@ -826,3 +826,49 @@ table.rep th { color: var(--cyan); }
 }
 .guideview .chip .sub { opacity: .6; font-style: italic; }
 .guideview .chip .sub::before { content: " · "; }
+
+/* ---- the MEASURED panel in the card guide -------------------------------------------------- */
+/* Numbers from tools/playtest.py, shown beside the hand-written notes. Laid out as a grid of
+   labelled cells rather than a table: on a phone the table collapsed to one unreadable column of
+   numbers with the labels wrapped off, and the "what it means" line under each value is the part
+   that keeps a rate from being read as a power ranking. */
+.guideview .gmeas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  margin: 6px 0 10px;
+}
+.guideview .gmeas .mcell {
+  border: 1px solid var(--line, #2a2f3a);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.02);
+}
+.guideview .gmeas .mk {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+.guideview .gmeas .mv {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.guideview .gmeas .mw {
+  font-size: 11px;
+  opacity: 0.55;
+  margin-top: 2px;
+}
+.guideview p.small { font-size: 11px; line-height: 1.5; }
+.guideview details.mnote { margin: 4px 0 10px; }
+.guideview details.mnote > summary {
+  cursor: pointer;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.guideview details.mnote > summary:hover { opacity: 0.9; }
+.guideview details.mnote p { margin: 6px 0 0; }

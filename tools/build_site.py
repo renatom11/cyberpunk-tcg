@@ -65,7 +65,7 @@ def build(out: Path, pyodide_url: str = PYODIDE) -> dict:
     # data/cards: registry.load_default() globs that directory and would try to parse them as
     # card sets. Missing files are not fatal; the CARDS page renders without the panel.
     (out / "data/strategy").mkdir(parents=True, exist_ok=True)
-    for name in ("graph.json", "cards.json"):
+    for name in ("graph.json", "cards.json", "measured.json"):
         src = ROOT / "data/strategy" / name
         if src.exists():
             shutil.copy(src, out / "data/strategy" / name)

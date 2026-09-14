@@ -741,6 +741,29 @@ def guide() -> dict:
     return _GUIDE
 
 
+#: Measured play, from ``tools/playtest.py --publish``. Served beside the hand-written notes so the
+#: guide can say what a card *did* as well as what somebody thinks of it — and so the two can
+#: disagree in public, which is the interesting case.
+MEASURED_NAME = "measured.json"
+_MEASURED: dict | None = None
+
+
+def measured() -> dict:
+    """``{card id: {drawn, played, gih, gip, play_rate, iwd}}`` plus provenance, read once.
+
+    Missing is not an error, exactly like the guide notes: a checkout with no measurement run in it
+    still browses the pool, and the page simply omits the panel.
+    """
+    global _MEASURED
+    if _MEASURED is None:
+        try:
+            _MEASURED = json.loads((ROOT / "data" / "strategy" / MEASURED_NAME)
+                                   .read_text(encoding="utf-8"))
+        except Exception:
+            _MEASURED = {"cards": {}, "note": "", "games": 0}
+    return _MEASURED
+
+
 #: The interaction map: ``tools/build_card_graph.py`` output. Served to the CARDS page so a card
 #: can show what it combos with, rather than only what it says.
 GRAPH_NAME = "graph.json"
@@ -801,6 +824,9 @@ def card_json_static(d) -> dict:
     g = guide().get(d.id)
     if g:
         j["guide"] = g
+    m = (measured().get("cards") or {}).get(d.id)
+    if m:
+        j["measured"] = m
     return j
 
 
@@ -844,9 +870,20 @@ def dispatch(method: str, path: str, query: dict, body: dict) -> tuple[int, obje
         if p == "/api/cards":
             return 200, [dict(card_json_static(d), image=_has_image(d.id)) for d in reg().defs]
         if p == "/api/cardlinks":
+            meas = measured()
+            # Stale means the cards have been changed since the run: a card fix changes what the
+            # game *is*, and every rate in that file was measured under the old behaviour. The
+            # page says so rather than quietly showing numbers about a different game — which is
+            # the exact failure the cards digest was introduced to make visible.
+            from cptcg.cards.registry import cards_digest
+            stale = bool(meas.get("cards_digest")) and meas["cards_digest"] != cards_digest()
             return 200, {"tokens": graph().get("tokens", {}),
                          "archetypes": graph().get("archetypes", {}),
-                         "links": card_links()}
+                         "links": card_links(),
+                         "measured_note": meas.get("note", ""),
+                         "measured_games": meas.get("games", 0),
+                         "measured_agent": meas.get("agent", ""),
+                         "measured_stale": stale}
         if p.startswith("/api/games/"):
             gid = p.split("/")[3]
             with LOCK:
