@@ -15,7 +15,6 @@ that earns the exception is caught the day it is printed rather than the day som
 """
 import re
 
-import pytest
 from conftest import Side, board, do, find
 
 from cptcg.core.actions import Attack, CallLegend, GoSolo, Play, Sell, Target
