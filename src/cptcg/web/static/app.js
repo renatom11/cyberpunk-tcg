@@ -18,6 +18,10 @@ let HAS_BACK = true;       // data/images/_back.jpg exists (cleared on first fai
 const CAN_HOVER = window.matchMedia("(any-hover: hover)").matches || window.matchMedia("(hover: hover)").matches;
 const TARGET_GIG = 1;      // cptcg.core.enums: a Target is at a Unit (0) or at a Gig area (1)
 let GAME = null;           // {id, view, log[]}
+// The card a sandbox game was opened for, or null in an ordinary game. A try-out board is a
+// starting position and nothing more, so this holds no rules — only what the room panel says and
+// which card NEXT CARD steps on from.
+let SANDBOX = null;
 let LOG = [];
 
 // ---------------------------------------------------------------- cards
@@ -319,7 +323,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
   let leftovers = null;
   const right = el("div", "col");
   const controls = el("div", "panel controls p-controls");
-  controls.append(el("span", "lbl", "ROOM"));
+  controls.append(el("span", "lbl", SANDBOX ? "SANDBOX" : "ROOM"));
   if (interactive) {
     controls.append(el("div", "desc", "Take back the last move, concede the match, or leave for a new one."));
     const undo = el("button", "", "UNDO"); undo.onclick = () => act("undo");
@@ -331,6 +335,19 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
     };
     // No PAY toggle: what you spend is a move, and a move is not a setting.
     controls.append(undo, concede, leave, dl);
+  }
+  // A try-out board gives the four things you want while reading one card: start it over, step to
+  // the next card without going back to CARDS, copy the board out when something looks wrong, and
+  // leave. They come *after* the room buttons on purpose — on a phone this panel is one
+  // horizontally-scrolling strip, and putting four new buttons in front of UNDO would push the
+  // most-used control in the game off the left of the screen.
+  if (interactive && SANDBOX) {
+    const again = el("button", "", "RESTART"); again.onclick = () => startSandbox(SANDBOX);
+    const next = el("button", "", "NEXT CARD"); next.onclick = () => startSandbox(nextSandboxCard(SANDBOX));
+    const copy = el("button", "", "COPY BOARD"); copy.onclick = copyPosition;
+    const back = el("button", "", "BACK TO CARDS");
+    back.onclick = () => { GAME = null; SANDBOX = null; $("#board").classList.add("hidden"); $("#setup").classList.remove("hidden"); matLock(); $("nav button[data-mode=cards]").click(); };
+    controls.append(again, next, copy, back);
   }
   right.append(controls);
   const logp = el("div", "panel logwrap p-log");
@@ -389,6 +406,20 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       // they are spent.
       const bar = el("div", "turnbar");
       bar.append(el("span", "tn", `TURN ${v.turn}${v.overtime ? " · OVERTIME" : ""}`));
+      // Which card this board was opened for. It belongs here rather than in the room panel
+      // because that panel hides its text on a phone — and on a phone, after two taps of NEXT
+      // CARD, "which card am I looking at" is the one thing you actually need on screen.
+      if (SANDBOX) {
+        const c = CARDS[SANDBOX] || {};
+        // With the subtitle, always. Names are not unique in this pool — every Legend shares its
+        // name with its other printing ("Goro Takemura — Hands Unclean" against "— Losing His
+        // Way"), so a chip showing the name alone cannot say which of the two you are looking at,
+        // and NEXT CARD walks you from one straight into the other.
+        const chip = el("span", "chip trying",
+          `TRYING · ${c.name || SANDBOX}${c.subtitle ? ` — ${c.subtitle}` : ""}`);
+        chip.dataset.hint = "the card this sandbox board was built around";
+        bar.append(chip);
+      }
       // Not during the mulligan, the roll-off, or the Gig die: none of them is a moment where
       // selling or calling is on offer, and a struck-through right you could not have taken yet
       // reads as one you have spent.
@@ -1458,10 +1489,55 @@ function cardOfOption(v, o) {
   }
   return null;
 }
+// ---------------------------------------------------------------- sandbox
+// Tap a card, play it. The whole feature on this side is: post the card id instead of two deck
+// paths, and remember which card it was. The board, the prompts, undo, the AI turns and the export
+// are the ordinary game ones, because a sandbox differs from a game only in where the board came
+// from.
+async function startSandbox(id) {
+  const r = await api("/api/games", { card: id, agent: $("#agent") ? $("#agent").value : "heuristic" });
+  SANDBOX = id;
+  GAME = { id: r.id, view: r.view };
+  LOG = r.view.log.slice();
+  SEEN = new Set(); SEEN_READY = false;
+  TURNED = new Set(); TURNED_READY = false;
+  arrivals(r.view);
+  closeCardGuide();
+  $("nav button[data-mode=play]").click();
+  $("#setup").classList.add("hidden"); $("#board").classList.remove("hidden"); matLock();
+  renderBoard($("#board"), r.view, { interactive: true, onAct: act });
+}
+
+// The pool in the order the CARDS grid shows it, so NEXT CARD walks the set the way you read it
+// rather than by internal index.
+function cardOrder() { return Object.keys(CARDS); }
+
+function nextSandboxCard(from) {
+  const ids = cardOrder();
+  const i = ids.indexOf(from);
+  return ids[(i + 1) % ids.length] || ids[0];
+}
+
+// The feedback channel. A board pasted back is one that can be rebuilt exactly and turned into a
+// test; "that card looked wrong" is not. Clipboard access fails on some mobile browsers and in
+// insecure contexts, so there is always the prompt() fallback rather than a silent no-op.
+async function copyPosition() {
+  if (!GAME) return;
+  const r = await api(`/api/games/${GAME.id}/spec`);
+  const text = JSON.stringify(r, null, 1);
+  try {
+    await navigator.clipboard.writeText(text);
+    alert("Board copied. Paste it into the chat with what looked wrong.");
+  } catch (e) {
+    window.prompt("Copy this board and paste it into the chat:", text);
+  }
+}
+
 async function newGame() {
   const body = { deck_me: $("#deckMe").value, deck_ai: $("#deckAi").value, agent: $("#agent").value, seat: +$("#seat").value };
   if ($("#seed").value) body.seed = +$("#seed").value;
   const r = await api("/api/games", body);
+  SANDBOX = null;
   GAME = { id: r.id, view: r.view };
   LOG = r.view.log.slice();
   SEEN = new Set(); SEEN_READY = false;
@@ -1794,6 +1870,10 @@ function openCardGuide(id) {
   sheet.innerHTML = "";
   const head = el("div", "head");
   head.append(el("h3", "", c.name + (c.subtitle ? ` <small class=dim>— ${c.subtitle}</small>` : "")));
+  const tryit = el("button", "tryit", "TRY IT");
+  tryit.title = "play this card right now, against the AI";
+  tryit.onclick = () => startSandbox(c.id);
+  head.append(tryit);
   const x = el("button", "x", "✕"); x.onclick = closeCardGuide; head.append(x);
   sheet.append(head);
 

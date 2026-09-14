@@ -1066,6 +1066,20 @@ body.mat { position: fixed; inset: 0; width: 100%; }
   background: var(--panel, #0d1117); z-index: 1; }
 .guideview .head h3 { margin: 0; font-size: 1.05rem; }
 .guideview .x { background: none; border: 0; color: inherit; font-size: 1.1rem; cursor: pointer; }
+/* The card guide's front door into the sandbox. It sits left of the close button and is the only
+   accented control on the sheet, because on a page that is otherwise all reading it is the one
+   thing that does something. margin-left:auto pushes it and the ✕ to the right edge together. */
+.guideview .tryit { margin-left: auto; background: var(--yellow, #ffe600); color: #000; border: 0;
+  border-radius: 4px; padding: 6px 12px; font: inherit; font-size: .74rem; font-weight: 700;
+  letter-spacing: .1em; cursor: pointer; white-space: nowrap; }
+.guideview .tryit:hover { filter: brightness(1.12); }
+/* The room panel's line about which card is being tried. Same shape as the other .desc blocks in
+   that panel, with the card name allowed to stand out because it is the only thing there that
+   changes between one sandbox and the next. */
+/* The sandbox chip in the turn bar: the one place the card under test is named that survives the
+   phone layout, where the room panel's prose is hidden. Accented, because after two taps of NEXT
+   CARD it is the only thing on screen that says what you are looking at. */
+.turnbar .chip.trying { border-color: var(--yellow, #ffe600); color: var(--yellow, #ffe600); }
 .guideview .gbody { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 16px; padding: 14px; }
 .guideview .gleft img { width: 100%; border-radius: 6px; display: block; }
 .guideview .gstats { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 8px; font-size: .78rem; }

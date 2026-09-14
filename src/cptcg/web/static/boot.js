@@ -80,7 +80,8 @@
     // inside Pyodide's filesystem and not merely sitting on the server. Missing them is invisible
     // rather than loud — the guide opens with no connections in it, which is exactly how this
     // shipped the first time — so they are fetched here and failure is tolerated per file.
-    await Promise.all((manifest.strategy || ["data/strategy/graph.json", "data/strategy/cards.json"])
+    await Promise.all([...(manifest.strategy || ["data/strategy/graph.json", "data/strategy/cards.json"]),
+                       ...(manifest.data || [])]
       .map(async path => {
         try {
           const r = await fetch(base + path + V);

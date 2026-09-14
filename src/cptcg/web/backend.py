@@ -20,7 +20,9 @@ from cptcg.core.rng import Pcg32
 from cptcg.deck.builder import heuristic_deck, random_deck
 from cptcg.deck.decklist import Decklist
 from cptcg.deck.validate import validate
+from cptcg.learn.delayed import build_position, spec_from_state
 from cptcg.sim.budget import Tracker
+from cptcg.sim.sandbox import load_overrides, sandbox_spec
 from cptcg.sim.narrate import narrate
 from cptcg.sim.record import Replay
 from cptcg.web.view import card_json, view_state
@@ -32,6 +34,7 @@ DECK_DIRS = [ROOT / "data" / "decks", ROOT / "out"]
 REG = None
 LOCK = threading.Lock()
 GAMES: dict[str, "Game"] = {}
+SANDBOX_OVERRIDES = None
 
 # How many of the rival's moves one reply will animate. A whole turn is a handful of moves;
 # the cap is there so a long chain cannot turn one response into megabytes of board JSON.
@@ -46,11 +49,17 @@ def reg():
 
 
 class Game:
-    def __init__(self, decks, agent_name: str, human_seat: int, seed: int) -> None:
+    def __init__(self, decks, agent_name: str, human_seat: int, seed: int,
+                 spec: dict | None = None, card: str = "") -> None:
         self.decks = decks
         self.agent_name = agent_name
         self.human = human_seat
         self.seed = seed
+        #: A sandbox board (cptcg.sim.sandbox) instead of a dealt game. It is a *starting position*,
+        #: not a mode: everything below — undo, the AI loop, the view, the replay export — works
+        #: unchanged, because a spec is as deterministic a starting point as a seed and a decklist.
+        self.spec = spec
+        self.card = card
         self.names = ("You" if human_seat == 0 else f"AI ({decks[0].name})",
                       "You" if human_seat == 1 else f"AI ({decks[1].name})")
         self.reset()
@@ -63,7 +72,15 @@ class Game:
     THINK_SECONDS = 1.5
 
     def reset(self, actions: list[int] | None = None, pays: dict[int, tuple] | None = None) -> None:
-        self.s = new_game(reg(), self.decks, self.seed, record=True)
+        if self.spec is not None:
+            # build_position starts at the acting player's main phase, so there is no roll-off and
+            # no mulligan to skip; record mode is switched on afterwards because the log should
+            # begin at the board the player is shown, not at how it was assembled.
+            self.s = build_position(reg(), self.spec)
+            self.s.log = []
+            self.s.actions = []
+        else:
+            self.s = new_game(reg(), self.decks, self.seed, record=True)
         self.agent = make_agent(self.agent_name, self.seed)
         if hasattr(type(self.agent), "max_seconds"):
             self.agent.max_seconds = self.THINK_SECONDS
@@ -165,6 +182,37 @@ class Game:
             v["frames"] = self.frames
             v["rival"] = self.names[1 - self.human]
         return v
+
+
+def sandbox_overrides() -> dict:
+    """``data/sandbox.json``: per-card patches to the generated try-out board, read once.
+
+    Empty is the normal state. A card lands here when its text needs something the generic board
+    does not have — a rival Unit already wearing Gear, a specific tag on the field, a stocked trash
+    — and writing one is a line of JSON rather than a branch in ``sandbox_spec``.
+    """
+    global SANDBOX_OVERRIDES
+    if SANDBOX_OVERRIDES is None:
+        SANDBOX_OVERRIDES = load_overrides(ROOT / "data" / "sandbox.json")
+    return SANDBOX_OVERRIDES
+
+
+def sandbox_game(card_id: str, agent_name: str) -> "Game":
+    """A game whose starting position is built around ``card_id``, with the AI on the other seat.
+
+    The decklists are still carried because everything downstream wants them — the replay export
+    names them, and ``Replay.from_game`` will not build without a pair. They are the sandbox card's
+    colour-matched samples and nothing is dealt from them.
+    """
+    d = reg().get(card_id)
+    spec = sandbox_spec(reg(), card_id, sandbox_overrides())
+    decks = (_sandbox_deck(d), _sandbox_deck(d))
+    return Game(decks, agent_name, 0, int(spec["seed"]), spec=spec, card=card_id)
+
+
+def _sandbox_deck(d) -> Decklist:
+    """A nominal decklist for a sandbox seat. Never dealt from: the board comes from the spec."""
+    return Decklist(name=f"sandbox — {d.name}", main=[], legends=[])
 
 
 def rel(path: Path) -> str:
@@ -890,9 +938,24 @@ def dispatch(method: str, path: str, query: dict, body: dict) -> tuple[int, obje
                 g = GAMES.get(gid)
                 if g is None:
                     return 404, {"error": "no such game"}
+                if p.endswith("/spec"):
+                    # The live board as build_position JSON. This is the bug-report channel: a
+                    # position pasted back is one I can rebuild exactly, where "that card looked
+                    # wrong" is not.
+                    return 200, {"spec": spec_from_state(g.s), "card": g.card,
+                                 "actions": list(g.s.actions or ())}
                 if p.endswith("/replay"):
-                    return 200, Replay.from_game(g.s, g.decks, ("human", g.agent_name)).__dict__ | {"decks": list(Replay.from_game(g.s, g.decks).decks)}
+                    r = Replay.from_game(g.s, g.decks, ("human", g.agent_name)).__dict__ | {"decks": list(Replay.from_game(g.s, g.decks).decks)}
+                    if g.spec is not None:
+                        # A sandbox game has no decklists to rebuild from — the board was hand-built
+                        # — so a replay of one carries the spec it started from. Without this the
+                        # exported file records a seed and two empty decks and would replay as a
+                        # different game entirely, which is worse than not exporting at all.
+                        r["meta"] = dict(r.get("meta") or {}, sandbox=g.card, spec=g.spec)
+                    return 200, r
                 return 200, g.view(int(q.get("since", 0)))
+        if p == "/api/sandbox":
+            return 200, {"tuned": sorted(sandbox_overrides())}
         if p == "/api/replays":
             return 200, list_replays()
         if p == "/api/replay":
@@ -917,6 +980,16 @@ def dispatch(method: str, path: str, query: dict, body: dict) -> tuple[int, obje
 
     if method == "POST":
         if p == "/api/games":
+            if body.get("card"):
+                # A try-out board. Nothing else in the body is needed or read: the point of the
+                # button is that picking decks, seats and seeds is exactly the friction it removes.
+                if body["card"] not in reg().by_id:
+                    return 404, {"error": "no such card"}
+                g = sandbox_game(body["card"], body.get("agent", "heuristic"))
+                gid = uuid.uuid4().hex[:8]
+                with LOCK:
+                    GAMES[gid] = g
+                return 200, {"id": gid, "view": g.view(), "card": body["card"]}
             a = Decklist.load(abs_deck_path(body["deck_me"]) or (ROOT / body["deck_me"]))
             b = Decklist.load(abs_deck_path(body["deck_ai"]) or (ROOT / body["deck_ai"]))
             seat = int(body.get("seat", 0))
