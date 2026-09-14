@@ -45,11 +45,13 @@ def test_industrial_assembly_draws_when_no_gig_can_be_increased(pool):
     assert len(s.zone(0, Zone.HAND)) == 1
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-trust-no-one-1: the draw is nested in the adjust continuation, so when no decrease is legal the separate min-Gig draw clause never runs")
 def test_trust_no_one_draws_when_no_gig_can_be_decreased(pool):
     """'Decrease a Gig by up to 3. Then, if you control a min Gig, draw 1.' The only Gig is a d4
     already showing its minimum face, so no decrease is legal; 'Then' sequences the clauses, it
-    does not make the draw conditional on a die having moved. A min Gig is controlled."""
+    does not make the draw conditional on a die having moved. A min Gig is controlled.
+
+    Fixed: AUD-trust-no-one-1.
+    """
     s = board(pool, Side(hand=["trust-no-one"], eddies=E, gig=[(4, 1)], deck=["floor-it"]),
               Side())
     play(s, "trust-no-one")

@@ -397,10 +397,14 @@ def _():
 @script("trust-no-one")
 def _():
     def play(c):
-        def after(c2, _o, _i):
+        # "Decrease a Gig by up to 3. Then, if you control a min Gig, draw 1." Two sentences: the
+        # second tests the board, not the die that moved, and "Then" sequences them rather than
+        # making the draw conditional. It was hung off ``cont``, so a declined "up to 3" -- or a Gig
+        # already on its minimum face, which cannot be decreased at all (ruling 037) -- skipped it.
+        def draw_on_min(c2):
             if c2.min_gigs():
                 c2.draw(1)
-        c.adjust_up_to([c.player, c.rival], -3, -1, cont=after, prompt="Decrease a Gig")
+        c.adjust_up_to([c.player, c.rival], -3, -1, after=draw_on_min, prompt="Decrease a Gig")
     return CardScript(on_play=play)
 
 
