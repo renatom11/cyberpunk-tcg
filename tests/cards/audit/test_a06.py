@@ -66,7 +66,6 @@ def test_yorinobu_draws_when_a_rival_arasaka_unit_is_defeated(pool):
     assert len(s.zone(0, Zone.HAND)) == 1
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-placide-voodoo-sentinel-1: the 'you may discard 1 Program' offer is suppressed when the rival controls no Units, although the bottom-deck is a separate 'if you do' rider")
 def test_placide_may_discard_a_program_with_no_rival_units(pool):
     """'PLAY / ATTACK: You may discard 1 Program. If you do, bottom-deck a rival Unit.'
 
@@ -79,10 +78,16 @@ def test_placide_may_discard_a_program_with_no_rival_units(pool):
 
     wnc.py:597 guards the whole offer with `if progs and c.rival_units()`, so with no rival
     Units the question is never asked and play returns straight to the main menu.
+
+    Fixed: AUD-placide-voodoo-sentinel-1.
     """
     s = board(pool, Side(hand=["placide-voodoo-sentinel", "floor-it"], eddies=E, deck=["floor-it"]),
               Side())
+    # The *hand* copy, named before it moves. `find` without a zone returns the first instance of
+    # the id, which here is the one in the deck -- an earlier version of this test asserted on that
+    # one and so failed for a reason its own docstring did not claim.
+    in_hand = find(s, "floor-it", Zone.HAND, 0)
     play(s, "placide-voodoo-sentinel")
     assert s.pending.kind is ChoiceKind.PICK and s.pending.player == 0   # the 'you may' is offered
     do(s, Pick((0,)))                                                    # yes, discard Floor It
-    assert s.i_zone[find(s, "floor-it", player=0)] == Zone.TRASH
+    assert s.i_zone[in_hand] == Zone.TRASH

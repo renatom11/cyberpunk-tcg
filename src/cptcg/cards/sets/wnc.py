@@ -655,14 +655,18 @@ def _():
 @script("placide-voodoo-sentinel")
 def _():
     def eff(c):
-        progs = hand_of_type(c, PROGRAM)
-
+        # "You may discard 1 Program. If you do, bottom-deck a rival Unit." The offer is the first
+        # sentence and it is not conditioned on the second: "if you do" guards the bottom-deck, not
+        # the discard. Gating the offer on the rival controlling a Unit takes a real choice away --
+        # this set pays for Programs in the trash (Alt Cunningham, V Streetkid, Hacked Corpo,
+        # Maman Brigitte, Lizzy Wizzy, Placide himself), so discarding one with nothing to
+        # bottom-deck is a play a person would sometimes make.
         def yes(c2):
             from cptcg.core.ops import discard
             c2.choose(hand_of_type(c2, PROGRAM),
                       lambda c3, i: (discard(c3.s, i), bottom_deck_one(c3, c3.rival_units())), prompt="Discard")
-        if progs and c.rival_units():
-            c.maybe(yes, prompt="Discard a Program to bottom-deck a rival Unit?")
+        if hand_of_type(c, PROGRAM):
+            c.maybe(yes, prompt="Discard a Program?")
     return CardScript(on_play=eff, on_attack=eff)
 
 

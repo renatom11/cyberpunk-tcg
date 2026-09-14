@@ -27,6 +27,8 @@ def test_zetatech_faceplate_draws_when_the_adjust_is_declined(pool):
     sentences, it does not make the draw conditional on a die having moved. Compare the passing
     ``tests/cards/test_statics.py::test_zetatech_faceplate_on_spend``, which takes the adjust and
     therefore never exercises this path.
+
+    Fixed: AUD-zetatech-faceplate-1.
     """
     s = board(pool, Side(field=[("psycho-squad", {"gear": ["zetatech-faceplate"]})],
                          gig=[(4, 1), (6, 2), (10, 7)], deck=["floor-it"]),
