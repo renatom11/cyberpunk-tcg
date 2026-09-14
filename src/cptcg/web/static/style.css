@@ -413,6 +413,29 @@ table.rep th { color: var(--cyan); }
 .preview { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 50; width: 423px; height: 590px; border-radius: 14px; overflow: hidden; border: 2px solid var(--line2); box-shadow: 0 12px 40px #000c; background: #000; display: none; pointer-events: none; }
 .preview.show { display: block; }
 .preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* iOS turns a long press on an <img> into its own Share / Save to Photos sheet, which lands on top
+   of the card the long press was meant to show. The card art is a UI element here, not a picture
+   the page is offering, so the callout is switched off on every image the board draws. */
+.card img, .preview img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+/* while a held preview follows the finger it must not be the thing the finger is over, and
+   `.preview.touch` below turns pointer events back on, so this needs the extra class to win */
+.preview.touch.scrub, .preview.scrub { pointer-events: none; }
+
+/* A card sold into an Eddies area is public (ruling 002), so it is shown before it is turned over:
+   face up for a beat, a turn on its vertical axis, then the back the pile actually shows. */
+.card.back.flipdown { animation: eddie-turn 1.5s ease-in-out both; }
+.card.back.flipdown .eddieface { position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; display: block; border-radius: inherit; animation: eddie-face 1.5s ease-in-out both; }
+@keyframes eddie-turn {
+  0%, 62% { transform: scaleX(1); }
+  74%     { transform: scaleX(.05); }
+  86%, 100% { transform: scaleX(1); }
+}
+@keyframes eddie-face { 0%, 73% { opacity: 1; } 75%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .card.back.flipdown { animation: none; }
+  .card.back.flipdown .eddieface { animation: eddie-face 1.5s steps(2, end) both; }
+}
 @media (max-height: 700px) { .preview { width: 300px; height: 418px; } }
 
 .logbtn { display: none; }
@@ -444,9 +467,15 @@ table.rep th { color: var(--cyan); }
        measured chrome, so the card height is what is left over divided by five — derived, not the
        fixed 46x64 this layout used to hard-code. */
     --chrome: 276px;
+    /* `svh` -- the SMALL viewport, the one with the browser's toolbars showing. `dvh` was letting
+       iOS Safari hand back the expanded height, so the board laid itself out for a screen ~250px
+       taller than the one it had: the prompt's last button ran off the bottom and the fixer column
+       lost its last dice to `overflow: hidden`. The dvh line stays first as the fallback for
+       anything that does not know `svh`. */
     --card-h: max(54px, calc((100dvh - var(--chrome)) / 5));
+    --card-h: max(54px, calc((100svh - var(--chrome)) / 5));
     --card-w: calc(var(--card-h) / 1.41);
-    display: grid; gap: 3px; padding: 3px; height: calc(100dvh - 36px);
+    display: grid; gap: 3px; padding: 3px; height: calc(100dvh - 36px); height: calc(100svh - 36px);
     overflow: hidden; box-sizing: border-box;
     grid-template-columns: 34px minmax(0, 1fr) minmax(0, 1fr) 34px;
     grid-template-rows: auto auto minmax(0, 1fr) auto minmax(0, 1fr) auto auto auto;
@@ -493,10 +522,14 @@ table.rep th { color: var(--cyan); }
      left column was clipped by the edge of the screen and the right column by the panel. A single
      column gives each label the full 34px, and the die shrinks with the card height so six of them
      still fit beside the shortest field row this layout produces. */
-  .dice { display: grid; grid-template-columns: 1fr; gap: 1px; padding: 1px;
-          align-content: start; justify-items: center; }
+  .dice { display: grid; grid-template-columns: 1fr; grid-auto-rows: minmax(0, 1fr);
+          gap: 1px; padding: 1px; justify-items: center; }
   .board .panel.dice { padding: 2px 1px; }
-  .die { --die: min(15px, calc(var(--card-h) / 7)); }
+  /* Fluid, not a fixed size: the six share whatever height the field row beside them works out to,
+     so no screen can push the last of them out of the panel. A die is square, so the height leads
+     and `aspect-ratio` gives it its width. */
+  .dice .die { --die: 15px; width: auto; height: 100%; max-width: 100%; aspect-ratio: 1;
+               max-height: 15px; }
   .die svg { stroke-width: 4; }
   .die.fixer .face { font-size: 6px; }
   .stacks { grid-template-rows: repeat(2, 1fr); gap: 3px; }
@@ -603,7 +636,9 @@ table.rep th { color: var(--cyan); }
   .card.sm { width: 34px; height: 48px; }
   .hand.mine .card { width: 50px; height: 70px; }
   .hand.opp .card { width: 28px; height: 39px; } .hand.opp .card.back + .card.back { margin-left: -19px; }
-  .die { width: 22px; height: 22px; font-size: 7px; } .die.gig { font-size: 9px; }
+  /* `:not(.fixer)` on purpose: the fixer tray sizes its dice from the column it stands in (above),
+     and a fixed 22px here is what used to push its last two dice out of the panel on a short screen. */
+  .die:not(.fixer) { width: 22px; height: 22px; font-size: 7px; } .die.gig { font-size: 9px; }
   .badge { padding: 0 3px; } .badge b { font-size: 9px; }
   .phase .title { font-size: 10px; padding: 1px; } .phase .sub { font-size: 8px; }
   .prompt { max-height: 22vh; } .prompt .desc { display: none; }

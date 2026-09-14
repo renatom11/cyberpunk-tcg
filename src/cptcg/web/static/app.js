@@ -27,6 +27,7 @@ function cardNode(c, opts = {}) {
   // Only where the view already gives one: a face-down Legend and a rival hand card are built from
   // {} on purpose, and must not gain an identity here.
   if (c && c.inst != null) d.dataset.inst = c.inst;
+  d._card = c;                      // what this node is, for the slide-to-preview below
   if (opts.back) {
     d.className = "card back" + (opts.small ? " sm" : "");
     if (HAS_BACK) { const img = el("img"); img.draggable = false; img.src = opts.legend ? "images/_back_legend.jpg" : "images/_back.jpg"; img.alt = "card back"; img.onerror = () => { HAS_BACK = false; img.remove(); }; d.append(img); }
@@ -43,7 +44,10 @@ function cardNode(c, opts = {}) {
       // that can act); where a mouse is also present, tapping is left alone so it can still click.
       if (!CAN_HOVER) d.onclick = () => showPreview(img.src, c, true);
       let press = null, fired = false;
-      d.addEventListener("touchstart", () => { fired = false; press = setTimeout(() => { press = null; fired = true; showPreview(img.src, c, true); }, 450); }, { passive: true });
+      d.addEventListener("touchstart", () => {
+        fired = false;
+        press = setTimeout(() => { press = null; fired = true; startScrub(img.src, c); }, 450);
+      }, { passive: true });
       const cancel = () => { if (press) { clearTimeout(press); press = null; } };
       d.addEventListener("touchend", cancel); d.addEventListener("touchmove", cancel, { passive: true }); d.addEventListener("touchcancel", cancel);
       d.addEventListener("click", (e) => { if (fired) { fired = false; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
@@ -174,6 +178,16 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
     if (!p.eddies.list.length) list.append(el("span", "waiting", "No Eddies yet."));
     p.eddies.list.forEach(c => {
       const n = cardNode(c, { back: true, small: true });
+      // Ruling 002: an Eddies area is public as an unordered multiset — selling reveals the card and
+      // both players saw it; only the order is lost. So a card that has just arrived is shown face
+      // up for a beat and then turns over, which is what happens at the table. Without it the
+      // rival's sale was a card back appearing out of nowhere.
+      if (fresh && fresh.has(c.inst) && (CARDS[c.id] || {}).image) {
+        const face = el("img", "eddieface");
+        face.draggable = false; face.src = `images/${c.id}.jpg`; face.alt = c.name;
+        n.classList.add("flipdown");
+        n.append(face);
+      }
       if (c.spent) n.classList.add("spent");
       if (c.image) { n.onmouseenter = () => showPreview(`images/${c.id}.jpg`, c); n.onmouseleave = hidePreview; if (TOUCH) n.onclick = () => showPreview(`images/${c.id}.jpg`, c, true); }
       list.append(n);
@@ -501,7 +515,7 @@ window.addEventListener("resize", () => {
 // Which cards are on the board that were not a moment ago. The board is the source of truth rather
 // than the log, because the log is prose and this has to be exact: a card that arrives gets the
 // arrival glow, and the first one gets shown full size the way the reference client does.
-let SEEN = new Set();
+let SEEN = new Set(), SEEN_READY = false;
 function visibleCards(v) {
   const out = [];
   (v.players || []).forEach(p => {
@@ -518,8 +532,14 @@ function arrivals(v) {
     now.add(c.inst);
     if (!SEEN.has(c.inst)) fresh.push(c);
   });
-  const opening = SEEN.size === 0;        // a new game: everything is new, so nothing is news
-  SEEN = now;
+  // The first board of a game: everything on it is new, so none of it is news. This used to ask
+  // whether SEEN was empty, which is not the same question -- a game opens with nothing visible at
+  // all (both Legend rows are face down, both fields are empty, neither player has sold anything),
+  // so SEEN stayed empty and *every* render counted as the opening one until the first card
+  // appeared. That first card was therefore the one arrival that never got its glow: a card sold
+  // into an Eddies area, which is exactly where the arrival is the only thing that says what it was.
+  const opening = !SEEN_READY;
+  SEEN = now; SEEN_READY = true;
   return opening ? [] : fresh;
 }
 
@@ -841,7 +861,7 @@ async function newGame() {
   const r = await api("/api/games", body);
   GAME = { id: r.id, view: r.view };
   LOG = r.view.log.slice();
-  SEEN = new Set();
+  SEEN = new Set(); SEEN_READY = false;
   arrivals(r.view);                        // seed the board history; the opening board is not news
   $("#setup").classList.add("hidden"); $("#board").classList.remove("hidden");
   renderBoard($("#board"), r.view, { interactive: true, onAct: act });
@@ -1293,6 +1313,40 @@ function showPreview(src, c, touch) {
   PREVIEW.style.left = ""; PREVIEW.style.top = "";
 }
 function hidePreview() { if (PREVIEW) PREVIEW.classList.remove("show", "touch"); }
+
+// Hold a card, then slide: the preview follows the finger from card to card, so a whole row can be
+// read without lifting and pressing again. Held on `document` rather than per card, because the
+// finger leaves the card that started it almost immediately — and `elementFromPoint` is what says
+// which card it is over now. The preview itself stops taking pointer events while this runs, or it
+// would be the only thing the finger is ever over.
+let SCRUB = false;
+function startScrub(src, c) {
+  SCRUB = true;
+  showPreview(src, c, true);
+  if (PREVIEW) PREVIEW.classList.add("scrub");
+}
+function endScrub() {
+  if (!SCRUB) return;
+  SCRUB = false;
+  if (PREVIEW) PREVIEW.classList.remove("scrub");
+  hidePreview();
+}
+document.addEventListener("touchmove", (e) => {
+  if (!SCRUB) return;
+  const t = e.touches[0];
+  if (!t) return;
+  const under = document.elementFromPoint(t.clientX, t.clientY);
+  const node = under && under.closest && under.closest(".card");
+  const c = node && node._card;
+  if (!c || !c.id || !(CARDS[c.id] || {}).image) return;      // a back, or a card with no art
+  const src = `images/${c.id}.jpg`;
+  const img = PREVIEW && PREVIEW.querySelector("img");
+  if (img && img.getAttribute("src") === src) return;         // already showing this one
+  showPreview(src, c, true);
+  if (PREVIEW) PREVIEW.classList.add("scrub");
+}, { passive: true });
+document.addEventListener("touchend", endScrub);
+document.addEventListener("touchcancel", endScrub);
 
 // ---------------------------------------------------------------- looking through a pile
 // The trash is public — every card in it was played face up — so it is something to read rather
