@@ -459,12 +459,21 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
     });
   }
   if (leftovers) {
-    const seen = new Set();   // identical labels are identical choices (e.g. three face-down Legends)
+    // Two options that read the same are still two options. This used to drop the second, on the
+    // reasoning that identical labels are identical choices -- true for three face-down Legends,
+    // false the moment a label is ambiguous for any other reason, and then the move it named was
+    // simply unreachable. Misty Olszewski asks you to choose a card type and two of her three
+    // buttons read the same; one of the three types could not be picked at all. They are numbered
+    // instead, so the duplicate is visible rather than missing.
+    const seen = new Map();
     let n = 0;
     pend.options.forEach(o => {
-      if (CLAIM.has(o.index) || seen.has(o.label)) return;
-      seen.add(o.label); n++;
-      const b = el("button", o.kind === "EndTurn" ? "end" : "", o.label);
+      if (CLAIM.has(o.index)) return;
+      const dup = (seen.get(o.label) || 0) + 1;
+      seen.set(o.label, dup);
+      n++;
+      const b = el("button", o.kind === "EndTurn" ? "end" : "",
+                   dup > 1 ? `${o.label} (${dup})` : o.label);
       b.onclick = () => onAct(o.index);
       leftovers.append(b);
     });

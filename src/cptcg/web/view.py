@@ -234,6 +234,15 @@ def _pick_values(s: GameState, me: int | None):
 
 
 def _describe_value(s: GameState, v, me: int | None = None) -> str:
+    # Enums BEFORE instance ids, because an IntEnum is both. Misty Olszewski asks you to choose a
+    # card type and passes CardType.UNIT/GEAR/PROGRAM, which are the integers 1/3/2 — so all three
+    # buttons were described as the card instances with those ids: "Your card from the deck",
+    # "Misty Olszewski (Mender of Broken Spirits)", "Your card from the deck". Two of them read the
+    # same, and a client that drops a duplicate label then left one of the three types unpickable.
+    # The `hasattr(v, "name")` branch below was always meant to catch these; it just never got the
+    # chance.
+    if hasattr(v, "name") and not isinstance(v, (str, bytes)):
+        return str(v.name).replace("_", " ").title()
     if isinstance(v, int) and 0 <= v < len(s.i_card) and not isinstance(v, bool):
         # Through the same gate as every other identity in the view. A choice among face-down cards
         # named all of them in its own buttons — "Look at a friendly face-down Legend" offered
