@@ -74,7 +74,7 @@ function cardNode(c, opts = {}) {
   const def = CARDS[c.id] || {};
   if (def.image) {
     const img = cardImg(`images/${c.id}.jpg`, c.name);
-    if (CAN_HOVER) { d.onmouseenter = () => showPreview(img.src, c, false, placeOf(d)); d.onmouseleave = hidePreview; }
+    if (CAN_HOVER) { d.onmouseenter = () => showPreview(img.src, c, false, placeOf(d), d); d.onmouseleave = hidePreview; }
     // Touch has no onclick preview: a tap is how you ACT on a card now, and a tap that also threw
     // the card up full-screen meant every move began by dismissing a picture of the card you had
     // just moved. Reading is the press-and-hold instead (see `startScrub`), which is a
@@ -257,7 +257,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
         n.append(face);
       }
       if (c.spent) n.classList.add("spent");
-      if (c.image) { n.onmouseenter = () => showPreview(`images/${c.id}.jpg`, c, false, placeOf(n)); n.onmouseleave = hidePreview; }
+      if (c.image) { n.onmouseenter = () => showPreview(`images/${c.id}.jpg`, c, false, placeOf(n), n); n.onmouseleave = hidePreview; }
       list.append(n);
     });
     ed.append(list);
@@ -2016,7 +2016,42 @@ function placeOf(n) {
   if (n.closest(".stackbox"))      return "Top of the trash";
   return "";
 }
-function showPreview(src, c, touch, place) {
+// Keep the zoom off the card it is a zoom OF.
+//
+// The preview is centred on purpose: it lands in the same place every time, so reading a row of
+// cards is a glance rather than a chase. On a phone that is the whole story, because the board is
+// small and the card you are holding a finger on is behind your finger anyway. On a desktop the
+// board is wide, and a card near the middle of it gets covered by its own enlargement — you point
+// at a Unit to read it and it disappears under the picture of itself, which also means the hover
+// is now over the preview and not the card.
+//
+// So: only when it actually overlaps, and only as far as it has to. Sideways first, into whichever
+// side has more room, because a card is tall and narrow and the horizontal move is the short one;
+// vertically only if neither side can hold it, which happens in a window narrower than about three
+// card widths. If nothing fits, it stays centred — a covered card beats a card half off-screen.
+function keepClearOf(box, node) {
+  const r = node.getBoundingClientRect();
+  const hits = () => {
+    const b = box.getBoundingClientRect();
+    return !(b.right <= r.left || b.left >= r.right || b.bottom <= r.top || b.top >= r.bottom);
+  };
+  if (!hits()) return;
+  const b = box.getBoundingClientRect();
+  const w = b.width, h = b.height, gap = 12, edge = 6;
+  // Setting `left` positions the CENTRE, because the element carries translate(-50%, -50%).
+  const fits = (x) => x - w / 2 >= edge && x + w / 2 <= innerWidth - edge;
+  const right = r.right + gap + w / 2, left = r.left - gap - w / 2;
+  const first = (innerWidth - r.right) >= r.left ? [right, left] : [left, right];
+  for (const x of first) {
+    if (fits(x)) { box.style.left = x + "px"; return; }
+  }
+  const below = r.bottom + gap + h / 2, above = r.top - gap - h / 2;
+  for (const y of ((innerHeight - r.bottom) >= r.top ? [below, above] : [above, below])) {
+    if (y - h / 2 >= edge && y + h / 2 <= innerHeight - edge) { box.style.top = y + "px"; return; }
+  }
+}
+
+function showPreview(src, c, touch, place, node) {
   if (!PREVIEW) {
     PREVIEW = el("div", "preview");
     PREVIEW.append(el("div", "cap"), el("img"), el("div", "sheetbody hidden"));
@@ -2038,6 +2073,9 @@ function showPreview(src, c, touch, place) {
   // is a glance rather than a chase, and moving along a row of cards swaps one image for another.
   // pointer-events stay off, so the preview never steals the hover from the card underneath it.
   PREVIEW.style.left = ""; PREVIEW.style.top = "";
+  // After the reset, so the overlap is measured against the centred position it would have taken.
+  // Not for the sheet: that one is a box you opened deliberately, and it is meant to be in front.
+  if (!touch && node) keepClearOf(PREVIEW, node);
 }
 function hidePreview() {
   SHEET_INST = null;
