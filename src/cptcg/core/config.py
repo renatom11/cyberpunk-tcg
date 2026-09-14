@@ -1,9 +1,20 @@
 """Rules configuration.
 
-Every open question in docs/rulings.md is a field here, so a ruling is (a) testable, (b) hashed
-into every simulation result and replay, and (c) flippable in one place when official
-clarification arrives. Simulation results carry ``RulesConfig.digest()`` so that changing a ruling
-visibly invalidates comparisons with older runs instead of quietly shifting them.
+Every open question in docs/rulings.md is a field here, so a ruling is (a) testable and (b) hashed
+into every simulation result and replay. Simulation results carry ``RulesConfig.digest()`` so that
+changing a ruling visibly invalidates comparisons with older runs instead of quietly shifting them.
+
+**Not every flag is flippable, and this docstring used to claim otherwise.** Twelve of these fields
+are read by no code at all: the behaviour they document is hard-coded in the engine, so flipping one
+changes the digest — invalidating every stored comparison — while changing nothing about play. That
+is the worst of both worlds, and it was silent.
+
+They are kept rather than deleted, because each one is a real ruling that a future official
+clarification could reopen, and the field is where that change would go. But they are now declared
+as what they are. :data:`DESCRIPTIVE` names them, ``tests/rules/test_ruling_flags.py`` pins the
+hard-coded behaviour each one describes, and a test fails if a flag joins or leaves that set without
+the declaration being updated — so "I added a config flag and forgot to wire it" cannot happen
+quietly again.
 """
 
 from __future__ import annotations
@@ -61,3 +72,25 @@ class RulesConfig:
 
 
 DEFAULT_CONFIG = RulesConfig()
+
+#: Ruling fields that **no code reads**. The behaviour each one documents is hard-coded in the
+#: engine, and ``tests/rules/test_ruling_flags.py`` pins that behaviour against the default recorded
+#: here — so the field is an accurate description and a place for a future clarification to land,
+#: rather than a switch that appears to work and does not.
+#:
+#: Moving a flag out of this set means wiring it: the engine must actually branch on it, and the
+#: test must exercise both branches. Adding a new unread flag means adding it here, deliberately.
+DESCRIPTIVE = frozenset({
+    "perfect_eddie_memory",      # 002  Eddie-area identities are a public multiset (Zone.EDDIES is public)
+    "spent_legend_callable",     # 003  a Legend spent as an Eddie is still Callable
+    "empty_fixer_skips",         # 004  an empty fixer skips the Gig step
+    "win_check_before_draw",     # 008  push_turn orders the win check ahead of the draw
+    "zero_power_fights",         # 010  a 0-power Unit fights (it just cannot defeat — that half IS wired)
+    "go_solo_vacates_slot",      # 015  Uncertain
+    "gear_reequip",              # 016  equipped Gear cannot be moved; no menu offers it
+    "hidden_mulligan",           # 018  the mulligan is simultaneous and hidden
+    "once_per_turn_scope",       # 019  Uncertain
+    "hand_limit",                # 020  there is no hand limit; no step enforces one
+    "sell_in_reactions",         # 021  the reaction menu offers no Sell
+    "explicit_payment",          # 025  Approximation: payment order is chosen automatically
+})
