@@ -11,7 +11,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from conftest import Side, board, do, find, options            # noqa: E402
-from cptcg.core.actions import Attack, EndTurn, Play, Target    # noqa: E402
+from cptcg.core.actions import Attack, EndTurn, GoSolo, Play, Target   # noqa: E402
 from cptcg.core.enums import Zone                               # noqa: E402
 from cptcg.core.ops import available                            # noqa: E402
 
@@ -45,11 +45,13 @@ def test_kiroshi_optics_equips_friendly_only_like_every_other_gear(pool):
 
 
 # ---------------------------------------------------------- dying-night-vs-pistol
-@pytest.mark.xfail(strict=True, reason="AUD-dying-night-vs-pistol-1: readies 2 Eddies for a face-up Legend host named V, but the text says 'this Unit'")
 def test_dying_night_ready_2_only_when_the_host_is_a_unit(pool):
     """'At the end of your turn, if this Unit is named "V", ready 2 Eddies.'
     A face-up Legend in the Legends area is not a Unit (cf. zetatech-faceplate, which spells
-    out 'this Unit or Legend' when it means both)."""
+    out 'this Unit or Legend' when it means both).
+
+    Fixed: AUD-dying-night-vs-pistol-1.
+    """
     s = board(pool, Side(legends=[("v-streetkid", {"faceup": True,
                                                    "gear": ["dying-night-vs-pistol"]}),
                                   "padre-man-of-the-cross", "wakako-okada-peace-and-harmony"],
@@ -60,12 +62,31 @@ def test_dying_night_ready_2_only_when_the_host_is_a_unit(pool):
     assert available(s, 0) == 3                        # the host is a Legend, not a Unit
 
 
+def test_dying_night_still_pays_out_for_a_v_that_went_solo(pool):
+    """Control, and the guard against over-fixing the one above. Ruling 015: a Legend played to the
+    field with GO SOLO *is* a Unit there, and ruling 016 moves its Gear with it. So the same V, the
+    same Gear, one action apart: on the field the end-of-turn clause pays, and a `type is LEGEND`
+    test rather than a zone test would have silently taken that away.
+    """
+    s = board(pool, Side(legends=[("v-streetkid", {"faceup": True,
+                                                   "gear": ["dying-night-vs-pistol"]}),
+                                  "padre-man-of-the-cross", "wakako-okada-peace-and-harmony"],
+                         eddies=5, deck=["floor-it"]),
+              Side(deck=["floor-it", "floor-it"]))
+    do(s, GoSolo(find(s, "v-streetkid")))                  # 5 €$: V is a Unit on the field now
+    assert s.i_zone[find(s, "v-streetkid")] is Zone.FIELD
+    before = available(s, 0)
+    do(s, EndTurn())
+    assert available(s, 0) == before + 2                   # ... so the Gear readies 2 Eddies
+
+
 # ------------------------------------------------- the-relic-experimental-biochip
 def test_the_relic_bottom_decks_the_host_with_no_unit_to_recur(pool):
     """'Play another Unit with cost 9 or less from your trash for free. Then, bottom-deck this
+    Unit.' With nothing to play the first sentence does nothing; the second still happens.
 
     Fixed: AUD-the-relic-experimental-biochip-1.
-    Unit.' With nothing to play the first sentence does nothing; the second still happens."""
+    """
     s = board(pool, Side(field=["animals-wrecker"]),
               Side(field=[("corpo-security", {"spent": True,
                                               "gear": ["the-relic-experimental-biochip"]})],

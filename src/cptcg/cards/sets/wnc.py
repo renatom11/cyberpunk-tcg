@@ -786,8 +786,14 @@ def _():
 @script("dying-night-vs-pistol")
 def _():
     def ev(c, e):
+        # "if this Unit is named V". A face-up Legend is a legal host for Gear and this Gear will
+        # happily sit on one, but a Legend in the Legends area is not a Unit -- the five Gear in
+        # this set that mean both say "this Unit or Legend" in so many words. The test is the host's
+        # zone rather than its type, because a V Legend that has GONE SOLO onto the field *is* a
+        # Unit (ruling 015) and must keep paying out.
         h = c.host()
-        if e[0] == "end_turn" and e[1] == c.player and h >= 0 and c.d(h).name == "V":
+        if (e[0] == "end_turn" and e[1] == c.player and h >= 0
+                and c.s.i_zone[h] is Zone.FIELD and c.d(h).name == "V"):
             c.ready_eddies(2)
     return CardScript(on_attack=lambda c: c.adjust_up_to([c.player, c.rival], -2, -1, prompt="Decrease a Gig"),
                       on_event=ev, events=frozenset({"end_turn"}))
