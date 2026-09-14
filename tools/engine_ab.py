@@ -51,7 +51,8 @@ def measure(a) -> int:
     decks = [random_deck(reg, rng, name=f"d{i}") for i in range(a.decks)]
     drawn: dict = defaultdict(int)
     played: dict = defaultdict(int)
-    games = 0
+    ends: dict = defaultdict(int)
+    games = seat0_wins = turns = 0
     for i in range(0, a.decks - 1, 2):
         for s_i in range(a.seeds):
             for pair in ((decks[i], decks[i + 1]), (decks[i + 1], decks[i])):
@@ -70,12 +71,16 @@ def measure(a) -> int:
                     apply(s, idx)
                     n += 1
                 games += 1
+                seat0_wins += (s.winner == 0)
+                turns += s.turn
+                ends[s.end_reason.name] += 1
                 for _owner, cid in {(s.i_owner[i2], s.card(i2).id) for i2 in s.drawn}:
                     drawn[cid] += 1
                 for _owner, cid in cast:
                     played[cid] += 1
     out = {"games": games, "decks": a.decks, "seeds": a.seeds, "agent": a.agent,
            "deck_seed": DECK_SEED, "cards_digest": cards_digest(),
+           "seat0_wins": seat0_wins, "turns": turns, "end_reasons": dict(ends),
            "drawn": dict(drawn), "played": dict(played)}
     Path(a.out).write_text(json.dumps(out), encoding="utf-8")
     print(f"{games} games, {len(drawn)} cards drawn, {len(played)} cards played -> {a.out}")
@@ -89,6 +94,12 @@ def compare(a) -> int:
             raise SystemExit(f"not a paired comparison: {key} is {o[key]!r} and {n[key]!r}")
     print(f"{o['games']} games per side, {o['decks']} decks, agent {o['agent']}")
     print(f"cards {o.get('cards_digest')} -> {n.get('cards_digest')}")
+    if "seat0_wins" in o and "seat0_wins" in n:
+        # Every pairing is played from both seats, so seat 0 should win about half whatever the
+        # build does; a move here is the panel becoming less balanced, not an agent getting better.
+        print(f"seat 0 wins {o['seat0_wins']}/{o['games']} -> {n['seat0_wins']}/{n['games']}; "
+              f"mean turns {o['turns'] / o['games']:.2f} -> {n['turns'] / n['games']:.2f}")
+        print(f"end reasons {o['end_reasons']} -> {n['end_reasons']}")
     rows = []
     for cid in set(o["played"]) | set(n["played"]):
         po, pn = o["played"].get(cid, 0), n["played"].get(cid, 0)

@@ -403,6 +403,12 @@ error, with the largest single card moving seven plays in eight hundred games. T
 moved most are Trust No One (0.244 → 0.275) and Shattered Memories (0.029 → 0.046), both of which
 had a "may" restored to a player who used to be forced.
 
+The outcomes moved less than that. Seat 0 won 389 of 800 before and 396 of 800 after — nine tenths
+of a point on a panel where every pairing is played from both seats, so the standard error is about
+1.8 points — mean game length went 13.79 turns to 13.78, and the end reasons went 406 OVERTIME / 394
+SEVEN_GIGS to an even 400/400. Twenty-one fixes, 103 cards playing differently, and **no measurable
+change in who wins or how long a game takes**.
+
 Two caveats the tool's own docstring carries. Seeds are shared but *games* are not: the moment
 behaviour diverges the trajectories separate, so a card's delta includes everything downstream of
 the first change — this measures the total effect of a build difference over a fixed panel, not a
