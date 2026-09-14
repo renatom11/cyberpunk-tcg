@@ -163,7 +163,11 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
   const opp = 1 - me;
   const P = v.players;
   const pend = v.pending;
-  const myTurn = interactive && pend && pend.player === me;
+  // `onAct` as well as `interactive`: the rival-turn playback renders interactively so the board
+  // still reads as live, but it has no way to act -- and its last frame is the one where the turn
+  // has come back to you, so without this the board offered moves it could not carry out and the
+  // buttons threw. Nothing is offered that cannot be done.
+  const myTurn = interactive && !!onAct && pend && pend.player === me;
   const byInst = {};          // inst -> [options]
   if (myTurn) pend.options.forEach(o => { if (o.inst != null && o.kind !== "Die") (byInst[o.inst] = byInst[o.inst] || []).push(o); });
   const targets = new Set(myTurn ? pend.options.filter(o => o.kind === "Target").map(o => o.inst) : []);
@@ -460,9 +464,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       if (box) box.replaceWith(cardPanel(v, byInst, pend, myTurn, onAct));
       root.querySelectorAll(".card.picked").forEach(x => x.classList.remove("picked"));
       n.classList.add("picked");
-      const acts = myTurn ? (byInst[inst] || []) : [];
-      if (acts.length) openCardMenu(n, findOnBoard(v, inst), acts, onAct);
-      else closeCardMenu();
+      openCardMenu(n, findOnBoard(v, inst), myTurn ? (byInst[inst] || []) : [], onAct);
     });
   });
   logp.scrollTop = 0;
@@ -801,30 +803,72 @@ function verbFor(o) {
   if (o.kind === "Play" && o.host >= 0) { const i = o.label.indexOf(" on "); return i < 0 ? "EQUIP" : "EQUIP TO" + o.label.slice(i + 3); }
   return VERB[o.kind] || o.label;
 }
-let CARDMENU = null;
-function closeCardMenu() { if (CARDMENU) { CARDMENU.remove(); CARDMENU = null; } }
+// Tapping a card opens the card, full size: its face, where it is standing, what is bolted to it
+// and what that comes to, and what it can do. A forty-pixel sliver is a thing to point at, not a
+// thing to read, and a little menu hanging off one was answering only the last of those questions.
+// Tap it again, or anywhere off it, and it goes away.
+let SHEET_INST = null;
+function closeCardMenu() {
+  SHEET_INST = null;
+  if (PREVIEW) { PREVIEW.classList.remove("sheet"); hidePreview(); }
+}
+// What a Unit's power is made of. Each piece of Gear contributes its own printed power and nothing
+// else (ops.power sums exactly that), so the breakdown is honest rather than inferred; whatever is
+// left over after the print and the Gear is the turn's buffs and auras, and it is named as such
+// rather than hidden in a total that does not add up.
+function powerParts(c) {
+  const printed = typeof c.power === "number" ? c.power : null;
+  const gear = (c.gear || []).reduce((n, g) => n + (typeof g.power === "number" ? g.power : 0), 0);
+  if (printed == null || typeof c.power_now !== "number") return null;
+  return { printed, gear, other: c.power_now - printed - gear, now: c.power_now };
+}
 function openCardMenu(node, c, acts, onAct) {
-  closeCardMenu();
-  if (!acts.length) return;
-  const m = el("div", "cardmenu");
-  m.append(el("div", "who", (c && c.name) || ""));
-  acts.forEach(o => {
-    const b = el("button", "", verbFor(o));
-    b.onclick = (e) => { e.stopPropagation(); closeCardMenu(); onAct(o.index); };
-    m.append(b);
-  });
-  m.addEventListener("click", (e) => e.stopPropagation());
-  document.body.append(m);
-  // Above the card if it fits, below if it does not, and never off either edge: on a phone the card
-  // this is hanging off can be twenty pixels from the side of the screen.
-  const r = node.getBoundingClientRect(), mb = m.getBoundingClientRect();
-  const above = r.top - mb.height - 8;
-  m.style.top = (above >= 6 ? above : Math.min(r.bottom + 8, innerHeight - mb.height - 6)) + "px";
-  m.style.left = Math.max(6, Math.min(r.left + r.width / 2 - mb.width / 2, innerWidth - mb.width - 6)) + "px";
-  CARDMENU = m;
+  if (!c) return;
+  if (SHEET_INST != null && SHEET_INST === c.inst) { closeCardMenu(); return; }   // a second tap closes it
+  const img = node.querySelector("img");
+  showPreview(img ? img.getAttribute("src") : "", c, true, placeOf(node));
+  PREVIEW.classList.remove("scrub");
+  PREVIEW.classList.add("sheet");
+  PREVIEW.querySelector("img").classList.toggle("hidden", !img);
+
+  const body = PREVIEW.querySelector(".sheetbody");
+  body.innerHTML = "";
+  const parts = powerParts(c);
+  if (parts) {
+    const line = el("div", "pow");
+    line.append(el("b", "", `POWER ${parts.now}`));
+    const bits = [`${parts.printed} printed`];
+    if (parts.gear) bits.push(`${parts.gear >= 0 ? "+" : ""}${parts.gear} Gear`);
+    if (parts.other) bits.push(`${parts.other >= 0 ? "+" : ""}${parts.other} this turn`);
+    line.append(el("span", "", bits.join(" \u00b7 ")));
+    body.append(line);
+  }
+  if (c.gear && c.gear.length) {
+    const list = el("div", "gearlist");
+    list.append(el("div", "lbl", c.gear.length === 1 ? "EQUIPPED" : `EQUIPPED \u00d7${c.gear.length}`));
+    c.gear.forEach(g => {
+      const row = el("div", "g" + (g.spent ? " spent" : ""));
+      row.append(el("b", "", g.name),
+                 el("i", "", typeof g.power === "number" && g.power ? `${g.power >= 0 ? "+" : ""}${g.power} power` : ""));
+      if (g.text) row.append(el("div", "t", g.text.replace(/\n/g, " ")));
+      list.append(row);
+    });
+    body.append(list);
+  }
+  if (acts && acts.length) {
+    const row = el("div", "opts");
+    acts.forEach(o => {
+      const b = el("button", "", verbFor(o));
+      b.onclick = (e) => { e.stopPropagation(); closeCardMenu(); onAct(o.index); };
+      row.append(b);
+    });
+    body.append(row);
+  }
+  body.classList.toggle("hidden", !body.childNodes.length);
+  SHEET_INST = c.inst;
 }
 // Anything else on the page closes it. The card's own click stops propagating, so opening one does
-// not immediately close it, and so does the menu's.
+// not immediately close it, and so does the sheet's.
 document.addEventListener("click", closeCardMenu);
 
 // The long press is this board's own gesture — it reads the card under the finger — and iOS wants to
@@ -1595,11 +1639,17 @@ function placeOf(n) {
 function showPreview(src, c, touch, place) {
   if (!PREVIEW) {
     PREVIEW = el("div", "preview");
-    PREVIEW.append(el("div", "cap"), el("img"));
+    PREVIEW.append(el("div", "cap"), el("img"), el("div", "sheetbody hidden"));
     document.body.append(PREVIEW);
-    PREVIEW.onclick = (e) => { e.stopPropagation(); hidePreview(); };
+    PREVIEW.onclick = (e) => { e.stopPropagation(); closeCardMenu(); };
   }
-  const img = PREVIEW.querySelector("img"); img.src = src; img.alt = c.name;
+  // Whoever is opening it owns it: a read takes the plain card, a tap builds the sheet back up.
+  PREVIEW.classList.remove("sheet");
+  const body = PREVIEW.querySelector(".sheetbody");
+  body.innerHTML = ""; body.classList.add("hidden");
+  const img = PREVIEW.querySelector("img");
+  img.classList.remove("hidden");
+  img.src = src; img.alt = c.name;
   const cap = PREVIEW.querySelector(".cap");
   cap.textContent = place || "";
   cap.classList.toggle("hidden", !place);
@@ -1609,7 +1659,10 @@ function showPreview(src, c, touch, place) {
   // pointer-events stay off, so the preview never steals the hover from the card underneath it.
   PREVIEW.style.left = ""; PREVIEW.style.top = "";
 }
-function hidePreview() { if (PREVIEW) PREVIEW.classList.remove("show", "touch"); }
+function hidePreview() {
+  SHEET_INST = null;
+  if (PREVIEW) PREVIEW.classList.remove("show", "touch", "sheet");
+}
 
 // The mat is a table, not a document. While a board is on screen the page itself is pinned: a
 // finger dragged across the cards was scrolling the whole page up and down, which is the one thing

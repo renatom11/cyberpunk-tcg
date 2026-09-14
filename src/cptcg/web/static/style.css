@@ -491,20 +491,12 @@ table.rep th { color: var(--cyan); }
 .stackbox.open { cursor: pointer; }
 .stackbox.open:hover { border-color: var(--cyan); }
 
-/* ------------------------------------------------------- what this card can do, at the card
+/* ------------------------------------------------------- the sheet a tapped card opens
    The prompt used to carry a button for every legal action in the game, so a main phase with a
    hand of seven and a field of four was thirty buttons of "Play X" and "Sell X" to read through in
-   order to do the thing you were already pointing at. The moves belong to the cards; this is where
-   they are offered. Rows are tall because this is aimed at a thumb. */
-.cardmenu { position: fixed; z-index: 60; background: var(--panel); border: 1px solid var(--cyan);
-  border-radius: 9px; padding: 6px; display: flex; flex-direction: column; gap: 4px;
-  box-shadow: 0 12px 34px #000d; min-width: 136px; max-width: min(280px, 92vw); }
-.cardmenu .who { color: var(--yellow); font-size: 10px; font-weight: 800; letter-spacing: .08em;
-  padding: 1px 3px 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cardmenu button { font-size: 12px; padding: 9px 11px; text-align: left; letter-spacing: .06em;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* When the board has taken every action onto its own cards, the prompt still says so rather than
-   going blank — an empty box reads as a bug, and this reads as an instruction. */
+   order to do the thing you were already pointing at. The moves belong to the cards, and a card
+   tapped opens as a sheet (see `.preview.sheet` below) rather than as a popover beside a
+   forty-pixel sliver. */
 .opts .none { color: var(--dim); font-size: 11px; font-style: italic; align-self: center; }
 
 /* ---------------------------------------------------------------- hover preview */
@@ -548,6 +540,34 @@ body.mat { position: fixed; inset: 0; width: 100%; }
 /* while a held preview follows the finger it must not be the thing the finger is over, and
    `.preview.touch` below turns pointer events back on, so this needs the extra class to win */
 .preview.touch.scrub, .preview.scrub { pointer-events: none; }
+
+/* The sheet: the same overlay, opened by a tap rather than a hold, with what the board has no room
+   to say underneath the face — what is bolted to this Unit, what that comes to, and what it can
+   do. It grows to its content and scrolls past it rather than capping the card, because a Unit
+   carrying three pieces of Gear is exactly the one worth opening. */
+/* `.preview.touch` in the phone block sets a height, and comes later; this needs the same weight
+   plus one to keep the sheet sized by what is in it. */
+.preview.sheet, .preview.touch.sheet { pointer-events: auto; height: auto; max-height: 88vh;
+  overflow-y: auto; }
+.preview.sheet img { flex: 0 0 auto; height: auto; max-height: 62vh; }
+.preview .sheetbody { flex: 0 0 auto; padding: 8px 10px 10px; background: #070c14;
+  border-top: 1px solid var(--line2); }
+.preview .sheetbody .pow { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 6px; }
+.preview .sheetbody .pow b { color: var(--green); font-size: 15px; letter-spacing: .08em; }
+.preview .sheetbody .pow span { color: var(--dim); font-size: 11px; letter-spacing: .04em; }
+.preview .sheetbody .gearlist .lbl { display: block; color: var(--dim); font-size: 9px;
+  letter-spacing: .16em; margin: 4px 0 3px; }
+.preview .sheetbody .gearlist .g { border: 1px solid var(--line); border-radius: 6px;
+  padding: 4px 7px; margin-bottom: 4px; background: #0b1420; }
+.preview .sheetbody .gearlist .g.spent { opacity: .6; }
+.preview .sheetbody .gearlist .g b { color: var(--yellow); font-size: 12px; }
+.preview .sheetbody .gearlist .g i { color: var(--green); font-style: normal; font-size: 11px;
+  font-weight: 700; float: right; }
+.preview .sheetbody .gearlist .g .t { color: #c8d4dc; font-size: 10.5px; line-height: 1.35;
+  margin-top: 2px; clear: both; }
+.preview .sheetbody .opts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.preview .sheetbody .opts button { font-size: 12px; padding: 9px 12px; letter-spacing: .06em; }
 
 /* A card sold into an Eddies area is public (ruling 002), so it is shown before it is turned over:
    face up for a beat, a turn on its vertical axis, then the back the pile actually shows. */
