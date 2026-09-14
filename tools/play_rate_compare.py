@@ -114,16 +114,53 @@ def rates(results, cards: set[str]) -> dict[str, tuple[int, int]]:
     return {c: tuple(v) for c, v in out.items()}
 
 
+def feasible_groups(reg, cards: list[str]) -> list[list[str]]:
+    """Split a card list into groups a single legal deck can hold, greedily by colour demand.
+
+    A colour needs ``ceil(ram / 2)`` of the three Legend slots to admit its highest-RAM card, so a
+    list spanning four colours, or three colours where one wants two slots, has no deck at all. The
+    first version of this tool simply refused such a list, which made the interesting comparison —
+    the twelve cards the sweep flagged, which span all four colours — impossible to run. Splitting
+    is sound here because each group is measured against *itself* under two agents: the comparison
+    is paired within a group and never across them.
+    """
+    ranked = sorted((reg.get(c) for c in cards), key=lambda d: (-d.ram, d.id))
+    groups: list[list] = []
+    for d in ranked:
+        for g in groups:
+            need = {}
+            for x in g + [d]:
+                if x.ram:
+                    need[x.color] = max(need.get(x.color, 0), -(-x.ram // 2))
+            if sum(need.values()) <= 3:
+                g.append(d)
+                break
+        else:
+            groups.append([d])
+    return [[d.id for d in g] for g in groups]
+
+
 def run(a) -> int:
     reg = load_default()
-    cards = list(a.cards)
-    rng = Pcg32(a.seed, seq=77)
+    groups = feasible_groups(reg, list(a.cards))
+    if len(groups) > 1:
+        print(f"{len(a.cards)} cards do not fit one legal deck; running {len(groups)} probes:")
+        for g in groups:
+            print("   " + ", ".join(g))
+        print()
+    rc = 0
+    for gi, group in enumerate(groups):
+        rc |= _run_group(a, reg, group, gi)
+    return rc
+
+
+def _run_group(a, reg, cards: list[str], gi: int) -> int:
+    rng = Pcg32(a.seed + 13 * gi, seq=77)
     decks = []
     for k in range(a.decks):
-        d = build_around(reg, cards, rng, f"probe{k}")
+        d = build_around(reg, cards, rng, f"probe{gi}_{k}")
         if d is None:
-            print("no legal deck holds all of those cards together — their colours need more than "
-                  "three Legend slots. Split the list and run it twice.")
+            print(f"could not build a deck around {', '.join(cards)}")
             return 1
         decks.append(d)
     want = set(cards)
@@ -161,11 +198,13 @@ def run(a) -> int:
         star = "  *" if p < 0.05 else ""
         print(f"{c:34s} {fmt(ra, pa, da):>18s} {fmt(rb, pb, db):>18s}   {dtxt}  {p:6.3f}{star}")
     if a.out:
-        Path(a.out).parent.mkdir(parents=True, exist_ok=True)
-        Path(a.out).write_text(json.dumps({"a": a.a, "b": a.b, "seeds": a.seeds,
-                                           "decks": [d.name for d in decks], "rows": rows},
-                                          indent=1), encoding="utf-8")
-        print(f"\nwrote {a.out}")
+        out = Path(a.out if gi == 0 else Path(a.out).with_name(
+            f"{Path(a.out).stem}.{gi}{Path(a.out).suffix}"))
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps({"a": a.a, "b": a.b, "seeds": a.seeds, "cards": cards,
+                                   "decks": [d.name for d in decks], "rows": rows},
+                                  indent=1), encoding="utf-8")
+        print(f"\nwrote {out}")
     return 0
 
 
