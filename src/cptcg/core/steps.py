@@ -317,6 +317,21 @@ class ResolveAttackStep(Step):
 
     def run(self, s: GameState) -> None:
         atk = s.atk
+        try:
+            self._resolve(s)
+        finally:
+            # Gunpoint Diplomacy: "the next time this Unit attacks this turn, it may attack ready
+            # Units." One attack, and this is where it is spent -- at the end of the attack it
+            # authorised, not at its start. The grant has to survive until here because CR 9.26.3
+            # (above) re-reads `attack_targets` after the reaction window, so retiring it any
+            # earlier -- on the ("attack", unit, player) event, the obvious card-side place --
+            # makes the very attack it permitted illegal and the attack fizzles instead.
+            if any(m[0] == "attack_ready_units" for m in s.mods):
+                s.mods = [m for m in s.mods
+                          if not (m[0] == "attack_ready_units" and m[1] == atk.attacker)]
+
+    def _resolve(self, s: GameState) -> None:
+        atk = s.atk
         if atk.fizzled or s.over or s.i_zone[atk.attacker] is not Zone.FIELD:
             return
         a = atk.attacker

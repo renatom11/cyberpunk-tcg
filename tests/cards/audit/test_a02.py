@@ -56,14 +56,15 @@ def test_fool_on_the_hill_reveals_the_top_two_to_the_chooser(pool):
 
 
 # ----------------------------------------------------------------------- AUD-gunpoint-diplomacy-1
-@pytest.mark.xfail(strict=True, reason=(
-    "AUD-gunpoint-diplomacy-1: 'the next time this Unit attacks this turn' is granted as an "
-    "until-end-of-turn mod, so every attack that turn may hit ready Units"))
 def test_gunpoint_diplomacy_ready_attack_lasts_one_attack(pool):
     """"- The next time this Unit attacks this turn, it may attack ready Units."
 
     One attack, not all of them. The Unit here attacks a ready Unit (spending the grant), is made
-    ready again by an effect, and must then be unable to target the second ready Unit.
+    ready again by an effect, and must then be unable to target the second ready Unit. The first
+    attack resolving at all is half the claim: the grant has to outlive its own declaration, since
+    CR 9.26.3 re-reads the permission after the reaction window.
+
+    Fixed: AUD-gunpoint-diplomacy-1.
     """
     s = board(pool, Side(hand=["gunpoint-diplomacy"], eddies=E, field=["psycho-squad"],
                          gig=[(20, 20)]),
@@ -78,3 +79,23 @@ def test_gunpoint_diplomacy_ready_attack_lasts_one_attack(pool):
     during_main(s, lambda st: ops.ready(st, mine))
     assert Target(TARGET_UNIT, second) not in legal.attack_targets(s, mine), \
         "the grant was spent on the first attack"
+
+
+def test_gunpoint_diplomacy_grant_is_spent_by_any_attack_not_only_a_useful_one(pool):
+    """Control. "The next time this Unit attacks" counts attacks, not attacks that needed the
+    permission — so an attack on a *spent* rival Unit, which any Unit may make, spends it just the
+    same. The mirror of the test above: identical board but for the first target being spent.
+    """
+    s = board(pool, Side(hand=["gunpoint-diplomacy"], eddies=E, field=["psycho-squad"],
+                         gig=[(20, 20)]),
+              Side(field=[("corpo-security", {"spent": True}), "psycho-squad"], gig=[(4, 1)]))
+    play(s, "gunpoint-diplomacy")
+    mine = s.units(0)[0]
+    spent_one = find(s, "corpo-security", Zone.FIELD, 1)
+    ready_one = find(s, "psycho-squad", Zone.FIELD, 1)
+    do(s, Attack(mine))
+    do(s, Target(TARGET_UNIT, spent_one))         # legal without any grant at all ...
+    assert s.i_zone[spent_one] == Zone.TRASH
+    during_main(s, lambda st: ops.ready(st, mine))
+    assert Target(TARGET_UNIT, ready_one) not in legal.attack_targets(s, mine), \
+        "... and it still spent the one attack the grant was good for"

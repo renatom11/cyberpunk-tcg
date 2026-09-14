@@ -246,6 +246,11 @@ def _():
 def _():
     def play(c):
         def give(c2, u):
+            # "The NEXT TIME this Unit attacks this turn" -- one attack, not every attack until
+            # the end of the turn. "This turn" bounds the grant, it is not its extent; the sibling
+            # bullet says "+3 power this turn" when it means all turn. `steps.ResolveAttackStep`
+            # retires the mod at the end of the attack it authorised, which is the only place it
+            # can be spent: CR 9.26.3 re-reads the permission after the reaction window.
             opts = [("May attack ready Units", lambda c3: c3.mod("attack_ready_units", u)),
                     ("+3 power", lambda c3: c3.temp_power(u, 3))]
             if c2.less_cred():
