@@ -11,7 +11,6 @@ text across the whole pool. The detector is
 and running it over all 151 cards turned up one card no auditor had been assigned. This is its
 scenario test.
 """
-import pytest
 from conftest import Side, board, do, find
 
 from cptcg.core.actions import Attack, Pick, Target

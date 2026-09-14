@@ -10,7 +10,6 @@ printed sentence that must still run when the prompt before it has nothing to of
 
 Every assertion is a printed-text outcome: zones, Gig faces, hand size, keywords.
 """
-import pytest
 from conftest import Side, board, do, find, options
 
 from cptcg.core import ops
@@ -159,24 +158,30 @@ def test_take_control_really_makes_a_rival_unit_steal_one_fewer_gig(pool):
 def test_appetite_for_destruction_fires_once_even_across_two_qualifying_wins(pool):
     """'**The next time** a friendly Unit wins a fight by 3+ power this turn, it also steals a Gig.'
 
-    A one-shot, not an until-end-of-turn modifier: two friendly attackers each win by 4 in the same
-    turn and exactly one extra Gig changes hands. MaxTac AV at 8 and Hacked Corpo... at 3 cannot
-    both qualify, so both attacks go through MaxTac-class power — the board gives each attacker a
-    spent 4-power defender.
+    A one-shot, not an until-end-of-turn modifier. Two friendly attackers (power 8) each win a
+    fight by 4 against a spent 4-power defender in the same turn; exactly one extra Gig changes
+    hands, and the same board without the Program moves none at all — a fight steals nothing by
+    itself, so the one Gig is the trigger and the second win did not fire it again.
     """
-    s = board(pool, Side(hand=["appetite-for-destruction"], eddies=E,
-                         field=["maxtac-av", "sandayu-oda-hanakos-guardian"], gig=[(4, 1)]),
-              Side(field=[("emergency-atlus", {"spent": True}), ("emergency-atlus", {"spent": True})],
-                   gig=[(6, 3), (8, 5), (10, 7)]))
-    play(s, "appetite-for-destruction")
-    for atk in ("maxtac-av", "sandayu-oda-hanakos-guardian"):
-        do(s, Attack(find(s, atk, Zone.FIELD, 0)))
-        for _ in range(8):
-            if s.pending is None or s.pending.kind is ChoiceKind.MAIN:
-                break
-            do(s, s.pending.options[0])
-    assert ids(s, 1) == []                                    # both defenders lost their fights
-    assert len(s.gig[0]) == 2 and len(s.gig[1]) == 2, "one extra Gig, not two"
+    def run(with_program):
+        s = board(pool, Side(hand=["appetite-for-destruction"], eddies=E,
+                             field=["maxtac-av", "sandayu-oda-hanakos-guardian"], gig=[(4, 1)]),
+                  Side(field=[("emergency-atlus", {"spent": True}),
+                              ("emergency-atlus", {"spent": True})],
+                       gig=[(6, 3), (8, 5), (10, 7)]))
+        if with_program:
+            play(s, "appetite-for-destruction")
+        for atk in ("maxtac-av", "sandayu-oda-hanakos-guardian"):
+            do(s, Attack(find(s, atk, Zone.FIELD, 0)))
+            for _ in range(8):
+                if s.pending is None or s.pending.kind is ChoiceKind.MAIN:
+                    break
+                do(s, s.pending.options[0])
+        assert ids(s, 1) == [], "both defenders lost their fights"
+        return len(s.gig[0]), len(s.gig[1])
+
+    assert run(False) == (1, 3), "a won fight steals nothing on its own"
+    assert run(True) == (2, 2), "one extra Gig for the first 3+ win, and only the first"
 
 
 # ------------------------------------------------------- a separate sentence runs with no prompt

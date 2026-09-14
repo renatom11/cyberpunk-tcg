@@ -3,7 +3,6 @@
 Audit of src/cptcg/cards/sets/wnc.py lines 16-95 against the printed text in data/cards/wnc.json.
 Every test here asserts a printed-text outcome only (zones, hand size), never script internals.
 """
-import pytest
 from conftest import Side, board, find
 
 from cptcg.core.actions import Play

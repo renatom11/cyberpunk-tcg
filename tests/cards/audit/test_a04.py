@@ -4,7 +4,6 @@ Audit of src/cptcg/cards/sets/wnc.py lines 337-367 (afterparty-at-lizzies, indus
 trust-no-one, peace-offering) against the printed text in data/cards/wnc.json.
 Every test here asserts a printed-text outcome only (gig values, hand size), never internals.
 """
-import pytest
 from conftest import Side, board, do, find
 
 from cptcg.core.actions import Pick, Play
