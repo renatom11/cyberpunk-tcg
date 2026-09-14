@@ -387,10 +387,14 @@ def _():
 @script("industrial-assembly")
 def _():
     def play(c):
-        def after(c2, _o, _i):
+        # "Increase a Gig by up to 4. If you control a Gig with 8+ value, draw 1." The condition is
+        # read off the board, not off the die that moved, so it holds when the increase is declined
+        # and when no increase is legal at all -- a d10 already showing 10 cannot be raised
+        # (ruling 037), yet it is exactly the 8+ Gig the second sentence is asking about.
+        def draw_on_eight_plus(c2):
             if gigs_8plus(c2):
                 c2.draw(1)
-        c.adjust_up_to([c.player, c.rival], 1, 4, cont=after, prompt="Increase a Gig")
+        c.adjust_up_to([c.player, c.rival], 1, 4, after=draw_on_eight_plus, prompt="Increase a Gig")
     return CardScript(on_play=play)
 
 

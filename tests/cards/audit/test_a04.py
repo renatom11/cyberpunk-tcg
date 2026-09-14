@@ -32,12 +32,14 @@ def test_afterparty_draws_when_the_adjust_is_declined(pool):
     assert len(s.zone(0, Zone.HAND)) == 1                    # ... and the draw still happens
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-industrial-assembly-1: the draw is nested in the adjust continuation, so when no increase is legal the separate 8+-value draw clause never runs")
 def test_industrial_assembly_draws_when_no_gig_can_be_increased(pool):
     """'Increase a Gig by up to 4. If you control a Gig with 8+ value, draw 1.' The only Gig in
     play is a d10 already showing 10, so no increase is legal (CR 6.4.4 / ruling 037) and the
     first sentence simply does nothing. The d10 still has value 10, so the second sentence —
-    its own sentence, with its own condition — is satisfied."""
+    its own sentence, with its own condition — is satisfied.
+
+    Fixed: AUD-industrial-assembly-1.
+    """
     s = board(pool, Side(hand=["industrial-assembly"], eddies=E, gig=[(10, 10)],
                          deck=["floor-it"]), Side())
     play(s, "industrial-assembly")
