@@ -506,20 +506,23 @@ let DRAG = null;
 document.addEventListener("dragstart", (e) => { if (e.target.closest(".card")) e.preventDefault(); });
 
 function wireDrag(root, pend, onAct) {
-  const plays = {}, sells = {}, gear = {};
+  const plays = {}, sells = {}, gear = {}, attacks = {};
   pend.options.forEach(o => {
     if (o.inst == null || o.inst < 0) return;
     if (o.kind === "Play" && o.host >= 0) (gear[o.inst] = gear[o.inst] || {})[o.host] = o;
     else if (o.kind === "Play" || o.kind === "GoSolo") plays[o.inst] = o;
     else if (o.kind === "Sell") sells[o.inst] = o;
+    else if (o.kind === "Attack") attacks[o.inst] = o;
   });
   const field = root.querySelector(".p-my-field");
   const eddies = root.querySelector(".p-my-eddies");
 
-  root.querySelectorAll(".hand.mine > .card[data-inst], .p-my-legends .card[data-inst]:not(.gearcard)").forEach(node => {
+  // My field joins the hand and my Legends: a Unit that can attack is dragged at the rival, which
+  // is the gesture the table has for it — you push the card forward across the middle of the mat.
+  root.querySelectorAll(".hand.mine > .card[data-inst], .p-my-legends .card[data-inst]:not(.gearcard), .p-my-field .card[data-inst]:not(.gearcard)").forEach(node => {
     const inst = +node.dataset.inst;
-    const mine = { play: plays[inst], sell: sells[inst], gear: gear[inst] };
-    if (!mine.play && !mine.sell && !mine.gear) return;
+    const mine = { play: plays[inst], sell: sells[inst], gear: gear[inst], attack: attacks[inst] };
+    if (!mine.play && !mine.sell && !mine.gear && !mine.attack) return;
     node.classList.add("draggable");
     node.addEventListener("pointerdown", (e) => {
       if (e.button !== undefined && e.button !== 0) return;
@@ -533,6 +536,13 @@ function wireDrag(root, pend, onAct) {
   DRAG_ZONES = [];
   if (field) DRAG_ZONES.push({ el: field, label: "DROP TO PLAY", pick: (d) => d.opts.play });
   if (eddies) DRAG_ZONES.push({ el: eddies, label: "DROP TO SELL", pick: (d) => d.opts.sell });
+  // The rival's half, all of it: their field, their Legend band, their Gig area. Dropping there
+  // declares the attack; the board then asks what it is aimed at, because that is a second decision
+  // and CR 9.26 has a reaction window between the two — it is not the drop's to answer.
+  [".p-opp-field", ".p-opp-legends", ".p-opp-gig"].forEach(sel => {
+    const z = root.querySelector(sel);
+    if (z) DRAG_ZONES.push({ el: z, label: "DROP TO ATTACK", pick: (d) => d.opts.attack });
+  });
   root.querySelectorAll(".card[data-inst]").forEach(host => {
     DRAG_ZONES.push({ el: host, label: "EQUIP", host: +host.dataset.inst,
                       pick: (d) => d.opts.gear && d.opts.gear[+host.dataset.inst] });
@@ -831,10 +841,33 @@ function verbFor(o) {
 // and what that comes to, and what it can do. A forty-pixel sliver is a thing to point at, not a
 // thing to read, and a little menu hanging off one was answering only the last of those questions.
 // Tap it again, or anywhere off it, and it goes away.
-let SHEET_INST = null;
+let SHEET_INST = null, CARDMENU = null;
 function closeCardMenu() {
   SHEET_INST = null;
+  if (CARDMENU) { CARDMENU.remove(); CARDMENU = null; }
   if (PREVIEW) { PREVIEW.classList.remove("sheet"); hidePreview(); }
+}
+// A face-down card has nothing to read, so blowing it up full screen shows a card back the size of
+// the phone — all of the room and none of the answer. What it has is what it can do, and that is
+// all it gets: a short list standing on the card, the way every card's list used to work.
+function openCardPopover(node, c, acts, onAct) {
+  if (!acts.length) return;
+  const m = el("div", "cardmenu");
+  acts.forEach(o => {
+    const b = el("button", "", verbFor(o));
+    b.onclick = (e) => { e.stopPropagation(); closeCardMenu(); onAct(o.index); };
+    m.append(b);
+  });
+  m.addEventListener("click", (e) => e.stopPropagation());
+  document.body.append(m);
+  // Above the card if it fits, below if it does not, and never off either edge: on a phone the card
+  // this is hanging off can be twenty pixels from the side of the screen.
+  const r = node.getBoundingClientRect(), mb = m.getBoundingClientRect();
+  const above = r.top - mb.height - 8;
+  m.style.top = (above >= 6 ? above : Math.min(r.bottom + 8, innerHeight - mb.height - 6)) + "px";
+  m.style.left = Math.max(6, Math.min(r.left + r.width / 2 - mb.width / 2, innerWidth - mb.width - 6)) + "px";
+  CARDMENU = m;
+  SHEET_INST = c.inst;
 }
 // What a Unit's power is made of. Each piece of Gear contributes its own printed power and nothing
 // else (ops.power sums exactly that), so the breakdown is honest rather than inferred; whatever is
@@ -848,7 +881,10 @@ function powerParts(c) {
 }
 function openCardMenu(node, c, acts, onAct) {
   if (!c) return;
-  if (SHEET_INST != null && SHEET_INST === c.inst) { closeCardMenu(); return; }   // a second tap closes it
+  const open = SHEET_INST != null && SHEET_INST === c.inst;
+  closeCardMenu();
+  if (open) return;                                      // a second tap on the same card closes it
+  if (node.classList.contains("back")) { openCardPopover(node, c, acts, onAct); return; }
   const img = node.querySelector("img");
   showPreview(img ? img.getAttribute("src") : "", c, true, placeOf(node));
   PREVIEW.classList.remove("scrub");
@@ -1034,6 +1070,10 @@ function gigPanel(p, meSeat) {
   if (p.gigs.length >= 7) n.classList.add("hot");
   score.append(n, el("div", "c" + (p.seat === meSeat ? " own" : ""), p.gigs.length ? p.cred : "Null"));
   g.append(list, score);
+  // The two Gig areas meet along the centre line and are otherwise identical boxes. A die keeps the
+  // colour of whoever brought it, so a stolen one sits in the other tray still wearing your green,
+  // which is exactly when knowing which box you are looking at matters most.
+  g.append(el("div", "tag", p.seat === meSeat ? "FRIENDLY GIGS" : "OPPONENT GIGS"));
   return g;
 }
 // The fixer: the dice not yet rolled, dim, named rather than numbered.
