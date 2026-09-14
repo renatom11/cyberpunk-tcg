@@ -342,9 +342,14 @@ def view_state(s: GameState, perspective: int | None, names: tuple[str, str], lo
             if pick_values is not None and idx < len(pick_values):
                 row["pick"] = pick_values[idx]
             opts.append(row)
-        phase = {ChoiceKind.MULLIGAN: "Opening hand", ChoiceKind.ORDER: "Turn order", ChoiceKind.GIG_DIE: "Start phase",
-                 ChoiceKind.MAIN: "Main phase", ChoiceKind.TARGET: "Attack", ChoiceKind.REACTION: "Rival reacts",
-                 ChoiceKind.PICK: "Choose"}[ch.kind]
+        # `.get`, not `[]`: this was the one place in the client path that turned an unmapped
+        # ChoiceKind into a KeyError, and it would have taken the whole view down for both seats
+        # rather than showing an unnamed phase. A kind the engine grows before this map does is a
+        # missing label, not an outage.
+        phase = {ChoiceKind.MULLIGAN: "Opening hand", ChoiceKind.ORDER: "Turn order",
+                 ChoiceKind.GIG_DIE: "Start phase", ChoiceKind.MAIN: "Main phase",
+                 ChoiceKind.TARGET: "Attack", ChoiceKind.REACTION: "Rival reacts",
+                 ChoiceKind.PICK: "Choose"}.get(ch.kind, ch.kind.name.replace("_", " ").title())
         pending = {"kind": ch.kind.name, "player": ch.player, "prompt": ch.prompt, "phase": phase,
                    "options": opts, "mine": mine}
     return {"turn": s.turn, "active": s.active, "first_player": s.first_player, "overtime": s.overtime,
