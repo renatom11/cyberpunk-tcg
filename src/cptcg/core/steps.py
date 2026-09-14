@@ -388,11 +388,15 @@ def fight(s: GameState, a: int, t: int) -> None:
             defeat_t = False
         if pt <= 0:
             defeat_a = False
-    # Reboot Optics: the next time a rival Unit fights this turn, it doesn't defeat our Unit.
-    if defeat_t and s.has_mod("next_fight_no_defeat", ot):
+    # Reboot Optics: "the next time a rival Unit FIGHTS this turn, it doesn't defeat the opposing
+    # friendly Unit." The fight is the trigger, so the shield is spent by the next fight whether or
+    # not it had anything to prevent -- a rival Unit that fights and loses, or that ties, or that
+    # was going to be stopped by CR 9.19.2 anyway, still spends it. Every fight has exactly one
+    # Unit per side, so a fight at all is a rival Unit fighting, for either owner.
+    if s.has_mod("next_fight_no_defeat", ot):
         defeat_t = False
         s.mods = [m for m in s.mods if not (m[0] == "next_fight_no_defeat" and m[1] == ot)]
-    if defeat_a and s.has_mod("next_fight_no_defeat", oa):
+    if s.has_mod("next_fight_no_defeat", oa):
         defeat_a = False
         s.mods = [m for m in s.mods if not (m[0] == "next_fight_no_defeat" and m[1] == oa)]
     if a_wins:

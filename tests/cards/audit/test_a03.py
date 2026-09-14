@@ -19,9 +19,6 @@ def play(s, cid):
 
 
 # --------------------------------------------------------------------------- AUD-reboot-optics-1
-@pytest.mark.xfail(strict=True, reason=(
-    "AUD-reboot-optics-1: the shield is consumed only by a fight it actually saves a Unit from, "
-    "so one Program protects every later fight that turn"))
 def test_reboot_optics_shield_covers_only_the_next_fight(pool):
     """"QUICK: The next time a rival Unit fights this turn, it doesn't defeat the opposing
     friendly Unit."
@@ -31,7 +28,9 @@ def test_reboot_optics_shield_covers_only_the_next_fight(pool):
     second fight, Psycho Squad (6) into the spent Animals Wrecker (10), is therefore unshielded
     and Psycho Squad must be defeated. (Under the narrower reading of "a rival Unit fights" —
     only a rival Unit that attacks — the shield never applies on our own turn at all, and Psycho
-    Squad dies for that reason instead. Both readings kill it; the script saves it.)
+    Squad dies for that reason instead. Both readings kill it; the script saved it.)
+
+    Fixed: AUD-reboot-optics-1.
     """
     s = board(pool, Side(hand=["reboot-optics"], eddies=E,
                          field=["maxtac-suppression-team", "psycho-squad"]),
