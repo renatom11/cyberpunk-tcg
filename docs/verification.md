@@ -344,7 +344,7 @@ is why the engine's behaviour is the one left standing rather than the filer's.
 
 Twenty-one findings are closed with a fix as of this writing, one was withdrawn as a false
 positive, and `data/COVERAGE.md` — which counts the `xfail(strict=True)` tests rather than trusting
-a number kept by hand — reports 23 still open. Eight of the fixes needed a golden regeneration and
+a number kept by hand — reports 23 still open. Twelve of the fixes needed a golden regeneration and
 each is a ledger entry in `tests/golden/REGEN.md`; the rest were G0, and the unbroken run of
 IDENTICAL across them is their neutrality proof. Two things came out of landing them
 that reading alone did not produce.
