@@ -16,6 +16,11 @@ reason claimed rather than because its board was broken — Maelstrom Zealots lo
 *decisively* does defeat the winner, so the xfail about a tied fight is genuinely about ties. It
 stays next to its finding, where a reader meets both at once, and says so in its first line.
 
+**A fixed finding** stays exactly where it was, with the marker deleted and the finding id still
+named in its docstring. The deletion is the git record of red before and green after; the id is what
+makes `git log -S AUD-<card>-<n>` return the whole story in one command — the finding landing red,
+the verification that let it through, and the fix.
+
 **A confirmation** is what the audit produces when it suspects a card, writes the test, and finds
 the engine right. That is coverage the pool did not have, paid for out of the audit, and it is the
 class the plan calls S-SUSPICION — the most dangerous to act on, since someone who "knows" a card is

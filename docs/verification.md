@@ -124,11 +124,20 @@ ruling does, and did it silently across every stored replay, league table, arena
 model.
 
 `cards.registry.cards_digest()` now fingerprints the card data and the script sources together, and
-is recorded beside `rules` in replays, tournaments, arena results and model files. **Recorded, not
+is recorded beside `rules` in replays, tournaments, arena results, model files and harvest
+manifests. **Recorded, not
 enforced**: enforcing it on the day it was introduced would reject every artifact already on disk.
-It does real work in one place already — the website's card guide compares it against the digest
-stamped into the published measurement and says, in as many words, when the numbers describe the
-game as it behaved before a fix.
+It did real work on the very first card fix, in two places. The website's card guide compares it
+against the digest stamped into the published measurement and now says, in as many words, that
+those numbers describe the game as it behaved before the fix. And
+`tests/learn/test_harvest.py::test_the_committed_sample_still_replays` — a hundred games committed
+as exact action-index streams, with the same staleness contract as the golden file — failed loudly,
+because a card whose option count changes shifts every index after it. That is the alarm working:
+the sample was regenerated deliberately, from the same seed and the same decks, and the diff is the
+fingerprint of a small real change (14,848 decisions to 14,855, one game's winner moved). The
+harvest manifest had recorded only `rules`, so it could say which *ruleset* produced a file and not
+which *cards*; it records both now, which is what makes a future regeneration explicable rather than
+merely necessary.
 
 ## The golden protocol
 
@@ -154,6 +163,14 @@ because the fixed card has to appear in that window or the change there is unexp
 steps stay manual: revert the script hunk while keeping the new golden and confirm the same keys go
 DIFFERENT, and — for a G0 card, which the golden cannot see at all — confirm `bench.py fuzz` moves,
 or the fix is a no-op.
+
+**The fuzz rule needs one qualification, learned on the second fix.** A G0 fix must move `fuzz` *or*
+be a fix to a branch the fuzz demonstrably cannot reach — and "demonstrably" means measured, not
+assumed. Memory Relapse's draw only differs when the rival controls no Units, and the frozen
+heuristic is played 10 times in 300 games and essentially never casts a spend-a-rival-Unit Program
+into an empty field, because the spend is the whole reason it plays the card. The branch matters to
+a human and to a searching agent, not to the fuzz. Where that is the case, the red-to-green xfail
+test *is* the reachability proof: it failed on a board a real game reaches and now passes.
 
 G0 fixes batch freely; the unbroken run of IDENTICAL across the batch *is* the proof of neutrality.
 G1 and G2 land one at a time, each with its own regeneration commit, ordered by ascending golden-key
@@ -214,3 +231,45 @@ better decks is a question for the builder, played head to head against itself w
 it is not a question either store can answer about itself. Until that runs, the honest statement is
 narrower and still worth having: **the prior was thin enough that half of it was sign-noise**, which
 is a much better reason to distrust the learned-archetype results than anything in the model.
+
+
+## Does a stronger agent play the cards the heuristic refuses?
+
+The coverage sweep's most surprising output was a set of cards the frozen heuristic holds and does
+not cast. Two readings pointed opposite ways — the card is bad, or the evaluator is blind to it,
+since a one-ply agent scores the board at the end of its own turn and a card whose whole value is
+what the *rival* cannot do next turn is invisible to it by construction.
+
+`tools/play_rate_compare.py` pairs them: the same decks, the same seeds, the same opponents, only
+the agent differs. Twelve cards, 600 games per arm, split into three colour-feasible probes because
+three Legends cannot cover four colours.
+
+| card | heuristic | ismcts:8 | delta |
+|---|---|---|---|
+| Reboot Optics | 19.5% | 31.0% | **+11.5pp** |
+| Adam Smasher — Metal Over Meat | 19.8% | 28.7% | **+8.9pp** |
+| Appetite for Destruction | 6.3% | 9.7% | +3.5pp |
+| Sandevistan | 21.8% | 25.6% | +3.8pp (n.s.) |
+| Chrome Reverie | 8.0% | 9.6% | +1.6pp (n.s.) |
+| We Gotta Live Together | 8.0% | 8.5% | n.s. |
+| Safety Override | 6.6% | 6.2% | n.s. |
+| Take Control | 12.9% | 11.6% | n.s. |
+| Cyberpsychosis | 8.7% | 7.2% | n.s. |
+| Unlikely Bond | 7.8% | 4.2% | **−3.6pp** |
+| Bootleg Black Sapphire Show | 12.7% | 2.3% | **−10.5pp** |
+| Gunpoint Diplomacy | 19.6% | 5.5% | **−14.1pp** |
+
+The headline is a negative, and it is the one worth having. **Chrome Reverie is not rescued by
+search.** It is the card the opponent-reading module was written around, the card whose strategy
+note calls it the answer to a rival winning on one attacker, and the searching agent plays it no
+more often than the greedy one does. Whatever its 2.6% play rate in the coverage sweep means, it is
+not simply that a one-ply evaluator cannot see it.
+
+The two largest disagreements come with a caveat that is more interesting than the numbers.
+**Reboot Optics and Gunpoint Diplomacy both have open audit findings**, and both findings say the
+card currently behaves more broadly than it prints — the Optics shield is consumed only by a fight
+it actually saves a Unit from, so one Program covers every later fight that turn; the Diplomacy
+grant is written as an until-end-of-turn modifier where the card says "the next time this Unit
+attacks this turn". Those play rates are measurements of the bug, not of the card, for both agents.
+They have to be re-measured after the fixes land, and until then the right reading of the ±11 and
+±14 point gaps is "the two agents disagree about a card that is not yet the printed card".

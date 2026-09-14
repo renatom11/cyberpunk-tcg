@@ -61,8 +61,10 @@ def test_every_audit_test_is_a_strict_xfail_naming_its_finding():
                 doc = (ast.get_docstring(node) or "").strip()
                 if doc.lower().startswith("control") or "AUD-" in doc:
                     continue                  # a control for a finding: see the module docstring
-                bad.append(f"{where}: no xfail marker and no docstring declaring it a control — "
-                           f"a probe. Move a confirmed-behaviour test to test_confirmed_*.py.")
+                bad.append(f"{where}: no xfail marker, and the docstring neither starts with "
+                           f"'Control' nor names an AUD- finding. If the finding was fixed, keep "
+                           f"its id in the docstring; if the engine was right all along, move the "
+                           f"test to test_confirmed_*.py.")
                 continue
             kw = {k.arg: k.value for k in marks[0].keywords}
             strict = kw.get("strict")

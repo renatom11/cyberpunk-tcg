@@ -101,11 +101,17 @@ def _():
 @script("memory-relapse")
 def _():
     def play(c):
-        def after(c2, u):
+        # Two sentences, two hooks. "It can't ready until your next turn" is about the Unit that was
+        # spent and has nothing to act on when none was. "If your ★ (Street Cred) is an even number,
+        # draw 1" is a separate sentence about the board -- it does not say "if you do" -- so it
+        # runs whether or not the rival had a Unit to spend.
+        def held(c2, u):
             c2.cant_ready(u)
+
+        def draw_on_even_cred(c2):
             if c2.cred_even():
                 c2.draw(1)
-        spend_one(c, c.rival_units(), then=after)
+        spend_one(c, c.rival_units(), then=held, after=draw_on_even_cred)
     return CardScript(on_play=play)
 
 
@@ -158,7 +164,16 @@ def _():
                 for i in top:
                     move(c2.s, i, Zone.TRASH)
                 c2.draw(2)
-        c.choose([True, False], decide, prompt="Rival: add to hand (yes) or trash (no)?", player=c.rival)
+        # "Reveal the top 2 cards of your deck. A Rival chooses ..." -- the reveal is the first
+        # sentence and the Rival is the one who has to act on it. ``revealed`` is the declared
+        # mechanism (core/view._pinned reads exactly what a choice declares and guesses nothing), so
+        # without it the chooser is asked to decide about two cards the mask still hides from them:
+        # in the browser, web/view.py blanks an unknown card's name, so a human Rival was answering
+        # this question about two blank rectangles. Naming both in the prompt is the same fact said
+        # out loud, and matches how tetratronic-rippler and search_top already do it.
+        names = " and ".join(c.d(i).name for i in top)
+        c.choose([True, False], decide, player=c.rival, revealed=top,
+                 prompt=f"Rival: {names} to their hand (yes) or the trash (no)?")
     return CardScript(on_play=play)
 
 

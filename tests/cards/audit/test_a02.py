@@ -36,14 +36,13 @@ def test_shattered_memories_draw_five_is_optional(pool):
 
 
 # ------------------------------------------------------------------------- AUD-fool-on-the-hill-1
-@pytest.mark.xfail(strict=True, reason=(
-    "AUD-fool-on-the-hill-1: 'Reveal the top 2 cards of your deck' is never implemented — the "
-    "Rival makes the choice without being shown the cards"))
 def test_fool_on_the_hill_reveals_the_top_two_to_the_chooser(pool):
     """"Reveal the top 2 cards of your deck. A Rival chooses whether you add them to your hand..."
 
     The choice is handed to the Rival with no ``revealed=`` declaration, so ``core.view`` keeps
     both cards hidden from seat 1 — the Rival decides blind, which the reveal clause forbids.
+
+    Fixed: AUD-fool-on-the-hill-1.
     """
     s = board(pool, Side(hand=["fool-on-the-hill"], eddies=E, deck=["floor-it", "psycho-squad"]),
               Side())

@@ -70,12 +70,23 @@ def bottom_deck_one(c: EffectCtx, cands, *, optional: bool = False, then: Callab
     c.choose(list(cands), _do, prompt="Bottom-deck", optional=optional)
 
 
-def spend_one(c: EffectCtx, cands, *, optional: bool = False, then: Callable | None = None) -> None:
+def spend_one(c: EffectCtx, cands, *, optional: bool = False, then: Callable | None = None,
+              after: Callable | None = None) -> None:
+    """Spend one of ``cands``; ``then(ctx, unit)`` runs with the Unit that was spent.
+
+    ``after(ctx)`` runs whatever happens — after the spend, after a decline, and when there was no
+    legal candidate to offer at all. Same distinction as ``EffectCtx.adjust_up_to``: a clause that
+    says "**It** can't ready until your next turn" belongs on ``then`` and has nothing to act on
+    when nothing was spent, while a separate printed sentence about the board ("If your ★ is an
+    even number, draw 1") belongs on ``after`` and must run either way.
+    """
     def _do(c2: EffectCtx, u: int) -> None:
         c2.spend(u)
         if then is not None:
             then(c2, u)
-    c.choose(list(cands), _do, prompt="Spend", optional=optional)
+        if after is not None:
+            after(c2)
+    c.choose(list(cands), _do, prompt="Spend", optional=optional, otherwise=after)
 
 
 def temp_power_one(c: EffectCtx, cands, delta: int, cond: int = 0, *, optional: bool = False,

@@ -64,7 +64,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from cptcg.cards.registry import load_default  # noqa: E402
+from cptcg.cards.registry import cards_digest, load_default  # noqa: E402
 from cptcg.core.config import DEFAULT_CONFIG  # noqa: E402
 from cptcg.core.rng import Pcg32  # noqa: E402
 from cptcg.deck.decklist import Decklist  # noqa: E402
@@ -337,8 +337,14 @@ def cmd_play(a) -> int:
                     f"{out} already exists but has no usable manifest; pass --fresh to overwrite.")
             out.unlink(missing_ok=True)
             manifest_path(out).unlink(missing_ok=True)
+        # "cards" beside "rules": a harvest is reproducible from (seed, agents, mix, ruleset) only
+        # while the cards behave the same way. A card-script fix changes what the game *is* every
+        # bit as much as flipping a ruling does, and without this the manifest cannot say which
+        # game it recorded. Recorded, not enforced, exactly like everywhere else the digest is
+        # stamped -- enforcing it would reject every file already on disk.
         man = {"format": MANIFEST_FORMAT, "out": str(out), "seed": a.seed, "agents": list(agents),
-               "mix": mix, "rules": rules, "games_target": a.games, "games_done": 0, "bytes": 0,
+               "mix": mix, "rules": rules, "cards": cards_digest(),
+               "games_target": a.games, "games_done": 0, "bytes": 0,
                "decisions": 0, "elapsed_s": 0.0, "sources": {}, "end_reasons": {}, "winners": {},
                "started": _now(), "updated": _now()}
         write_manifest(out, man)

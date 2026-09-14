@@ -18,10 +18,11 @@ def play(s, cid):
     return s
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-memory-relapse-1: the even-Street-Cred draw is nested in the spend's continuation, so it never happens when the rival has no Unit to spend")
 def test_memory_relapse_draws_on_even_cred_with_no_rival_units(pool):
     """'Spend a rival Unit. It can't ready until your next turn. If your * (Street Cred) is an
     even number, draw 1.' — the draw is its own sentence: it does not depend on a Unit being
+
+    Fixed: AUD-memory-relapse-1.
     there to spend. Street Cred here is 4 (even)."""
     s = board(pool, Side(hand=["memory-relapse"], eddies=E, gig=[(6, 4)], deck=["floor-it"]),
               Side(field=[], deck=["floor-it"]))
@@ -32,6 +33,8 @@ def test_memory_relapse_draws_on_even_cred_with_no_rival_units(pool):
 def test_bonnie_and_clyde_defeat_is_not_optional(pool):
     """'Defeat a rival Unit with power 4 or less. You may defeat 2 instead if a Rival controls at
     least 2 Gigs more than you.' — the 'may' buys the second Unit only; defeating one is
+
+    Fixed: AUD-bonnie-and-clyde-1.
     mandatory. With equal Gigs and exactly one legal target there is nothing to decide."""
     s = board(pool, Side(hand=["bonnie-and-clyde"], eddies=E),
               Side(field=["corpo-security"]))
