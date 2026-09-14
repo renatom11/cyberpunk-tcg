@@ -389,7 +389,10 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       // they are spent.
       const bar = el("div", "turnbar");
       bar.append(el("span", "tn", `TURN ${v.turn}${v.overtime ? " · OVERTIME" : ""}`));
-      if (pend.kind !== "MULLIGAN" && pend.kind !== "ORDER") {
+      // Not during the mulligan, the roll-off, or the Gig die: none of them is a moment where
+      // selling or calling is on offer, and a struck-through right you could not have taken yet
+      // reads as one you have spent.
+      if (pend.kind !== "MULLIGAN" && pend.kind !== "ORDER" && pend.kind !== "GIG_DIE") {
         const chip = (name, used, what) => {
           const c = el("span", "chip" + (used ? " used" : ""), name + (used ? " · done" : ""));
           c.dataset.hint = what + (used ? " — already taken this turn" : " — still yours this turn");
@@ -401,6 +404,25 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       const end = (pend.options || []).find(o => o.kind === "EndTurn");
       if (end) { bar.append(endTurnButton(end, onAct, "end")); claim(end); }
       prompt.append(bar);
+      // The Gig die is the first thing asked every turn and it is asked of the fixer, which on a
+      // phone is a 34px column of six dice down the flank -- a target for a stylus. The whole tray
+      // is laid out again here at thumb size: every die still in the fixer, the ones you may take
+      // lit and the d20 shown but out of reach until it is the last one left, which is the rule
+      // and is worth seeing rather than being told.
+      if (pend.kind === "GIG_DIE") {
+        const tray = el("div", "gigpick");
+        const can = new Map();
+        (pend.options || []).forEach(o => { if (o.kind === "Die") can.set(o.inst, o); });
+        [4, 6, 8, 10, 12, 20].forEach(k => {
+          if (!P[me].fixer.includes(k)) return;
+          const d = dieNode(k, null, "fixer big");
+          const o = can.get(k);
+          if (o) { d.classList.add("pick"); d.onclick = () => onAct(o.index); claim(o); }
+          else { d.classList.add("off"); d.dataset.hint = `d${k} \u00b7 only when it is the last die left`; }
+          tray.append(d);
+        });
+        if (tray.childNodes.length) prompt.append(tray);
+      }
       // Filled at the end of the render, once every panel has had its chance to claim what it can
       // put under a finger. What is left here is what the board has no place for: keep or mulligan,
       // who goes first, a card effect's choices, passing a reaction.
@@ -429,7 +451,9 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       b.onclick = () => onAct(o.index);
       leftovers.append(b);
     });
-    if (!n) leftovers.append(el("div", "none", "Tap a lit card to act on it."));
+    // ... and nothing to say when the prompt is already holding the thing to tap.
+    if (!n && !leftovers.parentNode.querySelector(".gigpick"))
+      leftovers.append(el("div", "none", "Tap a lit card to act on it."));
   }
   // The attack, drawn on the board instead of described in the prompt. "React?" over a wall of
   // cards does not say which card is coming at you or what it is coming at, and that is the whole

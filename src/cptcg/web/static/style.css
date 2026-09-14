@@ -211,6 +211,20 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .turnbar .chip.used { color: var(--dim); border-color: var(--line); text-decoration: line-through;
   opacity: .65; }
 .turnbar button.end { margin-left: auto; padding: 5px 11px; font-size: 11px; }
+/* The fixer, laid out again at thumb size for the one question that is asked of it. The dice you
+   may take are lit; the d20 is drawn but held back, because "the d20 only when it is last" is a
+   rule the tray can show rather than a sentence the player has to be told. */
+.gigpick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 2px; }
+.gigpick .die.big { --die: 46px; width: 46px; height: 46px; flex: 0 0 auto; }
+.gigpick .die.big .face { font-size: 13px; font-weight: 800; }
+.gigpick .die.big svg { stroke-width: 5; }
+.gigpick .die.off { opacity: .3; }
+.gigpick .die.off svg { stroke: var(--dim); filter: none; }
+@media (max-width: 700px) {
+  /* the short-screen block shrinks every non-fixer die to 22px; this one is a target, not a token */
+  .gigpick .die.big, .board .gigpick .die.big { --die: 42px; width: 42px; height: 42px; max-height: none; }
+  .gigpick { gap: 6px; }
+}
 /* Armed: one tap in, one to go. It changes colour as well as wording, because the wording is the
    part a thumb on its way back down does not read. */
 button.armed, button.armed:hover { background: #2a0d12; border-color: var(--red); color: var(--red);
