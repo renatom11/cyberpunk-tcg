@@ -335,8 +335,8 @@ class EffectCtx:
         self.s.add_mod(kind, subject, value, turns=turns)
 
     def cant_ready(self, inst: int) -> None:
-        from cptcg.core.enums import F_NO_READY_NEXT
-        self.s.i_flags[inst] |= F_NO_READY_NEXT
+        from cptcg.core.enums import F_CANT_READY
+        self.s.i_flags[inst] |= F_CANT_READY
 
     def return_to_hand(self, inst: int) -> None:
         ops.move(self.s, inst, Zone.HAND)

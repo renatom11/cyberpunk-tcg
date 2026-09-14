@@ -41,10 +41,6 @@ def _relapse_board(pool, rival_unit):
     return s
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-memory-relapse-2: 'it can't ready until your next turn' "
-                                       "is stored as F_NO_READY_NEXT, which only steps.ReadyStep "
-                                       "reads, so any effect that readies the Unit — here its own "
-                                       "fight-win trigger, on the same turn — readies it anyway")
 def test_memory_relapse_keeps_a_unit_spent_against_its_own_ready_trigger(pool):
     """'Spend a rival Unit. It can't ready until your next turn.'
 
@@ -53,6 +49,8 @@ def test_memory_relapse_keeps_a_unit_spent_against_its_own_ready_trigger(pool):
     still the turn Memory Relapse was played — a mid-turn ready, nowhere near the boundary. So
     Johnny must still be spent after winning, and a spent Unit is attackable (docs/rules.md:
     "Ready Units can't be attacked"), which is what Animals Wrecker at power 10 is for.
+
+    Fixed: AUD-memory-relapse-2.
     """
     s = _relapse_board(pool, "johnny-silverhand-never-stop-fighting")
     johnny, wrecker = find(s, "johnny-silverhand-never-stop-fighting"), find(s, "animals-wrecker")

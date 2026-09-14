@@ -10,7 +10,7 @@ Rule for anything that needs a player decision: push an AskStep (see ``ask``). N
 
 from __future__ import annotations
 
-from cptcg.core.enums import (F_GO_SOLO, NO_INST, NZONE, CardType, EndReason, Keyword,
+from cptcg.core.enums import (F_CANT_READY, F_GO_SOLO, NO_INST, NZONE, CardType, EndReason, Keyword,
                               Trigger, Zone)
 from cptcg.core.state import ONCE_CALLED, GameState
 
@@ -326,6 +326,16 @@ def spend(s: GameState, inst: int) -> None:
 
 
 def ready(s: GameState, inst: int) -> None:
+    """Ready a card, unless something has said it may not.
+
+    "It can't ready until your next turn" is a prohibition on the card, and a prohibition has to be
+    checked wherever the thing it forbids can happen. It used to be checked only in the Ready step,
+    so Memory Relapse's rider held against the rival's own start of turn and not against any of the
+    nine card effects that ready -- including the named Unit's own "the first time this Unit wins a
+    fight each turn, ready it", on the very turn the rider was applied.
+    """
+    if s.i_flags[inst] & F_CANT_READY:
+        return
     s.i_spent[inst] = 0
 
 

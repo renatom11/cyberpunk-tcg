@@ -11,7 +11,8 @@ from __future__ import annotations
 from itertools import combinations
 
 from cptcg.core.actions import Choice, ChoiceKind, Mulligan, Pick, TakeGigDie, Target
-from cptcg.core.enums import (F_NO_READY_NEXT, NO_INST, NZONE, TARGET_GIG, TARGET_UNIT, CardType,
+from cptcg.core.enums import (F_CANT_READY, F_NO_READY_NEXT, NO_INST, NZONE, TARGET_GIG,
+                              TARGET_UNIT, CardType,
                               EndReason, Trigger, Zone)
 from cptcg.core.legal import attack_targets, gig_die_options, main_menu, reaction_menu
 from cptcg.core.ops import (ATTACKING, FIGHTING, VS_LEGEND, VS_UNIT, _ctx, _rebuild_active,
@@ -111,8 +112,8 @@ class ReadyStep(Step):
         zones = (Zone.FIELD, Zone.LEGENDS) + ((Zone.EDDIES,) if s.cfg.eddies_ready else ())
         for zone in zones:
             for i in s.z[p * NZONE + zone]:
-                if s.i_flags[i] & F_NO_READY_NEXT:
-                    s.i_flags[i] &= ~F_NO_READY_NEXT
+                if s.i_flags[i] & (F_NO_READY_NEXT | F_CANT_READY):
+                    s.i_flags[i] &= ~(F_NO_READY_NEXT | F_CANT_READY)
                 else:
                     s.i_spent[i] = 0
 

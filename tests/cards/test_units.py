@@ -168,10 +168,21 @@ def test_offduty_malfini(pool):
 
 
 def test_pacifica_netrunner_locks_on_even_cred(pool):
-    s = board(pool, Side(hand=["pacifica-netrunner"], eddies=E, gig=[(6, 2)]), Side(field=[("psycho-squad", {"spent": True})]))
+    """'PLAY: If your ★ (Street Cred) is an even number, a rival Unit can't ready until your next
+    turn.'
+
+    Asserted as the printed outcome -- the Unit is still spent when the rival's own turn begins --
+    rather than as the flag the script sets. The flag version of this test passed while the
+    prohibition was enforced in exactly one place (`AUD-memory-relapse-2`), which is the whole
+    argument against testing the bookkeeping.
+    """
+    s = board(pool, Side(hand=["pacifica-netrunner"], eddies=E, gig=[(6, 2)], deck=["floor-it"] * 3),
+              Side(field=[("psycho-squad", {"spent": True})], deck=["floor-it"] * 3))
     play(s, "pacifica-netrunner")
-    from cptcg.core.enums import F_NO_READY_NEXT
-    assert s.i_flags[find(s, "psycho-squad")] & F_NO_READY_NEXT
+    target = find(s, "psycho-squad")
+    assert s.i_spent[target]
+    do(s, EndTurn())                                    # the rival's Ready step skips it
+    assert s.active == 1 and s.i_spent[target], "the named Unit readied anyway"
 
 
 def test_royce_simon_scales_with_cred(pool):

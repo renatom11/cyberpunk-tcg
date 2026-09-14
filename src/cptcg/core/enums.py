@@ -63,6 +63,12 @@ F_GO_SOLO = 1 << 0        # a Legend played as a Unit; leaves the field -> remov
 F_NO_READY_NEXT = 1 << 1  # skip this card at the next Ready step (first-player handicap etc.)
 F_CANT_ATTACK = 1 << 2    # printed "this Unit can't attack"
 F_MUST_ATTACK = 1 << 3    # "must attack next turn if it can"
+#: "It can't ready until your next turn" -- a PROHIBITION, not a skipped Ready step. The two used to
+#: share F_NO_READY_NEXT, which is why the prohibition was enforced in exactly one place: the Ready
+#: step skipped the card and every card effect that readies (`ops.ready`, nine scripts) went straight
+#: through it. The first-player handicap keeps F_NO_READY_NEXT, because that one really is only
+#: about the next Ready step.
+F_CANT_READY = 1 << 4
 
 # Attack target kinds
 TARGET_UNIT = 0
