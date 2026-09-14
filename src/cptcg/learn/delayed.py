@@ -110,7 +110,7 @@ from pathlib import Path
 
 from cptcg.agents.base import make_agent
 from cptcg.agents.heuristic import _equiv_key
-from cptcg.cards.registry import Registry
+from cptcg.cards.registry import Registry, cards_digest
 from cptcg.core.actions import Choice, ChoiceKind
 from cptcg.core.config import DEFAULT_CONFIG, RulesConfig
 from cptcg.core.engine import apply, legal_actions, new_game
@@ -551,7 +551,8 @@ def qualify(reg: Registry, entry: dict, *, max_nodes: int = MAX_NODES,
             "floor_wins": floor_wins, "floor_trials": floor_trials,
             "floor_rate": round(floor, 3), "max_floor": MAX_FLOOR,
             "policy": f"{POLICY_AGENT}(seed {POLICY_SEED}) for the rival and the reply",
-            "rules": cfg.digest(), "seconds": round(time.perf_counter() - t0, 2),
+            "rules": cfg.digest(), "cards": cards_digest(),
+            "seconds": round(time.perf_counter() - t0, 2),
             "when": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}
 
 
@@ -651,12 +652,20 @@ def _deck_json(d: Decklist) -> dict:
 
 # ------------------------------------------------------------------ the suite
 def load_suite(path: str | Path = SUITE_PATH,
-               *, rules: str | None = DEFAULT_CONFIG.digest()) -> dict:
-    """Read the suite, refusing one verified under a different ruleset.
+               *, rules: str | None = DEFAULT_CONFIG.digest(),
+               cards: str | None = None) -> dict:
+    """Read the suite, refusing one verified under a different ruleset — or a different card set.
 
     A changed ruling makes a stored line a line in a different game, so scoring an agent against a
     stale suite would produce a number that means nothing. ``rules=None`` reads anything, which is
     what re-verification and mining need in order to repair the file.
+
+    A changed *card script* does exactly the same damage and for most of this project's life nothing
+    said so: every stored line here is a sequence of action indices through a solver's tree, and a
+    card that gains or loses a prompt renumbers it. Pass ``cards=cards_digest()`` to make that a
+    refusal too. It is not the default, because the digest covers all 140 scripts and most fixes
+    cannot touch a given position — see ``requalify_suite``, which re-derives every block in about
+    half a minute and is the repair.
     """
     suite = json.loads(Path(path).read_text(encoding="utf-8"))
     if rules is not None and suite.get("rules") != rules:
@@ -664,6 +673,10 @@ def load_suite(path: str | Path = SUITE_PATH,
             f"{path}: the suite was verified under ruleset {suite.get('rules')}, this build is "
             f"{rules}. Re-verify it (`arena delayed --verify`) and update 'rules' before scoring "
             f"anything against it.")
+    if cards is not None and suite.get("cards") != cards:
+        raise ValueError(
+            f"{path}: the suite was verified against card set {suite.get('cards')}, this build is "
+            f"{cards}. Re-qualify it (`arena delayed --verify`) before scoring anything against it.")
     return suite
 
 
@@ -691,6 +704,7 @@ def requalify_suite(reg: Registry, suite: dict, *, max_nodes: int = MAX_NODES,
         if progress:
             progress(e, v)
     suite["rules"] = cfg.digest()
+    suite["cards"] = cards_digest()
     return suite, dropped
 
 

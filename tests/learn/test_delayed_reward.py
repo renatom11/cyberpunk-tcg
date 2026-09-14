@@ -9,6 +9,7 @@ uniform random play still does not stumble into it more often than the file says
 
 import pytest
 
+from cptcg.cards.registry import cards_digest
 from cptcg.core.config import DEFAULT_CONFIG
 from cptcg.core.engine import legal_actions
 from cptcg.core.view import info_key
@@ -60,6 +61,36 @@ def test_the_suite_is_not_empty_and_is_for_this_ruleset(suite):
     ids = [p["id"] for p in suite["positions"]]
     assert len(ids) == len(set(ids))
     assert any(p["source"] == "hand-built" for p in suite["positions"])
+
+
+def test_the_suite_was_qualified_against_this_build_of_the_cards(suite):
+    """The other half of the staleness contract, and the half that was missing.
+
+    Every stored line is a list of action *indices* into the solver's own tree. A card script that
+    gains or loses a prompt renumbers those indices, exactly as a changed ruling does — and for most
+    of this project's life the file recorded only the ruleset, so a card fix could quietly turn a
+    stored winning line into a different line in a different game with nothing raising.
+
+    The repair is `python tools/arena.py delayed --requalify`, about half a minute for the whole
+    suite, which re-derives every block and re-stamps both digests.
+    """
+    assert suite.get("cards") == cards_digest(), (
+        "the suite was qualified against another build of the card scripts; re-qualify it with "
+        "`tools/arena.py delayed --requalify`")
+
+
+def test_load_suite_can_refuse_a_stale_card_set(tmp_path):
+    """The refusal is available but off by default: the digest covers all 140 scripts, and most
+    fixes cannot touch a given position — so an unconditional refusal would cry wolf. Passing
+    `cards=` is how a caller that cares asks for it."""
+    import json
+
+    p = tmp_path / "suite.json"
+    p.write_text(json.dumps({"rules": DEFAULT_CONFIG.digest(), "cards": "deadbeef",
+                             "positions": []}), encoding="utf-8")
+    delayed.load_suite(p)                                     # the default reads it happily
+    with pytest.raises(ValueError, match="card set"):
+        delayed.load_suite(p, cards=cards_digest())
 
 
 def test_the_suite_covers_both_horizons(suite):

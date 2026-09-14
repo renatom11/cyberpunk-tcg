@@ -50,7 +50,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from cptcg.cards.registry import load_default  # noqa: E402
+from cptcg.cards.registry import cards_digest, load_default  # noqa: E402
 from cptcg.core.config import DEFAULT_CONFIG  # noqa: E402
 from cptcg.learn.delayed import entry_horizon, qualify  # noqa: E402
 
@@ -202,6 +202,10 @@ def merge(paths: list[str], apply: bool) -> int:
         elif v.get("rules") != suite.get("rules"):
             refused.append((cid, f"verified under ruleset {v.get('rules')!r}, suite is "
                                  f"{suite.get('rules')!r} — the claim is about a different game"))
+        elif v.get("cards") != cards_digest():
+            refused.append((cid, f"verified against card set {v.get('cards')!r}, this build is "
+                                 f"{cards_digest()!r} — re-run `check` on the spec; a stored line "
+                                 f"is action indices, and a fixed card renumbers them"))
         elif cid in ids:
             refused.append((cid, "an entry with this id is already in the suite"))
         elif _signature(entry) in seen:
