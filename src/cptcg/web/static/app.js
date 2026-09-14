@@ -607,7 +607,7 @@ document.addEventListener("pointerup", (e) => {
   if (!d || !d.moved) return;                 // a click: the node's own handler deals with it
   const z = zoneAt(d, e.clientX, e.clientY);
   const opt = z && z.pick(d);
-  if (opt) { SUPPRESS_CLICK = true; d.onAct(opt.index); }
+  if (opt) { SUPPRESS_CLICK = Date.now() + 400; d.onAct(opt.index); }
 });
 // iOS takes a pointer away whenever something else claims the gesture, and it sends pointercancel
 // rather than pointerup when it does. With nothing listening, the drag never ended: the ghost
@@ -617,10 +617,19 @@ document.addEventListener("touchcancel", endDrag);
 
 // A pointerup that ended a drag is followed by a click on whatever is underneath; swallow it once
 // so dropping a card does not also fire the card's own action menu.
-let SUPPRESS_CLICK = false;
+//
+// A DEADLINE, and cleared by the next press. A bare flag was a licence with no expiry, and on a
+// touchscreen a drag does not produce the click it was waiting for — so the licence sat there until
+// the player's next tap, wherever and whenever that was, and ate it. With a mouse the click always
+// arrived and spent it, which is why this only ever happened on the phone: drag a card to play it,
+// be asked which Eddies to spend, and the first Eddie you tap does nothing at all.
+let SUPPRESS_CLICK = 0;
+document.addEventListener("pointerdown", () => { SUPPRESS_CLICK = 0; }, true);
 document.addEventListener("click", (e) => {
   if (!SUPPRESS_CLICK) return;
-  SUPPRESS_CLICK = false;
+  const live = Date.now() < SUPPRESS_CLICK;
+  SUPPRESS_CLICK = 0;
+  if (!live) return;
   e.stopPropagation(); e.preventDefault();
 }, true);
 
