@@ -270,6 +270,29 @@ button.armed, button.armed:hover { background: #2a0d12; border-color: var(--red)
    rotation leaves the layout box untouched, so the side margins make room for the long edge. */
 .card.spent { transform: rotate(90deg); filter: brightness(.7);
   --pad-x: calc((var(--card-h) - var(--card-w)) / 2); margin: 0 var(--pad-x); }
+/* Turning a card on its side is the one move you make with your hand rather than by saying it, and
+   the turn is how the table knows. A card that arrives already sideways says the same thing and
+   shows none of it, so the ones that have JUST been turned play the turn — which also says, when
+   four Eddies go over at once for one cost, that they went together. The board is rebuilt on every
+   render, so this has to be an animation: the node is new and has no previous state to move from.
+   The slot the card sits in is already its final width, so it turns in place. */
+.card.turning { animation: card-turn .42s cubic-bezier(.25, .8, .35, 1) both; }
+@keyframes card-turn {
+  0%   { transform: rotate(0deg)  scale(1);    filter: brightness(1); }
+  55%  { transform: rotate(62deg) scale(1.06); }
+  100% { transform: rotate(90deg) scale(1);    filter: brightness(.7); }
+}
+/* An Eddies pile dims further than the field does, so its turn has to land on the same value it
+   would have had without the animation. */
+.eddies .list .card.turning { animation-name: eddie-turn-spend; }
+@keyframes eddie-turn-spend {
+  0%   { transform: rotate(0deg)  scale(1);    filter: brightness(1); }
+  55%  { transform: rotate(62deg) scale(1.06); }
+  100% { transform: rotate(90deg) scale(1);    filter: brightness(.45); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card.turning, .eddies .list .card.turning { animation: none; }
+}
 .card.lag { filter: brightness(.52) saturate(.55); }
 .card.faceup-legend .nm { color: var(--yellow); }
 /* The live power sits where the card prints its own: bottom right. It supersedes the printed

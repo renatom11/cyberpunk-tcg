@@ -441,6 +441,15 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       if (fresh.has(+n.dataset.inst)) n.classList.add("fresh");
     });
   }
+  // The card is rebuilt on every render, so it cannot transition from a state it never held: the
+  // turn has to be an animation, played on the cards that have just changed hands-on state.
+  const spun = turns(v);
+  if (spun.length) {
+    const set = new Set(spun);
+    root.querySelectorAll(".card[data-inst]").forEach(n => {
+      if (set.has(+n.dataset.inst)) n.classList.add("turning");
+    });
+  }
   if (leftovers) {
     const seen = new Set();   // identical labels are identical choices (e.g. three face-down Legends)
     let n = 0;
@@ -774,6 +783,36 @@ function visibleCards(v) {
   });
   return out;
 }
+// Which cards have just been turned, either way. Spending a card is the one move on a table you
+// make with your hand rather than by saying it — you turn it on its side, and the turn is how
+// everyone at the table knows it is spent. Arriving already sideways says the same thing and shows
+// none of it, and when four Eddies go over at once for one cost, the turn is the only part that
+// says they went together.
+let TURNED = new Set(), TURNED_READY = false;
+function turns(v) {
+  const now = new Set(), spun = [];
+  // Its own walk, not `visibleCards`: that one skips a face-down Legend on purpose, because a card
+  // with no identity has no arrival to announce -- but a face-down Legend is the commonest thing in
+  // the game to spend, since on turn one it is the only thing you have to spend, and its turn is
+  // the whole of what the board can show you about a payment.
+  const see = (c) => {
+    if (!c || c.inst == null || !c.spent) return;
+    now.add(c.inst);
+    if (!TURNED.has(c.inst)) spun.push(c.inst);
+  };
+  (v.players || []).forEach(p => {
+    (p.field || []).forEach(see);
+    (p.legends || []).forEach(see);
+    ((p.eddies && p.eddies.list) || []).forEach(see);
+  });
+  const opening = !TURNED_READY;                 // the first board of a game turns nothing
+  TURNED = now; TURNED_READY = true;
+  // Only the turn out, not the turn back: a card standing up again is drawn in the narrower slot
+  // an upright card gets, so the first half of that animation would be clipped by the panel it is
+  // standing in. Readying stays instant until the slot can be animated with it.
+  return opening ? [] : spun;
+}
+
 function arrivals(v) {
   const now = new Set(), fresh = [];
   visibleCards(v).forEach(c => {
@@ -1250,6 +1289,7 @@ async function newGame() {
   GAME = { id: r.id, view: r.view };
   LOG = r.view.log.slice();
   SEEN = new Set(); SEEN_READY = false;
+  TURNED = new Set(); TURNED_READY = false;
   arrivals(r.view);                        // seed the board history; the opening board is not news
   $("#setup").classList.add("hidden"); $("#board").classList.remove("hidden"); matLock();
   renderBoard($("#board"), r.view, { interactive: true, onAct: act });
