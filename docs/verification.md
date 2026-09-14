@@ -339,3 +339,50 @@ Both defensible; the card does not say. It is `docs/rulings.md` row 042, **Uncer
 engine has it, with the failing test for the other reading still in place. Ruling 038 (Street Cred
 with no Gigs is *null*, not 0) is the nearest precedent and leans against the vacuous reading, which
 is why the engine's behaviour is the one left standing rather than the filer's.
+
+## What the fixes cost, and the two that the verification pass got wrong
+
+Seventeen findings are closed as of this writing, out of the forty-three filed. Six needed a golden
+regeneration and each is a ledger entry in `tests/golden/REGEN.md`; the rest were G0 and the
+unbroken run of IDENTICAL across them is their neutrality proof. Two things came out of landing them
+that reading alone did not produce.
+
+**A verified finding's *proposed fix* is not verified.** Gunpoint Diplomacy's report ended with a
+specific recommendation: retire the one-attack grant from a listener on the `("attack", unit,
+player)` event, citing `docs/effects-authoring.md`, which recommends exactly that idiom for "the
+next time … this turn" wording. It does not work. `ResolveAttackStep` implements CR 9.26.3 by
+re-reading `attack_targets` *after* the reaction window, so a target that was legal only because of
+the grant stops being legal the moment the grant is retired, and the attack the grant authorised
+fizzles. The test then fails one assertion earlier than before, on a rival Unit that quietly
+survives a fight it should have lost — which is the same trap as a strict xfail proving only *that*
+a test fails. The finding was right; its fix was wrong, and the only thing that caught it was
+applying it and reading the new failure rather than the old one.
+
+**Reachability has to be measured.** The rule above says a G0 fix must move the fuzz digest *or* be
+a fix to a branch the fuzz demonstrably cannot reach. Placide — Voodoo Sentinel is the worked
+example of "demonstrably": in 400 fuzz games with Placide in 170 of the decks, the heuristic drew it
+123 times, had it as a legal play 52 times, cast it in 45 games, and held a Program in hand for 34
+of those resolutions — with an empty rival field on **none** of them. The random agent reached that
+board once in 400 games, and there the fix shows: `fuzz --agent random -n 400` moves. So the default
+digest not moving is a measured fact about the heuristic's taste, not an assumption, and the numbers
+are in the commit rather than in a claim.
+
+The same instrument says when a fix is large. "Must attack next turn" was a mod two cards wrote and
+nothing read; giving it a reader moved all four predicted golden keys, 60 of 112 games, ten winner
+flips, **and** both fuzz digests. An unchanged golden there would have meant the fix did nothing.
+
+## The staleness alarms, and what they caught
+
+`cards_digest()` was added record-only, because enforcing it on the day it was introduced would have
+rejected every artifact already on disk. Three places now compare it and fail loudly, and all three
+have fired on a real fix rather than in a drill:
+
+* `tests/learn/test_harvest.py` — the 100-game committed sample replays as exact action indices. Any
+  card that gains or loses a prompt renumbers them. Fired on five of the seventeen fixes.
+* `tests/learn/test_delayed_reward.py` — the tactics suite's stored winning lines are action indices
+  too, and for most of this project's life the file recorded only the *ruleset*. Twenty-three
+  positions were about to be merged carrying a pre-audit digest; `propose_positions.py merge`
+  refused them until they were re-qualified, which is the refusal doing its job on its first day.
+  Re-deriving all 79 against the post-audit engine dropped none of them.
+* The card guide on the website compares the digest stamped into the published measurement and says,
+  in as many words, that those numbers describe the game as it behaved before the fixes.
