@@ -3,11 +3,11 @@
   "heuristic",
   "heuristic"
  ],
- "bytes": 24558,
- "cards": "531a8fc8034f2593",
- "compacted": "2026-09-14T08:47:39+00:00",
- "decisions": 14757,
- "elapsed_s": 6.323,
+ "bytes": 24576,
+ "cards": "582bdd122b6c5450",
+ "compacted": "2026-09-14T08:49:45+00:00",
+ "decisions": 14759,
+ "elapsed_s": 3.195,
  "end_reasons": {
   "OVERTIME": 53,
   "SEVEN_GIGS": 47
@@ -25,8 +25,8 @@
   "random": 56,
   "sample": 32
  },
- "started": "2026-09-14T08:47:32+00:00",
- "updated": "2026-09-14T08:47:39+00:00",
+ "started": "2026-09-14T08:49:42+00:00",
+ "updated": "2026-09-14T08:49:45+00:00",
  "winners": {
   "seat0": 49,
   "seat1": 51

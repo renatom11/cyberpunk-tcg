@@ -257,10 +257,25 @@ def test_evelyn_siren_attack(pool):
 
 
 def test_sketchy_ripper_finds_gear(pool):
+    """'ATTACK: Search the top 3 cards of your deck. Reveal a Gear and add it to your hand.'
+
+    No "may", so with exactly one Gear in the top 3 there is nothing to decide and the engine asks
+    nothing. This test used to answer a Pick, which only existed because the search was scripted
+    with a lower bound of zero (AUD-sketchy-ripper-1).
+    """
     s = board(pool, Side(field=["sketchy-ripper"], deck=["floor-it", "mantis-blades", "floor-it"]), Side(gig=[(4, 1)]))
     do(s, Attack(find(s, "sketchy-ripper")))
-    do(s, Pick((0,)))
     assert s.card(s.zone(0, Zone.HAND)[0]).id == "mantis-blades"
+
+
+def test_sketchy_ripper_with_no_gear_in_the_top_three(pool):
+    """Control for the test above: a mandatory take is still safe when there is nothing to take.
+
+    `choose_many` clamps hi to the candidates available and then lo to hi, so the search resolves
+    with an empty pick and the three cards still go to the bottom."""
+    s = board(pool, Side(field=["sketchy-ripper"], deck=["floor-it"] * 3), Side(gig=[(4, 1)]))
+    do(s, Attack(find(s, "sketchy-ripper")))
+    assert not s.zone(0, Zone.HAND) and len(s.zone(0, Zone.DECK)) == 3
 
 
 def test_swordwise_huscle_draws_at_5_power(pool):

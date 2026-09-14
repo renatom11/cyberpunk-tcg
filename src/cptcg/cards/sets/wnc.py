@@ -691,7 +691,11 @@ def _():
 
 @script("sketchy-ripper")
 def _():
-    return CardScript(on_attack=lambda c: c.search_top(3, lambda i: c.is_type(i, GEAR), 0, 1))
+    # "Reveal a Gear and add it to your hand" carries no "may", and Sasha Yakovleva's identical
+    # verb phrase is already scripted as mandatory. `lo=1` is safe when the top 3 hold no Gear:
+    # `choose_many` clamps hi to the candidates available and then lo to hi, so an empty search
+    # resolves with an empty pick and still bottom-decks the three.
+    return CardScript(on_attack=lambda c: c.search_top(3, lambda i: c.is_type(i, GEAR), 1, 1))
 
 
 @script("swordwise-huscle")

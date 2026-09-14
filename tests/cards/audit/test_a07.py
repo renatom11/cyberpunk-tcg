@@ -39,7 +39,6 @@ def test_el_sombreron_gains_the_value_of_a_max_gig_not_the_largest_value(pool):
     assert power(s, u) == 8
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-sketchy-ripper-1: 'Reveal a Gear and add it to your hand' is mandatory, but the script offers a decline (search_top lo=0)")
 def test_sketchy_ripper_must_take_the_gear_it_finds(pool):
     """'ATTACK: Search the top 3 cards of your deck. Reveal a Gear and add it to your hand.
     Bottom-deck the rest.'
@@ -53,6 +52,8 @@ def test_sketchy_ripper_must_take_the_gear_it_finds(pool):
     Top 3 of the deck hold exactly one Gear (Mantis Blades). With `lo=1` that pick is the only
     option and auto-resolves, leaving the Gear in hand as the attack continues. wnc.py:627 asks
     with `lo=0`, so the engine offers `Pick(())` — decline — and the Gear is still in the deck.
+
+    Fixed: AUD-sketchy-ripper-1.
     """
     s = board(pool, Side(field=["sketchy-ripper"], deck=["floor-it", "mantis-blades", "floor-it"]),
               Side(gig=[(4, 1)]))
