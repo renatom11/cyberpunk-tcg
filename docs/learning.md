@@ -2040,7 +2040,7 @@ so — with the suite reclassified as a stress test rather than a progress metri
 So: the delayed suite is hereby a **stress test, not a progress metric**. Its positions are
 adversarial by construction and the failure they expose is real but rare; treating its score as the
 headline number is what made three flat results look like three mysteries. (It held 8 positions
-when that was written; see "The suite is 21 positions now" below.)
+when that was written; see "The suite is 56 positions now" below.)
 
 ### The cumulative scoreboard
 
@@ -2649,7 +2649,7 @@ Worth recording because the honest failure mode was not a crash: it was an exper
 back flat for a reason that has nothing to do with its hypothesis.
 
 
-## The suite is 21 positions now
+## The suite is 56 positions now
 
 Every agent comparison above was bottlenecked by the same number. "4 of 8" against "6 of 8" is a
 two-position difference on a sample of eight, and half the entries in the tables on this page are
@@ -2665,13 +2665,29 @@ when the searched turn ends, or it is a within-turn puzzle wearing a "delayed" l
 comes back `ok: false` with the reason and the only cost is the seconds the solver spent refuting
 it. The output is correct by construction; the open question was only yield.
 
-Thirteen proposals from a "steal threshold" theme qualified and are merged, taking the suite from 8
-to **21**. `tests/learn/test_delayed_reward.py` re-derives every stored claim, and passes.
+Seven themes were proposed against — steal thresholds, Gear stacking, Legend Calls, Gig shaping,
+selling to afford a line, defensive setup and removal-first — and 48 proposals qualified, taking the
+suite from 8 to **56**. Fourteen of them are horizon 2: the payoff is still off the board when the
+searched turn ends, the rival answers in between, and the frozen policy has to convert it a turn
+later. That is the delayed reward the training plan claims to teach, and there were three such
+positions in the whole suite before this. `tests/learn/test_delayed_reward.py` re-derives every
+stored claim on all 56, and passes.
+
+The floor distribution is worth recording as a property of the batch rather than of any one entry:
+29 positions are ones uniform random never wins, and the worst is 4 of 16, comfortably inside the
+25% ceiling `qualify` enforces. A suite of positions random stumbles into would measure luck.
 
 The `merge` step refuses more than the solver does, and deliberately. A verification block must be
 present and `ok`; it must carry the same ruleset digest the suite is stamped with, or the stored
 claim is about a different game; the board must not repeat one already in the file, because a
 re-skin qualifies just as happily as a new idea and the solver has no opinion about novelty; and the
-entry must explain itself in a paragraph. Fourteen further positions qualified and are **not** in
-the file, because they arrived with `why` set to "placeholder". A verified row nobody can read is a
-correct answer to a question the file no longer records, and the eight originals set the standard.
+entry must explain itself in a paragraph. One position qualified and is **not** in the file, because it arrived with `why` set to
+"placeholder". A verified row nobody can read is a correct answer to a question the file no longer
+records, and the eight originals set the standard. (Fourteen more were held back on the first pass
+for the same reason and came back documented, which is the refusal doing its job rather than
+costing anything.)
+
+`tools/explain_position.py` is what makes that paragraph writable: it prints the starting board as
+a person reads it, the solver's line narrated move by move, and the frozen heuristic's line from the
+same position. The difference between the last two *is* the position, and reading it off a list of
+action indices is not something anyone was going to keep doing.
