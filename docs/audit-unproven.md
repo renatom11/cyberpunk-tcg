@@ -40,6 +40,8 @@ read. Line numbers are as of the audit and may have drifted.
   requires a ready card") points at "no legal target", while the mainstream TCG convention is that
   a spend/tap effect may target an already-spent permanent and the rider still applies. Card text
   is silent. Flagging for a rules decision rather than freezing a guess into an xfail.
+  **Answered:** this became [`rulings.md`](rulings.md) row 043, left Uncertain with the engine's
+  behaviour standing — exactly what "flag it for a decision" was asking for.
 - **U-UNREACHABLE — Live with the Aftermath's candidate lists are snapshots.** Both `c.rival_units()`
   and `c.units()` are materialised when the Program resolves, and the two picks are then queued.
   If resolving the first defeat removed a Unit from the other player's list (a DEFEATED trigger
