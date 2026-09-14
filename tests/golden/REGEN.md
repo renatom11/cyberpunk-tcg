@@ -150,3 +150,18 @@ exactly the 8+ Gig the second sentence is asking about.
 **4. Aggregate.** 3 of 40 and 1 of 40, no winner flips, one end-reason change. Both heuristic keys
 unmoved, same reason as Trust No One: the heuristic takes an increase whenever one is legal.
 **5. Two-sided reachability.** Not applicable at G1.
+
+---
+
+## 2026-09-14 — `afterparty-at-lizzies` (AUD-afterparty-at-lizzies-1)
+
+**The fix.** "Adjust a Gig by up to 1. **If you control 2 or more Gigs with different values, draw
+1.**" Two Gigs showing 3 and 4 are two Gigs with different values whether or not a die moved, and
+"up to 1" includes zero — the engine offers the decline explicitly. Moved to `after=`.
+
+**1. Prediction.** Four keys. Observed: two, both `random`.
+**2. Localisation.** decisions 47 and 25, card first a legal option at 4 and earlier.
+**3. Revert confirmation.** DIFFERENT on exactly those two keys at exactly those actions.
+**4. Aggregate.** 4 of 40 and 1 of 40, one winner flip, no end-reason changes, turn deltas +0.25 and
+0.00. Both heuristic keys unmoved.
+**5. Two-sided reachability.** Not applicable at G1.
