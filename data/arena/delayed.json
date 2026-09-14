@@ -263,9 +263,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.04,
-    "when": "2026-09-14 10:25 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.05,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -540,9 +540,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
+    "cards": "41f64e6e3fbffc83",
     "seconds": 0.04,
-    "when": "2026-09-14 10:25 UTC"
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -822,9 +822,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.26,
-    "when": "2026-09-14 10:25 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.27,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -1114,9 +1114,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 1.31,
-    "when": "2026-09-14 10:25 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 1.38,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -1433,9 +1433,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 2.9,
-    "when": "2026-09-14 10:25 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 3.19,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -1715,9 +1715,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 1.82,
-    "when": "2026-09-14 10:25 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 1.95,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -2060,9 +2060,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 3.76,
-    "when": "2026-09-14 10:25 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 4.06,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -2308,9 +2308,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.78,
-    "when": "2026-09-14 10:25 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.87,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -2586,9 +2586,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.05,
-    "when": "2026-09-14 10:25 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.06,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -2848,9 +2848,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.04,
-    "when": "2026-09-14 10:25 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.05,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -3131,9 +3131,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.18,
-    "when": "2026-09-14 10:25 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.21,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -3416,9 +3416,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
+    "cards": "41f64e6e3fbffc83",
     "seconds": 0.05,
-    "when": "2026-09-14 10:25 UTC"
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -3693,9 +3693,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
+    "cards": "41f64e6e3fbffc83",
     "seconds": 0.06,
-    "when": "2026-09-14 10:25 UTC"
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -3972,9 +3972,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.96,
-    "when": "2026-09-14 10:25 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.94,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -4245,9 +4245,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 8.01,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 8.79,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -4516,9 +4516,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.22,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.23,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -4783,9 +4783,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
+    "cards": "41f64e6e3fbffc83",
     "seconds": 0.04,
-    "when": "2026-09-14 10:26 UTC"
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -5053,9 +5053,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
+    "cards": "41f64e6e3fbffc83",
     "seconds": 0.04,
-    "when": "2026-09-14 10:26 UTC"
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -5330,9 +5330,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
+    "cards": "41f64e6e3fbffc83",
     "seconds": 0.09,
-    "when": "2026-09-14 10:26 UTC"
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -5608,9 +5608,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.95,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.99,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -5873,9 +5873,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
+    "cards": "41f64e6e3fbffc83",
     "seconds": 0.04,
-    "when": "2026-09-14 10:26 UTC"
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -6167,9 +6167,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.21,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.25,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -6459,9 +6459,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.05,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.06,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -6753,9 +6753,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.06,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.07,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -7041,9 +7041,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.04,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.05,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -7340,9 +7340,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 3.53,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 3.37,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -7616,9 +7616,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.09,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.11,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -7901,9 +7901,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.09,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.07,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -8186,9 +8186,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.22,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.23,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -8462,9 +8462,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.09,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.11,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -8741,9 +8741,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.14,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.16,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -9002,9 +9002,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
+    "cards": "41f64e6e3fbffc83",
     "seconds": 0.02,
-    "when": "2026-09-14 10:26 UTC"
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -9294,9 +9294,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
+    "cards": "41f64e6e3fbffc83",
     "seconds": 0.11,
-    "when": "2026-09-14 10:26 UTC"
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -9575,9 +9575,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.33,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.36,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -9856,9 +9856,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
+    "cards": "41f64e6e3fbffc83",
     "seconds": 0.04,
-    "when": "2026-09-14 10:26 UTC"
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -10147,9 +10147,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.05,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.06,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -10435,9 +10435,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
+    "cards": "41f64e6e3fbffc83",
     "seconds": 0.03,
-    "when": "2026-09-14 10:26 UTC"
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -10714,9 +10714,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 1.93,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 1.62,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -10996,9 +10996,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.07,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.05,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -11285,9 +11285,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.11,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.08,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -11573,9 +11573,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.06,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.04,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -11872,9 +11872,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.08,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.07,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -12149,9 +12149,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.78,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.74,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -12423,9 +12423,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.02,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.01,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -12715,9 +12715,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.15,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.14,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -13004,9 +13004,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.17,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.15,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -13278,9 +13278,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
+    "cards": "41f64e6e3fbffc83",
     "seconds": 0.03,
-    "when": "2026-09-14 10:26 UTC"
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -13554,9 +13554,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
+    "cards": "41f64e6e3fbffc83",
     "seconds": 0.04,
-    "when": "2026-09-14 10:26 UTC"
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -13839,9 +13839,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
+    "cards": "41f64e6e3fbffc83",
     "seconds": 0.03,
-    "when": "2026-09-14 10:26 UTC"
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -14119,9 +14119,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
+    "cards": "41f64e6e3fbffc83",
     "seconds": 0.03,
-    "when": "2026-09-14 10:26 UTC"
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -14404,9 +14404,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.05,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.04,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -14687,9 +14687,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
+    "cards": "41f64e6e3fbffc83",
     "seconds": 0.03,
-    "when": "2026-09-14 10:26 UTC"
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -14964,9 +14964,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.04,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.03,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -15245,9 +15245,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.05,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.04,
+    "when": "2026-09-14 12:54 UTC"
    }
   },
   {
@@ -15529,9 +15529,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.45,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.39,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -15807,9 +15807,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.66,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.51,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -16104,9 +16104,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.77,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.75,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -16297,7 +16297,7 @@
      1,
      1,
      2,
-     1,
+     2,
      0,
      1,
      3,
@@ -16305,7 +16305,7 @@
      0,
      0
     ],
-    "nodes": 487,
+    "nodes": 593,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -16383,7 +16383,7 @@
        4,
        2,
        0,
-       5,
+       6,
        0,
        1,
        1,
@@ -16416,9 +16416,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 3.24,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 4.58,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -16685,9 +16685,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 5.61,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 6.99,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -16968,9 +16968,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.76,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.96,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -17273,9 +17273,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.92,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.96,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -17600,9 +17600,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.09,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.07,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -17909,9 +17909,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.39,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.35,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -18221,9 +18221,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 1.67,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 1.64,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -18534,9 +18534,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
+    "cards": "41f64e6e3fbffc83",
     "seconds": 0.1,
-    "when": "2026-09-14 10:26 UTC"
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -18852,9 +18852,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.06,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.07,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -19170,9 +19170,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.11,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.12,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -19483,9 +19483,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.43,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.47,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -19798,9 +19798,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.08,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.1,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -20058,9 +20058,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 2.06,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 2.25,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -20334,9 +20334,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.12,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.1,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -20613,9 +20613,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.08,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.09,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -20880,9 +20880,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.05,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.06,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -21174,9 +21174,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.11,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.12,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -21465,9 +21465,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.09,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.12,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -21751,9 +21751,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.08,
-    "when": "2026-09-14 10:26 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.1,
+    "when": "2026-09-14 12:55 UTC"
    }
   },
   {
@@ -22012,9 +22012,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 43.34,
-    "when": "2026-09-14 10:27 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 43.0,
+    "when": "2026-09-14 12:56 UTC"
    }
   },
   {
@@ -22293,9 +22293,9 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.08,
-    "when": "2026-09-14 10:27 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.1,
+    "when": "2026-09-14 12:56 UTC"
    }
   },
   {
@@ -22566,11 +22566,11 @@
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
-    "cards": "0692b457b26e297e",
-    "seconds": 0.12,
-    "when": "2026-09-14 10:27 UTC"
+    "cards": "41f64e6e3fbffc83",
+    "seconds": 0.13,
+    "when": "2026-09-14 12:56 UTC"
    }
   }
  ],
- "cards": "0692b457b26e297e"
+ "cards": "41f64e6e3fbffc83"
 }

@@ -320,3 +320,31 @@ would have meant the fix did nothing.
 3b4932720efc3f3b2354f268 → 739dfb303644a4bcbad64a06 (32335 → 32481 actions) and the default
 heuristic fuzz moves 8a1e68700fe9fd617d05d0df → 399958ef4d06ba064c0411b6 (8601 → 8634). Both
 instruments see it, which no other fix in this ledger has managed.
+
+## 2026-09-14 — `alt-cunningham-soulkiller-architect` (AUD-alt-cunningham-soulkiller-architect-1)
+
+**The fix.** "⊡: Your next Program this turn plays for -1 €$ for each friendly min Gig, to a minimum
+of 1 €$." A `legal=` guard the card does not print made the ability unavailable with no min Gig, so
+the Legend could not be spent at all. Deleting the guard restores an activation whose discount is
+zero — and whose ⊡ is worth paying when something watches for the spend.
+
+**1. Prediction.** Two keys: `sample_gangers` is the only golden deck holding the card. Observed:
+both.
+
+**2. Localisation.** `sample_gangers~sample_netrunners~heuristic` game 1 at decision 76, with the
+card a legal option from decision 9; the random key diverges at 20. The narration around the
+heuristic divergence shows sample_gangers activating a *different* Legend's ability in the same
+window — the frozen agent's arithmetic over an enlarged menu, which is what adding a legal action to
+every turn does.
+
+**3. Revert confirmation.** The guard restored against the new golden: DIFFERENT on exactly those
+two keys, same games, same actions.
+
+**4. Aggregate.** 13 of 16 heuristic games and 28 of 40 random ones, 10 winner flips in the random
+key, turn deltas −0.38 and +0.18. Large for one card, and the mechanism is the one the ledger has
+seen before with Unlikely Bond: a new option in the main menu renumbers every action index after it,
+so a key diverges as soon as the card is *on the board*, not when it is used.
+
+**5. Two-sided reachability.** Not required at G1; recorded anyway — `fuzz --agent random -n 400
+--seed 1` moves 5e97831a765d264cbf2bd32c → 57d2e94a287e533545144a7f, 32,561 → 32,633 actions, which
+is this fix alone (Kerry's had already been taken).
