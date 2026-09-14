@@ -523,24 +523,11 @@ function arrivals(v) {
   return opening ? [] : fresh;
 }
 
-// The card that just hit the board, shown full size for a beat. This is what makes a rival's turn
-// readable: without it a card appears in a row of six and nothing tells you which one moved.
-let SPOT_TIMER = null;
-function showcase(c) {
-  if (!c || !(CARDS[c.id] || {}).image) return;
-  let box = $("#spotlight");
-  if (!box) {
-    box = el("div", "spotlight"); box.id = "spotlight";
-    box.append(el("img"));
-    document.body.append(box);
-  }
-  box.querySelector("img").src = `images/${c.id}.jpg`;
-  box.classList.remove("show");
-  void box.offsetWidth;                    // restart the animation on a repeat play
-  box.classList.add("show");
-  clearTimeout(SPOT_TIMER);
-  SPOT_TIMER = setTimeout(() => box.classList.remove("show"), 1100);
-}
+// A card that just hit the board used to be thrown full size into the middle of the screen for a
+// beat. On a phone that is the whole board covered, once per move, including for a card you just
+// played yourself and a card you sold face-down into your Eddies — where the image is not even
+// information the game gives you. What the arrival needs to say is "this one moved", and
+// `.card.fresh` says it in place, on the card, without taking the board away.
 // ---------------------------------------------------------------- log
 // A wall of sentences is hard to scan for the thing that changed, so the two kinds of proper noun
 // in it are marked: who did it, and which card. Both are matched against lists the client already
@@ -739,7 +726,6 @@ function playRival(v) {
       const fresh = arrivals(fv);
       renderBoard($("#board"), fv, { interactive: true, watching: v.rival || "The rival", onSkip: stop,
                                      fresh: new Set(fresh.map(c => c.inst)) });
-      showcase(f.played || fresh[0]);
       timer = setTimeout(tick, step);
     };
     tick();
@@ -836,9 +822,6 @@ async function act(verbOrIndex) {
   GAME.view = v; v.log = LOG;
   const fresh = arrivals(v);
   renderBoard($("#board"), v, { interactive: true, onAct: act, fresh: new Set(fresh.map(c => c.inst)) });
-  // The card the move was about comes first: a Program resolves and goes to the trash, so diffing
-  // the board would never show the one card that mattered.
-  showcase(about || fresh[0]);
 }
 
 //: Which card an option is about, looked up in the board we were holding when it was chosen.
