@@ -54,7 +54,6 @@ def test_saburo_aura_reaches_an_arasaka_legend_that_went_solo(pool):
     assert power(s, g, ATTACKING) == 8
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-royce-psycho-on-the-edge-1: the script adds an unprinted zone is FIELD condition, so a face-up Royce holding Gear in the Legends area gets no bonus")
 def test_royce_gear_bonus_applies_in_the_legends_area(pool):
     """'During your turn, this Legend has +2 power for each of its equipped Gear.'
 
@@ -62,6 +61,8 @@ def test_royce_gear_bonus_applies_in_the_legends_area(pool):
     cost and equip it to a friendly Unit or Legend'; core.legal.gear_hosts). The text puts no zone
     condition on the bonus, so a face-up Royce holding two Gear is 6 + 4 (printed Gear power) + 4
     during his controller's turn.
+
+    Fixed: AUD-royce-psycho-on-the-edge-1.
     """
     s = board(pool, Side(legends=[("royce-psycho-on-the-edge",
                                    {"faceup": True, "gear": ["mantis-blades", "satori-sword-of-saburo"]})]),

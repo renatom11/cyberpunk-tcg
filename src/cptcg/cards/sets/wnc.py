@@ -967,8 +967,12 @@ def _():
 
 @script("royce-psycho-on-the-edge")
 def _():
-    return CardScript(power_mod=lambda c, unit, sit: 2 * len(c.gear()) if unit == c.inst and c.is_active_turn()
-                      and c.s.i_zone[c.inst] is Zone.FIELD else 0)
+    # "During your turn, this Legend has +2 power for each of its equipped Gear." No zone condition
+    # is printed -- and the card says "this LEGEND", which is the Legends area's own word, so a
+    # Zone.FIELD gate reads the sentence as its opposite. A face-up Royce wearing two Gear is 14
+    # wherever he stands.
+    return CardScript(power_mod=lambda c, unit, sit:
+                      2 * len(c.gear()) if unit == c.inst and c.is_active_turn() else 0)
 
 
 @script("johnny-silverhand-never-stop-fighting")
@@ -1287,7 +1291,11 @@ def _():
         on_call=_choose_one_call([("A friendly Unit can't be defeated in a fight this turn",
                                    lambda c: c.choose(c.units(), lambda c2, u: c2.mod("no_defeat_in_fight", u))),
                                   ("Draw 1", lambda c: c.draw(1))]),
-        abilities=(Ability(effect=lambda c: c.adjust_up_to([c.player, c.rival], -1, 1, prompt="Adjust a Gig by 1"),
+        # "⊡: Adjust a Gig by 1" -- no "up to", unlike all thirteen other adjust effects in the set,
+        # so once the ⊡ is paid a die moves. `optional=False` drops the decline the shared helper
+        # offers for the "up to" wording.
+        abilities=(Ability(effect=lambda c: c.adjust_up_to([c.player, c.rival], -1, 1,
+                                                           prompt="Adjust a Gig by 1"),
                            self_spend=True, label="Adjust a Gig by 1"),))
 
 
