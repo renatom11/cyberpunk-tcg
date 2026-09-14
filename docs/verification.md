@@ -139,6 +139,16 @@ harvest manifest had recorded only `rules`, so it could say which *ruleset* prod
 which *cards*; it records both now, which is what makes a future regeneration explicable rather than
 merely necessary.
 
+**What neither digest covers.** `RulesConfig.digest()` fingerprints the rulings and
+`cards_digest()` the card data and scripts. An **engine** change belongs to neither: the tie-dispatch
+fix changed what the game does on every tied fight, and nothing in any stored artifact moved to say
+so — the golden file was IDENTICAL, the harvested sample still replayed, the tactics suite still
+qualified. That is the correct outcome for those three instruments (the change genuinely does not
+alter any game they contain) but it means a stale *measurement* cannot be detected after an engine
+fix the way it can after a card fix. Adding a third digest over `src/cptcg/core` is the obvious
+answer and the wrong one: it would move on every refactor and teach people to ignore it. The gap is
+recorded here instead.
+
 ## The golden protocol
 
 `tests/golden/games.json` pins 224 games as exact action-index streams. A genuine card fix will

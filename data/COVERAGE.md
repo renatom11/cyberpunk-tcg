@@ -32,13 +32,11 @@ The table above counts what exists. This one counts what has been verified, whic
 | Scripted cards | 140 |
 | ... named by at least one test | 140 |
 | ... named by no test at all | 0 |
-| Open audit findings (failing tests, awaiting a fix) | 23 |
+| Open audit findings (failing tests, awaiting a fix) | 18 |
 
 Open findings — each is a `xfail(strict=True)` test under `tests/cards/audit/`, so the suite stays green until a fix makes one pass and pytest reports XPASS:
 
 - `AUD-6th-street-recruits-1`
-- `AUD-alt-cunningham-soulkiller-architect-1`
-- `AUD-cyberpsychosis-1`
 - `AUD-evelyn-parker-beautiful-enigma-1`
 - `AUD-gorilla-arms-1`
 - `AUD-goro-takemura-losing-his-way-1`
@@ -47,8 +45,6 @@ Open findings — each is a `xfail(strict=True)` test under `tests/cards/audit/`
 - `AUD-jackie-welles-mamas-favorite-2`
 - `AUD-jackie-welles-pour-one-out-for-me-1`
 - `AUD-kerry-eurodyne-axe-attitude-audience-1`
-- `AUD-kerry-eurodyne-the-last-rockerboy-1`
-- `AUD-maelstrom-zealots-1`
 - `AUD-memory-relapse-2`
 - `AUD-misty-olszewski-mender-of-broken-spirits-1`
 - `AUD-muamar-reyes-el-capitan-1`
@@ -56,7 +52,6 @@ Open findings — each is a `xfail(strict=True)` test under `tests/cards/audit/`
 - `AUD-rogue-amendiares-queen-of-the-afterlife-1`
 - `AUD-royce-psycho-on-the-edge-1`
 - `AUD-saburo-arasaka-stubborn-patriarch-1`
-- `AUD-safety-override-1`
 - `AUD-satori-sword-of-saburo-1`
 - `AUD-viktor-vektor-drop-your-illusions-1`
 
