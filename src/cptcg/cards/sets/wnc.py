@@ -802,11 +802,18 @@ def _():
         host = hosts[-1] if hosts else None
         cands = [i for i in c.trash() if c.is_type(i, UNIT) and (c.d(i).cost or 0) <= 9 and i != host]
 
-        def after(c2, i):
-            c2.play_free(i)
+        def bottom_deck_the_host(c2):
+            # "Then, bottom-deck this Unit." Its own sentence, and "Then" sequences it rather than
+            # making it conditional -- the Unit goes to the bottom whether or not the trash held
+            # anything to recur. It was nested in the choose's continuation, so an empty trash left
+            # the host lying in it.
             if host is not None and c2.s.i_zone[host] is Zone.TRASH:
                 c2.bottom_deck(host)
-        c.choose(cands, after, prompt="Play a Unit from trash")
+
+        def recur(c2, i):
+            c2.play_free(i)
+            bottom_deck_the_host(c2)
+        c.choose(cands, recur, prompt="Play a Unit from trash", otherwise=bottom_deck_the_host)
     return CardScript(on_defeated=defeated)
 
 

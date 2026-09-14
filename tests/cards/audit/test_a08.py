@@ -61,9 +61,10 @@ def test_dying_night_ready_2_only_when_the_host_is_a_unit(pool):
 
 
 # ------------------------------------------------- the-relic-experimental-biochip
-@pytest.mark.xfail(strict=True, reason="AUD-the-relic-experimental-biochip-1: 'Then, bottom-deck this Unit' is skipped when the trash holds no eligible Unit")
 def test_the_relic_bottom_decks_the_host_with_no_unit_to_recur(pool):
     """'Play another Unit with cost 9 or less from your trash for free. Then, bottom-deck this
+
+    Fixed: AUD-the-relic-experimental-biochip-1.
     Unit.' With nothing to play the first sentence does nothing; the second still happens."""
     s = board(pool, Side(field=["animals-wrecker"]),
               Side(field=[("corpo-security", {"spent": True,
