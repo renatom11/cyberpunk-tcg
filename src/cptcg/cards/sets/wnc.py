@@ -734,12 +734,18 @@ def _():
     from cptcg.core.ops import available, pay
 
     def attack(c):
-        if available(c.s, c.player) < 2 or not c.gigs():
+        # "a friendly **max Gig**" is set terminology for a die showing its maximum face -- the
+        # mirror of "min Gig", which six cards in this set use and which EffectCtx.min_gigs()
+        # implements the same way. It is not "the largest value in your Gig area": with a d12 on 9
+        # and a d4 on 4, the max Gig is the d4 and the bonus is +4, not +9. `EffectCtx.max_gigs`
+        # already existed and was unused.
+        if available(c.s, c.player) < 2 or not c.max_gigs():
             return
 
         def yes(c2):
             pay(c2.s, c2.player, 2)
-            c2.temp_power(c2.inst, max(c2.gig_values()))
+            gigs = c2.gigs()
+            c2.temp_power(c2.inst, max(gigs[i][1] for i in c2.max_gigs()))
         c.maybe(yes, prompt="Pay 2 €$ for +power?")
     return CardScript(on_attack=attack)
 

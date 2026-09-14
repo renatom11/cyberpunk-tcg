@@ -13,7 +13,6 @@ from cptcg.core.enums import Zone
 from cptcg.core.ops import power
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-el-sombreron-la-venganza-lenta-1: 'a friendly max Gig' means a die showing its maximum face (cf. 'min Gig' / EffectCtx.max_gigs), but the script adds the largest value in the Gig area")
 def test_el_sombreron_gains_the_value_of_a_max_gig_not_the_largest_value(pool):
     """'ATTACK: You may pay 2 €$. If you do, this Unit gains power equal to a friendly max Gig
     this turn.'
@@ -29,6 +28,8 @@ def test_el_sombreron_gains_the_value_of_a_max_gig_not_the_largest_value(pool):
     Board: a d12 showing 9 and a d4 showing 4. The only max Gig is the d4, so El Sombrerón
     (printed power 4+) should end at 4 + 4 = 8. wnc.py:675 uses `max(c2.gig_values())`, the
     largest *value* in the area, and gives 4 + 9 = 13.
+
+    Fixed: AUD-el-sombreron-la-venganza-lenta-1.
     """
     s = board(pool, Side(field=["el-sombreron-la-venganza-lenta"], eddies=2, gig=[(12, 9), (4, 4)]),
               Side(gig=[(4, 1)]))

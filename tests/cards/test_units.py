@@ -301,11 +301,28 @@ def test_jackie_ride_or_die(pool):
 
 
 def test_el_sombreron_pays_for_power(pool):
-    s = board(pool, Side(field=["el-sombreron-la-venganza-lenta"], eddies=2, gig=[(12, 9)]), Side(gig=[(4, 1)]))
+    """'ATTACK: You may pay 2 €$. If you do, this Unit gains power equal to a friendly max Gig.'
+
+    A *max Gig* is a die showing its maximum face — the mirror of "min Gig", which six cards in
+    this set use. The d12 has to be on 12 for the bonus to exist at all, and then it is +12.
+    This test used to sit a d12 on 9 and expect +9, which is the largest *value* rather than a max
+    Gig (AUD-el-sombreron-la-venganza-lenta-1).
+    """
+    s = board(pool, Side(field=["el-sombreron-la-venganza-lenta"], eddies=2, gig=[(12, 12)]), Side(gig=[(4, 1)]))
     u = find(s, "el-sombreron-la-venganza-lenta")
     do(s, Attack(u))
     do(s, Pick((0,)))
-    assert power(s, u) == 13 and available(s, 0) == 0 and len(s.gig[0]) == 2   # 13 power steals 2 (only 1 there)
+    assert power(s, u) == 16 and available(s, 0) == 0                          # 4 printed + 12
+    assert len(s.gig[0]) == 2                                                  # 16 power steals 2; 1 was there
+
+
+def test_el_sombreron_offers_nothing_without_a_max_gig(pool):
+    """Control for the test above. A d12 showing 9 is not a max Gig, so there is no bonus to buy
+    and the card does not ask — the attack proceeds straight to its target."""
+    s = board(pool, Side(field=["el-sombreron-la-venganza-lenta"], eddies=2, gig=[(12, 9)]), Side(gig=[(4, 1)]))
+    u = find(s, "el-sombreron-la-venganza-lenta")
+    do(s, Attack(u))
+    assert power(s, u) == 4 and available(s, 0) == 2                           # nothing paid, nothing gained
 
 
 def test_goro_losing_his_way(pool):
