@@ -265,3 +265,29 @@ and rarely more; nothing here is unexplainable.
 **5. Two-sided reachability.** Not required at G1, but recorded: `fuzz --agent random -n 400
 --seed 1` moves c0f43d0ac9ccbc54221d480d → 3b4932720efc3f3b2354f268 and the default heuristic fuzz
 digest is 8a1e68700fe9fd617d05d0df.
+
+## 2026-09-14 — `reboot-optics` (AUD-reboot-optics-1)
+
+**The fix.** "The next time a rival Unit fights this turn, it doesn't defeat the opposing friendly
+Unit." The shield was consumed only by a fight it actually saved a Unit from, so a rival Unit that
+fought and lost — or tied, or was already barred from defeating anything by CR 9.19.2 — left it
+standing for every later fight that turn. The fight is the trigger; the shield is spent by it either
+way. The edit is in `steps.fight`, but `next_fight_no_defeat` is written by this card alone and read
+only there, so the deck-membership prediction still applies.
+
+**1. Prediction.** Four keys: `sample_arasaka` and `the_heist` hold the card. Observed: one.
+
+**2. Localisation.** `sample_arasaka~sample_fixers~random` game 20 at decision 114; the Program was
+first a legal option at 95. The window shows a fight resolving at Sketchy Ripper 0 against Ruthless
+Lowlife 6 — a 0-power attacker that cannot defeat anything under CR 9.19.2, which is precisely the
+fight that used to leave the shield unspent.
+
+**3. Revert confirmation.** Old `steps.py` against the new golden: DIFFERENT on that one key, same
+game, same action.
+
+**4. Aggregate.** 1 of 40 games, no winner flips, no end-reason change, mean turn delta −1.00: one
+game ended a turn earlier, which is what a Unit dying when it should have is worth.
+
+**5. Two-sided reachability.** Not required at G1 reach. The card-level test is the evidence, and it
+now pins both halves — the first fight spends the shield even though it protected nobody, and the
+second fight kills the Unit that used to be saved.
