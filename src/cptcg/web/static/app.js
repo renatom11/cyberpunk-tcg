@@ -254,7 +254,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
     controls.append(el("div", "desc", "Take back the last move, concede the match, or leave for a new one."));
     const undo = el("button", "", "UNDO"); undo.onclick = () => act("undo");
     const concede = el("button", "", "CONCEDE"); concede.onclick = () => { if (confirm("Concede?")) act("concede"); };
-    const leave = el("button", "", "NEW GAME"); leave.onclick = () => { GAME = null; $("#board").classList.add("hidden"); $("#setup").classList.remove("hidden"); };
+    const leave = el("button", "", "NEW GAME"); leave.onclick = () => { GAME = null; $("#board").classList.add("hidden"); $("#setup").classList.remove("hidden"); matLock(); };
     const dl = el("button", "", "EXPORT"); dl.onclick = async () => {
       if (window.CPTCG_BRIDGE) window.CPTCG_BRIDGE.download(`cptcg-game-${GAME.id}.json`, await api(`/api/games/${GAME.id}/replay`));
       else window.open(`/api/games/${GAME.id}/replay`);
@@ -858,7 +858,7 @@ async function newGame() {
   LOG = r.view.log.slice();
   SEEN = new Set(); SEEN_READY = false;
   arrivals(r.view);                        // seed the board history; the opening board is not news
-  $("#setup").classList.add("hidden"); $("#board").classList.remove("hidden");
+  $("#setup").classList.add("hidden"); $("#board").classList.remove("hidden"); matLock();
   renderBoard($("#board"), r.view, { interactive: true, onAct: act });
 }
 
@@ -868,7 +868,7 @@ async function rpGo(step) {
   const r = await api(`/api/replay?file=${encodeURIComponent(RP.file)}&step=${step}`);
   RP.step = r.step; RP.steps = r.steps;
   $("#rpSlider").max = r.steps - 1; $("#rpSlider").value = r.step; $("#rpPos").textContent = `${r.step + 1} / ${r.steps}`;
-  $("#rpBoard").classList.remove("hidden");
+  $("#rpBoard").classList.remove("hidden"); matLock();
   renderBoard($("#rpBoard"), r.view, { interactive: false });
 }
 
@@ -1309,6 +1309,17 @@ function showPreview(src, c, touch) {
 }
 function hidePreview() { if (PREVIEW) PREVIEW.classList.remove("show", "touch"); }
 
+// The mat is a table, not a document. While a board is on screen the page itself is pinned: a
+// finger dragged across the cards was scrolling the whole page up and down, which is the one thing
+// this gesture must not do. Fixing the body takes the document out of flow, so there is nothing
+// left for the browser to scroll or rubber-band; the panels that are *meant* to scroll (the prompt,
+// the control strip, the log) are inside the board and keep their own overflow.
+function matLock() {
+  const on = !!document.querySelector("main.mode:not(.hidden) .board:not(.hidden)");
+  document.documentElement.classList.toggle("mat", on);
+  document.body.classList.toggle("mat", on);
+}
+
 // Hold, then slide: the board becomes a reader. Whatever card is under the finger is shown, and it
 // follows the finger from card to card, so a row can be read without lifting and pressing again.
 //
@@ -1374,10 +1385,13 @@ document.addEventListener("touchmove", (e) => {
     return;
   }
   if (!SCRUB) return;
+  // A hold that landed on one of the board's own scrolling panels would otherwise scroll it while
+  // reading, so the listener is not passive and this move belongs to the gesture.
+  if (e.cancelable) e.preventDefault();
   const c = cardUnder(t.clientX, t.clientY);
   if (c) previewCard(c);
   else hidePreview();                // slid onto the table: nothing to read there
-}, { passive: true });
+}, { passive: false });
 document.addEventListener("touchend", endScrub);
 document.addEventListener("touchcancel", endScrub);
 // One click is swallowed after a hold, wherever it lands: the finger came down to read, and the
@@ -1595,6 +1609,7 @@ async function init() {
   document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
     document.querySelectorAll("nav button").forEach(x => x.classList.toggle("active", x === b));
     document.querySelectorAll("main.mode").forEach(m => m.classList.toggle("hidden", m.id !== b.dataset.mode));
+    matLock();
   });
 }
 document.querySelectorAll("details.how").forEach(d => {

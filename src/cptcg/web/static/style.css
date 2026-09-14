@@ -415,8 +415,25 @@ table.rep th { color: var(--cyan); }
 .preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
 /* iOS turns a long press on an <img> into its own Share / Save to Photos sheet, which lands on top
    of the card the long press was meant to show. The card art is a UI element here, not a picture
-   the page is offering, so the callout is switched off on every image the board draws. */
+   the page is offering, so the callout is switched off on every image the board draws.
+
+   The same press over anything else on the mat -- a panel's "No Gigs yet.", a name plate, a die --
+   raised the text-selection handles and a Copy / Find Selection / Look Up menu instead. None of
+   that is text the reader is meant to take away: it is the furniture of a table, so selection and
+   the callout are off across the board, the header and the overlays the board opens. Documents
+   stay documents -- the guide, the reports and the card grid are untouched and still selectable. */
 .card img, .preview img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.board, .top, .preview, .pileview {
+  -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
+}
+
+/* While a board is on screen the page is pinned (`matLock` in app.js sets the class). Taking the
+   body out of flow leaves the document with nothing to scroll, so dragging a finger across the
+   cards reads them instead of scrolling the page; `overscroll-behavior` stops the rubber-band that
+   would still be available at the edges. The scrolling parts of the board -- the prompt, the
+   control strip, the log -- are inside it and keep their own overflow. */
+html.mat, body.mat { overflow: hidden; overscroll-behavior: none; }
+body.mat { position: fixed; inset: 0; width: 100%; }
 /* while a held preview follows the finger it must not be the thing the finger is over, and
    `.preview.touch` below turns pointer events back on, so this needs the extra class to win */
 .preview.touch.scrub, .preview.scrub { pointer-events: none; }
