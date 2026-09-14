@@ -374,3 +374,24 @@ the first time the decline would have been taken. The zero turn delta says the g
 the same games.
 
 **5. Two-sided reachability.** Not required at G1.
+
+## 2026-09-14 — `kerry-eurodyne-axe-attitude-audience` (AUD-kerry-eurodyne-axe-attitude-audience-1)
+
+**The fix.** The min/max draw was queued with `later`, which pushes a step on top of the stack, so it
+resolved before the player was asked whether to reroll — and its guard read a mod nothing writes. A
+roll of 1 on a d6 drew a card and the reroll to 6 drew another. The draw now hangs off the reroll
+question's `after=`, once, on the value the die ends on.
+
+**1. Prediction.** Two keys; `sample_fixers` is the only golden deck holding him. Observed: both.
+**2. Localisation.** `sample_arasaka~sample_fixers~heuristic` game 0 at decision 39, the card first a
+legal option at 14.
+**3. Revert confirmation.** DIFFERENT on exactly those two keys against the new golden.
+**4. Aggregate.** 8 of 16 and 15 of 40 games, one winner flip each, turn deltas +0.00 and −0.53. A
+Legend whose trigger fires on the Gig roll every single turn, so half the games touching it is the
+expected shape.
+**5. Two-sided reachability.** Not required at G1.
+
+**A second file had to move first.** The five mined suite positions are stored as action-index
+replays of real games, and this fix stopped them rebuilding. They were frozen into board specs
+against the previous build (`delayed.freeze_replays`) before the fix was restored — the same lesson
+as this ledger's, one instrument over: an index is not a move.
