@@ -65,7 +65,10 @@ def build(out: Path, pyodide_url: str = PYODIDE) -> dict:
     # data/cards: registry.load_default() globs that directory and would try to parse them as
     # card sets. Missing files are not fatal; the CARDS page renders without the panel.
     (out / "data/strategy").mkdir(parents=True, exist_ok=True)
-    for name in ("graph.json", "cards.json", "measured.json"):
+    # knowledge.json is the deck builder's prior, not commentary: without it the LAB in the browser
+    # builds with no learned card values at all, which is the gap `tools/knowledge_ab.py` measures
+    # at 56.1% over 48 paired deck slots. 250 KB, fetched only when the LAB builds a deck.
+    for name in ("graph.json", "cards.json", "measured.json", "knowledge.json"):
         src = ROOT / "data/strategy" / name
         if src.exists():
             shutil.copy(src, out / "data/strategy" / name)
