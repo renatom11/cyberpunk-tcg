@@ -62,9 +62,17 @@ def req(pattern, name, check, flags=re.I):
 
 req(r"(?<!un)equipped (Unit|Legend|Gear)|its equipped|are equipped", "an equipped friendly Unit/Legend",
     lambda s, d: bool(gear_on(s, 0)))
-req(r"cost equal to that Gig's value|cost equals the value of a friendly Gig",
+# "a friendly Gig" is any of yours, so one matching card in hand is enough...
+req(r"cost equals the value of a friendly Gig",
     "a card in hand whose cost equals one of my Gig values",
     lambda s, d: any((c.cost or -1) in my_gig_values(s) for c in cards(s, zone(s, 0, Zone.HAND))))
+# ...but "THAT Gig's value" is a Gig somebody else picked, so the hand has to cover every value it
+# could be. Alt Cunningham — Mother of Daemons reads the Gig a rival Unit is stealing; with one
+# matching card the offer appeared only if the Rival happened to take that Gig, and the clause
+# looked unimplemented on every other steal.
+req(r"cost equal to that Gig's value",
+    "a card in hand for EVERY Gig value, since someone else chooses which Gig",
+    lambda s, d: my_gig_values(s) <= {c.cost for c in cards(s, zone(s, 0, Zone.HAND))})
 req(r"\bdiscard\b", "a non-empty hand to discard from",
     lambda s, d: len(zone(s, 0, Zone.HAND)) >= 2)
 req(r"discard (1|2|\d) Programs?", "Programs in hand",

@@ -226,6 +226,33 @@ def sandbox_spec(reg: Registry, card_id: str, overrides: dict | None = None) -> 
     return spec
 
 
+def _hand_covering_every_gig(spec: dict, reg: Registry, card_id: str) -> None:
+    """A card in hand priced at EVERY one of your Gig values, not merely one of them.
+
+    Alt Cunningham — Mother of Daemons is why this is its own knob. Her text is "when a rival Unit
+    would steal a Gig, you may discard 1 with cost equal to *that* Gig's value" — and which Gig is
+    stolen is the Rival's choice, not yours. With one matching card in hand the offer appears only
+    if the Rival happens to take that Gig: on a 4/5/7 board with a single cost-5 card, the first two
+    steals passed in silence and the clause read as unimplemented. It is not — it fires exactly when
+    the rules say it does, and the board was giving it nothing to fire with.
+
+    Any card whose text says "that Gig's value" rather than "a friendly Gig" has the same shape.
+    """
+    mine = spec["sides"][0]
+    hand = list(mine["hand"])
+    have = {reg.get(c if isinstance(c, str) else c[0]).cost for c in hand}
+    for value in sorted({g[1] for g in mine["gig"]}):
+        if value in have:
+            continue
+        match = next((d.id for d in reg.defs
+                      if d.cost == value and d.id != card_id and _is_inert(d, True)
+                      and d.type is not CardType.LEGEND), None)
+        if match:
+            hand.append(match)
+            have.add(value)
+    mine["hand"] = hand
+
+
 def _ensure_cost_match(spec: dict, reg: Registry, card_id: str) -> None:
     """Guarantee a card in hand whose cost equals one of your Gig values.
 
@@ -459,6 +486,9 @@ def _apply_condition(spec: dict, cond: dict, reg: Registry, card_id: str) -> Non
             side = mine if cond["blocker"] == "mine" else rival
             side["field"] = list(side["field"]) + got
 
+    if cond.get("hand_matches_every_gig"):
+        _hand_covering_every_gig(spec, reg, card_id)
+
     if "trash_tag" in cond:
         mine["trash"] = list(mine["trash"]) + _pick(reg, 1, tag=cond["trash_tag"])
 
@@ -546,7 +576,9 @@ CONDITIONS = {
     "cyberpsychosis":         {"equip": 2, "why": "+3 power for each equipped Gear on the Unit"},
     "dum-dum-maelstrom-triggerman": {"equip": 2, "why": "defeat a friendly Gear; +1 power per equipped Gear"},
     "gilded-maton":           {"equip": 1, "weak_rival": 3, "why": "defeat a friendly Gear -> defeat a rival Unit cost 3 or less"},
-    "alt-cunningham-mother-of-daemons": {"equip": 2, "why": "draw when a friendly equipped Unit or Legend is spent"},
+    "alt-cunningham-mother-of-daemons": {"equip": 2, "hand_matches_every_gig": True,
+                               "why": "an equipped friendly Unit to spend; and a card in hand for EVERY Gig value, "
+                                      "since the Rival picks which Gig to steal"},
     "panam-palmer-nomad-cavalry": {"equip": 2, "why": "move Gear off this Legend; count equipped Units"},
     "royce-psycho-on-the-edge": {"equip": 2, "why": "+2 power for each Gear equipped to this Legend"},
     "deadman-transmitter":    {"weak_rival": 4, "why": "needs a fight it can replace the defeat in"},
