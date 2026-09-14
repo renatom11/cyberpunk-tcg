@@ -174,6 +174,53 @@ def _pick_labels(s: GameState, me: int | None = None) -> list[str] | None:
     return out
 
 
+def _pick_struct(s: GameState, v, me: int | None):
+    """The same values `_describe_value` renders as prose, as data the client can draw with.
+
+    Only the shapes worth drawing: a Gig die, with the amount an option would move it by. A choice
+    between "your d4=3 -2" and "rival d12=10 -1" is a die and a number, and a list of sentences is
+    the worst way to show either — so the client gets the die and the number.
+    """
+    if isinstance(v, tuple) and all(isinstance(x, int) for x in v):
+        if len(v) == 5:                                   # (owner, index, amount, sides, value)
+            o, i, a, k, val = v
+            return {"t": "gig", "owner": o, "i": i, "delta": a, "sides": k, "value": val}
+        if len(v) == 4:                                   # (owner, index, sides, value)
+            o, i, k, val = v
+            return {"t": "gig", "owner": o, "i": i, "delta": 0, "sides": k, "value": val}
+        if len(v) == 2 and 0 <= v[0] <= 1:
+            o, i = v
+            gigs = s.gig[o]
+            if i < len(gigs):
+                return {"t": "gig", "owner": o, "i": i, "delta": 0,
+                        "sides": gigs[i][0], "value": gigs[i][1]}
+    return None
+
+
+def _pick_values(s: GameState, me: int | None):
+    """Per option, the structured values behind its label (or None where there is no structure)."""
+    ch = s.pending
+    try:
+        cells = ch.cont.__closure__ or ()
+        env = {nm: c.cell_contents for nm, c in zip(ch.cont.__code__.co_freevars, cells)}
+    except Exception:  # noqa: BLE001
+        return None
+    vals = env.get("vals")
+    if vals is None:
+        return None
+    out = []
+    for o in ch.options:
+        row = []
+        for i in o.picks:
+            v = vals[i] if i < len(vals) else i
+            st = _pick_struct(s, v, me)
+            if st is None:
+                return None                               # one unknown shape and the whole set is prose
+            row.append(st)
+        out.append(row)
+    return out
+
+
 def _describe_value(s: GameState, v, me: int | None = None) -> str:
     if isinstance(v, int) and 0 <= v < len(s.i_card) and not isinstance(v, bool):
         # Through the same gate as every other identity in the view. A choice among face-down cards
@@ -281,15 +328,20 @@ def view_state(s: GameState, perspective: int | None, names: tuple[str, str], lo
         # and anyone can open the network tab. The omniscient view (perspective None) is the replay
         # and debug view and keeps everything.
         mine = perspective is None or ch.player == perspective
-        pick_labels = _pick_labels(s, perspective) if mine and ch.kind is ChoiceKind.PICK else None
+        is_pick = mine and ch.kind is ChoiceKind.PICK
+        pick_labels = _pick_labels(s, perspective) if is_pick else None
+        pick_values = _pick_values(s, perspective) if is_pick else None
         opts = []
         for idx, a in enumerate(ch.options if mine else ()):
             label, kind, inst = _label(s, a)
             if pick_labels and idx < len(pick_labels):
                 label = pick_labels[idx]
-            opts.append({"index": idx, "label": label, "kind": kind, "inst": inst,
-                         "cost": _cost(s, ch.player, a),
-                         "host": getattr(a, "host", -1) if isinstance(a, Play) else -1})
+            row = {"index": idx, "label": label, "kind": kind, "inst": inst,
+                   "cost": _cost(s, ch.player, a),
+                   "host": getattr(a, "host", -1) if isinstance(a, Play) else -1}
+            if pick_values is not None and idx < len(pick_values):
+                row["pick"] = pick_values[idx]
+            opts.append(row)
         phase = {ChoiceKind.MULLIGAN: "Opening hand", ChoiceKind.ORDER: "Turn order", ChoiceKind.GIG_DIE: "Start phase",
                  ChoiceKind.MAIN: "Main phase", ChoiceKind.TARGET: "Attack", ChoiceKind.REACTION: "Rival reacts",
                  ChoiceKind.PICK: "Choose"}[ch.kind]

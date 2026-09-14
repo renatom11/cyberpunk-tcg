@@ -409,6 +409,10 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       // is laid out again here at thumb size: every die still in the fixer, the ones you may take
       // lit and the d20 shown but out of reach until it is the last one left, which is the rule
       // and is worth seeing rather than being told.
+      if (pend.kind === "PICK") {
+        const picker = adjustPicker(pend, onAct, me);
+        if (picker) { prompt.append(picker); (pend.options || []).forEach(claim); }
+      }
       if (pend.kind === "GIG_DIE") {
         const tray = el("div", "gigpick");
         const can = new Map();
@@ -545,12 +549,14 @@ function wireDrag(root, pend, onAct) {
   DRAG_ZONES = [];
   if (field) DRAG_ZONES.push({ el: field, label: "DROP TO PLAY", pick: (d) => d.opts.play });
   if (eddies) DRAG_ZONES.push({ el: eddies, label: "DROP TO SELL", pick: (d) => d.opts.sell });
-  // The rival's half, all of it: their field, their Legend band, their Gig area. Dropping there
-  // declares the attack; the board then asks what it is aimed at, because that is a second decision
-  // and CR 9.26 has a reaction window between the two — it is not the drop's to answer.
-  [".p-opp-field", ".p-opp-legends", ".p-opp-gig"].forEach(sel => {
+  // Two places to aim at, because an attack has two things it can be aimed at: a Unit on their
+  // field, or their Gig area. Three lit zones {D} their Legend band was one of them {D} read as three
+  // different attacks, and the extra one was not a third kind of anything. The drop declares the
+  // attack and stops; what it is aimed at is a second decision with a reaction window between the
+  // two (CR 9.26), so the board asks it rather than the drop answering it.
+  [[".p-opp-field", "DROP TO ATTACK"], [".p-opp-gig", "DROP TO RAID THE GIGS"]].forEach(([sel, label]) => {
     const z = root.querySelector(sel);
-    if (z) DRAG_ZONES.push({ el: z, label: "DROP TO ATTACK", pick: (d) => d.opts.attack });
+    if (z) DRAG_ZONES.push({ el: z, label, pick: (d) => d.opts.attack });
   });
   root.querySelectorAll(".card[data-inst]").forEach(host => {
     DRAG_ZONES.push({ el: host, label: "EQUIP", host: +host.dataset.inst,
@@ -1124,6 +1130,80 @@ function gigPanel(p, meSeat) {
   g.append(el("div", "tag", p.seat === meSeat ? "FRIENDLY GIGS" : "OPPONENT GIGS"));
   return g;
 }
+// ---------------------------------------------------------------- adjusting a Gig
+// "Decrease a Gig" used to be seven buttons reading "your d4=3 -2", "your d4=3 -1", "rival d12=10
+// -2" and so on: every (die, amount) pair in the game written out as a sentence, for a decision
+// that is a die and a number. So it is a die and a number. Pick the die off a row of the actual
+// dice, pick the amount off a stepper that only offers what that die allows, watch the result
+// change as you do, and confirm. The engine's options are unchanged -- each combination is still
+// one of them -- this only stops asking the question in prose.
+//
+// It builds only when every option really is one Gig (the view ships the structure behind each
+// label); anything else falls back to the buttons, which are still correct, just plainer.
+function adjustPicker(pend, onAct, me) {
+  const opts = pend.options || [];
+  if (!opts.length || !opts.every(o => Array.isArray(o.pick))) return null;
+  const real = opts.filter(o => o.pick.length === 1 && o.pick[0].t === "gig");
+  const decline = opts.find(o => o.pick.length === 0);
+  if (!real.length || real.length + (decline ? 1 : 0) !== opts.length) return null;
+
+  const dice = [];                                  // one entry per die, with the amounts it allows
+  real.forEach(o => {
+    const g = o.pick[0], key = g.owner + ":" + g.i;
+    let d = dice.find(x => x.key === key);
+    if (!d) dice.push(d = { key, g, moves: [] });
+    d.moves.push({ delta: g.delta, index: o.index });
+  });
+  dice.forEach(d => d.moves.sort((a, b) => a.delta - b.delta));
+
+  const box = el("div", "gigadj");
+  const row = el("div", "dicerow");
+  const stepRow = el("div", "steprow");
+  const go = el("button", "primary hidden", "CONFIRM");
+  let picked = null, move = null;
+
+  const paint = () => {
+    row.querySelectorAll(".pick").forEach(n => n.classList.toggle("on", n.dataset.key === (picked && picked.key)));
+    stepRow.innerHTML = "";
+    if (!picked) { go.classList.add("hidden"); return; }
+    const g = picked.g;
+    picked.moves.forEach(m => {
+      const b = el("button", "step" + (move && move.index === m.index ? " on" : ""),
+                   m.delta > 0 ? `+${m.delta}` : String(m.delta));
+      b.onclick = (e) => { e.stopPropagation(); move = m; paint(); };
+      stepRow.append(b);
+    });
+    const now = move ? g.value + move.delta : g.value;
+    stepRow.append(el("span", "to", `d${g.sides}: ${g.value}` + (move ? ` \u2192 ${now}` : "")));
+    go.classList.toggle("hidden", !move);
+    go.textContent = move ? `CONFIRM ${move.delta > 0 ? "+" : ""}${move.delta}` : "CONFIRM";
+  };
+
+  dice.forEach(d => {
+    const wrap = el("div", "pick");
+    wrap.dataset.key = d.key;
+    wrap.append(dieNode(d.g.sides, d.g.value, d.g.owner === me ? "own" : "rival"),
+                el("span", "whose", d.g.owner === me ? "FRIENDLY" : "OPPONENT"));
+    wrap.onclick = (e) => {
+      e.stopPropagation();
+      picked = d; move = d.moves.length === 1 ? d.moves[0] : null;
+      paint();
+    };
+    row.append(wrap);
+  });
+  go.onclick = (e) => { e.stopPropagation(); if (move) onAct(move.index); };
+  const buttons = el("div", "opts");
+  buttons.append(go);
+  if (decline) {
+    const b = el("button", "", "DECLINE");
+    b.onclick = (e) => { e.stopPropagation(); onAct(decline.index); };
+    buttons.append(b);
+  }
+  box.append(row, stepRow, buttons);
+  paint();
+  return box;
+}
+
 // The fixer: the dice not yet rolled, dim, named rather than numbered.
 function diceTray(p, pick, pend, onAct) {
   const t = el("div", "panel dice");
