@@ -816,6 +816,18 @@ function openCardMenu(node, c, acts, onAct) {
 // not immediately close it, and so does the menu's.
 document.addEventListener("click", closeCardMenu);
 
+// The long press is this board's own gesture — it reads the card under the finger — and iOS wants to
+// answer it with a system callout at the same time, which is where the stray "Share..." bubble over
+// the control strip came from. `-webkit-touch-callout: none` is the CSS for that and is set, but it
+// is advisory and does not reach everything; cancelling the contextmenu event is the same refusal
+// said in a way the browser has to honour, and it is what a right-click on a desktop board would
+// have raised too. Scoped to the board and its chrome, so the guide and the reports keep theirs.
+document.addEventListener("contextmenu", (e) => {
+  const t = e.target;
+  if (t && t.closest && t.closest(".board, .top, .preview, .pileview, .cardmenu, .paypanel"))
+    e.preventDefault();
+});
+
 function findOnBoard(v, inst) {
   for (const p of v.players || []) {
     for (const c of (p.hand || [])) if (c.inst === inst) return c;

@@ -475,9 +475,15 @@ table.rep th { color: var(--cyan); }
    the callout are off across the board, the header and the overlays the board opens. Documents
    stay documents -- the guide, the reports and the card grid are untouched and still selectable. */
 .card img, .preview img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
-.board, .top, .preview, .pileview {
+.board, .top, .preview, .pileview, .cardmenu {
   -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
 }
+/* And again on every descendant, buttons named separately. The property inherits, but a form
+   control is where inheritance is least dependable, and a long press on UNDO was still raising the
+   system "Share..." bubble over the control strip with the rule already set on the board above it.
+   `body.mat` is on exactly while a board is up (`matLock`), so this reaches a board and nothing
+   else: the guide and the reports stay long-pressable documents. */
+body.mat, body.mat *, body.mat button, body.mat input, body.mat select { -webkit-touch-callout: none; }
 
 /* While a board is on screen the page is pinned (`matLock` in app.js sets the class). Taking the
    body out of flow leaves the document with nothing to scroll, so dragging a finger across the
