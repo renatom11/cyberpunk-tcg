@@ -133,6 +133,7 @@ CONDITION_CHECKS = {
     "min_gig": lambda s: any(v == 1 for _k, v in s.gig[0]),
     "value_pair": lambda s: len({v for _k, v in s.gig[0]}) < len(s.gig[0]),
     "high_gig": lambda s: any(v >= 8 for _k, v in s.gig[0]),
+    "high_gigs2": lambda s: sum(1 for _k, v in s.gig[0] if v >= 8) >= 2,
     "all_rolled": lambda s: not s.fixer[0] and any(k == 20 for k, _v in s.gig[0]),
     "reducible": lambda s: any(k == 4 and 1 < v <= 3 for k, v in s.gig[0]),
     # Every value low enough to be some Gear's cost, which is what "cost equals the value of a
@@ -201,6 +202,38 @@ def test_every_condition_says_which_clause_it_is_for(pool):
     assert not missing, missing
     unknown = [c for c in CONDITIONS if c not in pool.by_id]
     assert not unknown, unknown
+
+
+def test_no_unverified_card_is_ever_put_on_a_sandbox_board(pool):
+    """Filler must be a card somebody has actually read.
+
+    An unverified card is one whose printed face was never captured: every stat on it is a
+    placeholder, and its text is empty — which also means it has no script, which made it look like
+    the *most* inert card in the pool to a filler rule that asked only about behaviour. One card in
+    151 is in that state and it was standing in the Legends area behind all 151 sandboxes.
+
+    This asserts the property that actually matters, across the whole pool and every zone, rather
+    than blacklisting the one id: the next unverified card to enter the set is caught the same way.
+    """
+    bad = []
+    for d in pool.defs:
+        s = build_position(pool, sandbox_spec(pool, d.id, OVERRIDES))
+        for i in range(len(s.i_card)):
+            seen = pool.defs[s.i_card[i]]
+            if not seen.verified and seen.id != d.id:
+                bad.append(f"{d.id}: board holds unverified {seen.id}")
+                break
+    assert not bad, bad
+
+
+def test_filler_legends_are_not_all_the_same_two_faces(pool):
+    """The filler rotates, so the pool is visible rather than the same pair behind every card."""
+    seen = set()
+    for d in pool.defs:
+        side = sandbox_spec(pool, d.id, OVERRIDES)["sides"][0]
+        seen.update(c if isinstance(c, str) else c[0] for c in side["legends"])
+    seen.discard(None)
+    assert len(seen) >= 5, f"only {len(seen)} distinct Legends ever appear: {sorted(seen)}"
 
 
 def test_overrides_only_name_real_cards(pool):

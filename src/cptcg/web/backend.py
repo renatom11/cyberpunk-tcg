@@ -64,6 +64,13 @@ class Game:
         #: on the board: a try-out board that quietly differs from the default is confusing, and a
         #: player who does not know the Rival's Gig lead is deliberate reads it as a bug.
         self.why = CONDITIONS.get(card, {}).get("why", "") if card else ""
+        if card and not reg().get(card).verified:
+            # One card in the pool is a placeholder: its printed face was never captured, so it has
+            # no text, no tags and invented stats. Trying it and finding it does nothing is not a
+            # bug in the card or the sandbox, and the board says so rather than letting it look
+            # like one.
+            self.why = ("this card is UNVERIFIED — its printed face was never captured, so its "
+                        "stats are placeholders and it has no text to test")
         self.names = ("You" if human_seat == 0 else f"AI ({decks[0].name})",
                       "You" if human_seat == 1 else f"AI ({decks[1].name})")
         self.reset()

@@ -696,9 +696,15 @@ body.mat { position: fixed; inset: 0; width: 100%; }
    one of them was drawn on top of its own panel's text. */
 @media (max-width: 700px) {
   .top { padding: 3px 6px; height: 36px; box-sizing: border-box; flex-wrap: nowrap; }
-  .brand { font-size: 10px; white-space: nowrap; letter-spacing: 0; } .brand span:not(.build) { display: none; }
-  /* the nav scrolls rather than clipping its last button off the edge of the screen */
-  nav { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .brand { font-size: 10px; white-space: nowrap; letter-spacing: 0; flex: 0 1 auto; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; }
+  .brand span:not(.build) { display: none; }
+  /* The nav scrolls rather than clipping its last button off the edge of the screen — but it can
+     only do that inside the space it is given, and a flex item defaults to min-width:auto, which
+     is its content width. Without min-width:0 the nav simply grew past the header instead, and the
+     last tab (CARDS) sat half off the right edge of a phone with no sign that it could be reached. */
+  nav { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
+    min-width: 0; flex: 1 1 auto; justify-content: flex-end; }
   nav::-webkit-scrollbar { display: none; }
   nav button { padding: 3px 4px; font-size: 8.5px; margin-left: 2px; letter-spacing: 0; flex: 0 0 auto; }
 
@@ -889,6 +895,9 @@ body.mat { position: fixed; inset: 0; width: 100%; }
   .p-controls button { padding: 2px 5px; font-size: 8px; }
 }
 .brand .build { color: var(--dim); font-size: 10px; margin-left: 8px; letter-spacing: 0; font-weight: 400; }
+/* Below this width the build hash costs about one tab of space, and a tab you can tap is worth more
+   than a version string you cannot. It is still in the page for a bug report to read. */
+@media (max-width: 460px) { .brand .build { display: none; } }
 
 /* ---------------------------------------------------------------- lab: estimates, cancel, phone fit */
 .estimate { margin-top: 6px; font-size: 12px; color: var(--cyan); }

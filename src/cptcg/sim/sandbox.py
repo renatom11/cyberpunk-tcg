@@ -49,18 +49,57 @@ SLACK = 4
 DECK_SIZE = 15
 
 
+#: Script hooks that run without being asked: a card carrying one of these is doing something the
+#: whole time it is on the board. Triggers (PLAY/CALL/ATTACK/DEFEATED) are not here — a Legend
+#: sitting face-up in the Legends area is never played, Called or attacked with — and neither are
+#: activated abilities, which only fire when a player spends something on them.
+CONTINUOUS_HOOKS = ("on_event", "power_mod", "kw_mod", "cost_mod", "attack_perm",
+                    "would_defeat", "would_steal", "unblockable")
+
+
+def _is_inert(d, allow_abilities: bool = False) -> bool:
+    """Can this card sit on the board doing nothing at all?
+
+    ``verified`` is the first condition and the one that matters most. A card is unverified when
+    its printed face was never captured, so every value on it is a placeholder — and because
+    nobody could transcribe text for it, it also has no script, which made it look like the most
+    inert card in the pool to any rule that asked only about behaviour. Exactly one card in 151 is
+    in that state, and it was appearing on every board in the game as furniture.
+    """
+    if not d.verified:
+        return False
+    sc = d.script
+    if sc is None:
+        return True
+    if any(getattr(sc, f, None) for f in CONTINUOUS_HOOKS) or sc.extra:
+        return False
+    return allow_abilities or not sc.abilities
+
+
 def _vanilla_units(reg: Registry) -> dict[Color, str]:
-    """The one scriptless, keywordless Unit per colour — the filler that cannot perturb a test."""
+    """The one inert, keywordless, textless Unit per colour — filler that cannot perturb a test."""
     out: dict[Color, str] = {}
     for d in reg.defs:
-        if (d.type is CardType.UNIT and d.script is None and not d.keywords
-                and not d.needs_script and d.color not in out):
+        if (d.type is CardType.UNIT and _is_inert(d) and not d.keywords
+                and not d.needs_script and not d.text and d.color not in out):
             out[d.color] = d.id
     return out
 
 
-def _vanilla_legends(reg: Registry) -> list[str]:
-    return [d.id for d in reg.defs if d.type is CardType.LEGEND and d.script is None]
+def _filler_legends(reg: Registry, card_id: str, seed: int) -> list[str]:
+    """Legends that can stand face-up in the Legends area without doing anything.
+
+    Rotated by the card under test, so the same two faces do not appear behind all 151 cards. The
+    bar is stricter than for a Unit, because these are face-up: no continuous hook (they would
+    change the board under you) and no activated ability (it would put a button in your main menu
+    that has nothing to do with the card you came to try).
+    """
+    pool = [d.id for d in reg.defs
+            if d.type is CardType.LEGEND and _is_inert(d) and d.id != card_id]
+    if not pool:
+        return []
+    k = seed % len(pool)
+    return pool[k:] + pool[:k]
 
 
 def _filler_ids(units: dict[Color, str], tried: str) -> list[str]:
@@ -89,12 +128,16 @@ def sandbox_spec(reg: Registry, card_id: str, overrides: dict | None = None) -> 
     Gear, a full trash, a specific tag on the field. Hand-tuning one card is a line of JSON rather
     than a branch in this function, which is why the function stays readable as the pool grows.
     """
+    # A stable seed per card: the same card always deals the same sandbox, so RESTART reproduces
+    # what you were just looking at and a bug report names a board I can rebuild. zlib.crc32 rather
+    # than hash(), which is salted per process and would make "restart" mean "reshuffle".
     d = reg.get(card_id)
     units = _vanilla_units(reg)
-    legends = [c for c in _vanilla_legends(reg) if c != card_id]
+    seed = zlib.crc32(card_id.encode()) % 1_000_000
+    legends = _filler_legends(reg, card_id, seed)
     if not units or not legends:
-        raise ValueError("no vanilla filler in this registry: sandbox boards need at least one "
-                         "scriptless Unit and one scriptless Legend to build around")
+        raise ValueError("no inert filler in this registry: sandbox boards need at least one "
+                         "inert Unit and one inert Legend to build around")
     fill = _filler_ids(units, card_id)
     # The board Unit in the card's own colour, and one in another, neither ever the tried card.
     # Both fall back through `fill` rather than indexing `units` directly: the filler pool is
@@ -106,11 +149,6 @@ def sandbox_spec(reg: Registry, card_id: str, overrides: dict | None = None) -> 
     other = units.get(Color((int(d.color) + 1) % 4)) or ""
     if other in (card_id, same, ""):
         other = next((i for i in fill if i != same), same)
-
-    # A stable seed per card: the same card always deals the same sandbox, so RESTART reproduces
-    # what you were just looking at and a bug report names a board I can rebuild. zlib.crc32 rather
-    # than hash(), which is salted per process and would make "restart" mean "reshuffle".
-    seed = zlib.crc32(card_id.encode()) % 1_000_000
 
     # Eddies: the card's cost plus slack. A Legend is reached by Calling it for 1 €$ first and only
     # then GO SOLO-ing it for its cost, so it needs both amounts, not the larger of them. All of it
@@ -144,7 +182,7 @@ def sandbox_spec(reg: Registry, card_id: str, overrides: dict | None = None) -> 
         # Six Legend slots are filled from a pool of three scriptless Legends (the whole supply),
         # so the rival's area repeats one. Duplicates are ordinary instances and nothing reads
         # identity across slots; a Legend that *did* something would be the worse trade.
-        "legends": _filler_deck(legends, 3, 0),
+        "legends": _filler_deck(legends, 3, 2),
     }
 
     # One rival Legend face-up, so "a face-up rival Legend" has a target; the other two stay
@@ -184,7 +222,38 @@ def sandbox_spec(reg: Registry, card_id: str, overrides: dict | None = None) -> 
     patch = (overrides or {}).get(card_id)
     if patch:
         _apply_patch(spec, patch)
+    _ensure_cost_match(spec, reg, card_id)
     return spec
+
+
+def _ensure_cost_match(spec: dict, reg: Registry, card_id: str) -> None:
+    """Guarantee a card in hand whose cost equals one of your Gig values.
+
+    Several cards pay off that coincidence — "you may discard 1 with cost equal to that Gig's
+    value", "if the card's cost equals the value of a friendly Gig" — and on a board where it does
+    not hold, that half of the card cannot be reached at all. It was holding only by luck, and only
+    for the Gig sets that happen to overlap the filler's costs.
+
+    Applied last, after the conditions and any override, because those are what finally decide the
+    Gig values it has to match.
+    """
+    mine = spec["sides"][0]
+    values = {g[1] for g in mine["gig"]}
+    have = set()
+    for c in mine["hand"]:
+        cid = c if isinstance(c, str) else c[0]
+        if cid == card_id:
+            continue          # the card under test is the one you are here to PLAY, not to discard
+        cost = reg.get(cid).cost
+        if cost is not None:
+            have.add(cost)
+    if values & have:
+        return
+    match = next((d.id for d in reg.defs
+                  if d.cost in values and d.id != card_id and _is_inert(d, True)
+                  and d.type is not CardType.LEGEND), None)
+    if match:
+        mine["hand"] = list(mine["hand"]) + [match]
 
 
 #: Keys in an override entry that describe the entry rather than the board, and so are never
@@ -267,6 +336,8 @@ GIG_SETS = {
     "min_gig": ([[4, 1], [6, 5], [8, 7]], [[4, 4], [6, 5], [8, 7]]),      # a d4 showing 1
     "value_pair": ([[4, 4], [6, 4], [8, 7]], [[4, 4], [6, 5], [8, 7]]),   # two dice showing 4
     "high_gig": ([[4, 4], [6, 5], [8, 8]], [[4, 4], [6, 5], [8, 7]]),     # a Gig with 8+ value
+    # Two of them, for the cards that ask for "2 or more Gigs with 8+ value".
+    "high_gigs2": ([[4, 4], [8, 8], [10, 9], [12, 11]], [[4, 4], [6, 5], [8, 7]]),
     # Every die rolled: the fixer area is empty AND a d20 is among your Gigs. Six Gigs is one short
     # of the seven that win, so this is still a position and not a victory screen.
     "all_rolled": ([[4, 4], [6, 5], [8, 7], [10, 8], [12, 10], [20, 15]], [[4, 4], [6, 5], [8, 7]]),
@@ -379,6 +450,39 @@ def _apply_condition(spec: dict, cond: dict, reg: Registry, card_id: str) -> Non
     if "trash_programs" in cond:
         mine["trash"] = list(mine["trash"]) + _pick(reg, cond["trash_programs"], type=CardType.PROGRAM, maxcost=3)
 
+    if "blocker" in cond:
+        # A Unit that already has BLOCKER, for the cards that read one rather than grant one.
+        # The rival's is left READY on purpose: "can attack ready Units with BLOCKER" is precisely
+        # a permission to attack something you otherwise could not, so a spent one proves nothing.
+        got = _pick(reg, 1, type=CardType.UNIT, kw=Keyword.BLOCKER)
+        if got:
+            side = mine if cond["blocker"] == "mine" else rival
+            side["field"] = list(side["field"]) + got
+
+    if "trash_tag" in cond:
+        mine["trash"] = list(mine["trash"]) + _pick(reg, 1, tag=cond["trash_tag"])
+
+    if cond.get("equip_cost_matches_gig"):
+        # "Defeat a Gear. If its cost equals the value of a friendly Gig, draw 1." The Gear has to
+        # be on the board AND priced at one of your Gig values, or the second half never fires.
+        values = {g[1] for g in mine["gig"]}
+        gear = next((d2.id for d2 in reg.defs
+                     if d2.type is CardType.GEAR and d2.cost in values and _is_inert(d2, True)), None)
+        if gear:
+            host = mine["field"][0]
+            hid = host if isinstance(host, str) else host[0]
+            opts = {} if isinstance(host, str) else dict(host[1])
+            opts["gear"] = list(opts.get("gear", ())) + [gear]
+            mine["field"] = [[hid, opts]] + list(mine["field"][1:])
+
+    if cond.get("facedown_go_solo"):
+        # Arasaka Emergency Radioport looks at a friendly *face-down* Legend and asks whether it is
+        # ARASAKA or has GO SOLO. Which Legend is face-down is otherwise just where the rotation
+        # landed, so the one card that reads its identity says so instead of hoping.
+        got = _pick(reg, 1, type=CardType.LEGEND, kw=Keyword.GO_SOLO)
+        if got and got[0] != card_id:
+            mine["legends"] = [got[0]] + list(mine["legends"][1:])
+
     if cond.get("rival_solo_legend"):
         # A Legend standing on the field as a Unit, for "while fighting a Legend". A GO SOLO Legend
         # is the only way one is ever there, so the board puts it there directly.
@@ -442,7 +546,6 @@ CONDITIONS = {
     "cyberpsychosis":         {"equip": 2, "why": "+3 power for each equipped Gear on the Unit"},
     "dum-dum-maelstrom-triggerman": {"equip": 2, "why": "defeat a friendly Gear; +1 power per equipped Gear"},
     "gilded-maton":           {"equip": 1, "weak_rival": 3, "why": "defeat a friendly Gear -> defeat a rival Unit cost 3 or less"},
-    "heywood-ripperdoc":      {"equip": 1, "why": "defeat a Gear, and its cost can match a friendly Gig"},
     "alt-cunningham-mother-of-daemons": {"equip": 2, "why": "draw when a friendly equipped Unit or Legend is spent"},
     "panam-palmer-nomad-cavalry": {"equip": 2, "why": "move Gear off this Legend; count equipped Units"},
     "royce-psycho-on-the-edge": {"equip": 2, "why": "+2 power for each Gear equipped to this Legend"},
@@ -464,6 +567,19 @@ CONDITIONS = {
     "saburo-arasaka-stubborn-patriarch": {"my_tag": "ARASAKA", "why": "friendly ARASAKA Units get +1 while attacking"},
     "yorinobu-arasaka-embracing-destruction": {"my_tag": "ARASAKA", "why": "a friendly ARASAKA Unit to attack; ★ 16 is under 20"},
     "overwatch-panams-gift":  {"weak_rival": 3, "why": "a spent rival Unit cheap enough for the discard to reach"},
+    "arasaka-emergency-radioport": {"facedown_go_solo": True,
+                               "why": "the face-down Legend it looks at has GO SOLO -> Call it for free"},
+    "goro-takemura-vengeful-bodyguard": {"gigs": "value_pair", "blocker": "mine",
+                               "why": "a value-pair for the +1, and a friendly BLOCKER for the discard trigger"},
+    "valentino-guerrera":     {"gigs": "more_cred", "blocker": "rival",
+                               "why": "more ★, and a READY rival BLOCKER that permission lets you attack"},
+    "river-ward-detective-on-the-hunt": {"equip": 1, "hand_gear": True,
+                               "why": "an equipped friendly Unit to be defeated; a cheap Gear in hand for the ⊡"},
+    "modded-muramasa":        {"gigs": "less_cred", "why": "less ★ than a Rival -> ready this Unit at end of turn"},
+    "v-roamer-of-the-badlands": {"gigs": "high_gigs2", "why": "2 or more Gigs with 8+ value -> draw 1"},
+    "v-streetkid":            {"trash_tag": "BRAINDANCE", "why": "a BRAINDANCE Program in the trash for CALL to retrieve"},
+    "heywood-ripperdoc":      {"equip_cost_matches_gig": True,
+                               "why": "a Gear on the board priced at one of your Gig values -> draw 1"},
     "the-heist":              {"gigs": "cheap_values", "why": "Gig values 1-3, where Gear costs are, so the free-play clause can fire"},
     "swordwise-huscle":       {"hand_gear": True, "why": "printed power 3 needs Gear to reach the power 5+ clause"},
     "westbrook-netrunner":    {"rival_solo_legend": True, "why": "a rival Legend on the field for its steal to be stopped"},
