@@ -165,3 +165,25 @@ unmoved, same reason as Trust No One: the heuristic takes an increase whenever o
 **4. Aggregate.** 4 of 40 and 1 of 40, one winner flip, no end-reason changes, turn deltas +0.25 and
 0.00. Both heuristic keys unmoved.
 **5. Two-sided reachability.** Not applicable at G1.
+
+---
+
+## 2026-09-14 — `el-sombreron-la-venganza-lenta` (AUD-el-sombreron-la-venganza-lenta-1)
+
+**The fix.** "ATTACK: You may pay 2 €$. If you do, this Unit gains power equal to a friendly **max
+Gig** this turn." A max Gig is a die showing its maximum face — the mirror of "min Gig", which six
+cards in this set use and which `EffectCtx.min_gigs` implements exactly that way. The script used
+`max(gig_values())`, the largest *value* in the area, so a d12 on 9 beside a d4 on 4 gave +9 where
+the card gives +4. `EffectCtx.max_gigs` already existed and was unused.
+
+A pre-existing green test encoded the bug — a d12 on 9 expecting +9 — which is why no one noticed.
+It now uses a real max Gig, and a control beside it shows the card does not even ask when there is
+none.
+
+**1. Prediction.** Two keys. Observed: both.
+**2. Localisation.** decisions 146 and 62; the card first a legal option at 80 and earlier, and the
+narration shows it attacking one line before.
+**3. Revert confirmation.** DIFFERENT on exactly those two keys at exactly those actions.
+**4. Aggregate.** 3 of 16 and 1 of 40 games, no winner flips, no end-reason changes, turn deltas
+0.00. A pure power-number change on one Unit in one deck: the games stay the same games.
+**5. Two-sided reachability.** Not applicable at G1.
