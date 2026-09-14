@@ -1,0 +1,33 @@
+# The suite, on every push. It did not run here before: for most of this project's life the only
+# workflow in this directory deployed the site, so a red suite reached GitHub Pages and the tests
+# were green only on whatever machine last ran them.
+name: Tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # numpy is not a dependency of the engine and never can be (tests/unit/test_stdlib_only.py
+      # enforces that), but the trainer's numpy-agreement tests skip themselves without it, and a
+      # test that silently skips in CI is a test that is not running.
+      - run: pip install pytest numpy
+      - name: pytest
+        run: python -m pytest -q
+      - name: the golden games are identical
+        run: python tools/bench.py check
+      - name: fuzz the whole pool with invariants on
+        run: python tools/bench.py fuzz -n 40 --seed 7

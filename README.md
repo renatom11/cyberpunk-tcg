@@ -47,8 +47,9 @@ small tournaments, on desktop or phone, nothing to install. Built from this repo
 
 ```bash
 pip install -e '.[dev]'
-pytest                                   # ~870 tests: rules, properties, a scenario per card,
+pytest                                   # ~945 tests: rules, properties, a scenario per card,
                                          # pool-wide lints, and the open audit findings as strict xfails
+                                         # (and .github/workflows/tests.yml runs all of it on every push)
 
 # play 1000 mirrored games between two decks and report win rates with 95% intervals
 python -m cptcg sim --deck-a data/decks/the_heist.json \
