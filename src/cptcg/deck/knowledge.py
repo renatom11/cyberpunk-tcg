@@ -38,8 +38,9 @@ def default_path(root: Path | None = None) -> Path | None:
     A fresh clone had no card values at all, because the only path anything looked at was inside a
     gitignored directory -- so the deck builder on the published site built with no learned opinion
     while the same code on the machine that ran a league built with one. `tools/knowledge_ab.py`
-    measures what that is worth: 48 paired deck slots, same Legends and same seed on both sides,
-    and the shipped store's decks win 56.1% (slot-level 95% interval 51.8-60.4).
+    measures what that is worth over 48 paired deck slots, same Legends and same seed on both
+    sides: against no store at all the shipped one wins 60.7% (slot-level 95% interval 58.0-63.5,
+    43 slots of 48), and against the old 1,440-game store it wins 56.1% (51.8-60.4).
     """
     root = root or Path.cwd()
     for p in (root / DEFAULT_PATH, root / SHIPPED_PATH):

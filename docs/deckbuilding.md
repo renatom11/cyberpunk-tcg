@@ -309,13 +309,16 @@ and nothing anywhere said so.
 two decks from the **same Legends, the same seed and the same strategy**, differing only in the
 store they consult, and plays them against each other with mirrored seats.
 
-| | |
-|---|---|
-| slots (deck pairs) | 48 |
-| games per slot | 60 |
-| new-store decks won | 1,616 of 2,880 (0.561) |
-| slot-level 95% interval | 0.518 .. 0.604 |
-| slots won / lost | 30 / 15 |
+| comparison | decks won | slot-level 95% interval | slots won / lost |
+|---|---|---|---|
+| 28,400-game store vs the old 1,440-game one | 1,616 of 2,880 (0.561) | 0.518 .. 0.604 | 30 / 15 |
+| 28,400-game store vs **no store at all** | 1,749 of 2,880 (0.607) | 0.580 .. 0.635 | 43 / 4 |
+
+Both are 48 slots of 60 games. The second row is the one that describes what a fresh clone and the
+published site were doing — building with no learned card values whatsoever — and it is both larger
+and much tighter: 43 of 48 deck pairs went to the side with the prior, and the per-slot spread is
+half what it is in the first row, because "some values against none" is a more consistent edge than
+"better values against worse ones".
 
 The slot is the unit of evidence and the tool insists on it: sixty games inside one slot are sixty
 samples of one deck pair, and the game-level interval (0.543–0.579) is about twice as tight as the
