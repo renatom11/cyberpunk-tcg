@@ -340,7 +340,14 @@ class EffectCtx:
 
     def choose_gig(self, owners: Iterable[int], cont: Callable[["EffectCtx", int, int], None], *,
                    pred: Callable[[int, int], bool] | None = None, prompt: str = "Choose a Gig",
-                   optional: bool = False, player: int | None = None) -> None:
+                   optional: bool = False, player: int | None = None,
+                   after: Callable[["EffectCtx"], None] | None = None) -> None:
+        """Pick a Gig; ``cont(ctx, owner, index)`` runs with the pick.
+
+        ``after(ctx)`` runs **whatever happens**: after the pick, after a decline, and when there
+        was no legal Gig to offer in the first place. See :meth:`adjust_up_to` for why that hook
+        exists and what goes wrong without it.
+        """
         cands = [(o, i, k, v) for o in owners for i, (k, v) in enumerate(self.gigs(o))
                  if pred is None or pred(k, v)]
 
@@ -349,13 +356,29 @@ class EffectCtx:
             gigs = c.gigs(o)
             if i < len(gigs) and gigs[i] == (k, v):
                 cont(c, o, i)
+            if after is not None:
+                after(c)
         self.choose(cands, _do, prompt=prompt, optional=optional, player=player,
-                    tag=call_site(cont))
+                    otherwise=after, tag=call_site(cont))
 
     def adjust_up_to(self, owners: Iterable[int], lo: int, hi: int, *, cont: Callable | None = None,
+                     after: Callable[["EffectCtx"], None] | None = None,
                      prompt: str = "Adjust a Gig") -> None:
         """'Increase/decrease/adjust a Gig by up to N' as ONE decision over (owner, index, amount)
-        triples, plus a decline option. Fewer, richer decisions keep search trees small."""
+        triples, plus a decline option. Fewer, richer decisions keep search trees small.
+
+        Two hooks, and the difference between them is a class of bug rather than a convenience.
+        ``cont(ctx, owner, index)`` runs only when a die actually moved, and is right for a clause
+        that talks about *that* Gig ("If **it** becomes a min Gig, draw 1"). ``after(ctx)`` runs
+        whatever happens — after the adjustment, after a decline, and when no legal adjustment
+        existed to offer — and is right for a separate printed sentence with its own board
+        condition ("Then, **if you control** a min Gig, draw 1").
+
+        Getting that backwards is invisible and common: "up to N" includes zero and the engine
+        offers the decline explicitly, a Gig already at its face cannot move at all (ruling 037),
+        and in both cases a second sentence hung off ``cont`` silently never runs. Six cards in
+        this set were written that way.
+        """
         cands = []
         for o in owners:
             for i, (k, v) in enumerate(self.gigs(o)):
@@ -366,13 +389,15 @@ class EffectCtx:
         def _do(c: "EffectCtx", t: tuple) -> None:
             o, i, a, k, v = t
             gigs = c.gigs(o)
-            if i >= len(gigs) or gigs[i] != (k, v):
-                return                                   # that die moved before the answer arrived
-            c.adjust_gig(o, i, a)
-            if cont is not None:
-                cont(c, o, i)
+            if i < len(gigs) and gigs[i] == (k, v):      # else that die moved before the answer
+                c.adjust_gig(o, i, a)
+                if cont is not None:
+                    cont(c, o, i)
+            if after is not None:
+                after(c)
 
-        self.choose(cands, _do, prompt=prompt, optional=True, tag=call_site(cont) or "adjust_gig")
+        self.choose(cands, _do, prompt=prompt, optional=True, otherwise=after,
+                    tag=call_site(cont) or "adjust_gig")
 
     # ------------------------------------------------------------- legends
     def call_free(self, inst: int) -> None:
