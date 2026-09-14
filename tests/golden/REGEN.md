@@ -237,3 +237,31 @@ instead, and the test fails, and now passes, for the clause it names.
 **3. Revert confirmation.** DIFFERENT on exactly that key.
 **4. Aggregate.** 3 of 40 games, no winner flips, no end-reason changes, turn delta 0.00.
 **5. Two-sided reachability.** Not applicable at G1.
+
+## 2026-09-14 — `dying-night-vs-pistol` (AUD-dying-night-vs-pistol-1)
+
+**The fix.** "At the end of your turn, if this Unit is named "V", ready 2 Eddies." The clause tested
+the host's *name* and nothing else, so the Gear paid out while sitting on a face-up V in the Legends
+area — which is not a Unit. The gate is now the host's zone, so a V that has GONE SOLO onto the
+field keeps paying (ruling 015) and a Called one does not.
+
+**1. Prediction.** Four keys may change: `the_heist` and `sample_corpos` are the two golden decks
+holding the card, in one matchup each, heuristic and random. Observed: two, both of them random.
+Observed ⊂ predicted.
+
+**2. Localisation.** `sample_corpos~sample_nomads~random` game 3 diverges at decision 23, and the
+narration of the game the *current* engine plays shows the cause outright: eight decisions earlier,
+sample_corpos "plays Dying Night — V's Pistol (Gear) on V — Corporate Exile" — a Legend in the
+Legends area, the exact board the fix changes. `the_heist~embracing_power~random` game 13 diverges
+at 26 with the card first a legal option at 10.
+
+**3. Revert confirmation.** Old script against the new golden: DIFFERENT on exactly those two keys,
+same games, same action numbers.
+
+**4. Aggregate.** 2 of 40 and 1 of 40 games, no winner flips, one end-reason change, mean turn delta
++0.50 and +0.00. An Eddie source removed from a board where a Legend hosted the Gear shifts a turn
+and rarely more; nothing here is unexplainable.
+
+**5. Two-sided reachability.** Not required at G1, but recorded: `fuzz --agent random -n 400
+--seed 1` moves c0f43d0ac9ccbc54221d480d → 3b4932720efc3f3b2354f268 and the default heuristic fuzz
+digest is 8a1e68700fe9fd617d05d0df.
