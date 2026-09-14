@@ -279,4 +279,8 @@ def _atk(s: GameState) -> dict | None:
     a = s.atk
     if a is None:
         return None
-    return {"attacker": a.attacker, "target_kind": a.target_kind, "target": a.target}
+    # `ctrl` so the client can draw the attack rather than describe it: with the attacker's seat it
+    # knows which side of the board the arrow points at, and therefore whose Gig area is the one
+    # under attack when the target is a Gig area rather than a Unit.
+    return {"attacker": a.attacker, "target_kind": a.target_kind, "target": a.target,
+            "ctrl": a.attacker_ctrl, "fizzled": bool(a.fizzled)}

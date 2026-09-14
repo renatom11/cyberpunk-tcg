@@ -16,6 +16,7 @@ let HAS_BACK = true;       // data/images/_back.jpg exists (cleared on first fai
 // capability as "cannot hover" is what stopped the card preview ever appearing on those machines.
 // any-hover asks whether ANY attached pointer can hover, which is the question that matters here.
 const CAN_HOVER = window.matchMedia("(any-hover: hover)").matches || window.matchMedia("(hover: hover)").matches;
+const TARGET_GIG = 1;      // cptcg.core.enums: a Target is at a Unit (0) or at a Gig area (1)
 let GAME = null;           // {id, view, log[]}
 let LOG = [];
 
@@ -178,7 +179,6 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
     // for the card they mean. Tapping opens the short list of what THAT card can do; dragging it to
     // the field, the Eddies or a host is the fast path for the three that have a place to go.
     (opts || []).forEach(claim);
-    if (atk && atk.attacker === inst) node.classList.add("attacking");
   };
 
   // ----- left column
@@ -325,17 +325,8 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       if (window.CPTCG_BRIDGE) window.CPTCG_BRIDGE.download(`cptcg-game-${GAME.id}.json`, await api(`/api/games/${GAME.id}/replay`));
       else window.open(`/api/games/${GAME.id}/replay`);
     };
-    // Payment choice is off the critical path, so it lives as a toggle rather than a settings page.
-    const paybtn = el("button", "", autopay() ? "PAY: AUTO" : "PAY: ASK");
-    // aria-label, not title: a title is the browser's white tooltip box, and nothing on the
-    // board should pop one of those over the cards.
-    paybtn.setAttribute("aria-label", "Whether to be asked which Eddies and Legends to spend when you can pay more than one way");
-    paybtn.onclick = () => {
-      const now = !autopay();
-      try { localStorage.setItem(AUTOPAY_KEY, now ? "1" : "0"); } catch (e) {}
-      paybtn.textContent = now ? "PAY: AUTO" : "PAY: ASK";
-    };
-    controls.append(undo, concede, leave, dl, paybtn);
+    // No PAY toggle: what you spend is a move, and a move is not a setting.
+    controls.append(undo, concede, leave, dl);
   }
   right.append(controls);
   const logp = el("div", "panel logwrap p-log");
@@ -435,6 +426,26 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       leftovers.append(b);
     });
     if (!n) leftovers.append(el("div", "none", "Tap a glowing card."));
+  }
+  // The attack, drawn on the board instead of described in the prompt. "React?" over a wall of
+  // cards does not say which card is coming at you or what it is coming at, and that is the whole
+  // of the decision — so the attacker is ringed, and so is the thing it is aimed at, whether that
+  // is a Unit or a Gig area. Marked here rather than in `decorate` because an attack is worth
+  // seeing whoever's turn it is: watching a replay or the AI's turn go by, this is the only thing
+  // on screen that says what just happened.
+  if (atk && atk.attacker != null && atk.attacker >= 0 && !atk.fizzled) {
+    const mark = (inst, cls) => {
+      const n = root.querySelector(`.card[data-inst="${inst}"]`);
+      if (n) n.classList.add(cls);
+    };
+    mark(atk.attacker, "attacking");
+    if (atk.target_kind === TARGET_GIG) {
+      const defender = 1 - atk.ctrl;                        // a Gig area belongs to the other seat
+      const panel = root.querySelector(defender === me ? ".p-my-gig" : ".p-opp-gig");
+      if (panel) panel.classList.add("underattack");
+    } else if (atk.target != null && atk.target >= 0) {
+      mark(atk.target, "defending");
+    }
   }
   if (myTurn) wireDrag(root, pend, onAct);
   fitBoard(root);                   // the size first, then the fan that is measured against it
@@ -822,6 +833,15 @@ document.addEventListener("click", closeCardMenu);
 // is advisory and does not reach everything; cancelling the contextmenu event is the same refusal
 // said in a way the browser has to honour, and it is what a right-click on a desktop board would
 // have raised too. Scoped to the board and its chrome, so the guide and the reports keep theirs.
+// No zoom. A board is a fixed layout that has just been measured to the pixel against the screen it
+// is on; a pinch or a double-tap does not reveal more of it, it slides the half you are looking at
+// off the edge and leaves you to find your way back. The viewport meta says so, but iOS has ignored
+// `user-scalable=no` since iOS 10 — the gesture events are the part it does honour, and
+// `touch-action: manipulation` is what takes the double-tap.
+["gesturestart", "gesturechange", "gestureend"].forEach(k => {
+  document.addEventListener(k, (e) => e.preventDefault(), { passive: false });
+});
+
 document.addEventListener("contextmenu", (e) => {
   const t = e.target;
   if (t && t.closest && t.closest(".board, .top, .preview, .pileview, .cardmenu, .paypanel"))
@@ -1001,13 +1021,10 @@ function playRival(v) {
 
 // ---- choosing what to spend
 // The engine auto-pays (ruling 025) because making payment a decision multiplies the AI's branching
-// factor. At a table you do get to choose, so when the human has more ready sources than the cost,
-// ask. Between two face-down Eddies the choice changes nothing in the rules — no card ever reads
-// which card is sitting in an Eddies area — but between an Eddie and a Legend it very much does,
-// and the player is the one who should decide. "Let the game pick" is remembered per browser.
-const AUTOPAY_KEY = "cptcg.autopay";
-function autopay() { try { return localStorage.getItem(AUTOPAY_KEY) === "1"; } catch (e) { return false; } }
-
+// factor. At a table you push the Eddies forward yourself, so here the human always does: there is
+// no "let the game pick" and no setting to turn this off. Between two face-down Eddies the choice
+// changes nothing in the rules — no card ever reads which card is sitting in an Eddies area — but
+// between an Eddie and a Legend it very much does, and it is not the game's decision to make.
 function askPayment(cost, sources) {
   // On the board, not in a dialog: the sources are cards sitting in front of you, so the thing to
   // click is the card. The panel only keeps the count and the way out.
@@ -1028,11 +1045,14 @@ function askPayment(cost, sources) {
     panel.append(el("span", "lbl", "PAY COST"));
     const q = el("div", "q", `Spend ${cost} ready ${cost === 1 ? "Eddie or Legend" : "Eddies or Legends"}`);
     const count = el("div", "count", `Selected 0 of ${cost}`);
-    const hint = el("div", "desc", "Click the glowing cards. Between two Eddies it changes nothing — no card ever reads which one you spent — but spending a Legend keeps an Eddie ready for later.");
+    const hint = el("div", "desc", "Tap the glowing cards, in any order. Between two Eddies it changes nothing — no card ever reads which one you spent — but spending a Legend keeps an Eddie ready for later.");
     const row = el("div", "opts");
-    const auto = el("button", "", "LET THE GAME PICK");
+    // The confirm only exists once the cost is covered. Paying used to fire the moment the count
+    // came right, which meant the last card you tapped was also the card that committed the move,
+    // and a mis-tap on it was a move you had not decided to make yet.
+    const go = el("button", "primary pay-go hidden", `PAY ${cost}`);
     const cancel = el("button", "", "CANCEL");
-    row.append(auto, cancel);
+    row.append(go, cancel);
     panel.append(q, count, hint, row);
 
     const done = (val) => {
@@ -1042,7 +1062,7 @@ function askPayment(cost, sources) {
       resolve(val);
     };
     const onKey = (e) => { if (e.key === "Escape") done(null); };
-    auto.onclick = () => done([]);
+    go.onclick = () => { if (picked.length === cost) done(picked.slice()); };
     cancel.onclick = () => done(null);
     nodes.forEach((n, inst) => {
       n.classList.add("payable");
@@ -1053,7 +1073,7 @@ function askPayment(cost, sources) {
         if (at >= 0) { picked.splice(at, 1); n.classList.remove("paypicked"); }
         else { picked.push(inst); n.classList.add("paypicked"); }
         count.textContent = `Selected ${picked.length} of ${cost}`;
-        if (picked.length === cost) done(picked.slice());
+        go.classList.toggle("hidden", picked.length !== cost);
       };
     });
     document.addEventListener("keydown", onKey);
@@ -1066,15 +1086,19 @@ async function act(verbOrIndex) {
   if (!GAME || PLAYBACK) return;
   const since = LOG.length;
   let pay = null;
-  if (typeof verbOrIndex === "number" && !autopay()) {
+  if (typeof verbOrIndex === "number") {
     const pend = GAME.view && GAME.view.pending;
     const opt = pend && pend.options && pend.options.find(o => o.index === verbOrIndex);
     const me = GAME.view && (GAME.view.perspective == null ? 0 : GAME.view.perspective);
     const src = (opt && opt.cost > 0 && GAME.view.players[me].pay_sources) || [];
-    if (opt && opt.cost > 0 && src.length > opt.cost) {
+    // Every paid move, not only the ones with a choice in them. Even when the ready cards are
+    // exactly the cost, pushing them forward yourself is the move; the alternative is a game that
+    // sometimes takes your Eddies without asking and sometimes does not, which is worse than
+    // either rule on its own.
+    if (opt && opt.cost > 0 && src.length >= opt.cost) {
       pay = await askPayment(opt.cost, src);
       if (pay === null) return;            // cancelled: the action was never sent
-      if (!pay.length) pay = null;         // "let the game pick" is just the default order
+      if (!pay.length) pay = null;
     }
   }
   const about = typeof verbOrIndex === "number" && GAME.view.pending
