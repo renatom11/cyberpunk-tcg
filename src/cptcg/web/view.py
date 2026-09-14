@@ -121,7 +121,27 @@ def _ctx_for(s: GameState, inst: int):
     return _ctx(s, inst)
 
 
-def _pick_labels(s: GameState) -> list[str] | None:
+def _anon(s: GameState, inst: int, me: int | None) -> str:
+    """Name a card ``me`` may not read, by where it is standing rather than by what it is.
+
+    The Legend slots are numbered left to right, the way the board draws them, so "face-down Legend
+    2" points at something the player can actually see.
+    """
+    owner = s.i_owner[inst]
+    whose = "Your" if me is not None and owner == me else "Rival"
+    zone = s.i_zone[inst]
+    if zone == Zone.LEGENDS:
+        slots = list(s.legends(owner))
+        n = slots.index(inst) + 1 if inst in slots else 0
+        return f"{whose} face-down Legend" + (f" {n}" if n else "")
+    if zone == Zone.HAND:
+        return f"{whose} card in hand"
+    if zone == Zone.DECK:
+        return f"{whose} card from the deck"
+    return "A face-down card"
+
+
+def _pick_labels(s: GameState, me: int | None = None) -> list[str] | None:
     """For PICK choices, try to describe each option using the continuation's captured values."""
     ch = s.pending
     cont = ch.cont
@@ -149,13 +169,19 @@ def _pick_labels(s: GameState) -> list[str] | None:
         parts = []
         for i in o.picks:
             v = vals[i] if i < len(vals) else i
-            parts.append(_describe_value(s, v))
+            parts.append(_describe_value(s, v, me))
         out.append(", ".join(parts))
     return out
 
 
-def _describe_value(s: GameState, v) -> str:
+def _describe_value(s: GameState, v, me: int | None = None) -> str:
     if isinstance(v, int) and 0 <= v < len(s.i_card) and not isinstance(v, bool):
+        # Through the same gate as every other identity in the view. A choice among face-down cards
+        # named all of them in its own buttons — "Look at a friendly face-down Legend" offered
+        # "Viktor Vektor", "V (Corporate Exile)" and "Jackie Welles", which is the whole of what the
+        # card was going to tell you, told before you chose, about all three instead of one.
+        if not knows_identity(s, me, v):
+            return _anon(s, v, me)
         d = s.card(v)
         return d.name + (f" ({d.subtitle})" if d.subtitle else "")
     if isinstance(v, tuple):
@@ -255,7 +281,7 @@ def view_state(s: GameState, perspective: int | None, names: tuple[str, str], lo
         # and anyone can open the network tab. The omniscient view (perspective None) is the replay
         # and debug view and keeps everything.
         mine = perspective is None or ch.player == perspective
-        pick_labels = _pick_labels(s) if mine and ch.kind is ChoiceKind.PICK else None
+        pick_labels = _pick_labels(s, perspective) if mine and ch.kind is ChoiceKind.PICK else None
         opts = []
         for idx, a in enumerate(ch.options if mine else ()):
             label, kind, inst = _label(s, a)

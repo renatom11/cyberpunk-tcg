@@ -11,10 +11,14 @@ may not. A new field that leaks fails here without anyone remembering to add it.
 """
 
 import json
+import re
 
 import pytest
 
+from conftest import Side, board, do, find
+
 from cptcg.agents.base import make_agent
+from cptcg.core.actions import Attack
 from cptcg.core.engine import apply, legal_actions, new_game
 from cptcg.core.rng import Pcg32
 from cptcg.core.view import knows_identity
@@ -52,14 +56,69 @@ def walk(pool, seed: int, turns: int):
         apply(s, agents[ch.player].act(s, ch))
 
 
+def strings(v, skip=("text",)):
+    """Every string in the view except printed card text.
+
+    Printed text is on the face of a public card and legitimately names other cards — Dying Night's
+    text says 'if this Unit is named "V"' — so matching names inside it is noise, not a leak.
+    """
+    out = []
+    def walk_json(node, key=None):
+        if isinstance(node, str):
+            if key not in skip:
+                out.append(node)
+        elif isinstance(node, dict):
+            for k, val in node.items():
+                walk_json(val, k)
+        elif isinstance(node, (list, tuple)):
+            for val in node:
+                walk_json(val, key)
+    walk_json(v)
+    return out
+
+
 @pytest.mark.parametrize("seed", [3, 11, 29])
 def test_no_view_names_a_card_the_seat_may_not_identify(pool, seed):
+    """Anywhere in the string, not only as a whole field.
+
+    This used to ask whether `"Viktor Vektor"` appeared in the serialised view — the name as a
+    complete JSON value, quotes and all. A menu button is a sentence, so the leak it was written to
+    catch walked straight past it: the label read "Viktor Vektor (Sit Down and Relax)" and the name
+    was never a value of its own. The match is now the name wherever it appears, bounded so that a
+    name that is a prefix of another word does not fire.
+    """
     for s, me, v in walk(pool, seed, 90):
-        blob = json.dumps(v)
-        leaked = sorted(n for n in forbidden_names(s, me) if n and f'"{n}"' in blob)
+        forbidden = {n for n in forbidden_names(s, me) if n}
+        pats = {n: re.compile(r"(?<![\w'])" + re.escape(n) + r"(?![\w'])") for n in forbidden}
+        hay = strings(v)
+        leaked = sorted(n for n, pat in pats.items() if any(pat.search(t) for t in hay))
         assert not leaked, (
             f"seat {me} was sent {leaked} on turn {s.turn}; "
             f"knows_identity says it may not read them")
+
+
+def test_looking_at_a_face_down_legend_does_not_name_all_three_first(pool):
+    """Kiroshi Optics: 'ATTACK: Look at a friendly face-down Legend. (Don't reveal it.)'
+
+    The card gives you one of the three. The buttons offering the choice named all three, which is
+    more than the card gives and is given before you choose — so the card had nothing left to tell
+    you. They are offered by slot instead, which is what you can see on the table.
+    """
+    s = board(pool,
+              Side(field=[("psycho-squad", {"gear": ["kiroshi-optics"]})],
+                   legends=["viktor-vektor-sit-down-and-relax", "v-corporate-exile",
+                            "jackie-welles-mamas-favorite"]),
+              Side(gig=[(4, 1)]))
+    do(s, Attack(find(s, "psycho-squad")))
+    ch = s.pending
+    assert ch is not None and "face-down Legend" in (ch.prompt or ""), ch and ch.prompt
+    v = view_state(s, 0, ("P0", "P1"), [])
+    labels = [o["label"] for o in v["pending"]["options"]]
+    hidden = forbidden_names(s, 0)
+    named = sorted(n for n in hidden if n and any(n in lab for lab in labels))
+    assert not named, f"the buttons named {named}: {labels}"
+    # ... and still point at something: one button per slot, plus the decline.
+    assert sum(1 for lab in labels if "face-down Legend" in lab) == 3, labels
 
 
 def test_a_face_down_legend_is_anonymous_in_its_own_controllers_pay_sources(pool):
