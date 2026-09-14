@@ -546,6 +546,7 @@ def call_legend(s: GameState, player: int, inst: int) -> None:
     s._active = None
     s.i_known[inst] = 0b11
     s.once[player] |= ONCE_CALLED
+    s.played_log.append((inst, player))           # a Called Legend entered play by a player's act
     s.emit("call", player, inst)
     push_trigger(s, Trigger.CALL, inst)
     dispatch(s, ("called", inst, player))

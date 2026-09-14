@@ -56,6 +56,13 @@ class CardStat:
     drawn_wins: int = 0
     other_games: int = 0
     other_wins: int = 0
+    #: Games where this deck's copy actually hit the table — cast, replayed from the trash, or for
+    #: a Legend, Called or sent GO SOLO — and how many of those it won. ``drawn`` counts a game
+    #: where the card sat in hand untouched exactly like one where it was cast, which for an
+    #: expensive card is most of them; and a Legend is never drawn at all, so until this existed no
+    #: Legend had a per-card number of any kind.
+    played_games: int = 0
+    played_wins: int = 0
 
     @property
     def gih(self) -> float | None:
@@ -68,6 +75,20 @@ class CardStat:
     @property
     def iwd(self) -> float | None:
         return None if self.gih is None or self.gnd is None else self.gih - self.gnd
+
+    @property
+    def gip(self) -> float | None:
+        """Win rate in games where it was played."""
+        return self.played_wins / self.played_games if self.played_games else None
+
+    @property
+    def play_rate(self) -> float | None:
+        """Of the games where it was drawn, how often it was then actually played.
+
+        The number the draw-conditioned statistics cannot see. A card with a high win-rate-when-drawn
+        and a low play rate is not winning games; it is riding in decks that win.
+        """
+        return self.played_games / self.drawn_games if self.drawn_games else None
 
 
 @dataclass
@@ -173,7 +194,11 @@ class Tournament:
         nearest = self.info.get("nearest") or []
         return {
             "version": self.JSON_VERSION,
-            "agent": self.agent, "seed": self.seed, "rules": DEFAULT_CONFIG.digest(), "cards": cards_digest(),
+            # "cards_digest", not "cards": the card *statistics* already own the "cards" key below, and
+            # spelling both the same way silently dropped the digest — a later key wins in a dict
+            # literal and nothing warns. tests/sim/test_tournament_played.py pins that both survive.
+            "agent": self.agent, "seed": self.seed, "rules": DEFAULT_CONFIG.digest(),
+            "cards_digest": cards_digest(),
             "info": dict(self.info),
             "how_played": how_played(self),
             "decks": [{"name": d.name, "legends": list(d.legends), "main": d.counts(),
@@ -190,7 +215,8 @@ class Tournament:
             "standings": self.standings(),
             "summary": summarize(self, reg, bt=bt, nash=nash, q=q),
             "cards": [{cid: {"drawn_games": s.drawn_games, "drawn_wins": s.drawn_wins,
-                             "other_games": s.other_games, "other_wins": s.other_wins}
+                             "other_games": s.other_games, "other_wins": s.other_wins,
+                             "played_games": s.played_games, "played_wins": s.played_wins}
                        for cid, s in stats.items()} for stats in self.card_stats],
         }
 
@@ -212,7 +238,9 @@ class Tournament:
             cell.i_first_wins, cell.i_first_n = int(first[0]), int(first[1])
             cell.turns = int(round(float(c.get("avg_turns", 0.0)) * cell.n))
             cells[(cell.i, cell.j)] = cell
-        card_stats = [{cid: CardStat(s["drawn_games"], s["drawn_wins"], s["other_games"], s["other_wins"])
+        card_stats = [{cid: CardStat(s["drawn_games"], s["drawn_wins"], s["other_games"], s["other_wins"],
+                                     # absent in every file written before play was instrumented
+                                     int(s.get("played_games", 0)), int(s.get("played_wins", 0)))
                        for cid, s in stats.items()} for stats in data.get("cards", [])]
         while len(card_stats) < len(decks):
             card_stats.append({})
@@ -252,7 +280,15 @@ class Tournament:
         return t
 
 
-def _update_card_stats(stats: dict[str, CardStat], deck: Decklist, drawn: frozenset, won: bool) -> None:
+def _update_card_stats(stats: dict[str, CardStat], deck: Decklist, drawn: frozenset, won: bool,
+                       played: frozenset = frozenset()) -> None:
+    """Per-card counters for one game of one deck.
+
+    Legends are included deliberately. ``deck.main`` excludes them by construction, so iterating it
+    alone is why no Legend has ever had a per-card number — and a Legend is a third of a deck's
+    identity. Their draw counters stay at zero (a Legend is never drawn), but their play counters
+    are real: a Legend that is never Called is a Legend that did nothing.
+    """
     for cid in set(deck.main):
         st = stats.setdefault(cid, CardStat())
         if cid in drawn:
@@ -261,6 +297,14 @@ def _update_card_stats(stats: dict[str, CardStat], deck: Decklist, drawn: frozen
         else:
             st.other_games += 1
             st.other_wins += won
+        if cid in played:
+            st.played_games += 1
+            st.played_wins += won
+    for cid in set(deck.legends):
+        st = stats.setdefault(cid, CardStat())
+        if cid in played:
+            st.played_games += 1
+            st.played_wins += won
 
 
 def run_tournament(decks: list[Decklist], agent: str = "heuristic", games_per_pair: int = 200,
@@ -286,8 +330,8 @@ def run_tournament(decks: list[Decklist], agent: str = "heuristic", games_per_pa
                           cfg=cfg, workers=workers)
             c.add(m.results)
             for r in m.results:
-                _update_card_stats(card_stats[c.i], decks[c.i], r.drawn_a, r.winner_deck == "A")
-                _update_card_stats(card_stats[c.j], decks[c.j], r.drawn_b, r.winner_deck == "B")
+                _update_card_stats(card_stats[c.i], decks[c.i], r.drawn_a, r.winner_deck == "A", r.played_a)
+                _update_card_stats(card_stats[c.j], decks[c.j], r.drawn_b, r.winner_deck == "B", r.played_b)
             if sprt is not None:
                 c.verdict = sprt.test(c.wins_i, c.n)
             if progress:

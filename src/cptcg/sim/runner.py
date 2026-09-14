@@ -30,6 +30,13 @@ class GameResult:
     replay: Replay | None = None
     drawn_a: frozenset = frozenset()   # card ids deck A drew this game
     drawn_b: frozenset = frozenset()
+    # card ids deck A / B actually **played** this game — cast from hand, replayed from the trash,
+    # or, for a Legend, Called or sent GO SOLO. Every per-card number this project has ever produced
+    # was conditioned on *drawing* a card, which counts a game where it sat in hand all game exactly
+    # like a game where it was cast; and no Legend had a number at all, because a Legend is never
+    # drawn. Empty on results loaded from a file written before this field existed.
+    played_a: frozenset = frozenset()
+    played_b: frozenset = frozenset()
 
 
 @dataclass
@@ -127,7 +134,8 @@ def jobs_to_json(jobs: list) -> str:
 def result_to_json(r: GameResult) -> dict:
     return {"seed": r.seed, "deck_a_seat": r.deck_a_seat, "winner_deck": r.winner_deck, "end_reason": r.end_reason,
             "turns": r.turns, "first_deck": r.first_deck, "replay": asdict(r.replay) if r.replay else None,
-            "drawn_a": sorted(r.drawn_a), "drawn_b": sorted(r.drawn_b)}
+            "drawn_a": sorted(r.drawn_a), "drawn_b": sorted(r.drawn_b),
+            "played_a": sorted(r.played_a), "played_b": sorted(r.played_b)}
 
 
 def result_from_json(d: dict) -> GameResult:
@@ -135,7 +143,8 @@ def result_from_json(d: dict) -> GameResult:
     if rep is not None:
         rep = Replay(**dict(rep, decks=tuple(rep["decks"]), agents=tuple(rep["agents"])))
     return GameResult(d["seed"], d["deck_a_seat"], d["winner_deck"], d["end_reason"], d["turns"], d["first_deck"],
-                      rep, frozenset(d["drawn_a"]), frozenset(d["drawn_b"]))
+                      rep, frozenset(d["drawn_a"]), frozenset(d["drawn_b"]),
+                      frozenset(d.get("played_a", ())), frozenset(d.get("played_b", ())))
 
 
 def run_chunk_json(job_json: str) -> str:
@@ -169,8 +178,14 @@ def _run_chunk(args) -> list[GameResult]:
             drawn = ([], [])
             for inst in s.drawn:
                 drawn[s.i_owner[inst]].append(s.card(inst).id)
+            played = ([], [])
+            for inst, _by in s.played_log:
+                # by owner, not by who played it: a card replayed from a rival effect is still that
+                # deck's card, and the question is "did this deck's copy hit the table".
+                played[s.i_owner[inst]].append(s.card(inst).id)
             out.append(GameResult(seed, a_seat, winner_deck, s.end_reason.name, s.turn, first_deck, rep,
-                                  frozenset(drawn[a_seat]), frozenset(drawn[1 - a_seat])))
+                                  frozenset(drawn[a_seat]), frozenset(drawn[1 - a_seat]),
+                                  frozenset(played[a_seat]), frozenset(played[1 - a_seat])))
     return out
 
 

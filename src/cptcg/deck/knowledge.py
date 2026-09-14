@@ -30,25 +30,43 @@ DEFAULT_PATH = Path("out") / "knowledge.json"
 
 @dataclass
 class Evidence:
-    """The four counts behind IWD for one card in one bucket."""
+    """The four counts behind IWD for one card in one bucket, plus what it did when it was played.
+
+    The first four are draw-conditioned and are all this store held for most of its life. They
+    cannot see the difference between a card that won games and a card that rode along in decks
+    that win, and they are silent about Legends, which are never drawn. The last two close both
+    gaps: ``played_games`` counts the games where this deck's copy actually reached the table.
+    """
     drawn_games: int = 0
     drawn_wins: int = 0
     other_games: int = 0
     other_wins: int = 0
+    played_games: int = 0
+    played_wins: int = 0
 
-    def add(self, drawn: bool, won: bool) -> None:
+    def add(self, drawn: bool, won: bool, played: bool = False) -> None:
         if drawn:
             self.drawn_games += 1
             self.drawn_wins += int(won)
         else:
             self.other_games += 1
             self.other_wins += int(won)
+        if played:
+            self.played_games += 1
+            self.played_wins += int(won)
 
-    def merge(self, dg: int, dw: int, og: int, ow: int) -> None:
+    def add_play(self, won: bool) -> None:
+        """A Legend's only counter: it is never drawn, so it has no draw-conditioned record."""
+        self.played_games += 1
+        self.played_wins += int(won)
+
+    def merge(self, dg: int, dw: int, og: int, ow: int, pg: int = 0, pw: int = 0) -> None:
         self.drawn_games += dg
         self.drawn_wins += dw
         self.other_games += og
         self.other_wins += ow
+        self.played_games += pg
+        self.played_wins += pw
 
     @property
     def gih(self) -> float | None:
@@ -67,12 +85,24 @@ class Evidence:
         dg, og = self.drawn_games, self.other_games
         return dg * og / (dg + og) if dg and og else 0.0
 
+    @property
+    def gip(self) -> float | None:
+        """Win rate in games where it was played. Unlike IWD this has no "not drawn" arm to
+        difference against, so it is a level, not a contrast — read it beside ``play_rate``."""
+        return self.played_wins / self.played_games if self.played_games else None
+
+    @property
+    def play_rate(self) -> float | None:
+        """Of the games where it was drawn, how often it then actually reached the table."""
+        return self.played_games / self.drawn_games if self.drawn_games else None
+
     def to_list(self) -> list[int]:
-        return [self.drawn_games, self.drawn_wins, self.other_games, self.other_wins]
+        return [self.drawn_games, self.drawn_wins, self.other_games, self.other_wins,
+                self.played_games, self.played_wins]
 
     @classmethod
     def from_list(cls, v: list[int]) -> "Evidence":
-        return cls(*v)
+        return cls(*v)                     # a four-long row predates the play counters; they read 0
 
 
 @dataclass
@@ -106,7 +136,9 @@ class Knowledge:
         return kn
 
     def to_json(self) -> dict:
-        return {"version": 1, "k": self.k, "games": self.games, "tournaments": self.tournaments,
+        # version 2 adds the two play counters to the end of every row; a version-1 file loads
+        # unchanged because ``Evidence.from_list`` fills the missing tail with zeros.
+        return {"version": 2, "k": self.k, "games": self.games, "tournaments": self.tournaments,
                 "cards": {cid: e.to_list() for cid, e in sorted(self.cards.items())},
                 "contexts": {ctx: {cid: e.to_list() for cid, e in sorted(d.items())}
                              for ctx, d in sorted(self.contexts.items())},
@@ -130,14 +162,26 @@ class Knowledge:
             ctx = context_key(self.reg, deck.legends)
         return ctx
 
-    def record_game(self, deck: Decklist, drawn: frozenset, won: bool) -> None:
+    def record_game(self, deck: Decklist, drawn: frozenset, won: bool,
+                    played: frozenset = frozenset()) -> None:
         ctx = self.bucket(deck)
         by_ctx = self.contexts.setdefault(ctx, {}) if ctx else None
         for cid in set(deck.main):
             was = cid in drawn
-            self.cards.setdefault(cid, Evidence()).add(was, won)
+            hit = cid in played
+            self.cards.setdefault(cid, Evidence()).add(was, won, hit)
             if by_ctx is not None:
-                by_ctx.setdefault(cid, Evidence()).add(was, won)
+                by_ctx.setdefault(cid, Evidence()).add(was, won, hit)
+        for cid in set(deck.legends):
+            # A Legend has no draw record to keep, so it got no row at all until play was
+            # instrumented — a third of every deck's identity, unmeasured.
+            self.cards.setdefault(cid, Evidence())
+            if by_ctx is not None:
+                by_ctx.setdefault(cid, Evidence())
+            if cid in played:
+                self.cards[cid].add_play(won)
+                if by_ctx is not None:
+                    by_ctx[cid].add_play(won)
         if self.track_pairs:
             seen = sorted(drawn)
             for i, a in enumerate(seen):
@@ -151,7 +195,8 @@ class Knowledge:
         """Games from ``run_match`` where ``deck`` was side ``"A"`` or ``"B"``."""
         for r in results:
             drawn = r.drawn_a if side == "A" else r.drawn_b
-            self.record_game(deck, drawn, r.winner_deck == side)
+            played = r.played_a if side == "A" else r.played_b
+            self.record_game(deck, drawn, r.winner_deck == side, played)
 
     def update_from_tournament(self, t) -> None:
         """Every game of every cell, for both decks. Falls back to the per-deck ``card_stats``
@@ -165,10 +210,11 @@ class Knowledge:
             for deck, stats in zip(t.decks, t.card_stats):
                 ctx = self.bucket(deck)
                 for cid, s in stats.items():
-                    self.cards.setdefault(cid, Evidence()).merge(s.drawn_games, s.drawn_wins, s.other_games, s.other_wins)
+                    row = (s.drawn_games, s.drawn_wins, s.other_games, s.other_wins,
+                           s.played_games, s.played_wins)
+                    self.cards.setdefault(cid, Evidence()).merge(*row)
                     if ctx:
-                        self.contexts.setdefault(ctx, {}).setdefault(cid, Evidence()).merge(
-                            s.drawn_games, s.drawn_wins, s.other_games, s.other_wins)
+                        self.contexts.setdefault(ctx, {}).setdefault(cid, Evidence()).merge(*row)
         self.tournaments += 1
 
     # ---------------------------------------------------------------- estimates

@@ -202,3 +202,39 @@ def test_legacy_league_still_builds_unopinionated_decks(reg):
                                 workers=1, games_per_pair=2, archetypes="legacy"))
     assert all("archetype" not in d.meta for d in decks)
     assert "| Archetype |" not in render_report(t, reg=reg)
+
+
+def test_knowledge_records_plays_and_gives_legends_a_row(reg, tourney):
+    """Both recording paths must agree, and both must cover Legends.
+
+    They disagreed the moment ``card_stats`` started carrying Legends: the per-game path walked
+    ``deck.main``, which excludes them, so the fallback produced rows the live path never did. That
+    is the shape of the bug this store has always had — a third of every deck was unmeasured.
+    """
+    kn = Knowledge(reg=reg)
+    kn.update_from_tournament(tourney)
+    for deck in tourney.decks:
+        for cid in deck.legends:
+            assert cid in kn.cards, "every Legend has a row now"
+    legend_rows = [kn.cards[c] for d in tourney.decks for c in d.legends]
+    assert any(e.played_games for e in legend_rows)
+    assert all(e.drawn_games == 0 and e.other_games == 0 for e in legend_rows)
+    assert any(e.played_games for cid, e in kn.cards.items()
+               if cid not in {c for d in tourney.decks for c in d.legends})
+
+
+def test_knowledge_round_trips_play_counters_and_reads_version_one_files(reg, tmp_path):
+    kn = Knowledge(path=tmp_path / "k.json", reg=reg)
+    kn.cards["a"] = Evidence(10, 6, 10, 4, 4, 3)
+    kn.save()
+    back = Knowledge.load(tmp_path / "k.json", reg=reg)
+    assert back.cards["a"].to_list() == [10, 6, 10, 4, 4, 3]
+    assert back.cards["a"].gip == pytest.approx(0.75) and back.cards["a"].play_rate == pytest.approx(0.4)
+    assert Evidence().gip is None and Evidence().play_rate is None
+
+    old = json.loads((tmp_path / "k.json").read_text())
+    old["version"] = 1
+    old["cards"]["a"] = old["cards"]["a"][:4]                 # a file written before play existed
+    (tmp_path / "v1.json").write_text(json.dumps(old))
+    v1 = Knowledge.load(tmp_path / "v1.json", reg=reg)
+    assert v1.cards["a"].to_list() == [10, 6, 10, 4, 0, 0] and v1.cards["a"].iwd == pytest.approx(0.2)

@@ -177,7 +177,8 @@ def play_card(s: GameState, p: int, inst: int, host: int = NO_INST, cost: int = 
         pay(s, p, cost)
     consume_cost_mods(s, p, inst, False)
     s.emit("play", p, inst)
-    s.played.append(inst)
+    s.played.append(inst)                         # per-turn: "did you play a Program this turn"
+    s.played_log.append((inst, p))                # whole game: card analytics
     if d.type is CardType.UNIT:
         move(s, inst, Zone.FIELD)
         s.i_lag[inst] = 1                         # ADRENALINE grants attacking, not freedom from Lag
@@ -210,6 +211,7 @@ def go_solo(s: GameState, p: int, inst: int, cost: int) -> None:
     s.i_faceup[inst] = 1
     s._active = None
     s.i_flags[inst] |= F_GO_SOLO
+    s.played_log.append((inst, p))                # GO SOLO is the other way a Legend enters play
     s.emit("go_solo", p, inst)
     s.played.append(inst)
     push_trigger(s, Trigger.PLAY, inst)           # "play it as a ready Unit": PLAY triggers (ruling 032)

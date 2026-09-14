@@ -72,6 +72,12 @@ class GameState:
         "used", "played",
         # every instance drawn this game (card analytics: "win rate when drawn")
         "drawn",
+        # every instance *played* this game, in order, and who played it: (instance, player).
+        # ``played`` above is per-turn bookkeeping and is cleared at every turn boundary, so it
+        # cannot answer "was this card ever played". Until this existed, every per-card number in
+        # the project was a win rate conditioned on *drawing* a card — which counts the games where
+        # it sat in hand all game exactly like the games where it was cast.
+        "played_log",
         # recording (None in rollouts)
         "log", "actions",
         # cache of active_cards() and its hook indexes; None = dirty
@@ -115,6 +121,7 @@ class GameState:
         self.used: set = set()
         self.played: list[int] = []
         self.drawn: list[int] = []
+        self.played_log: list[tuple[int, int]] = []
         self.log: list | None = None
         self.actions: list[int] | None = None
         self._active = None
@@ -163,6 +170,7 @@ class GameState:
         s.used = self.used.copy()
         s.played = self.played[:]
         s.drawn = self.drawn[:]
+        s.played_log = self.played_log[:]
         s.log = None
         s.actions = None
         s._active = self._active                       # immutable tuple-of-tuples, shareable
