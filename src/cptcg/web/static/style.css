@@ -284,8 +284,17 @@ button.armed, button.armed:hover { background: #2a0d12; border-color: var(--red)
    right idea on a desk and the wrong one on a phone: the rows are packed to the pixel and their
    panels clip their overflow, so the glow was cut off along whichever edge the card was against,
    and in a fanned row it spilled over the neighbour it was not describing. Inside, it cannot be
-   clipped by anything, at any packing, and it still reads as a neon edge. */
-.card.can { cursor: pointer; outline: 3px solid var(--green); outline-offset: -3px; }
+   clipped by anything, at any packing, and it still reads as a neon edge.
+
+   Usable is the quietest of them. A hard green ring on eight cards is most of the board shouting
+   the least surprising thing it knows — of course you can sell a card, of course you can call a
+   Legend. It is the card's own edge that carries it instead: the border warms to gold and a soft
+   gold line sits just inside it. Enough to pick out of a row at a glance, not enough to be the
+   first thing you see. The states that answer a question you actually asked — a target, a payment
+   source, an attacker — keep their full-strength rings, and now stand out from this rather than
+   competing with it. */
+.card.can { cursor: pointer; border-color: var(--yellow);
+  outline: 2px solid rgba(244, 224, 31, .38); outline-offset: -2px; }
 @media (hover: hover) {
   .card.can:hover { transform: translateY(-3px); }
   .card.can.spent:hover { transform: rotate(90deg) translateY(-3px); }

@@ -425,7 +425,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       b.onclick = () => onAct(o.index);
       leftovers.append(b);
     });
-    if (!n) leftovers.append(el("div", "none", "Tap a glowing card."));
+    if (!n) leftovers.append(el("div", "none", "Tap a lit card to act on it."));
   }
   // The attack, drawn on the board instead of described in the prompt. "React?" over a wall of
   // cards does not say which card is coming at you or what it is coming at, and that is the whole
@@ -884,10 +884,10 @@ function hintFor(p) {
   const h = {
     MULLIGAN: "Keep your opening hand, or shuffle it back and draw 6 new cards. You may do this only once.",
     ORDER: "You won the d20 roll-off, so you choose. Going first means the first turn's draw and Gig, but your two left-most Legends start spent and don't ready on that turn.",
-    GIG_DIE: "Start of your turn: take one die from your fixer area, roll it and add it to your Gig area. Click a glowing die in the fixer. The d20 can only be taken when it is the last die left.",
-    MAIN: "Your main phase. Do things in any order: play cards (pay their cost in €$ from ready Eddies and Legends), sell one card this turn for an Eddie, Call a Legend for 1 €$ (once per turn), GO SOLO a Legend, use abilities, and attack with ready Units that didn't enter this turn. Every one of those belongs to a card: tap a glowing card for what it can do, or drag it to the field, your Eddies or a host. Only what is not a card is a button here.",
-    TARGET: "Declare the target of the attack: tap a glowing rival Unit to start a fight (higher power wins, ties defeat both), or take the Gig area button to steal 1 die plus 1 more per 10 power. The attacker is then spent and its ATTACK effects resolve.",
-    REACTION: "A rival Unit is attacking. You may spend a ready BLOCKER Unit to redirect the attack to it, play a QUICK Program or ability by paying its cost, or Call a Legend for 1 €$ (if you haven't this turn) — all of those are on the glowing cards. Pass to let the attack resolve.",
+    GIG_DIE: "Start of your turn: take one die from your fixer area, roll it and add it to your Gig area. Click a lit die in the fixer. The d20 can only be taken when it is the last die left.",
+    MAIN: "Your main phase. Do things in any order: play cards (pay their cost in €$ from ready Eddies and Legends), sell one card this turn for an Eddie, Call a Legend for 1 €$ (once per turn), GO SOLO a Legend, use abilities, and attack with ready Units that didn't enter this turn. Every one of those belongs to a card: the ones you can use carry a faint gold edge, so tap one for what it can do, or drag it to the field, your Eddies or a host. Only what is not a card is a button here.",
+    TARGET: "Declare the target of the attack: tap a ringed rival Unit to start a fight (higher power wins, ties defeat both), or take the Gig area button to steal 1 die plus 1 more per 10 power. The attacker is then spent and its ATTACK effects resolve.",
+    REACTION: "A rival Unit is attacking. You may spend a ready BLOCKER Unit to redirect the attack to it, play a QUICK Program or ability by paying its cost, or Call a Legend for 1 €$ (if you haven't this turn) — all of those are on the cards themselves. Pass to let the attack resolve.",
     PICK: "A card effect is asking you to choose. The buttons list every legal choice; where the choice is a die, the label shows which die and its value.",
   };
   return h[p.kind] || p.prompt || "";
