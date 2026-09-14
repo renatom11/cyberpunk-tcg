@@ -20,6 +20,36 @@ let GAME = null;           // {id, view, log[]}
 let LOG = [];
 
 // ---------------------------------------------------------------- cards
+// Rebuilding the whole board on every frame means every <img> is a NEW element, and a new element
+// decodes before it paints even when its bytes are already in cache. At one frame per rival move
+// that read as the board blinking: for two or three frames every card was an empty outline, once
+// per move, all the way down the AI's turn. The images are kept across renders and moved into the
+// new tree instead, so a card that was on screen a moment ago is never decoded twice.
+let IMG_POOL = new Map();
+function harvestImages(root) {
+  IMG_POOL = new Map();
+  root.querySelectorAll("img[data-src]").forEach(img => {
+    if (!img.complete || !img.naturalWidth) return;      // never pool one that has nothing to show
+    const a = IMG_POOL.get(img.dataset.src);
+    if (a) a.push(img); else IMG_POOL.set(img.dataset.src, [img]);
+  });
+}
+function cardImg(src, alt, cls) {
+  const a = IMG_POOL.get(src);
+  let img = a && a.length ? a.pop() : null;
+  if (!img) {
+    img = el("img");
+    img.decoding = "sync";           // and one that does have to be made paints in the same frame
+    img.draggable = false;
+    img.dataset.src = src;
+    img.src = src;
+  }
+  img.className = cls || "";
+  img.alt = alt || "";
+  img.onerror = null;                // the caller's, if it wants one, replaces this
+  return img;
+}
+
 function cardNode(c, opts = {}) {
   const d = el("div", "card " + (c.color || ""));
   // Only where the view already gives one: a face-down Legend and a rival hand card are built from
@@ -28,13 +58,17 @@ function cardNode(c, opts = {}) {
   d._card = c;                      // what this node is, for the slide-to-preview below
   if (opts.back) {
     d.className = "card back" + (opts.small ? " sm" : "");
-    if (HAS_BACK) { const img = el("img"); img.draggable = false; img.src = opts.legend ? "images/_back_legend.jpg" : "images/_back.jpg"; img.alt = "card back"; img.onerror = () => { HAS_BACK = false; img.remove(); }; d.append(img); }
+    if (HAS_BACK) {
+      const img = cardImg(opts.legend ? "images/_back_legend.jpg" : "images/_back.jpg", "card back");
+      img.onerror = () => { HAS_BACK = false; img.remove(); };
+      d.append(img);
+    }
     return d;
   }
   if (opts.small) d.classList.add("sm");
   const def = CARDS[c.id] || {};
   if (def.image) {
-    const img = el("img"); img.draggable = false; img.src = `images/${c.id}.jpg`; img.alt = c.name;
+    const img = cardImg(`images/${c.id}.jpg`, c.name);
     if (CAN_HOVER) { d.onmouseenter = () => showPreview(img.src, c); d.onmouseleave = hidePreview; }
     // Touch has no onclick preview: a tap is how you ACT on a card now, and a tap that also threw
     // the card up full-screen meant every move began by dismissing a picture of the card you had
@@ -118,6 +152,7 @@ function endTurnButton(end, onAct, cls) {
 }
 
 function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = {}) {
+  harvestImages(root);              // keep the faces; only the boxes around them are rebuilt
   root.innerHTML = "";
   closeCardMenu();
   disarm();
@@ -209,8 +244,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       // up for a beat and then turns over, which is what happens at the table. Without it the
       // rival's sale was a card back appearing out of nowhere.
       if (fresh && fresh.has(c.inst) && (CARDS[c.id] || {}).image) {
-        const face = el("img", "eddieface");
-        face.draggable = false; face.src = `images/${c.id}.jpg`; face.alt = c.name;
+        const face = cardImg(`images/${c.id}.jpg`, c.name, "eddieface");
         n.classList.add("flipdown");
         n.append(face);
       }
@@ -403,6 +437,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
     if (!n) leftovers.append(el("div", "none", "Tap a glowing card."));
   }
   if (myTurn) wireDrag(root, pend, onAct);
+  fitBoard(root);                   // the size first, then the fan that is measured against it
   root.querySelectorAll(".hand, .eddies .list, .legends, .field").forEach(fanHand);
   root.querySelectorAll(".card[data-inst]").forEach(n => {
     n.addEventListener("click", (e) => {
@@ -557,7 +592,14 @@ function fanHand(row) {
   const cards = hand.querySelectorAll(".card, .slot");
   const n = cards.length;
   if (!n) return;
-  const w = cards[0].offsetWidth;
+  // The WIDEST card as drawn, not the first card's layout box. A spent card lies on its side, so
+  // the space it takes is its height, and getBoundingClientRect reports the rotated box while
+  // offsetWidth reports the upright one. Capping the overlap at a fraction of the upright width
+  // meant two sideways Eddies could not be brought close enough to touch, let alone to fit a 40%
+  // panel — which is why the rival's Eddies were cut off down the side exactly when they were
+  // turned over.
+  let w = 0;
+  cards.forEach(c => { w = Math.max(w, c.getBoundingClientRect().width, c.offsetWidth); });
   if (!w) return;                    // not laid out yet (a hidden tab); the resize hook retries
   // Measured, not computed from n * card width. A spent card lies on its side and carries margins
   // of half the difference between the two dimensions to make room for it, and a row holding one
@@ -565,7 +607,13 @@ function fanHand(row) {
   // spent Legend in it kept overflowing while the fan believed it had already fixed it. Asking the
   // browser costs one layout flush per row and cannot be wrong.
   hand.style.setProperty("--overlap", "0px");
-  const cap = Math.round(w * HAND_MAX_OVERLAP);
+  // An Eddies area is a PILE, and a pile may be squeezed to slivers: every card in it is the same
+  // face-down back, so what a reader takes from it is how many there are and how many lie on their
+  // side, both of which survive any amount of overlap. A hand is not a pile — it keeps the fifth of
+  // itself that makes each card recognisable.
+  const cap = hand.closest(".eddies")
+    ? Math.max(4, Math.round(w - 5))
+    : Math.round(w * HAND_MAX_OVERLAP);
   let over = 0;
   // Two corrections, then stop. scrollWidth does not count the last child's right margin, and a
   // spent card carries one of 16px, so a single pass can come back still overflowing by exactly
@@ -577,11 +625,84 @@ function fanHand(row) {
     hand.style.setProperty("--overlap", over + "px");
   }
 }
+// Everything has to fit on one screen, and the arithmetic for that cannot be written in CSS. The
+// height a board really has is the VISUAL viewport — what is left once Safari's toolbars have taken
+// their share, which moves as they come and go and which `svh` and `dvh` only approximate — and the
+// space the non-card rows want depends on what is in them: a prompt with five choices in it is not
+// the prompt with none. The old rule guessed both with one constant, and any slack it left over
+// went into the empty half of the field rows instead of into the cards.
+//
+// So the board is measured and the card height solved for. Five rows hold a card: the two Legend
+// bands, the two fields and the hand. Everything else — the control strip, the Gig line, the prompt
+// — is content-sized and does not move when the cards do, so one pass of arithmetic lands it and a
+// second absorbs the rounding.
+const FIT_MIN = 44;
+function fitBoard(root) {
+  if (!root || root.classList.contains("hidden") || !root.isConnected) return;
+  if (!window.matchMedia("(max-width: 700px)").matches) {
+    root.style.removeProperty("height"); root.style.removeProperty("--card-h");
+    root.style.removeProperty("--card-w");
+    return;
+  }
+  const top = document.querySelector("header.top");
+  const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+  const H = Math.floor(vh - (top ? top.getBoundingClientRect().height : 0));
+  if (H < 200) return;
+  root.style.height = H + "px";
+  const hOf = (sel) => { const n = root.querySelector(sel); return n ? n.getBoundingClientRect().height : 0; };
+  const set = (h) => {
+    root.style.setProperty("--card-h", h + "px");
+    root.style.setProperty("--card-w", Math.floor(h / 1.41) + "px");
+  };
+  const GRID = 3 * 7 + 3 * 2;        // the grid's seven gaps and its own padding
+  const PANEL = 8;                   // a card row sits in a panel, which costs a few pixels
+  const chrome = hOf(".p-controls") + Math.max(hOf(".p-my-gig"), hOf(".p-opp-gig")) + hOf(".p-prompt");
+  let card = Math.max(FIT_MIN, Math.floor((H - chrome - GRID - 5 * PANEL) / 5));
+  set(card);
+  // Then let the board correct the arithmetic, because the arithmetic has to guess at padding and
+  // the board does not. What it asks each of the five rows is the only question that matters: how
+  // much room is there below your bottom card? Spare room in every row means the cards can all be
+  // bigger; a row whose card hangs past its own edge reports a negative and they all come down.
+  // Taking the WORST row is what keeps the two that stretch from hiding a third that is being
+  // squeezed — which is exactly how the hand ended up eight pixels short of its own cards while
+  // the fields sat there with room to spare.
+  // Layout heights, not drawn ones: a spent card lies on its side, so the box it is drawn in is a
+  // card's width tall while the box the row reserves for it is still a card's height, and asking
+  // for the drawn one had this measuring 63 where the row had committed 90.
+  const spare = (sel) => {
+    const row = root.querySelector(sel);
+    const c = row && row.querySelector(".card, .slot");
+    if (!c) return null;
+    const n = c.parentElement;                    // the box that actually holds the row of cards
+    const cs = getComputedStyle(n);
+    return n.clientHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0)
+           - c.offsetHeight;
+  };
+  const ROWS = [".p-opp-legends", ".p-opp-field", ".p-my-field", ".p-my-legends", ".p-my-hand"];
+  for (let pass = 0; pass < 8; pass++) {
+    let worst = Infinity;
+    for (const sel of ROWS) { const v = spare(sel); if (v != null) worst = Math.min(worst, v); }
+    if (!isFinite(worst)) break;
+    const step = Math.trunc((worst - 2) * 2 / 5);      // 2px of air, not 0: a hairline is not a fit
+    if (!step) break;
+    card = Math.max(FIT_MIN, card + step);
+    set(card);
+  }
+}
+function refit() {
+  document.querySelectorAll(".board:not(.hidden)").forEach(b => {
+    fitBoard(b);
+    b.querySelectorAll(".hand, .eddies .list, .legends, .field").forEach(fanHand);
+  });
+}
 let FAN_TIMER = null;
-window.addEventListener("resize", () => {
-  clearTimeout(FAN_TIMER);
-  FAN_TIMER = setTimeout(() => document.querySelectorAll("#board .hand, #board .eddies .list, #board .legends, #board .field").forEach(fanHand), 80);
-});
+function refitSoon() { clearTimeout(FAN_TIMER); FAN_TIMER = setTimeout(refit, 80); }
+window.addEventListener("resize", refitSoon);
+window.addEventListener("orientationchange", refitSoon);
+// Safari gives and takes back height as its toolbars slide, and only the visual viewport reports it.
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", refitSoon);
+}
 
 // ---------------------------------------------------------------- arrivals
 // Which cards are on the board that were not a moment ago. The board is the source of truth rather

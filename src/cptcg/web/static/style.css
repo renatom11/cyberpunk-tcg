@@ -75,7 +75,7 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
    the row fits, so this is inert everywhere it is not needed. */
 .hand .card + .card, .eddies .list .card + .card,
 .legends .card + .card, .field .card + .card,
-.field .slot + .slot { margin-left: calc(-1 * var(--overlap, 0px)); }
+.field .slot + .slot { margin-left: calc(var(--pad-x, 0px) - var(--overlap, 0px)); }
 .hand .card { transition: transform .13s ease; flex: 0 0 auto; }
 /* Only the cards drawn on top of the hovered one have to move out of its way.
 
@@ -149,7 +149,13 @@ nav button.active { color: var(--yellow); border-color: var(--yellow); }
 .eddies { display: flex; flex-direction: column; min-width: 120px; }
 .eddies .list { display: flex; flex-wrap: nowrap; overflow: hidden; gap: 4px; align-items: flex-start; flex: 1; min-height: 0; }
 .eddies .list .card { cursor: default; }
-.eddies .list .card.spent { transform: rotate(90deg); filter: brightness(.45); margin: 0 calc((var(--card-h) - var(--card-w)) / 2); }
+/* Only the dimming. A card on its side is as wide as a card is tall, and the extra width is bought
+   with side margins written as the `margin` SHORTHAND — which quietly overwrote the negative
+   margin-left the fan uses to overlap a row, so a sideways card was the one card in the game the
+   fan could not move and a pile of them ran off the edge of its panel. The padding is a variable
+   on `.card.spent` now, and that rule is deliberately the least specific one that mentions it, so
+   the fan's `+ .card` rules win margin-left and fold the two together. */
+.eddies .list .card.spent { filter: brightness(.45); }
 /* the count pill sits in the bottom-right corner of the area, over its own edge */
 .board .eddies .badge { position: absolute; right: 8px; bottom: 4px; padding: 1px 8px; font-size: 11px; border-radius: 10px; background: #0a1622; color: var(--cyan); }
 .board .eddies .badge b { display: inline; font-size: 11px; margin-left: 5px; color: var(--cyan); }
@@ -239,7 +245,8 @@ button.armed, button.armed:hover { background: #2a0d12; border-color: var(--red)
 /* Orientation carries the state, the way it does on a table: a spent card lies perpendicular, a
    card that is not ready yet is set askew. Both are dimmed, each by the shade it already had. The
    rotation leaves the layout box untouched, so the side margins make room for the long edge. */
-.card.spent { transform: rotate(90deg); filter: brightness(.7); margin: 0 calc((var(--card-h) - var(--card-w)) / 2); }
+.card.spent { transform: rotate(90deg); filter: brightness(.7);
+  --pad-x: calc((var(--card-h) - var(--card-w)) / 2); margin: 0 var(--pad-x); }
 .card.lag { filter: brightness(.52) saturate(.55); }
 .card.faceup-legend .nm { color: var(--yellow); }
 /* The live power sits where the card prints its own: bottom right. It supersedes the printed
@@ -643,7 +650,7 @@ body.mat { position: fixed; inset: 0; width: 100%; }
      straight off the two fields. Same weight, later in the file. */
   .col.left > .panel.hand { flex: none; min-height: 0; }
   .col > .panel.hand.mine { min-height: 0; flex: 0 0 auto; }
-  .card.spent { margin: 0 calc((var(--card-h) - var(--card-w)) / 2); }
+  /* the padding and the rotation are the same everywhere; nothing to restate here */
   .slot { width: var(--card-w); height: var(--card-h); border-radius: 4px; }
   .card .pnow { border-width: 1px; font-size: calc(var(--card-w) * .18); }
 
@@ -695,10 +702,13 @@ body.mat { position: fixed; inset: 0; width: 100%; }
 #engineLoading .n { color: var(--dim); font-size: 12px; margin-top: 12px; }
 
 @media (max-width: 700px) and (max-height: 720px) {
-  .board { --card-w: 40px; --card-h: 56px; gap: 2px; padding: 2px; }
-  .card.sm { width: 34px; height: 48px; }
-  .hand.mine .card { width: 50px; height: 70px; }
-  .hand.opp .card { width: 28px; height: 39px; } .hand.opp .card.back + .card.back { margin-left: -19px; }
+  .board { gap: 2px; padding: 2px; }
+  /* No card sizes here any more. This block used to hard-code four of them — a 50x70 hand card, a
+     34x48 small card, a 40x56 pair of variables — and a phone in Safari with its toolbars showing is
+     under 720px tall, so on the device this layout exists for, every card on the board was one of
+     those constants rather than the size the board had worked out it could afford. `fitBoard` in
+     app.js measures the screen it is actually on and solves for the largest card that fits; a
+     constant can only ever be right on one handset, and was right on none. */
   /* `:not(.fixer)` on purpose: the fixer tray sizes its dice from the column it stands in (above),
      and a fixed 22px here is what used to push its last two dice out of the panel on a short screen. */
   .die:not(.fixer) { width: 22px; height: 22px; font-size: 7px; } .die.gig { font-size: 9px; }
