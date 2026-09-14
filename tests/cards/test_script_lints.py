@@ -494,6 +494,94 @@ def test_the_event_filter_lints_can_fire_and_read_named_hooks():
     assert tested - ev == {"start_turn"}, "the named-hook body was not read"
 
 
+# ------------------------------------------- "the next time ... this turn" must be spent
+#: The printed wording that promises a ONE-SHOT: it fires once and is gone, whether or not the
+#: turn ends first. Four cards in the set say it, and two of them were wrong in different ways --
+#: Gunpoint Diplomacy granted its permission for the whole turn, and Reboot Optics' shield was
+#: consumed only by a fight it actually saved a Unit from, so a fight it could not have saved
+#: anyone from left it standing for the next one.
+_NEXT_TIME = re.compile(r"the next time\b.*\bthis turn", re.I | re.S)
+
+
+def _mods_written(source: str, card: str) -> set[str]:
+    """Every ``c.mod("kind", ...)`` the named card's script writes."""
+    tree = ast.parse(source)
+    for fn in tree.body:
+        if not isinstance(fn, ast.FunctionDef):
+            continue
+        if not any(isinstance(d, ast.Call) and getattr(d.func, "id", "") == "script"
+                   and d.args and d.args[0].value == card for d in fn.decorator_list):
+            continue
+        return {n.args[0].value for n in ast.walk(fn)
+                if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr == "mod"
+                and n.args and isinstance(n.args[0], ast.Constant) and isinstance(n.args[0].value, str)}
+    return set()
+
+
+def test_every_one_shot_effect_has_something_that_spends_it(pool):
+    """A "the next time ... this turn" effect that nothing removes lasts the whole turn.
+
+    There is no runtime signal for this either: the mod is written, it is read, the effect works —
+    it simply keeps working. The bug is the *absence* of a removal, which is the hardest kind of
+    thing to see in a card script, because there is nothing on the screen to be wrong.
+
+    So: for each such card, either the script registers a ``listener`` that removes itself, or it
+    writes a mod kind that some site under `src/cptcg/core` removes. The removal idiom in this
+    engine is a list comprehension over ``s.mods`` testing ``m[0] == "kind"``, and that is what is
+    searched for.
+    """
+    core = "\n".join(p.read_text(encoding="utf-8")
+                     for p in sorted((SETS_DIR.parents[1] / "core").glob("*.py")))
+    sources = {p.stem: p.read_text(encoding="utf-8") for p in sorted(SETS_DIR.glob("*.py"))}
+    bad, checked = [], []
+    for d in pool.defs:
+        if not _NEXT_TIME.search(d.text or ""):
+            continue
+        checked.append(d.id)
+        written = set()
+        for src in sources.values():
+            written |= _mods_written(src, d.id)
+        if not written:
+            bad.append(f"{d.id}: says 'the next time ... this turn' and writes no mod at all")
+            continue
+        spent = []
+        for kind in written:
+            if kind == "listener":
+                # a self-removing listener: the body drops the entry whose value is itself
+                spent.append(any('m[2] is listen' in src or "m[2] is not listen" in src
+                                 for src in sources.values()))
+            else:
+                spent.append(f'm[0] == "{kind}"' in core)
+        if not any(spent):
+            bad.append(f"{d.id}: writes {sorted(written)}, and nothing removes any of them")
+    assert len(checked) >= 4, f"the wording scan found only {checked}; the pool has four such cards"
+    assert not bad, "one-shot effects nothing spends:\n  " + "\n  ".join(bad)
+
+
+def test_the_one_shot_lint_would_have_caught_gunpoint_diplomacy():
+    """It is not a lint that has never fired: it fires on the tree as it stood this morning.
+
+    Four cards print the wording and each is spent by a different mechanism — a self-removing
+    listener (Appetite for Destruction), and three engine-side removals. Before
+    `ResolveAttackStep` learned to retire it, `attack_ready_units` had no removal site anywhere in
+    `src/cptcg/core`, which is exactly what this check looks for and exactly what was wrong.
+    """
+    core = "\n".join(p.read_text(encoding="utf-8")
+                     for p in sorted((SETS_DIR.parents[1] / "core").glob("*.py")))
+    wnc = (SETS_DIR / "wnc.py").read_text(encoding="utf-8")
+    expect = {"gunpoint-diplomacy": "attack_ready_units",
+              "reboot-optics": "next_fight_no_defeat",
+              "safety-override": "next_loss_defeats_winner"}
+    for card, kind in expect.items():
+        assert _mods_written(wnc, card) == {kind}, card
+        assert f'm[0] == "{kind}"' in core, f"{card}: nothing spends {kind}"
+    assert _mods_written(wnc, "appetite-for-destruction") == {"listener"}
+    assert "m[2] is listen" in wnc, "the self-removing listener idiom is gone"
+
+    # and the check is not vacuous: a kind nothing removes is reported as unspent
+    assert 'm[0] == "no_such_mod_kind"' not in core
+
+
 # ------------------------------------------------- a steal that no protection effect can see
 def _steal_sites(source: str) -> list[tuple[str, int]]:
     """``(card id, line)`` for every ``push_steals`` call in a card script whose candidate indices
