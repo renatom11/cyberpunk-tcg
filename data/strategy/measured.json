@@ -1,1211 +1,1211 @@
 {
  "version": 1,
- "games": 24240,
+ "games": 28400,
  "agent": "heuristic",
  "target": 500,
  "rules": "149b39c8f55e9d41",
- "cards_digest": "f69b30b70fddb367",
+ "cards_digest": "0692b457b26e297e",
  "note": "Measured by tools/playtest.py: legal decks built from the coverage table so that every card in the set gets games, then heuristic self-play. Read these as facts about how the frozen one-ply agent plays the card, not as a power ranking. 'played' counts the games where this deck's copy actually reached the table -- cast, replayed from the trash, or for a Legend Called or sent GO SOLO -- which is why a Legend has numbers here for the first time. 'play rate' is of the games where it was drawn; a low one means the agent had it in hand and chose something else. 'when played' has no 'not drawn' arm to difference against, so it is a level rather than a contrast and is partly a fact about the decks the card appeared in; tools/legend_swap.py is the paired instrument for that question. IWD is the contrast and is the more trustworthy of the two, but draw order confounds it too.",
  "cards": {
   "6th-street-recruits": {
-   "drawn": 1784,
-   "played": 1547,
-   "gih": 0.5959,
-   "gip": 0.6044,
-   "play_rate": 0.8672,
-   "iwd": 0.1227
+   "drawn": 2134,
+   "played": 1836,
+   "gih": 0.5422,
+   "gip": 0.5588,
+   "play_rate": 0.8604,
+   "iwd": 0.0568
   },
   "adam-smasher-ender-of-legends": {
    "drawn": 0,
-   "played": 3840,
+   "played": 4479,
    "gih": null,
-   "gip": 0.4276,
+   "gip": 0.4217,
    "play_rate": null,
    "iwd": null
   },
   "adam-smasher-metal-over-meat": {
-   "drawn": 3610,
-   "played": 533,
-   "gih": 0.6634,
-   "gip": 0.7148,
-   "play_rate": 0.1476,
-   "iwd": -0.0408
+   "drawn": 4192,
+   "played": 646,
+   "gih": 0.6758,
+   "gip": 0.7276,
+   "play_rate": 0.1541,
+   "iwd": -0.0036
   },
   "adrenaline-converter": {
-   "drawn": 2682,
-   "played": 1551,
-   "gih": 0.5884,
-   "gip": 0.6093,
-   "play_rate": 0.5783,
-   "iwd": -0.0472
+   "drawn": 3143,
+   "played": 1853,
+   "gih": 0.609,
+   "gip": 0.5996,
+   "play_rate": 0.5896,
+   "iwd": -0.0001
   },
   "afterparty-at-lizzies": {
-   "drawn": 3775,
-   "played": 1558,
-   "gih": 0.6538,
-   "gip": 0.6354,
-   "play_rate": 0.4127,
-   "iwd": -0.0179
+   "drawn": 4278,
+   "played": 1849,
+   "gih": 0.6482,
+   "gip": 0.6193,
+   "play_rate": 0.4322,
+   "iwd": -0.0141
   },
   "all-is-lost": {
-   "drawn": 4006,
-   "played": 1550,
-   "gih": 0.4466,
-   "gip": 0.409,
-   "play_rate": 0.3869,
-   "iwd": -0.0176
+   "drawn": 4915,
+   "played": 1845,
+   "gih": 0.4405,
+   "gip": 0.394,
+   "play_rate": 0.3754,
+   "iwd": -0.047
   },
   "alt-cunningham-mother-of-daemons": {
-   "drawn": 2290,
-   "played": 1571,
-   "gih": 0.5939,
-   "gip": 0.5652,
-   "play_rate": 0.686,
-   "iwd": -0.0455
+   "drawn": 2640,
+   "played": 1855,
+   "gih": 0.5822,
+   "gip": 0.559,
+   "play_rate": 0.7027,
+   "iwd": -0.0723
   },
   "alt-cunningham-soulkiller-architect": {
    "drawn": 0,
-   "played": 880,
+   "played": 1040,
    "gih": null,
-   "gip": 0.2852,
+   "gip": 0.3683,
    "play_rate": null,
    "iwd": null
   },
   "animals-wrecker": {
-   "drawn": 1945,
-   "played": 1551,
-   "gih": 0.508,
-   "gip": 0.528,
-   "play_rate": 0.7974,
-   "iwd": 0.0505
+   "drawn": 2267,
+   "played": 1853,
+   "gih": 0.5562,
+   "gip": 0.5737,
+   "play_rate": 0.8174,
+   "iwd": 0.1061
   },
   "appetite-for-destruction": {
-   "drawn": 8918,
-   "played": 512,
-   "gih": 0.4381,
-   "gip": 0.2559,
-   "play_rate": 0.0574,
-   "iwd": -0.0494
+   "drawn": 10677,
+   "played": 629,
+   "gih": 0.4338,
+   "gip": 0.2671,
+   "play_rate": 0.0589,
+   "iwd": -0.0651
   },
   "arasaka-emergency-radioport": {
-   "drawn": 3473,
-   "played": 1546,
-   "gih": 0.4175,
-   "gip": 0.3965,
-   "play_rate": 0.4451,
-   "iwd": -0.0395
+   "drawn": 4083,
+   "played": 1851,
+   "gih": 0.434,
+   "gip": 0.3998,
+   "play_rate": 0.4533,
+   "iwd": -0.0402
   },
   "augmented-negotiators": {
-   "drawn": 1799,
-   "played": 1560,
-   "gih": 0.7021,
-   "gip": 0.7,
-   "play_rate": 0.8671,
-   "iwd": 0.0448
+   "drawn": 2112,
+   "played": 1854,
+   "gih": 0.679,
+   "gip": 0.6828,
+   "play_rate": 0.8778,
+   "iwd": 0.0734
   },
   "bonnie-and-clyde": {
-   "drawn": 3055,
-   "played": 1555,
-   "gih": 0.4714,
-   "gip": 0.4463,
-   "play_rate": 0.509,
-   "iwd": -0.0103
+   "drawn": 3758,
+   "played": 1845,
+   "gih": 0.4763,
+   "gip": 0.4472,
+   "play_rate": 0.491,
+   "iwd": 0.0214
   },
   "bootleg-black-sapphire-show": {
-   "drawn": 4802,
-   "played": 788,
-   "gih": 0.56,
-   "gip": 0.3756,
-   "play_rate": 0.1641,
-   "iwd": -0.0271
+   "drawn": 5435,
+   "played": 858,
+   "gih": 0.5534,
+   "gip": 0.3788,
+   "play_rate": 0.1579,
+   "iwd": -0.0317
   },
   "caliber-totentanzs-top-dog": {
-   "drawn": 2284,
-   "played": 1573,
-   "gih": 0.6296,
-   "gip": 0.6325,
-   "play_rate": 0.6887,
-   "iwd": -0.0162
+   "drawn": 2554,
+   "played": 1849,
+   "gih": 0.6562,
+   "gip": 0.6387,
+   "play_rate": 0.724,
+   "iwd": 0.0015
   },
   "carnage-at-the-colosseum": {
-   "drawn": 4614,
-   "played": 1550,
-   "gih": 0.4523,
-   "gip": 0.5,
-   "play_rate": 0.3359,
-   "iwd": -0.0016
+   "drawn": 5134,
+   "played": 1834,
+   "gih": 0.4548,
+   "gip": 0.4864,
+   "play_rate": 0.3572,
+   "iwd": -0.0213
   },
   "chrome-fang": {
-   "drawn": 2150,
-   "played": 1552,
-   "gih": 0.4619,
-   "gip": 0.4549,
-   "play_rate": 0.7219,
-   "iwd": -0.0106
+   "drawn": 2603,
+   "played": 1842,
+   "gih": 0.4572,
+   "gip": 0.4566,
+   "play_rate": 0.7076,
+   "iwd": -0.0085
   },
   "chrome-reverie": {
-   "drawn": 2424,
-   "played": 62,
-   "gih": 0.3177,
-   "gip": 0.3871,
-   "play_rate": 0.0256,
-   "iwd": -0.0288
+   "drawn": 2981,
+   "played": 108,
+   "gih": 0.3603,
+   "gip": 0.4167,
+   "play_rate": 0.0362,
+   "iwd": -0.0291
   },
   "corporate-surveillance": {
-   "drawn": 4390,
-   "played": 1542,
-   "gih": 0.3647,
-   "gip": 0.214,
-   "play_rate": 0.3513,
-   "iwd": -0.0465
+   "drawn": 5308,
+   "played": 1833,
+   "gih": 0.3644,
+   "gip": 0.2297,
+   "play_rate": 0.3453,
+   "iwd": -0.0468
   },
   "corpo-security": {
-   "drawn": 1746,
-   "played": 1560,
-   "gih": 0.3402,
-   "gip": 0.3135,
-   "play_rate": 0.8935,
-   "iwd": -0.075
+   "drawn": 2046,
+   "played": 1838,
+   "gih": 0.3631,
+   "gip": 0.3493,
+   "play_rate": 0.8983,
+   "iwd": -0.0179
   },
   "cyberpsychosis": {
-   "drawn": 7548,
-   "played": 608,
-   "gih": 0.6288,
-   "gip": 0.4819,
-   "play_rate": 0.0806,
-   "iwd": -0.0552
+   "drawn": 8734,
+   "played": 734,
+   "gih": 0.6224,
+   "gip": 0.4632,
+   "play_rate": 0.084,
+   "iwd": -0.0311
   },
   "deadman-transmitter": {
-   "drawn": 7453,
-   "played": 1304,
-   "gih": 0.4335,
-   "gip": 0.3382,
-   "play_rate": 0.175,
-   "iwd": -0.043
+   "drawn": 8815,
+   "played": 1615,
+   "gih": 0.4334,
+   "gip": 0.3529,
+   "play_rate": 0.1832,
+   "iwd": -0.0451
   },
   "delamain-cab": {
-   "drawn": 813,
-   "played": 555,
-   "gih": 0.3456,
-   "gip": 0.3477,
-   "play_rate": 0.6827,
-   "iwd": 0.0753
+   "drawn": 1035,
+   "played": 709,
+   "gih": 0.4473,
+   "gip": 0.4471,
+   "play_rate": 0.685,
+   "iwd": 0.0586
   },
   "delamain-rideshare-ai": {
-   "drawn": 831,
-   "played": 572,
-   "gih": 0.3237,
-   "gip": 0.3182,
-   "play_rate": 0.6883,
-   "iwd": -0.038
+   "drawn": 988,
+   "played": 701,
+   "gih": 0.3421,
+   "gip": 0.3138,
+   "play_rate": 0.7095,
+   "iwd": -0.0098
   },
   "detonate": {
-   "drawn": 3993,
-   "played": 1546,
-   "gih": 0.4453,
-   "gip": 0.3978,
-   "play_rate": 0.3872,
-   "iwd": -0.0046
+   "drawn": 4641,
+   "played": 1841,
+   "gih": 0.435,
+   "gip": 0.39,
+   "play_rate": 0.3967,
+   "iwd": -0.0411
   },
   "dexter-deshawn-off-the-grid": {
    "drawn": 0,
-   "played": 3840,
+   "played": 4440,
    "gih": null,
-   "gip": 0.4414,
+   "gip": 0.4291,
    "play_rate": null,
    "iwd": null
   },
   "dexter-deshawn-one-last-chance": {
-   "drawn": 1797,
-   "played": 1554,
-   "gih": 0.6845,
-   "gip": 0.6911,
-   "play_rate": 0.8648,
-   "iwd": 0.0261
+   "drawn": 2213,
+   "played": 1849,
+   "gih": 0.7054,
+   "gip": 0.7258,
+   "play_rate": 0.8355,
+   "iwd": 0.0908
   },
   "dont-fear-the-reaper": {
-   "drawn": 2522,
-   "played": 690,
-   "gih": 0.6487,
-   "gip": 0.5348,
-   "play_rate": 0.2736,
-   "iwd": -0.0768
+   "drawn": 2898,
+   "played": 762,
+   "gih": 0.6567,
+   "gip": 0.5617,
+   "play_rate": 0.2629,
+   "iwd": -0.0422
   },
   "dum-dum-maelstrom-triggerman": {
    "drawn": 0,
-   "played": 4319,
+   "played": 5040,
    "gih": null,
-   "gip": 0.6075,
+   "gip": 0.6137,
    "play_rate": null,
    "iwd": null
   },
   "dying-night-vs-pistol": {
-   "drawn": 1467,
-   "played": 561,
-   "gih": 0.289,
-   "gip": 0.2513,
-   "play_rate": 0.3824,
-   "iwd": -0.0565
+   "drawn": 1754,
+   "played": 701,
+   "gih": 0.3643,
+   "gip": 0.331,
+   "play_rate": 0.3997,
+   "iwd": -0.0131
   },
   "el-sombreron-la-venganza-lenta": {
-   "drawn": 2677,
-   "played": 1559,
-   "gih": 0.4688,
-   "gip": 0.4753,
-   "play_rate": 0.5824,
-   "iwd": -0.0066
+   "drawn": 3071,
+   "played": 1840,
+   "gih": 0.4881,
+   "gip": 0.4766,
+   "play_rate": 0.5992,
+   "iwd": -0.0109
   },
   "emergency-atlus": {
-   "drawn": 1861,
-   "played": 1567,
-   "gih": 0.5357,
-   "gip": 0.5265,
-   "play_rate": 0.842,
-   "iwd": 0.0975
+   "drawn": 2240,
+   "played": 1843,
+   "gih": 0.529,
+   "gip": 0.5193,
+   "play_rate": 0.8228,
+   "iwd": 0.0707
   },
   "evelyn-parker-beautiful-enigma": {
    "drawn": 0,
-   "played": 880,
+   "played": 1040,
    "gih": null,
-   "gip": 0.317,
+   "gip": 0.324,
    "play_rate": null,
    "iwd": null
   },
   "evelyn-parker-scheming-siren": {
-   "drawn": 753,
-   "played": 555,
-   "gih": 0.328,
-   "gip": 0.3063,
-   "play_rate": 0.7371,
-   "iwd": 0.004
+   "drawn": 964,
+   "played": 720,
+   "gih": 0.3558,
+   "gip": 0.3528,
+   "play_rate": 0.7469,
+   "iwd": 0.0275
   },
   "field-operator": {
-   "drawn": 2058,
-   "played": 1569,
-   "gih": 0.484,
-   "gip": 0.4767,
-   "play_rate": 0.7624,
-   "iwd": 0.0727
+   "drawn": 2467,
+   "played": 1842,
+   "gih": 0.5274,
+   "gip": 0.5071,
+   "play_rate": 0.7467,
+   "iwd": 0.0622
   },
   "floor-it": {
-   "drawn": 855,
-   "played": 561,
-   "gih": 0.2854,
-   "gip": 0.2317,
-   "play_rate": 0.6561,
-   "iwd": 0.0216
+   "drawn": 1179,
+   "played": 721,
+   "gih": 0.3664,
+   "gip": 0.3037,
+   "play_rate": 0.6115,
+   "iwd": -0.035
   },
   "fool-on-the-hill": {
-   "drawn": 2416,
-   "played": 939,
-   "gih": 0.6639,
-   "gip": 0.5442,
-   "play_rate": 0.3887,
-   "iwd": -0.0327
+   "drawn": 2811,
+   "played": 1050,
+   "gih": 0.6613,
+   "gip": 0.5962,
+   "play_rate": 0.3735,
+   "iwd": -0.0439
   },
   "gilded-maton": {
-   "drawn": 2625,
-   "played": 1575,
-   "gih": 0.6789,
-   "gip": 0.6629,
-   "play_rate": 0.6,
-   "iwd": 0.0196
+   "drawn": 2997,
+   "played": 1845,
+   "gih": 0.6507,
+   "gip": 0.6407,
+   "play_rate": 0.6156,
+   "iwd": 0.017
   },
   "gorilla-arms": {
-   "drawn": 4702,
-   "played": 1222,
-   "gih": 0.5715,
-   "gip": 0.5933,
-   "play_rate": 0.2599,
-   "iwd": 0.0088
+   "drawn": 5341,
+   "played": 1324,
+   "gih": 0.5623,
+   "gip": 0.6163,
+   "play_rate": 0.2479,
+   "iwd": -0.0004
   },
   "goro-takemura-hands-unclean": {
    "drawn": 0,
-   "played": 2480,
+   "played": 2920,
    "gih": null,
-   "gip": 0.471,
+   "gip": 0.489,
    "play_rate": null,
    "iwd": null
   },
   "goro-takemura-losing-his-way": {
-   "drawn": 2201,
-   "played": 1510,
-   "gih": 0.7106,
-   "gip": 0.7338,
-   "play_rate": 0.6861,
-   "iwd": 0.0676
+   "drawn": 2701,
+   "played": 1787,
+   "gih": 0.6905,
+   "gip": 0.7168,
+   "play_rate": 0.6616,
+   "iwd": 0.0428
   },
   "goro-takemura-vengeful-bodyguard": {
    "drawn": 0,
-   "played": 2480,
+   "played": 2997,
    "gih": null,
-   "gip": 0.4758,
+   "gip": 0.4852,
    "play_rate": null,
    "iwd": null
   },
   "gunpoint-diplomacy": {
-   "drawn": 7500,
-   "played": 945,
-   "gih": 0.434,
-   "gip": 0.3217,
-   "play_rate": 0.126,
-   "iwd": -0.042
+   "drawn": 8905,
+   "played": 1108,
+   "gih": 0.4253,
+   "gip": 0.3303,
+   "play_rate": 0.1244,
+   "iwd": -0.064
   },
   "hacked-corpo": {
-   "drawn": 793,
-   "played": 557,
-   "gih": 0.3455,
-   "gip": 0.3591,
-   "play_rate": 0.7024,
-   "iwd": 0.0642
+   "drawn": 1005,
+   "played": 714,
+   "gih": 0.3682,
+   "gip": 0.3782,
+   "play_rate": 0.7104,
+   "iwd": 0.077
   },
   "hanako-arasaka-daughter-of-the-emperor": {
    "drawn": 0,
-   "played": 2520,
+   "played": 2960,
    "gih": null,
-   "gip": 0.4897,
+   "gip": 0.5216,
    "play_rate": null,
    "iwd": null
   },
   "hanako-arasaka-in-a-gilded-cage": {
-   "drawn": 2673,
-   "played": 1564,
-   "gih": 0.673,
-   "gip": 0.6816,
-   "play_rate": 0.5851,
-   "iwd": -0.0082
+   "drawn": 3170,
+   "played": 1855,
+   "gih": 0.6618,
+   "gip": 0.6658,
+   "play_rate": 0.5852,
+   "iwd": -0.0026
   },
   "heywood-ripperdoc": {
-   "drawn": 1945,
-   "played": 1559,
-   "gih": 0.6411,
-   "gip": 0.6369,
-   "play_rate": 0.8015,
-   "iwd": -0.0404
+   "drawn": 2301,
+   "played": 1872,
+   "gih": 0.6115,
+   "gip": 0.5951,
+   "play_rate": 0.8136,
+   "iwd": -0.0686
   },
   "industrial-assembly": {
-   "drawn": 2256,
-   "played": 1555,
-   "gih": 0.4699,
-   "gip": 0.4469,
-   "play_rate": 0.6893,
-   "iwd": -0.0492
+   "drawn": 2610,
+   "played": 1862,
+   "gih": 0.4395,
+   "gip": 0.4108,
+   "play_rate": 0.7134,
+   "iwd": -0.0424
   },
   "jacked-in-voodoo-boy": {
-   "drawn": 683,
-   "played": 577,
-   "gih": 0.3499,
-   "gip": 0.3466,
-   "play_rate": 0.8448,
-   "iwd": 0.0322
+   "drawn": 852,
+   "played": 707,
+   "gih": 0.3509,
+   "gip": 0.3352,
+   "play_rate": 0.8298,
+   "iwd": 0.0262
   },
   "jackie-welles-mamas-favorite": {
    "drawn": 0,
-   "played": 2519,
+   "played": 2998,
    "gih": null,
-   "gip": 0.5403,
+   "gip": 0.503,
    "play_rate": null,
    "iwd": null
   },
   "jackie-welles-pour-one-out-for-me": {
    "drawn": 0,
-   "played": 879,
+   "played": 1040,
    "gih": null,
-   "gip": 0.3163,
+   "gip": 0.3452,
    "play_rate": null,
    "iwd": null
   },
   "jackie-welles-ride-or-die-choom": {
-   "drawn": 2044,
-   "played": 1557,
-   "gih": 0.6991,
-   "gip": 0.7238,
-   "play_rate": 0.7617,
-   "iwd": 0.0851
+   "drawn": 2384,
+   "played": 1860,
+   "gih": 0.6548,
+   "gip": 0.671,
+   "play_rate": 0.7802,
+   "iwd": 0.0331
   },
   "japantown-jonin": {
-   "drawn": 1831,
-   "played": 1566,
-   "gih": 0.4921,
-   "gip": 0.4777,
-   "play_rate": 0.8553,
-   "iwd": -0.0147
+   "drawn": 2162,
+   "played": 1845,
+   "gih": 0.469,
+   "gip": 0.4493,
+   "play_rate": 0.8534,
+   "iwd": -0.029
   },
   "johnny-silverhand-never-stop-fighting": {
-   "drawn": 2055,
-   "played": 1550,
-   "gih": 0.4599,
-   "gip": 0.4497,
-   "play_rate": 0.7543,
-   "iwd": -0.0425
+   "drawn": 2443,
+   "played": 1836,
+   "gih": 0.4265,
+   "gip": 0.409,
+   "play_rate": 0.7515,
+   "iwd": -0.0639
   },
   "johnny-silverhand-rocking-renegade": {
    "drawn": 0,
-   "played": 3800,
+   "played": 4479,
    "gih": null,
-   "gip": 0.4205,
+   "gip": 0.4501,
    "play_rate": null,
    "iwd": null
   },
   "judy-alvarez-braindance-maestro": {
    "drawn": 0,
-   "played": 879,
+   "played": 1080,
    "gih": null,
-   "gip": 0.3072,
+   "gip": 0.3574,
    "play_rate": null,
    "iwd": null
   },
   "judy-alvarez-nothing-to-doubt": {
-   "drawn": 818,
-   "played": 549,
-   "gih": 0.2836,
-   "gip": 0.2987,
-   "play_rate": 0.6711,
-   "iwd": -0.0544
+   "drawn": 991,
+   "played": 643,
+   "gih": 0.3502,
+   "gip": 0.3779,
+   "play_rate": 0.6488,
+   "iwd": -0.064
   },
   "kerry-eurodyne-axe-attitude-audience": {
    "drawn": 0,
-   "played": 4355,
+   "played": 5039,
    "gih": null,
-   "gip": 0.5986,
+   "gip": 0.5827,
    "play_rate": null,
    "iwd": null
   },
   "kerry-eurodyne-the-last-rockerboy": {
-   "drawn": 1841,
-   "played": 1551,
-   "gih": 0.5921,
-   "gip": 0.6074,
-   "play_rate": 0.8425,
-   "iwd": 0.0959
+   "drawn": 2215,
+   "played": 1850,
+   "gih": 0.5729,
+   "gip": 0.5865,
+   "play_rate": 0.8352,
+   "iwd": 0.1025
   },
   "kiroshi-optics": {
-   "drawn": 2443,
-   "played": 1562,
-   "gih": 0.6472,
-   "gip": 0.6492,
-   "play_rate": 0.6394,
-   "iwd": -0.0163
+   "drawn": 2849,
+   "played": 1848,
+   "gih": 0.6167,
+   "gip": 0.6261,
+   "play_rate": 0.6486,
+   "iwd": -0.0262
   },
   "la-llorona-ghost-of-the-past": {
-   "drawn": 1727,
-   "played": 1558,
-   "gih": 0.5727,
-   "gip": 0.5847,
-   "play_rate": 0.9021,
-   "iwd": 0.1057
+   "drawn": 2071,
+   "played": 1847,
+   "gih": 0.562,
+   "gip": 0.5793,
+   "play_rate": 0.8918,
+   "iwd": 0.0911
   },
   "les-elemens": {
-   "drawn": 1769,
-   "played": 535,
-   "gih": 0.3166,
-   "gip": 0.3981,
-   "play_rate": 0.3024,
-   "iwd": -0.0181
+   "drawn": 2059,
+   "played": 639,
+   "gih": 0.3448,
+   "gip": 0.4022,
+   "play_rate": 0.3103,
+   "iwd": 0.0212
   },
   "live-with-the-aftermath": {
-   "drawn": 4636,
-   "played": 1536,
-   "gih": 0.5695,
-   "gip": 0.5085,
-   "play_rate": 0.3313,
-   "iwd": -0.0125
+   "drawn": 5450,
+   "played": 1808,
+   "gih": 0.562,
+   "gip": 0.4823,
+   "play_rate": 0.3317,
+   "iwd": -0.0056
   },
   "lizzy-wizzy-delicate-weapon": {
-   "drawn": 749,
-   "played": 575,
-   "gih": 0.2977,
-   "gip": 0.2609,
-   "play_rate": 0.7677,
-   "iwd": 0.0409
+   "drawn": 942,
+   "played": 715,
+   "gih": 0.3907,
+   "gip": 0.365,
+   "play_rate": 0.759,
+   "iwd": 0.0342
   },
   "maelstrom-goons": {
-   "drawn": 2195,
-   "played": 1572,
-   "gih": 0.6743,
-   "gip": 0.6877,
-   "play_rate": 0.7162,
-   "iwd": 0.067
+   "drawn": 2582,
+   "played": 1855,
+   "gih": 0.6793,
+   "gip": 0.6846,
+   "play_rate": 0.7184,
+   "iwd": 0.0873
   },
   "maelstrom-zealots": {
-   "drawn": 4601,
-   "played": 1558,
-   "gih": 0.371,
-   "gip": 0.2709,
-   "play_rate": 0.3386,
-   "iwd": -0.04
+   "drawn": 5127,
+   "played": 1833,
+   "gih": 0.3524,
+   "gip": 0.2586,
+   "play_rate": 0.3575,
+   "iwd": -0.0286
   },
   "maman-brigitte-spirit-of-death": {
-   "drawn": 848,
-   "played": 554,
-   "gih": 0.4021,
-   "gip": 0.4693,
-   "play_rate": 0.6533,
-   "iwd": 0.1095
+   "drawn": 1080,
+   "played": 710,
+   "gih": 0.4361,
+   "gip": 0.4803,
+   "play_rate": 0.6574,
+   "iwd": 0.1225
   },
   "mandibular-upgrade": {
-   "drawn": 2502,
-   "played": 1574,
-   "gih": 0.6459,
-   "gip": 0.6252,
-   "play_rate": 0.6291,
-   "iwd": -0.0325
+   "drawn": 2762,
+   "played": 1862,
+   "gih": 0.6086,
+   "gip": 0.602,
+   "play_rate": 0.6741,
+   "iwd": -0.0549
   },
   "mantis-blades": {
-   "drawn": 2562,
-   "played": 1548,
-   "gih": 0.4528,
-   "gip": 0.4348,
-   "play_rate": 0.6042,
-   "iwd": -0.0425
+   "drawn": 2907,
+   "played": 1854,
+   "gih": 0.4599,
+   "gip": 0.4585,
+   "play_rate": 0.6378,
+   "iwd": -0.0157
   },
   "maxtac-av": {
-   "drawn": 1879,
-   "played": 1546,
-   "gih": 0.4774,
-   "gip": 0.478,
-   "play_rate": 0.8228,
-   "iwd": 0.0148
+   "drawn": 2259,
+   "played": 1847,
+   "gih": 0.4679,
+   "gip": 0.471,
+   "play_rate": 0.8176,
+   "iwd": 0.0539
   },
   "maxtac-heavy": {
-   "drawn": 1895,
-   "played": 1514,
-   "gih": 0.6322,
-   "gip": 0.6063,
-   "play_rate": 0.7989,
-   "iwd": -0.1072
+   "drawn": 2283,
+   "played": 1830,
+   "gih": 0.6846,
+   "gip": 0.6639,
+   "play_rate": 0.8016,
+   "iwd": -0.0297
   },
   "maxtac-squadron": {
-   "drawn": 2019,
-   "played": 1510,
-   "gih": 0.7211,
-   "gip": 0.7371,
-   "play_rate": 0.7479,
-   "iwd": 0.0975
+   "drawn": 2550,
+   "played": 1842,
+   "gih": 0.7016,
+   "gip": 0.7193,
+   "play_rate": 0.7224,
+   "iwd": 0.0319
   },
   "maxtac-suppression-team": {
-   "drawn": 2070,
-   "played": 1576,
-   "gih": 0.6816,
-   "gip": 0.677,
-   "play_rate": 0.7614,
-   "iwd": 0.0491
+   "drawn": 2375,
+   "played": 1850,
+   "gih": 0.6585,
+   "gip": 0.6476,
+   "play_rate": 0.7789,
+   "iwd": -0.0072
   },
   "memory-relapse": {
-   "drawn": 3695,
-   "played": 1553,
-   "gih": 0.3654,
-   "gip": 0.2486,
-   "play_rate": 0.4203,
-   "iwd": -0.032
+   "drawn": 4119,
+   "played": 1838,
+   "gih": 0.3996,
+   "gip": 0.2764,
+   "play_rate": 0.4462,
+   "iwd": -0.0456
   },
   "meredith-stout-stone-cold-corpo": {
-   "drawn": 1718,
-   "played": 1558,
-   "gih": 0.5681,
-   "gip": 0.5777,
-   "play_rate": 0.9069,
-   "iwd": 0.1092
+   "drawn": 2006,
+   "played": 1843,
+   "gih": 0.5688,
+   "gip": 0.5757,
+   "play_rate": 0.9187,
+   "iwd": 0.0699
   },
   "minotaur": {
-   "drawn": 2526,
-   "played": 1556,
-   "gih": 0.445,
-   "gip": 0.4531,
-   "play_rate": 0.616,
-   "iwd": -0.0283
+   "drawn": 2726,
+   "played": 1836,
+   "gih": 0.4897,
+   "gip": 0.4978,
+   "play_rate": 0.6735,
+   "iwd": 0.0007
   },
   "misty-olszewski-mender-of-broken-spirits": {
-   "drawn": 1441,
-   "played": 559,
-   "gih": 0.2783,
-   "gip": 0.195,
-   "play_rate": 0.3879,
-   "iwd": -0.0598
+   "drawn": 1738,
+   "played": 701,
+   "gih": 0.3251,
+   "gip": 0.2282,
+   "play_rate": 0.4033,
+   "iwd": -0.0795
   },
   "modded-kusanagi": {
-   "drawn": 733,
-   "played": 555,
-   "gih": 0.2797,
-   "gip": 0.2396,
-   "play_rate": 0.7572,
-   "iwd": -0.1177
+   "drawn": 919,
+   "played": 721,
+   "gih": 0.3439,
+   "gip": 0.3135,
+   "play_rate": 0.7845,
+   "iwd": -0.1
   },
   "modded-muramasa": {
-   "drawn": 1083,
-   "played": 558,
-   "gih": 0.3176,
-   "gip": 0.2778,
-   "play_rate": 0.5152,
-   "iwd": 0.0087
+   "drawn": 1389,
+   "played": 703,
+   "gih": 0.3686,
+   "gip": 0.3599,
+   "play_rate": 0.5061,
+   "iwd": 0.0271
   },
   "mox-inciters": {
-   "drawn": 669,
-   "played": 555,
-   "gih": 0.3782,
-   "gip": 0.3766,
-   "play_rate": 0.8296,
-   "iwd": 0.0519
+   "drawn": 787,
+   "played": 712,
+   "gih": 0.4269,
+   "gip": 0.4326,
+   "play_rate": 0.9047,
+   "iwd": 0.1133
   },
   "mtod12-flathead": {
-   "drawn": 1004,
-   "played": 565,
-   "gih": 0.3436,
-   "gip": 0.3664,
-   "play_rate": 0.5627,
-   "iwd": -0.0251
+   "drawn": 1203,
+   "played": 711,
+   "gih": 0.3001,
+   "gip": 0.2996,
+   "play_rate": 0.591,
+   "iwd": -0.0249
   },
   "muamar-reyes-el-capitan": {
    "drawn": 0,
-   "played": 4320,
+   "played": 5040,
    "gih": null,
-   "gip": 0.5968,
+   "gip": 0.6179,
    "play_rate": null,
    "iwd": null
   },
   "nadia-fighting-through-grief": {
-   "drawn": 2060,
-   "played": 1564,
-   "gih": 0.4015,
-   "gip": 0.3939,
-   "play_rate": 0.7592,
-   "iwd": -0.0305
+   "drawn": 2396,
+   "played": 1832,
+   "gih": 0.3898,
+   "gip": 0.369,
+   "play_rate": 0.7646,
+   "iwd": -0.0086
   },
   "netwatch-netdriver": {
-   "drawn": 2211,
-   "played": 521,
-   "gih": 0.3166,
-   "gip": 0.2726,
-   "play_rate": 0.2356,
-   "iwd": -0.0379
+   "drawn": 2776,
+   "played": 637,
+   "gih": 0.3664,
+   "gip": 0.3359,
+   "play_rate": 0.2295,
+   "iwd": -0.0033
   },
   "nocturne-op55n1": {
-   "drawn": 1105,
-   "played": 562,
-   "gih": 0.3186,
-   "gip": 0.258,
-   "play_rate": 0.5086,
-   "iwd": -0.0179
+   "drawn": 1389,
+   "played": 715,
+   "gih": 0.3585,
+   "gip": 0.3007,
+   "play_rate": 0.5148,
+   "iwd": -0.0163
   },
   "octant": {
-   "drawn": 2197,
-   "played": 1549,
-   "gih": 0.4547,
-   "gip": 0.4726,
-   "play_rate": 0.7051,
-   "iwd": -0.0476
+   "drawn": 2463,
+   "played": 1841,
+   "gih": 0.4519,
+   "gip": 0.4737,
+   "play_rate": 0.7475,
+   "iwd": -0.0318
   },
   "offduty-malfini": {
-   "drawn": 1857,
-   "played": 1568,
-   "gih": 0.6871,
-   "gip": 0.6773,
-   "play_rate": 0.8444,
-   "iwd": -0.0018
+   "drawn": 2152,
+   "played": 1864,
+   "gih": 0.6622,
+   "gip": 0.6481,
+   "play_rate": 0.8662,
+   "iwd": 0.0598
   },
   "over-the-edge": {
-   "drawn": 7661,
-   "played": 1524,
-   "gih": 0.4385,
-   "gip": 0.4514,
-   "play_rate": 0.1989,
-   "iwd": -0.0329
+   "drawn": 8613,
+   "played": 1805,
+   "gih": 0.4393,
+   "gip": 0.4343,
+   "play_rate": 0.2096,
+   "iwd": -0.0286
   },
   "overwatch-panams-gift": {
-   "drawn": 3184,
-   "played": 524,
-   "gih": 0.6156,
-   "gip": 0.6775,
-   "play_rate": 0.1646,
-   "iwd": -0.0748
+   "drawn": 3845,
+   "played": 641,
+   "gih": 0.6268,
+   "gip": 0.688,
+   "play_rate": 0.1667,
+   "iwd": -0.0446
   },
   "pacifica-netrunner": {
-   "drawn": 3056,
-   "played": 1554,
-   "gih": 0.4437,
-   "gip": 0.3719,
-   "play_rate": 0.5085,
-   "iwd": 0.012
+   "drawn": 3851,
+   "played": 1833,
+   "gih": 0.3996,
+   "gip": 0.3333,
+   "play_rate": 0.476,
+   "iwd": 0.0139
   },
   "padre-man-of-the-cross": {
    "drawn": 0,
-   "played": 2520,
-   "gih": null,
-   "gip": 0.4536,
-   "play_rate": null,
-   "iwd": null
-  },
-  "panam-palmer-nomad-cavalry": {
-   "drawn": 0,
-   "played": 2519,
+   "played": 2920,
    "gih": null,
    "gip": 0.5089,
    "play_rate": null,
    "iwd": null
   },
+  "panam-palmer-nomad-cavalry": {
+   "drawn": 0,
+   "played": 2958,
+   "gih": null,
+   "gip": 0.4875,
+   "play_rate": null,
+   "iwd": null
+  },
   "panam-palmer-strength-through-family": {
-   "drawn": 2376,
-   "played": 1387,
-   "gih": 0.6301,
-   "gip": 0.5703,
-   "play_rate": 0.5838,
-   "iwd": -0.1118
+   "drawn": 2695,
+   "played": 1572,
+   "gih": 0.6449,
+   "gip": 0.5903,
+   "play_rate": 0.5833,
+   "iwd": -0.0665
   },
   "peace-offering": {
-   "drawn": 2785,
-   "played": 1560,
-   "gih": 0.3935,
-   "gip": 0.3641,
-   "play_rate": 0.5601,
-   "iwd": -0.0553
+   "drawn": 3258,
+   "played": 1839,
+   "gih": 0.4245,
+   "gip": 0.3953,
+   "play_rate": 0.5645,
+   "iwd": -0.025
   },
   "pepe-najarro-working-doubles": {
-   "drawn": 1758,
-   "played": 1548,
-   "gih": 0.4835,
-   "gip": 0.4981,
-   "play_rate": 0.8805,
-   "iwd": 0.0833
+   "drawn": 2146,
+   "played": 1837,
+   "gih": 0.514,
+   "gip": 0.509,
+   "play_rate": 0.856,
+   "iwd": 0.0971
   },
   "placide-voodoo-sentinel": {
-   "drawn": 1415,
-   "played": 555,
-   "gih": 0.3336,
-   "gip": 0.3099,
-   "play_rate": 0.3922,
-   "iwd": 0.0088
+   "drawn": 1860,
+   "played": 699,
+   "gih": 0.3516,
+   "gip": 0.3333,
+   "play_rate": 0.3758,
+   "iwd": -0.0317
   },
   "psycho-squad": {
-   "drawn": 677,
-   "played": 570,
-   "gih": 0.3368,
-   "gip": 0.3439,
-   "play_rate": 0.8419,
-   "iwd": 0.0365
+   "drawn": 833,
+   "played": 702,
+   "gih": 0.3782,
+   "gip": 0.386,
+   "play_rate": 0.8427,
+   "iwd": 0.0594
   },
   "pyramid-song": {
-   "drawn": 1118,
-   "played": 563,
-   "gih": 0.3247,
-   "gip": 0.2131,
-   "play_rate": 0.5036,
-   "iwd": -0.0373
+   "drawn": 1541,
+   "played": 708,
+   "gih": 0.3128,
+   "gip": 0.1836,
+   "play_rate": 0.4594,
+   "iwd": -0.02
   },
   "reboot-optics": {
-   "drawn": 2333,
-   "played": 332,
-   "gih": 0.3292,
-   "gip": 0.2169,
-   "play_rate": 0.1423,
-   "iwd": 0.0235
+   "drawn": 2920,
+   "played": 340,
+   "gih": 0.3616,
+   "gip": 0.2706,
+   "play_rate": 0.1164,
+   "iwd": -0.0399
   },
   "riding-nomad": {
-   "drawn": 2473,
-   "played": 1031,
-   "gih": 0.6607,
-   "gip": 0.6809,
-   "play_rate": 0.4169,
-   "iwd": -0.0384
+   "drawn": 2874,
+   "played": 1087,
+   "gih": 0.6548,
+   "gip": 0.6679,
+   "play_rate": 0.3782,
+   "iwd": -0.0236
   },
   "riot-shield": {
-   "drawn": 3608,
-   "played": 1554,
-   "gih": 0.3786,
-   "gip": 0.352,
-   "play_rate": 0.4307,
-   "iwd": -0.0145
+   "drawn": 4320,
+   "played": 1837,
+   "gih": 0.4032,
+   "gip": 0.3261,
+   "play_rate": 0.4252,
+   "iwd": -0.009
   },
   "rita-wheeler-no-stupid-questions": {
-   "drawn": 632,
-   "played": 574,
-   "gih": 0.3639,
-   "gip": 0.3589,
-   "play_rate": 0.9082,
-   "iwd": 0.0202
+   "drawn": 796,
+   "played": 720,
+   "gih": 0.3869,
+   "gip": 0.3806,
+   "play_rate": 0.9045,
+   "iwd": 0.0474
   },
   "river-ward-detective-on-the-hunt": {
    "drawn": 0,
-   "played": 4357,
+   "played": 5037,
    "gih": null,
-   "gip": 0.5625,
+   "gip": 0.5906,
    "play_rate": null,
    "iwd": null
   },
   "rockn-rockerboy": {
-   "drawn": 1855,
-   "played": 1565,
-   "gih": 0.6474,
-   "gip": 0.6415,
-   "play_rate": 0.8437,
-   "iwd": -0.0035
+   "drawn": 2199,
+   "played": 1872,
+   "gih": 0.6317,
+   "gip": 0.6181,
+   "play_rate": 0.8513,
+   "iwd": -0.0239
   },
   "rogue-amendiares-preem-solo": {
    "drawn": 0,
-   "played": 4318,
+   "played": 5032,
    "gih": null,
-   "gip": 0.5973,
+   "gip": 0.5521,
    "play_rate": null,
    "iwd": null
   },
   "rogue-amendiares-queen-of-the-afterlife": {
-   "drawn": 1117,
-   "played": 556,
-   "gih": 0.316,
-   "gip": 0.3381,
-   "play_rate": 0.4978,
-   "iwd": 0.0207
+   "drawn": 1302,
+   "played": 720,
+   "gih": 0.3564,
+   "gip": 0.3208,
+   "play_rate": 0.553,
+   "iwd": -0.0581
   },
   "royce-dont-call-me-simon": {
-   "drawn": 2209,
-   "played": 1561,
-   "gih": 0.4862,
-   "gip": 0.5227,
-   "play_rate": 0.7067,
-   "iwd": 0.052
+   "drawn": 2607,
+   "played": 1835,
+   "gih": 0.5048,
+   "gip": 0.5221,
+   "play_rate": 0.7039,
+   "iwd": 0.0212
   },
   "royce-psycho-on-the-edge": {
    "drawn": 0,
-   "played": 3839,
+   "played": 4440,
    "gih": null,
-   "gip": 0.4381,
+   "gip": 0.4349,
    "play_rate": null,
    "iwd": null
   },
   "ruthless-lowlife": {
-   "drawn": 1711,
-   "played": 1546,
-   "gih": 0.5389,
-   "gip": 0.5388,
-   "play_rate": 0.9036,
-   "iwd": 0.0536
+   "drawn": 2038,
+   "played": 1849,
+   "gih": 0.525,
+   "gip": 0.523,
+   "play_rate": 0.9073,
+   "iwd": 0.0344
   },
   "saburo-arasaka-stubborn-patriarch": {
    "drawn": 0,
-   "played": 2520,
+   "played": 2960,
    "gih": null,
-   "gip": 0.5028,
+   "gip": 0.4574,
    "play_rate": null,
    "iwd": null
   },
   "safety-override": {
-   "drawn": 5543,
-   "played": 531,
-   "gih": 0.5598,
-   "gip": 0.4218,
-   "play_rate": 0.0958,
-   "iwd": -0.044
+   "drawn": 6258,
+   "played": 636,
+   "gih": 0.557,
+   "gip": 0.434,
+   "play_rate": 0.1016,
+   "iwd": -0.0175
   },
   "sandayu-oda-hanakos-guardian": {
-   "drawn": 2523,
-   "played": 1546,
-   "gih": 0.4784,
-   "gip": 0.4968,
-   "play_rate": 0.6128,
-   "iwd": 0.0117
+   "drawn": 2834,
+   "played": 1832,
+   "gih": 0.5116,
+   "gip": 0.5126,
+   "play_rate": 0.6464,
+   "iwd": 0.057
   },
   "sandevistan": {
-   "drawn": 3319,
-   "played": 531,
-   "gih": 0.6174,
-   "gip": 0.4557,
-   "play_rate": 0.16,
-   "iwd": -0.0817
+   "drawn": 3863,
+   "played": 645,
+   "gih": 0.6228,
+   "gip": 0.4791,
+   "play_rate": 0.167,
+   "iwd": -0.0674
   },
   "sasha-yakovleva-wont-let-you-down": {
    "drawn": 0,
-   "played": 880,
+   "played": 1080,
    "gih": null,
-   "gip": 0.3375,
+   "gip": 0.3787,
    "play_rate": null,
    "iwd": null
   },
   "satori-sword-of-saburo": {
-   "drawn": 3674,
-   "played": 1557,
-   "gih": 0.4486,
-   "gip": 0.4123,
-   "play_rate": 0.4238,
-   "iwd": -0.0346
+   "drawn": 4023,
+   "played": 1854,
+   "gih": 0.4459,
+   "gip": 0.4153,
+   "play_rate": 0.4609,
+   "iwd": -0.0368
   },
   "saul-bright-stormrider": {
-   "drawn": 4110,
-   "played": 1556,
-   "gih": 0.3659,
-   "gip": 0.338,
-   "play_rate": 0.3786,
-   "iwd": -0.0481
+   "drawn": 4514,
+   "played": 1833,
+   "gih": 0.3677,
+   "gip": 0.323,
+   "play_rate": 0.4061,
+   "iwd": -0.0186
   },
   "screw-lovelorn-fool": {
-   "drawn": 1997,
-   "played": 1561,
-   "gih": 0.4527,
-   "gip": 0.4375,
-   "play_rate": 0.7817,
-   "iwd": -0.0373
+   "drawn": 2319,
+   "played": 1841,
+   "gih": 0.4351,
+   "gip": 0.4367,
+   "play_rate": 0.7939,
+   "iwd": -0.0182
   },
   "secondhand-bombus": {
-   "drawn": 1841,
-   "played": 1565,
-   "gih": 0.6415,
-   "gip": 0.6179,
-   "play_rate": 0.8501,
-   "iwd": -0.0092
+   "drawn": 2144,
+   "played": 1853,
+   "gih": 0.6194,
+   "gip": 0.5882,
+   "play_rate": 0.8643,
+   "iwd": 0.0019
   },
   "shattered-memories": {
-   "drawn": 7380,
-   "played": 1438,
-   "gih": 0.4309,
-   "gip": 0.3296,
-   "play_rate": 0.1949,
-   "iwd": -0.0497
+   "drawn": 8518,
+   "played": 1720,
+   "gih": 0.4242,
+   "gip": 0.3215,
+   "play_rate": 0.2019,
+   "iwd": -0.0608
   },
   "sketchy-ripper": {
-   "drawn": 2219,
-   "played": 1555,
-   "gih": 0.6593,
-   "gip": 0.6232,
-   "play_rate": 0.7008,
-   "iwd": 0.01
+   "drawn": 2615,
+   "played": 1854,
+   "gih": 0.6008,
+   "gip": 0.5712,
+   "play_rate": 0.709,
+   "iwd": 0.0073
   },
   "swordwise-huscle": {
-   "drawn": 1978,
-   "played": 1550,
-   "gih": 0.5607,
-   "gip": 0.5639,
-   "play_rate": 0.7836,
-   "iwd": 0.1533
+   "drawn": 2342,
+   "played": 1843,
+   "gih": 0.5517,
+   "gip": 0.5654,
+   "play_rate": 0.7869,
+   "iwd": 0.1282
   },
   "synapse-burnout": {
-   "drawn": 4221,
-   "played": 1551,
-   "gih": 0.3712,
-   "gip": 0.3082,
-   "play_rate": 0.3674,
-   "iwd": -0.0428
+   "drawn": 5240,
+   "played": 1833,
+   "gih": 0.3641,
+   "gip": 0.3022,
+   "play_rate": 0.3498,
+   "iwd": -0.0425
   },
   "take-control": {
-   "drawn": 6305,
-   "played": 937,
-   "gih": 0.3513,
-   "gip": 0.2391,
-   "play_rate": 0.1486,
-   "iwd": -0.0504
+   "drawn": 7246,
+   "played": 1059,
+   "gih": 0.3539,
+   "gip": 0.221,
+   "play_rate": 0.1461,
+   "iwd": -0.0283
   },
   "t-bug-amateur-philosopher": {
-   "drawn": 2177,
-   "played": 1553,
-   "gih": 0.6417,
-   "gip": 0.6381,
-   "play_rate": 0.7134,
-   "iwd": 0.0245
+   "drawn": 2649,
+   "played": 1860,
+   "gih": 0.6512,
+   "gip": 0.6495,
+   "play_rate": 0.7022,
+   "iwd": 0.0227
   },
   "tetratronic-rippler": {
-   "drawn": 951,
-   "played": 569,
-   "gih": 0.3365,
-   "gip": 0.3076,
-   "play_rate": 0.5983,
-   "iwd": -0.0265
+   "drawn": 1190,
+   "played": 707,
+   "gih": 0.3504,
+   "gip": 0.3211,
+   "play_rate": 0.5941,
+   "iwd": -0.021
   },
   "the-heist": {
-   "drawn": 7512,
-   "played": 1240,
-   "gih": 0.6376,
-   "gip": 0.6315,
-   "play_rate": 0.1651,
-   "iwd": -0.0252
+   "drawn": 8728,
+   "played": 1558,
+   "gih": 0.6179,
+   "gip": 0.6104,
+   "play_rate": 0.1785,
+   "iwd": -0.046
   },
   "the-relic-experimental-biochip": {
-   "drawn": 4751,
-   "played": 808,
-   "gih": 0.5668,
-   "gip": 0.4802,
-   "play_rate": 0.1701,
-   "iwd": -0.0037
+   "drawn": 5448,
+   "played": 907,
+   "gih": 0.5642,
+   "gip": 0.5149,
+   "play_rate": 0.1665,
+   "iwd": 0.0048
   },
   "three-mouths-one-desire": {
-   "drawn": 1520,
-   "played": 553,
-   "gih": 0.3263,
-   "gip": 0.3002,
-   "play_rate": 0.3638,
-   "iwd": 0.0107
+   "drawn": 1763,
+   "played": 693,
+   "gih": 0.3216,
+   "gip": 0.3016,
+   "play_rate": 0.3931,
+   "iwd": -0.0432
   },
   "towerfall": {
-   "drawn": 1239,
-   "played": 558,
-   "gih": 0.3204,
-   "gip": 0.1685,
-   "play_rate": 0.4504,
-   "iwd": -0.0185
+   "drawn": 1607,
+   "played": 701,
+   "gih": 0.323,
+   "gip": 0.1569,
+   "play_rate": 0.4362,
+   "iwd": -0.0351
   },
   "trauma-team-operatives": {
-   "drawn": 2209,
-   "played": 1570,
-   "gih": 0.6202,
-   "gip": 0.5987,
-   "play_rate": 0.7107,
-   "iwd": 0.0036
+   "drawn": 2490,
+   "played": 1858,
+   "gih": 0.6253,
+   "gip": 0.6087,
+   "play_rate": 0.7462,
+   "iwd": -0.0053
   },
   "trust-no-one": {
-   "drawn": 994,
-   "played": 564,
-   "gih": 0.327,
-   "gip": 0.2766,
-   "play_rate": 0.5674,
-   "iwd": -0.0475
+   "drawn": 1221,
+   "played": 715,
+   "gih": 0.317,
+   "gip": 0.2769,
+   "play_rate": 0.5856,
+   "iwd": 0.0043
   },
   "tygers-whisper": {
-   "drawn": 2001,
-   "played": 1545,
-   "gih": 0.4273,
-   "gip": 0.4026,
-   "play_rate": 0.7721,
-   "iwd": 0.0399
+   "drawn": 2380,
+   "played": 1836,
+   "gih": 0.4571,
+   "gip": 0.4063,
+   "play_rate": 0.7714,
+   "iwd": 0.0301
   },
   "unlikely-bond": {
-   "drawn": 2403,
-   "played": 181,
-   "gih": 0.3159,
-   "gip": 0.2376,
-   "play_rate": 0.0753,
-   "iwd": -0.048
+   "drawn": 2970,
+   "played": 249,
+   "gih": 0.3626,
+   "gip": 0.3213,
+   "play_rate": 0.0838,
+   "iwd": -0.0238
   },
   "v-corporate-exile": {
    "drawn": 0,
-   "played": 880,
+   "played": 1080,
    "gih": null,
-   "gip": 0.3602,
+   "gip": 0.3704,
    "play_rate": null,
    "iwd": null
   },
   "v-roamer-of-the-badlands": {
-   "drawn": 2150,
-   "played": 1552,
-   "gih": 0.4865,
-   "gip": 0.4897,
-   "play_rate": 0.7219,
-   "iwd": 0.0177
+   "drawn": 2557,
+   "played": 1855,
+   "gih": 0.4759,
+   "gip": 0.4868,
+   "play_rate": 0.7255,
+   "iwd": -0.0048
   },
   "v-streetkid": {
    "drawn": 0,
-   "played": 3800,
+   "played": 4480,
    "gih": null,
-   "gip": 0.5013,
+   "gip": 0.4891,
    "play_rate": null,
    "iwd": null
   },
   "valentino-guerrera": {
-   "drawn": 1838,
-   "played": 1553,
-   "gih": 0.5876,
-   "gip": 0.5918,
-   "play_rate": 0.8449,
-   "iwd": 0.1522
+   "drawn": 2133,
+   "played": 1835,
+   "gih": 0.5724,
+   "gip": 0.5738,
+   "play_rate": 0.8603,
+   "iwd": 0.1089
   },
   "valentino-street-racer": {
-   "drawn": 2060,
-   "played": 1553,
-   "gih": 0.5422,
-   "gip": 0.5299,
-   "play_rate": 0.7539,
-   "iwd": 0.1065
+   "drawn": 2503,
+   "played": 1845,
+   "gih": 0.5214,
+   "gip": 0.4938,
+   "play_rate": 0.7371,
+   "iwd": 0.0878
   },
   "viktor-vektor-drop-your-illusions": {
-   "drawn": 2390,
-   "played": 1566,
-   "gih": 0.613,
-   "gip": 0.6105,
-   "play_rate": 0.6552,
-   "iwd": 0.0025
+   "drawn": 2783,
+   "played": 1864,
+   "gih": 0.6281,
+   "gip": 0.6218,
+   "play_rate": 0.6698,
+   "iwd": 0.0061
   },
   "viktor-vektor-sit-down-and-relax": {
    "drawn": 0,
-   "played": 4358,
+   "played": 5079,
    "gih": null,
-   "gip": 0.6166,
+   "gip": 0.5926,
    "play_rate": null,
    "iwd": null
   },
   "viktor-vektor-you-might-feel-a-little-pinch": {
-   "drawn": 2117,
-   "played": 1565,
-   "gih": 0.6953,
-   "gip": 0.6901,
-   "play_rate": 0.7393,
-   "iwd": 0.0804
+   "drawn": 2447,
+   "played": 1846,
+   "gih": 0.6976,
+   "gip": 0.6999,
+   "play_rate": 0.7544,
+   "iwd": 0.0645
   },
   "wakako-okada-peace-and-harmony": {
    "drawn": 0,
-   "played": 880,
+   "played": 1080,
    "gih": null,
-   "gip": 0.2852,
+   "gip": 0.3315,
    "play_rate": null,
    "iwd": null
   },
   "we-gotta-live-together": {
-   "drawn": 6264,
-   "played": 847,
-   "gih": 0.3568,
-   "gip": 0.2255,
-   "play_rate": 0.1352,
-   "iwd": -0.029
+   "drawn": 7194,
+   "played": 898,
+   "gih": 0.3531,
+   "gip": 0.2261,
+   "play_rate": 0.1248,
+   "iwd": -0.0263
   },
   "westbrook-netrunner": {
-   "drawn": 771,
-   "played": 570,
-   "gih": 0.3632,
-   "gip": 0.3702,
-   "play_rate": 0.7393,
-   "iwd": 0.0687
+   "drawn": 919,
+   "played": 721,
+   "gih": 0.4342,
+   "gip": 0.4605,
+   "play_rate": 0.7845,
+   "iwd": 0.0851
   },
   "wild-in-the-streets": {
-   "drawn": 2843,
-   "played": 598,
-   "gih": 0.6286,
-   "gip": 0.5552,
-   "play_rate": 0.2103,
-   "iwd": -0.0518
+   "drawn": 3494,
+   "played": 698,
+   "gih": 0.6242,
+   "gip": 0.5344,
+   "play_rate": 0.1998,
+   "iwd": -0.0468
   },
   "wraith-marauders": {
-   "drawn": 2511,
-   "played": 1549,
-   "gih": 0.4552,
-   "gip": 0.4216,
-   "play_rate": 0.6169,
-   "iwd": -0.0211
+   "drawn": 3115,
+   "played": 1835,
+   "gih": 0.4337,
+   "gip": 0.3907,
+   "play_rate": 0.5891,
+   "iwd": -0.003
   },
   "yorinobu-arasaka-embracing-destruction": {
    "drawn": 0,
-   "played": 3839,
+   "played": 4440,
    "gih": null,
-   "gip": 0.448,
+   "gip": 0.4266,
    "play_rate": null,
    "iwd": null
   },
   "yorinobu-arasaka-steel-dragon": {
-   "drawn": 2427,
-   "played": 1554,
-   "gih": 0.4574,
-   "gip": 0.462,
-   "play_rate": 0.6403,
-   "iwd": -0.0328
+   "drawn": 2626,
+   "played": 1841,
+   "gih": 0.481,
+   "gip": 0.4644,
+   "play_rate": 0.7011,
+   "iwd": -0.0108
   },
   "zetatech-berserk": {
-   "drawn": 5280,
-   "played": 1536,
-   "gih": 0.3598,
-   "gip": 0.2943,
-   "play_rate": 0.2909,
-   "iwd": -0.041
+   "drawn": 6303,
+   "played": 1828,
+   "gih": 0.3838,
+   "gip": 0.3091,
+   "play_rate": 0.29,
+   "iwd": -0.0145
   },
   "zetatech-faceplate": {
-   "drawn": 3269,
-   "played": 1559,
-   "gih": 0.6461,
-   "gip": 0.644,
-   "play_rate": 0.4769,
-   "iwd": -0.0503
+   "drawn": 3827,
+   "played": 1848,
+   "gih": 0.6331,
+   "gip": 0.6234,
+   "play_rate": 0.4829,
+   "iwd": -0.0067
   }
  }
 }
