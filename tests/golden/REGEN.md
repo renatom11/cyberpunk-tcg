@@ -210,3 +210,30 @@ deltas 0.00 and +0.54. A third of the random games is a large share and an expec
 decision from an ATTACK trigger shifts every index after it in any game where the Unit attacks, and
 random attacks with it often.
 **5. Two-sided reachability.** Not applicable at G1.
+
+---
+
+## 2026-09-14 — `zetatech-faceplate` (AUD-zetatech-faceplate-1) — the last of the six
+
+**The fix.** "When this Unit or Legend is spent, adjust a Gig by up to 1. **Then, if you control 3
+or more Gigs with different values, draw 1.**" The sixth and last card written with its tail clause
+inside the first clause's continuation. `tests/cards/test_script_lints.py::test_a_state_based_tail_clause_is_not_trapped_in_a_continuation`
+goes green with this one, which is what the whole detector was for.
+
+**The lint needed teaching first.** It flagged Peace Offering after that card was fixed, because
+Peace Offering's tail *has* to live inside a continuation — its set is two nested questions, so the
+tail belongs on the inner one. The lint now distinguishes the slot a continuation is passed into:
+`cont=`/`then=` run only if the prompt was answered, `after=`/`otherwise=` run whatever happens. A
+clause in the second kind is sequenced, not trapped.
+
+**The test needed strengthening too**, and this is the sharper lesson. Its first assertion said the
+Gig area was unchanged — but the attack that spends the host also *steals*, so the test had been
+failing on the steal rather than on the missing draw. A strict xfail proves a test fails; it does
+not prove it fails for the reason in its reason string. The board now attacks a spent rival Unit
+instead, and the test fails, and now passes, for the clause it names.
+
+**1. Prediction.** Two keys. Observed: one.
+**2. Localisation.** decision 89; the Gear first a legal option at 32.
+**3. Revert confirmation.** DIFFERENT on exactly that key.
+**4. Aggregate.** 3 of 40 games, no winner flips, no end-reason changes, turn delta 0.00.
+**5. Two-sided reachability.** Not applicable at G1.
