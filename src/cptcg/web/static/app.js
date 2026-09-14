@@ -1323,6 +1323,19 @@ function matLock() {
 // Hold, then slide: the board becomes a reader. Whatever card is under the finger is shown, and it
 // follows the finger from card to card, so a row can be read without lifting and pressing again.
 //
+// A card is not only the rectangle it occupies — it owns the whole column of screen above and below
+// it, its LANE. That is what makes the gesture usable one-handed: a hand of seven cards on a phone
+// is seven slivers about forty pixels wide, and a thumb reading them covers the very thing it is
+// reading. Sliding along underneath the row, over the prompt, moves card to card without the hand
+// ever being hidden behind the finger. Lanes are not a fixed grid; they are measured from where the
+// cards actually are when the hold arms, so a hand of three has three wide lanes and a hand of eight
+// has eight narrow ones, and a fanned row divides at the edges you can see rather than at the full
+// width of cards that are mostly covered.
+//
+// Once something is up it stays up until the finger lifts. Sliding into a gap used to blank the
+// screen, which made the row flicker as a thumb crossed it; there is nothing a reader wants to see
+// less than the card they were reading disappearing because they moved four pixels.
+//
 // The gesture belongs to the document, not to the cards. A hold that has to *begin* on a card can
 // only read the row it started in, and the moments a player most wants to read — deciding a
 // mulligan, looking over the rival's field on their turn — are moments when the finger is as likely
@@ -1341,13 +1354,53 @@ function matLock() {
 // at TAP_MS or had slid to another card by then.
 const HOLD_MS = 120, TAP_MS = 260;
 let SCRUB = false, SCRUB_TIMER = null, SCRUB_FROM = null, SCRUB_ATE_CLICK = false;
-let SCRUB_AT = 0, SCRUB_READ = false;
+let SCRUB_AT = 0, SCRUB_READ = false, SCRUB_ROWS = null;
 
 function cardUnder(x, y) {
   const under = document.elementFromPoint(x, y);
   const node = under && under.closest && under.closest(".card");
   const c = node && node._card;
   return (c && c.id && (CARDS[c.id] || {}).image) ? c : null;
+}
+
+// The rows of readable cards on screen, measured once when the hold arms: the board does not move
+// while a finger is resting on it, and measuring every card on every touchmove is the sort of thing
+// that makes a phone feel like treacle. Cards are grouped into a row by their vertical overlap
+// rather than by which panel drew them, so this needs to know nothing about the layout and holds
+// for the hand, the two fields, the Legend bands and the Eddies piles alike.
+function cardRows() {
+  const board = document.querySelector("main.mode:not(.hidden) .board:not(.hidden)");
+  const rows = [];
+  if (!board) return rows;
+  for (const n of board.querySelectorAll(".card")) {
+    const c = n._card;
+    if (!c || !c.id || !(CARDS[c.id] || {}).image) continue;      // a face-down card reads as nothing
+    const r = n.getBoundingClientRect();
+    if (r.width < 4 || r.height < 4) continue;
+    let row = rows.find(q => Math.min(q.bottom, r.bottom) - Math.max(q.top, r.top)
+                             > 0.5 * Math.min(q.bottom - q.top, r.height));
+    if (!row) rows.push(row = { top: r.top, bottom: r.bottom, items: [] });
+    row.top = Math.min(row.top, r.top); row.bottom = Math.max(row.bottom, r.bottom);
+    row.items.push({ c, left: r.left });
+  }
+  for (const row of rows) row.items.sort((a, b) => a.left - b.left);
+  return rows;
+}
+// The lane the finger is in: the nearest row by height, then within it the last card that begins at
+// or before x. That last-one-wins rule is the fan's own geometry — a later card in a row is drawn
+// over the one before it, so the slice of card i you can actually see runs from its left edge to the
+// next card's, which is exactly the lane it should answer to.
+function laneCard(x, y) {
+  if (!SCRUB_ROWS || !SCRUB_ROWS.length) return null;
+  let row = null, best = Infinity;
+  for (const q of SCRUB_ROWS) {
+    const d = y < q.top ? q.top - y : (y > q.bottom ? y - q.bottom : 0);
+    if (d < best) { best = d; row = q; }
+  }
+  if (!row) return null;
+  let pick = row.items[0];
+  for (const it of row.items) if (it.left <= x) pick = it;
+  return pick ? pick.c : null;
 }
 function previewCard(c) {
   const src = `images/${c.id}.jpg`;
@@ -1359,14 +1412,15 @@ function previewCard(c) {
 function startScrub(x, y) {
   SCRUB = true;
   DRAG = null;                       // a hold is a read, not a drag: drop the pending drag-to-play
-  const c = cardUnder(x, y);
+  SCRUB_ROWS = cardRows();
   SCRUB_READ = false;                // not a read yet: a tap this brief still plays the card it hit
-  if (c) previewCard(c);             // began on a card; otherwise it arms and waits for the slide
+  const c = cardUnder(x, y) || laneCard(x, y);
+  if (c) previewCard(c);
 }
 function endScrub() {
   clearTimeout(SCRUB_TIMER); SCRUB_TIMER = null; SCRUB_FROM = null;
   if (!SCRUB) return;
-  SCRUB = false;
+  SCRUB = false; SCRUB_ROWS = null;
   // The lift that ends a *read* must not also play the card it ended on. A brisk tap is not a read
   // even though it showed the card, so it keeps its click and plays what it touched.
   if (!(SCRUB_READ || Date.now() - SCRUB_AT >= TAP_MS)) {
@@ -1410,9 +1464,8 @@ document.addEventListener("touchmove", (e) => {
   // turn brisk taps into reads at random, which is the failure that looks like a dead button.
   if (SCRUB_FROM && Math.abs(t.clientX - SCRUB_FROM.x) + Math.abs(t.clientY - SCRUB_FROM.y) > 12)
     SCRUB_READ = true;
-  const c = cardUnder(t.clientX, t.clientY);
-  if (c) previewCard(c);
-  else hidePreview();                // slid onto the table: nothing to read there
+  const c = cardUnder(t.clientX, t.clientY) || laneCard(t.clientX, t.clientY);
+  if (c) previewCard(c);             // and if there is nothing at all, what is up stays up
 }, { passive: false });
 document.addEventListener("touchend", endScrub);
 document.addEventListener("touchcancel", endScrub);
