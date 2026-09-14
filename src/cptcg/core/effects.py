@@ -206,11 +206,24 @@ class EffectCtx:
                     tag=call_site(effects[0][1]) if effects else "")
 
     def maybe(self, cont: Callable[["EffectCtx"], None], *, prompt: str = "",
-              player: int | None = None, revealed: Iterable[int] = ()) -> None:
+              player: int | None = None, revealed: Iterable[int] = (),
+              after: Callable[["EffectCtx"], None] | None = None) -> None:
         """'You may ...' — a yes/no decision. ``revealed`` is as in ``choose``: name the card a
-        peek showed the chooser, so the mask knows they have seen it."""
-        self.choose([True], lambda c, _v: cont(c), prompt=prompt or f"{self.card.name}: use effect?",
-                    player=player, optional=True, tag=call_site(cont), revealed=revealed)
+        peek showed the chooser, so the mask knows they have seen it.
+
+        ``after(ctx)`` runs either way, and is how a printed sentence that follows a "may" is
+        sequenced without being made conditional on it — the same distinction ``adjust_up_to`` and
+        ``spend_one`` draw. Code written *after* the ``maybe`` call instead would run before the
+        answer arrives, because asking a question returns rather than blocking.
+        """
+        def _resolve(c: "EffectCtx") -> None:
+            cont(c)
+            if after is not None:
+                after(c)
+        self.choose([True], lambda c, _v: _resolve(c),
+                    prompt=prompt or f"{self.card.name}: use effect?",
+                    player=player, optional=True, otherwise=after, tag=call_site(cont),
+                    revealed=revealed)
 
     def later(self, fn: Callable[["EffectCtx"], None]) -> None:
         """Queue ``fn(ctx)`` to run after whatever is currently queued above it resolves."""

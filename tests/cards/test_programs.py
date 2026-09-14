@@ -133,7 +133,10 @@ def test_fool_on_the_hill_rival_chooses(pool):
 def test_shattered_memories(pool):
     s = board(pool, Side(hand=["shattered-memories", "floor-it"], eddies=E, gig=[(4, 3)], deck=["floor-it"] * 7),
               Side(hand=["floor-it", "floor-it"], deck=["floor-it"] * 5))
-    play(s, "shattered-memories")                           # 1 + 2 discarded = 3 = friendly gig -> draw 2 more
+    play(s, "shattered-memories")
+    do(s, Pick((0,)))                                       # the controller takes their five ...
+    do(s, Pick((0,)))                                       # ... and so does the Rival
+    # 1 + 2 discarded = 3 = a friendly Gig's value, so the controller draws 2 more on top.
     assert len(s.zone(0, Zone.HAND)) == 7 and len(s.zone(1, Zone.HAND)) == 5
 
 

@@ -8,7 +8,7 @@ import pytest
 from conftest import Side, board, do, during_main, find
 
 from cptcg.core import legal, ops, view
-from cptcg.core.actions import Attack, Play, Target
+from cptcg.core.actions import Attack, Pick, Play, Target
 from cptcg.core.enums import TARGET_UNIT, Zone
 
 E = 9  # plenty of eddies
@@ -20,19 +20,22 @@ def play(s, cid):
 
 
 # --------------------------------------------------------------------- AUD-shattered-memories-1
-@pytest.mark.xfail(strict=True, reason=(
-    "AUD-shattered-memories-1: 'may draw 5' is drawn unconditionally, so the Program can deck a "
-    "player out against their will"))
 def test_shattered_memories_draw_five_is_optional(pool):
     """"Each player discards their hand and may draw 5."
 
     The Rival owns their own 'may'. With 2 cards left in their deck they would decline; the script
-    draws for them and ends the game by deckout (ops.draw -> end_game).
+    drew for them and ended the game by deckout (ops.draw -> end_game).
+
+    Fixed: AUD-shattered-memories-1.
     """
     s = board(pool, Side(hand=["shattered-memories"], eddies=E, gig=[(4, 3)], deck=["floor-it"] * 7),
               Side(hand=["floor-it"], deck=["floor-it"] * 2))
     play(s, "shattered-memories")
+    do(s, Pick((0,)))                                    # the controller takes their five
+    assert s.pending.player == 1, "the Rival is asked about their own 'may'"
+    do(s, Pick(()))                                      # ... and the Rival declines theirs
     assert not s.over, "the Rival may decline the draw rather than deck out"
+    assert len(s.zone(1, Zone.DECK)) == 2, "declining leaves their deck untouched"
 
 
 # ------------------------------------------------------------------------- AUD-fool-on-the-hill-1

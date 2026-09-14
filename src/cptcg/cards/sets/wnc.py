@@ -193,10 +193,24 @@ def _():
             for i in hand:
                 discard(c.s, i)
         vals = set(c.gig_values())
-        for p in (c.player, c.rival):
-            c.draw(5, player=p)                       # "may draw 5": always beneficial, auto
-        if total in vals:
-            c.draw(2)
+
+        def bonus(c2):
+            # "If the total number of discarded cards equals the value of a friendly Gig, draw 2."
+            # Its own sentence about the board, so it runs whether or not either player took the
+            # five -- ``after`` on both prompts rather than code following them, because asking a
+            # question returns instead of blocking.
+            if total in vals:
+                c2.draw(2)
+
+        def rival_may(c2):
+            c2.maybe(lambda c3: c3.draw(5, player=c3.rival), player=c2.rival, after=bonus,
+                     prompt="Shattered Memories: draw 5?")
+
+        # "may draw 5" was drawn unconditionally, with a comment calling it "always beneficial".
+        # It is not: ops.draw ends the game on an empty deck, so the card could deck a player out
+        # against their will -- and the Rival's "may" is the Rival's to spend. Each player is asked,
+        # the controller first.
+        c.maybe(lambda c2: c2.draw(5), after=rival_may, prompt="Shattered Memories: draw 5?")
     return CardScript(on_play=play)
 
 
