@@ -43,14 +43,9 @@ function cardNode(c, opts = {}) {
       // does it too, since there is no hover to fall back on (decorate() replaces onclick for cards
       // that can act); where a mouse is also present, tapping is left alone so it can still click.
       if (!CAN_HOVER) d.onclick = () => showPreview(img.src, c, true);
-      let press = null, fired = false;
-      d.addEventListener("touchstart", () => {
-        fired = false;
-        press = setTimeout(() => { press = null; fired = true; startScrub(img.src, c); }, 450);
-      }, { passive: true });
-      const cancel = () => { if (press) { clearTimeout(press); press = null; } };
-      d.addEventListener("touchend", cancel); d.addEventListener("touchmove", cancel, { passive: true }); d.addEventListener("touchcancel", cancel);
-      d.addEventListener("click", (e) => { if (fired) { fired = false; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+      // The hold-and-slide preview is a document-level gesture (see `startScrub`), not a per-card
+      // one: it has to be able to begin on the table between two cards, on the prompt, or during
+      // the mulligan, which is when a player most wants to read what they are holding.
     }
     img.onerror = () => { img.remove(); d.append(...textFace(c)); };
     d.append(img);
@@ -1314,39 +1309,85 @@ function showPreview(src, c, touch) {
 }
 function hidePreview() { if (PREVIEW) PREVIEW.classList.remove("show", "touch"); }
 
-// Hold a card, then slide: the preview follows the finger from card to card, so a whole row can be
-// read without lifting and pressing again. Held on `document` rather than per card, because the
-// finger leaves the card that started it almost immediately — and `elementFromPoint` is what says
-// which card it is over now. The preview itself stops taking pointer events while this runs, or it
-// would be the only thing the finger is ever over.
-let SCRUB = false;
-function startScrub(src, c) {
-  SCRUB = true;
+// Hold, then slide: the board becomes a reader. Whatever card is under the finger is shown, and it
+// follows the finger from card to card, so a row can be read without lifting and pressing again.
+//
+// The gesture belongs to the document, not to the cards. A hold that has to *begin* on a card can
+// only read the row it started in, and the moments a player most wants to read — deciding a
+// mulligan, looking over the rival's field on their turn — are moments when the finger is as likely
+// to come down on the table between two cards. Starting anywhere and sliding onto the cards is the
+// same gesture with the restriction taken off.
+//
+// The two things it must not break: a short swipe still scrolls (the arming timer is cancelled by
+// any real movement before it fires), and a drag-to-play still plays (a hold cancels the pending
+// drag, so holding means read and moving straight off means play).
+const HOLD_MS = 350;
+let SCRUB = false, SCRUB_TIMER = null, SCRUB_FROM = null, SCRUB_ATE_CLICK = false;
+
+function cardUnder(x, y) {
+  const under = document.elementFromPoint(x, y);
+  const node = under && under.closest && under.closest(".card");
+  const c = node && node._card;
+  return (c && c.id && (CARDS[c.id] || {}).image) ? c : null;
+}
+function previewCard(c) {
+  const src = `images/${c.id}.jpg`;
+  const img = PREVIEW && PREVIEW.querySelector("img");
+  if (img && PREVIEW.classList.contains("show") && img.getAttribute("src") === src) return;
   showPreview(src, c, true);
-  if (PREVIEW) PREVIEW.classList.add("scrub");
+  PREVIEW.classList.add("scrub");
+}
+function startScrub(x, y) {
+  SCRUB = true;
+  DRAG = null;                       // a hold is a read, not a drag: drop the pending drag-to-play
+  const c = cardUnder(x, y);
+  if (c) previewCard(c);             // began on a card; otherwise it arms and waits for the slide
 }
 function endScrub() {
+  clearTimeout(SCRUB_TIMER); SCRUB_TIMER = null; SCRUB_FROM = null;
   if (!SCRUB) return;
   SCRUB = false;
+  // The lift that ends a hold must not also play the card it ended on. A touch click follows its
+  // lift within a few milliseconds, so the licence expires quickly — left standing it would eat
+  // the next real click instead, which is the sort of bug that makes a button "randomly" not work.
+  SCRUB_ATE_CLICK = true;
+  setTimeout(() => { SCRUB_ATE_CLICK = false; }, 400);
   if (PREVIEW) PREVIEW.classList.remove("scrub");
   hidePreview();
 }
+document.addEventListener("touchstart", (e) => {
+  if (e.touches.length !== 1) { endScrub(); return; }
+  SCRUB_ATE_CLICK = false;           // a new touch: whatever the last hold was owed, it is spent
+  const t = e.touches[0];
+  SCRUB_FROM = { x: t.clientX, y: t.clientY };
+  clearTimeout(SCRUB_TIMER);
+  SCRUB_TIMER = setTimeout(() => { SCRUB_TIMER = null; startScrub(SCRUB_FROM.x, SCRUB_FROM.y); }, HOLD_MS);
+}, { passive: true });
 document.addEventListener("touchmove", (e) => {
-  if (!SCRUB) return;
   const t = e.touches[0];
   if (!t) return;
-  const under = document.elementFromPoint(t.clientX, t.clientY);
-  const node = under && under.closest && under.closest(".card");
-  const c = node && node._card;
-  if (!c || !c.id || !(CARDS[c.id] || {}).image) return;      // a back, or a card with no art
-  const src = `images/${c.id}.jpg`;
-  const img = PREVIEW && PREVIEW.querySelector("img");
-  if (img && img.getAttribute("src") === src) return;         // already showing this one
-  showPreview(src, c, true);
-  if (PREVIEW) PREVIEW.classList.add("scrub");
+  if (SCRUB_TIMER && SCRUB_FROM) {
+    // moved before the hold armed: a swipe or a drag, and neither is this gesture
+    if (Math.abs(t.clientX - SCRUB_FROM.x) + Math.abs(t.clientY - SCRUB_FROM.y) > 12) {
+      clearTimeout(SCRUB_TIMER); SCRUB_TIMER = null;
+    }
+    return;
+  }
+  if (!SCRUB) return;
+  const c = cardUnder(t.clientX, t.clientY);
+  if (c) previewCard(c);
+  else hidePreview();                // slid onto the table: nothing to read there
 }, { passive: true });
 document.addEventListener("touchend", endScrub);
 document.addEventListener("touchcancel", endScrub);
+// One click is swallowed after a hold, wherever it lands: the finger came down to read, and the
+// card it came down on is often one a tap would have played.
+document.addEventListener("click", (e) => {
+  if (!SCRUB_ATE_CLICK) return;
+  SCRUB_ATE_CLICK = false;
+  e.stopImmediatePropagation();
+  e.preventDefault();
+}, true);
 
 // ---------------------------------------------------------------- looking through a pile
 // The trash is public — every card in it was played face up — so it is something to read rather
