@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Iterator
 
 from cptcg.cards.registry import Registry
+from cptcg.cards.registry import cards_digest
 from cptcg.core.config import DEFAULT_CONFIG, RulesConfig
 from cptcg.core.engine import apply, legal_actions, new_game
 from cptcg.core.state import GameState
@@ -32,6 +33,10 @@ class Replay:
     end_reason: str | None = None
     turns: int | None = None
     format: int = FORMAT
+    #: Fingerprint of the card data and scripts this game was played under. Recorded, never
+    #: compared — see ``cards.registry.cards_digest``. ``rules`` above is enforced on load; this is
+    #: not, because enforcing it would reject every replay already on disk.
+    cards: str = ""
     meta: dict = field(default_factory=dict)
 
     @classmethod
@@ -40,7 +45,8 @@ class Replay:
         if s.actions is None:
             raise ValueError("game was not recorded (new_game(record=True))")
         return cls(seed=s.seed, decks=(_deck(decks[0]), _deck(decks[1])),
-                   actions=list(s.actions), rules=s.cfg.digest(), agents=agents,
+                   actions=list(s.actions), rules=s.cfg.digest(), cards=cards_digest(),
+                   agents=agents,
                    winner=s.winner if s.over else None,
                    end_reason=s.end_reason.name if s.over else None, turns=s.turn)
 

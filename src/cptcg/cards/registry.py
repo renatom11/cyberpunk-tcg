@@ -11,6 +11,8 @@ can never silently play as vanilla.
 
 from __future__ import annotations
 
+import hashlib
+
 import json
 import re
 from dataclasses import dataclass, field
@@ -231,6 +233,37 @@ class Registry:
 
 
 DATA_DIR = Path(__file__).resolve().parents[3] / "data" / "cards"
+SETS_DIR = Path(__file__).resolve().parent / "sets"
+
+_CARDS_DIGEST: str | None = None
+
+
+def cards_digest() -> str:
+    """A fingerprint of what the cards *are* and what they *do*.
+
+    ``RulesConfig.digest()`` exists so that "changing a ruling visibly invalidates comparisons with
+    older runs instead of quietly shifting them" — it is stamped into every replay, tournament,
+    arena result and fitted model, and ``Replay.load`` refuses a mismatch.
+
+    **Card behaviour was never in it.** A fix to a card script changes what the game *is* every bit
+    as much as flipping a ruling does, and until now it did so silently: stored replays, league
+    tables, the frozen panel and every trained model would keep comparing across the change with
+    nothing raising. This closes that, over the two things that decide a card's behaviour — the
+    printed data in ``data/cards`` and the scripts in ``cards/sets``.
+
+    **Recorded, not enforced.** Nothing compares this yet. Enforcing it the day it is introduced
+    would reject every artifact already on disk, including the committed experience sample and the
+    shipped weights. It is written down now so that the *next* change is attributable, and a future
+    decision to enforce is a one-line change made deliberately rather than a breakage.
+    """
+    global _CARDS_DIGEST
+    if _CARDS_DIGEST is None:
+        h = hashlib.sha256()
+        for path in sorted(DATA_DIR.glob("*.json")) + sorted(SETS_DIR.glob("*.py")):
+            h.update(path.name.encode("utf-8"))
+            h.update(path.read_bytes())
+        _CARDS_DIGEST = h.hexdigest()[:16]
+    return _CARDS_DIGEST
 
 
 def load_default(load_scripts: bool = True) -> Registry:

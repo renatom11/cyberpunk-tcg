@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from cptcg.cards.registry import cards_digest
 from cptcg.core.config import DEFAULT_CONFIG, RulesConfig
 from cptcg.deck.decklist import Decklist
 from cptcg.sim.runner import GameResult, run_match
@@ -172,7 +173,7 @@ class Tournament:
         nearest = self.info.get("nearest") or []
         return {
             "version": self.JSON_VERSION,
-            "agent": self.agent, "seed": self.seed, "rules": DEFAULT_CONFIG.digest(),
+            "agent": self.agent, "seed": self.seed, "rules": DEFAULT_CONFIG.digest(), "cards": cards_digest(),
             "info": dict(self.info),
             "how_played": how_played(self),
             "decks": [{"name": d.name, "legends": list(d.legends), "main": d.counts(),

@@ -44,6 +44,7 @@ from operator import mul
 from pathlib import Path
 from typing import Sequence
 
+from cptcg.cards.registry import cards_digest
 from cptcg.core.config import DEFAULT_CONFIG
 from cptcg.core.state import GameState
 from cptcg.learn.features import FEATURE_NAMES, NFEAT, features
@@ -134,7 +135,7 @@ class ValueModel:
         d = dict(self.header)
         d.update(format=FORMAT, kind="value", hidden=self.hidden, activation="tanh",
                  features=list(FEATURE_NAMES), feature_digest=feature_digest(),
-                 rules=DEFAULT_CONFIG.digest(),
+                 rules=DEFAULT_CONFIG.digest(), cards=cards_digest(),
                  w1=[list(r) for r in self.w1], b1=list(self.b1),
                  w2=list(self.w2), b2=self.b2)
         return d
