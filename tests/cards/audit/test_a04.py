@@ -18,12 +18,14 @@ def play(s, cid):
     return s
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-afterparty-at-lizzies-1: the draw is nested in the adjust continuation, so declining the 'up to 1' (or having no legal adjustment) skips the separate different-values draw clause")
 def test_afterparty_draws_when_the_adjust_is_declined(pool):
     """'Adjust a Gig by up to 1. If you control 2 or more Gigs with different values, draw 1.'
     'Up to 1' includes 0 — the engine itself offers a decline option. The second sentence is a
     separate, state-based clause: two Gigs showing 3 and 4 are two Gigs with different values
-    whether or not a die was moved."""
+    whether or not a die was moved.
+
+    Fixed: AUD-afterparty-at-lizzies-1.
+    """
     s = board(pool, Side(hand=["afterparty-at-lizzies"], eddies=E, gig=[(6, 3), (8, 4)],
                          deck=["floor-it"]), Side())
     play(s, "afterparty-at-lizzies")

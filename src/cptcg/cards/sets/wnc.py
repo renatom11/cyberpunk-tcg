@@ -377,10 +377,13 @@ def _():
 @script("afterparty-at-lizzies")
 def _():
     def play(c):
-        def after(c2, _o, _i):
+        # "Adjust a Gig by up to 1. If you control 2 or more Gigs with different values, draw 1."
+        # Two Gigs showing 3 and 4 are two Gigs with different values whether or not a die moved,
+        # and "up to 1" includes zero -- the engine offers the decline explicitly.
+        def draw_on_different_values(c2):
             if len(set(c2.gig_values())) >= 2:
                 c2.draw(1)
-        c.adjust_up_to([c.player, c.rival], -1, 1, cont=after)
+        c.adjust_up_to([c.player, c.rival], -1, 1, after=draw_on_different_values)
     return CardScript(on_play=play)
 
 
