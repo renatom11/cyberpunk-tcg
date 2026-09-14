@@ -373,6 +373,44 @@ The same instrument says when a fix is large. "Must attack next turn" was a mod 
 nothing read; giving it a reader moved all four predicted golden keys, 60 of 112 games, ten winner
 flips, **and** both fuzz digests. An unchanged golden there would have meant the fix did nothing.
 
+## Did the fixes change the game? A paired answer, and the unpaired one it replaces
+
+The published card record was re-measured on the post-audit engine: 28,400 games,
+`data/strategy/measured.json`, 147 of 150 cards at 500 games or more. Differencing it against the
+pre-audit sweep showed three of the fixed cards gaining 4 to 7 points of play rate — Mox Inciters
+0.830 → 0.905, Yorinobu Arasaka 0.640 → 0.701, Westbrook Netrunner 0.739 → 0.784 — and a story
+suggested itself immediately: a card that acquires an effect it was not applying becomes worth
+playing, and the one-ply heuristic previews exactly that.
+
+**The story is wrong, and the reason it is wrong is the reason this section exists.** That
+comparison is not paired. `tools/playtest.py` builds its decks adaptively from its own coverage
+table, so two sweeps play different decks, with a different seed and a different total. The right
+instrument holds everything the engine does not own fixed, and `tools/engine_ab.py` is that
+instrument: 40 decks from one seed, 20 seeds per pairing, every pairing from both seats, nothing
+adapting to what happened, the identical file run in a git worktree at the pre-audit commit and in
+the current tree. What is left is the engine's.
+
+| card | unpaired sweeps | paired panel |
+|---|---|---|
+| Mox Inciters | 0.830 → 0.905 | 0.890 → 0.892 |
+| Yorinobu Arasaka — Steel Dragon | 0.640 → 0.701 | 0.366 → 0.366 |
+| Westbrook Netrunner | 0.739 → 0.784 | 0.750 → 0.738 |
+
+The paired panel's real answer is smaller and more interesting: **103 of 149 cards changed how often
+the frozen agent played them, and the total moved 14,652 plays to 14,707 — four tenths of one per
+cent.** Twenty-one card fixes, and the aggregate effect on how the one-ply agent plays is a rounding
+error, with the largest single card moving seven plays in eight hundred games. The two cards that
+moved most are Trust No One (0.244 → 0.275) and Shattered Memories (0.029 → 0.046), both of which
+had a "may" restored to a player who used to be forced.
+
+Two caveats the tool's own docstring carries. Seeds are shared but *games* are not: the moment
+behaviour diverges the trajectories separate, so a card's delta includes everything downstream of
+the first change — this measures the total effect of a build difference over a fixed panel, not a
+per-card isolation. And a small aggregate effect is not evidence the fixes did not matter. It is
+evidence about what a **one-ply heuristic** does with them; the same fixes change what is legal, what
+a searching agent can find, and what a person at the board is allowed to do, none of which this
+panel measures.
+
 ## The staleness alarms, and what they caught
 
 `cards_digest()` was added record-only, because enforcing it on the day it was introduced would have
