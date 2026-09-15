@@ -592,6 +592,24 @@ table.rep th { color: var(--cyan); }
    truncated one ("Alt Cunningham (Soulkiller Archi…") is the thing the box exists to avoid. */
 .cardmenu.centred button { font-size: 13px; padding: 11px 12px; text-align: center;
   white-space: normal; overflow: visible; }
+/* The reveal picker, centred: wide enough for a row of real card faces rather than a sidebar
+   column, and allowed to wrap and scroll rather than clip when a search shows five or more. */
+.reveal.centred { background: var(--panel); border: 1px solid var(--cyan); border-radius: 10px;
+  padding: 10px 12px 12px; max-width: min(680px, 94vw); max-height: 88vh; overflow-y: auto;
+  box-shadow: 0 12px 34px #000d; }
+.reveal.centred .shown { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.gigadj.centred { background: var(--panel); border: 1px solid var(--cyan); border-radius: 10px;
+  padding: 12px 14px; max-width: min(520px, 94vw); box-shadow: 0 12px 34px #000d; }
+
+/* A search that found nothing: the same row of faces the picker draws, all of them dimmed. */
+.reveal.peek { background: var(--panel); border: 1px solid var(--cyan); border-radius: 10px;
+  padding: 10px 12px 12px; max-width: min(560px, 94vw); display: flex; flex-direction: column;
+  gap: 8px; box-shadow: 0 12px 34px #000d; }
+.reveal.peek .cmtitle { color: var(--cyan); font-size: 11px; letter-spacing: .12em;
+  text-align: center; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.reveal.peek .shown { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.reveal.peek .note { color: var(--dim); font-size: 11.5px; text-align: center; }
+.reveal.peek button.primary { align-self: center; padding: 8px 22px; }
 .cardmenu button { font-size: 12px; padding: 9px 11px; text-align: left; letter-spacing: .06em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 

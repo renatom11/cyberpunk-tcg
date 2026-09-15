@@ -489,6 +489,18 @@ def _apply_condition(spec: dict, cond: dict, reg: Registry, card_id: str) -> Non
     if cond.get("hand_matches_every_gig"):
         _hand_covering_every_gig(spec, reg, card_id)
 
+    if "deck_top" in cond:
+        # Cards placed on TOP of your deck, which is the END of the list -- ops.draw takes deck[-1].
+        # "Search the top N of your deck for X" finds nothing in a deck of vanilla filler Units, and
+        # a search that matches nothing is the one case the engine resolves without asking: the card
+        # appears to do nothing at all. These cards get something findable put where they look.
+        want = cond["deck_top"]
+        picked: list[str] = []
+        for spec in want:
+            got = _pick(reg, spec.get("n", 1), **{k: v for k, v in spec.items() if k != "n"})
+            picked += [g for g in got if g != card_id]
+        mine["deck"] = list(mine["deck"]) + picked
+
     if "trash_tag" in cond:
         mine["trash"] = list(mine["trash"]) + _pick(reg, 1, tag=cond["trash_tag"])
 
@@ -544,7 +556,6 @@ CONDITIONS = {
 
     # --- Gig shapes -------------------------------------------------------
     "chrome-reverie":         {"gigs": "min_gig", "why": "control a min Gig -> Call a Legend for free"},
-    "three-mouths-one-desire": {"gigs": "min_gig", "why": "one more card for each friendly min Gig"},
     # "Bottom-deck a rival Unit with power 0" — and nothing in the pool is *printed* at power 0.
     # It gets there because the card's other half gives -4 power first, which is exactly why both
     # halves have to be choosable: the board needs a rival Unit that -4 can actually reduce to 0.
@@ -586,7 +597,6 @@ CONDITIONS = {
     # --- cards in hand or trash ------------------------------------------
     "maman-brigitte-spirit-of-death": {"hand_programs": 2, "why": "discard 2 Programs -> bottom-deck a rival Unit"},
     "placide-voodoo-sentinel": {"hand_programs": 1, "why": "discard 1 Program -> bottom-deck a rival Unit"},
-    "judy-alvarez-braindance-maestro": {"hand_tag": "BRAINDANCE", "why": "a BRAINDANCE Program to play"},
     "trauma-team-operatives": {"trash_units": 3, "why": "-1 €$ for each Unit in your trash"},
 
     # --- specific rival boards -------------------------------------------
@@ -612,7 +622,28 @@ CONDITIONS = {
     "v-streetkid":            {"trash_tag": "BRAINDANCE", "why": "a BRAINDANCE Program in the trash for CALL to retrieve"},
     "heywood-ripperdoc":      {"equip_cost_matches_gig": True,
                                "why": "a Gear on the board priced at one of your Gig values -> draw 1"},
-    "the-heist":              {"gigs": "cheap_values", "why": "Gig values 1-3, where Gear costs are, so the free-play clause can fire"},
+    # --- deck searches: something findable where the card looks ------------
+    "hacked-corpo":           {"deck_top": [{"type": CardType.PROGRAM, "maxcost": 3, "n": 1}],
+                               "why": "a Program in the top 3 it trashes, or the add-to-hand half never fires"},
+    "the-heist":              {"gigs": "cheap_values",
+                               "deck_top": [{"type": CardType.GEAR, "maxcost": 3, "n": 2}],
+                               "why": "Gear in the top 4 it trashes, priced where a Gig value can match it"},
+    "judy-alvarez-braindance-maestro": {"hand_tag": "BRAINDANCE",
+                               "deck_top": [{"type": CardType.PROGRAM, "maxcost": 3, "n": 1}],
+                               "why": "a BRAINDANCE Program to play; and a Program on top for the \u229e"},
+    "tetratronic-rippler":    {"equip": 1, "deck_top": [{"type": CardType.GEAR, "maxcost": 3, "n": 1}],
+                               "why": "equipped, so its spend trigger can fire, with a Gear on top to find"},
+    "viktor-vektor-sit-down-and-relax": {"deck_top": [{"type": CardType.GEAR, "maxcost": 2, "n": 2}],
+                               "why": "two Gear with cost 2 or less in the top 5, so the search has something to reveal"},
+    "sketchy-ripper":         {"deck_top": [{"type": CardType.GEAR, "n": 1}],
+                               "why": "a Gear in the top 3 — the search takes exactly 1, so an empty result skips it entirely"},
+    "hanako-arasaka-in-a-gilded-cage": {"deck_top": [{"type": CardType.GEAR, "maxcost": 2, "n": 2}],
+                               "why": "cards in the top 4 priced where a friendly Gig value can match"},
+    "river-ward-detective-on-the-hunt": {"equip": 1, "hand_gear": True,
+                               "deck_top": [{"type": CardType.GEAR, "maxcost": 2, "n": 2}],
+                               "why": "an equipped friendly Unit to be defeated; a cheap Gear in hand for the \u229e; and Gear in the top 2 it searches"},
+    "three-mouths-one-desire": {"gigs": "min_gig",
+                               "why": "one more card for each friendly min Gig"},
     "swordwise-huscle":       {"hand_gear": True, "why": "printed power 3 needs Gear to reach the power 5+ clause"},
     "westbrook-netrunner":    {"rival_solo_legend": True, "why": "a rival Legend on the field for its steal to be stopped"},
 }

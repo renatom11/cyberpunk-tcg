@@ -97,6 +97,10 @@ class Game:
             self.agent.max_seconds = self.THINK_SECONDS
         self.agent.new_game(self.seed, 1 - self.human)
         self.lines: list[str] = []
+        #: Looks that asked no question, since the last view. A search whose filter matched nothing
+        #: resolves without a prompt, so without this the cards were seen by the rules and by nobody
+        #: else — the card read as doing nothing at all.
+        self.peeks: list[dict] = []
         self.frames: list[dict] = []
         self.cursor = 0
         self.human_marks: list[int] = []            # action counts at each human decision
@@ -128,6 +132,9 @@ class Game:
     def _narrate(self) -> list[str]:
         new = self.s.log[self.cursor:]
         self.cursor = len(self.s.log)
+        for ev in new:
+            if ev[0] == "peek" and ev[1] == self.human:
+                self.peeks.append({"cards": [card_json(self.s, i) for i in ev[2]]})
         said = narrate(self.s, new, self.names)
         self.lines += said
         return said
@@ -189,6 +196,9 @@ class Game:
         v = view_state(self.s, self.human, self.names, self.lines[since:])
         v["log_total"] = len(self.lines)
         v["human"] = self.human
+        if self.peeks:
+            v["peeked"] = self.peeks
+            self.peeks = []
         if self.spec is not None:
             v["sandbox"] = {"card": self.card, "why": self.why}
         if frames and self.frames:

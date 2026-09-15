@@ -449,10 +449,17 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       // and is worth seeing rather than being told.
       if (pend.kind === "PICK") {
         const shownPicker = revealPicker(pend, onAct);
-        if (shownPicker) { prompt.append(shownPicker); (pend.options || []).forEach(claim); }
+        // Centred, not in the side panel. This is a row of real card faces and the panel is one
+        // column wide: five revealed cards were laid out across ~350px and the last two fell off
+        // the edge, while the counter underneath still said "0 of 5 chosen". It is also the same
+        // kind of question as the card options box — the game asking something about specific
+        // cards — so it gets the same dimmed-board treatment.
+        if (shownPicker) { centreOver(shownPicker); (pend.options || []).forEach(claim); }
         else {
+          // Same treatment: the Gig adjuster is the other box the game puts up to resolve a
+          // situation, and it reads better in the middle than tucked in a column beside the board.
           const picker = adjustPicker(pend, onAct, me);
-          if (picker) { prompt.append(picker); (pend.options || []).forEach(claim); }
+          if (picker) { centreOver(picker); (pend.options || []).forEach(claim); }
         }
       }
       if (pend.kind === "GIG_DIE") {
@@ -539,6 +546,8 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
       mark(atk.target, "defending");
     }
   }
+  // The question this belonged to is answered or gone; nothing should still be over the board.
+  if (!(pend && pend.kind === "PICK")) document.querySelectorAll(".revealback").forEach(n => n.remove());
   if (myTurn) wireDrag(root, pend, onAct);
   fitBoard(root);                   // the size first, then the fan that is measured against it
   root.querySelectorAll(".hand, .eddies .list, .legends, .field").forEach(fanHand);
@@ -1197,6 +1206,17 @@ function gigPanel(p, meSeat) {
 // player had just looked at, because `revealed` was never sent. Fool on the Hill asks your RIVAL to
 // send two revealed cards to your hand or your trash, and had to paste both names into its prompt
 // string to be answerable at all.
+// Put a resolver box in the middle of a dimmed board. Any previous one is dropped first: the board
+// re-renders on every view, and two stacked backdrops would trap the click that dismisses them.
+function centreOver(box) {
+  document.querySelectorAll(".revealback").forEach(n => n.remove());
+  const back = el("div", "cardmenuback revealback");
+  box.classList.add("centred");
+  box.addEventListener("click", (e) => e.stopPropagation());
+  back.append(box);
+  document.body.append(back);
+}
+
 function revealPicker(pend, onAct) {
   const shown = pend.revealed || [];
   if (!shown.length) return null;
@@ -1487,6 +1507,39 @@ async function act(verbOrIndex) {
   GAME.view = v; v.log = LOG;
   const fresh = arrivals(v);
   renderBoard($("#board"), v, { interactive: true, onAct: act, fresh: new Set(fresh.map(c => c.inst)) });
+  // A look that asked nothing still gets shown. Waits, so the board behind it is the board the
+  // search left — the cards have already gone to the bottom by the time you are reading them.
+  for (const peek of (v.peeked || [])) await showPeek(peek.cards);
+}
+
+// "Search the top 5 ... reveal up to 2 Gears" with no Gear among them is a real thing that
+// happened: the cards were seen and put back. The engine resolves it without asking, correctly —
+// there is no decision — and the result at the table was a card that appeared to do nothing at all.
+// So it is shown anyway: the same row of card faces the picker uses, every one of them dimmed
+// because none could be taken, and one button to carry on.
+function showPeek(cards) {
+  return new Promise(resolve => {
+    if (!cards || !cards.length) return resolve();
+    const back = el("div", "cardmenuback");
+    const box = el("div", "reveal peek");
+    box.append(el("div", "cmtitle", `YOU SAW THE TOP ${cards.length}`));
+    const row = el("div", "shown");
+    cards.forEach(c => {
+      const n = cardNode(c, { small: true });
+      n.classList.add("idle");
+      row.append(n);
+    });
+    box.append(row);
+    box.append(el("div", "note", "Nothing here could be taken. They go to the bottom of your deck."));
+    const ok = el("button", "primary", "OK");
+    const done = () => { back.remove(); resolve(); };
+    ok.onclick = done;
+    back.onclick = (e) => { if (e.target === back) done(); };
+    box.append(ok);
+    box.addEventListener("click", (e) => e.stopPropagation());
+    back.append(box);
+    document.body.append(back);
+  });
 }
 
 //: Which card an option is about, looked up in the board we were holding when it was chosen.

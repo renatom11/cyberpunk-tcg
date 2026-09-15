@@ -155,6 +155,68 @@ def tag_reqs(s, d):
 
 
 
+# --- deck searches -------------------------------------------------------------------------
+# "Search the top 5 cards of your deck. Reveal up to 2 Gears with cost 2 or less" finds nothing in a
+# deck of filler Units, and a search that matches nothing is the one case the engine resolves
+# without asking — so the card appeared to do nothing at all. The same shape covers "Trash N. Add a
+# <type> from among them", which also reads off the top of the deck.
+TYPE_WORD = {"Unit": CardType.UNIT, "Gear": CardType.GEAR, "Program": CardType.PROGRAM}
+DECK_LOOK = re.compile(
+    r"(?:[Ss]earch|[Rr]eveal|[Tt]rash) the top (\d+) cards?|[Tt]rash (\d+)\.|"
+    r"(?:[Ss]earch|[Rr]eveal|[Tt]rash) the top card", re.M)
+
+
+def _looks_at_top(d):
+    """How many cards off the top this card sees, and which type it is hunting for (if any)."""
+    text = d.text or ""
+    m = DECK_LOOK.search(text)
+    if not m:
+        return None
+    n = int(m.group(1) or m.group(2) or 1)
+    # Only the clause that says what to take — up to the next sentence end. A wider window reaches
+    # into unrelated text: Sketchy Ripper hunts for a Gear, and a 140-character look-ahead ran on
+    # into a later sentence containing the word "Unit", so the check passed against the wrong type
+    # while the card it was supposed to protect was still broken.
+    tail = text[m.end():]
+    after = re.split(r"(?<=[.])\s", tail, maxsplit=2)
+    after = " ".join(after[:2])
+    # ...and the NEAREST type word wins, not whichever happens to come first in the table.
+    best = None
+    for word, kind in TYPE_WORD.items():
+        w = re.search(rf"\b{word}s?\b", after)
+        if w and (best is None or w.start() < best[0]):
+            best = (w.start(), word, kind)
+    if best is None or "BRAINDANCE" in after[:40]:
+        return n, None, None
+    _at, word, kind = best
+    cap = re.search(rf"{word}s? with cost (\d+) or less", after)
+    return n, kind, int(cap.group(1)) if cap else None
+
+
+def test_a_deck_search_finds_something_to_reveal(pool):
+    """Whatever a card hunts for off the top of the deck is actually there.
+
+    Without this the card is not merely weaker on the sandbox board — it is untestable, because the
+    engine resolves an empty search without a prompt and nothing appears on screen at all.
+    """
+    from cptcg.core import ops
+    bad = []
+    for d in pool.defs:
+        look = _looks_at_top(d)
+        if look is None:
+            continue
+        n, kind, maxcost = look
+        if kind is None:
+            continue                       # no filter: anything off the top satisfies it
+        s = build_position(pool, sandbox_spec(pool, d.id, OVERRIDES))
+        top = [pool.defs[s.i_card[i]] for i in ops.top_cards(s, 0, n)]
+        ok = [c for c in top if c.type is kind and (maxcost is None or (c.cost or 99) <= maxcost)]
+        if not ok:
+            want = kind.name + (f" with cost <= {maxcost}" if maxcost else "")
+            bad.append(f"{d.id}: top {n} holds no {want} — the search resolves silently")
+    assert not bad, "\n".join(bad)
+
+
 def test_every_printed_requirement_is_met_on_its_own_sandbox(pool):
     rows = []
     for d in pool.defs:

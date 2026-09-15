@@ -155,6 +155,7 @@ class EffectCtx:
         ``tag`` overrides the call site used to identify the question."""
         vals = list(values)
         if not vals:
+            self._peek_only(revealed, player)
             if otherwise is not None:
                 otherwise(self)
             return
@@ -174,6 +175,23 @@ class EffectCtx:
                         prompt=prompt or self.card.name, tag=f"{inst}@{tag or call_site(cont)}",
                         revealed=tuple(revealed)))
 
+    def _peek_only(self, revealed, player=None) -> None:
+        """Record a look that asked no question.
+
+        A search whose filter matches nothing still *happened*: the cards were seen and then put
+        back. Both choose() and choose_many() resolve that case without asking — correctly, there is
+        no decision — and the consequence at the table is that the card appears to do nothing at
+        all. Viktor Vektor *Sit Down and Relax* reveals the top 5 and, with no Gear among them,
+        showed the player nothing whatsoever.
+
+        This is narration, not a decision: emit() writes to s.log and nothing else, and is a no-op
+        in rollouts where s.log is None. No action is added, so stored action streams are unchanged
+        and the search costs the search nothing.
+        """
+        rev = tuple(revealed)
+        if rev:
+            self.s.emit("peek", self.player if player is None else player, rev)
+
     def choose_many(self, values: Iterable, lo: int, hi: int,
                     cont: Callable[["EffectCtx", list], None], *, prompt: str = "",
                     player: int | None = None, tag: str = "", revealed: Iterable[int] = ()) -> None:
@@ -183,6 +201,7 @@ class EffectCtx:
         hi = min(hi, len(vals))
         lo = min(lo, hi)
         if hi == 0:
+            self._peek_only(revealed, player)
             cont(self, [])
             return
         opts = tuple(Pick(c) for n in range(lo, hi + 1) for c in combinations(range(len(vals)), n))
