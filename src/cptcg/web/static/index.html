@@ -23,6 +23,13 @@
 <main id="guide" class="mode hidden">
   <div class="setup guide">
     <h2>Guide</h2>
+    <!-- Which build you are looking at. It used to live beside the title in the header, but that
+         row has six tabs and on a phone the version string cost about one tab of width, so it is
+         hidden there under 460px. It still has to be readable SOMEWHERE on a phone: "the fix isn't
+         in my build" and "the fix doesn't work" look identical from the outside, and without a
+         version you can read aloud there is no way to tell them apart. -->
+    <p class="buildline">Build <b id="buildInfo">dev</b> — quote this when something looks wrong,
+      so we can tell a stale page from a real bug.</p>
     <p class="lede">This is a simulator for the Cyberpunk Trading Card Game. It plays the game by the official comprehensive rules, lets you play against an AI with the real cards, and — its main purpose — lets AIs build decks and play each other thousands of times so you can find out which decks are actually good.</p>
 
     <h3>The tabs</h3>

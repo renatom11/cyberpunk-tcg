@@ -928,6 +928,8 @@ body.mat { position: fixed; inset: 0; width: 100%; }
 /* Below this width the build hash costs about one tab of space, and a tab you can tap is worth more
    than a version string you cannot. It is still in the page for a bug report to read. */
 @media (max-width: 460px) { .brand .build { display: none; } }
+.guide .buildline { color: var(--dim); font-size: 12px; margin: -4px 0 12px; }
+.guide .buildline b { color: var(--cyan); font-family: ui-monospace, monospace; }
 
 /* ---------------------------------------------------------------- lab: estimates, cancel, phone fit */
 .estimate { margin-top: 6px; font-size: 12px; color: var(--cyan); }

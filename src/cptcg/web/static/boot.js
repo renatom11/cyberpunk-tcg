@@ -20,6 +20,9 @@
   const STORE = "cptcg:files";
   const brand = document.querySelector(".brand");
   if (brand && cfg.v) { const b = document.createElement("span"); b.className = "build"; b.textContent = "v " + cfg.v; brand.append(b); }
+  // The same string on the GUIDE page, where there is room for it at any width.
+  const bi = document.getElementById("buildInfo");
+  if (bi && cfg.v) bi.textContent = cfg.v;
   const $ = (s) => document.querySelector(s);
 
   // ---- loading overlay
