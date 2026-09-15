@@ -76,8 +76,9 @@ def build(out: Path, pyodide_url: str = PYODIDE) -> dict:
     # Loose data files the backend reads by path. sandbox.json holds the per-card try-out board
     # patches; without it here the site falls back to the generated board for every card, which is
     # correct but silently ignores every hand-tune — the worst kind of difference between the local
-    # server and the published site.
-    for name in ("sandbox.json",):
+    # server and the published site. faq.json is the published card and general FAQ, generated from
+    # data/faq.txt by tools/faq_to_json.py.
+    for name in ("sandbox.json", "faq.json"):
         src = ROOT / "data" / name
         if src.exists():
             shutil.copy(src, out / "data" / name)
