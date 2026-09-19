@@ -1,124 +1,100 @@
 {
  "general": [
   {
-   "q": "If a Unit has , can I use its the turn it's played?",
-   "a": "No",
-   "icons_missing": true
+   "q": "If a Unit has ADRENALINE, can I use its ⊡: the turn it's played?",
+   "a": "No"
   },
   {
-   "q": "Can I use a Unit's  effect the turn it's played?",
-   "a": "Yes",
-   "icons_missing": true
+   "q": "Can I use a Unit's BLOCKER effect the turn it's played?",
+   "a": "Yes"
   },
   {
-   "q": "If I have used a friendly Unit's  to redirect an attack, can I use  on another Unit to redirect that attack again to that Unit?",
-   "a": "Yes",
-   "icons_missing": true
+   "q": "If I have used a friendly Unit's BLOCKER to redirect an attack, can I use BLOCKER on another Unit to redirect that attack again to that Unit?",
+   "a": "Yes"
   },
   {
-   "q": "If my ready friendly Unit with  is being attacked, can it use ?",
-   "a": "No",
-   "icons_missing": true
+   "q": "If my ready friendly Unit with BLOCKER is being attacked, can it use BLOCKER?",
+   "a": "No"
   },
   {
-   "q": "Can I use  when my Rival is attacking the Gig area and not another Unit?",
-   "a": "Yes",
-   "icons_missing": true
+   "q": "Can I use BLOCKER when my Rival is attacking the Gig area and not another Unit?",
+   "a": "Yes"
   },
   {
-   "q": "Can I use  when my Rival is attacking another Unit and not the friendly Gig area?",
-   "a": "Yes",
-   "icons_missing": true
+   "q": "Can I use BLOCKER when my Rival is attacking another Unit and not the friendly Gig area?",
+   "a": "Yes"
   },
   {
-   "q": "Can I use a Legend's  in the Legends area?",
-   "a": "No. The Legend must be on the field to use .",
-   "icons_missing": true
+   "q": "Can I use a Legend's BLOCKER in the Legends area?",
+   "a": "No. The Legend must be on the field to use BLOCKER."
   },
   {
-   "q": "Can I use  the turn I called my Legend?",
-   "a": "Yes",
-   "icons_missing": true
+   "q": "Can I use GO SOLO the turn I called my Legend?",
+   "a": "Yes"
   },
   {
-   "q": "Can I  on a spent Legend?",
-   "a": "Yes",
-   "icons_missing": true
+   "q": "Can I GO SOLO on a spent Legend?",
+   "a": "Yes"
   },
   {
-   "q": "Can I spend a Legend for an Eddie when playing it with it's own ?",
-   "a": "Yes",
-   "icons_missing": true
+   "q": "Can I spend a Legend for an Eddie when playing it with it's own GO SOLO?",
+   "a": "Yes"
   },
   {
-   "q": "Can I play a Legend without using  if it has ?",
-   "a": "Yes",
-   "icons_missing": true
+   "q": "Can I play a Legend without using GO SOLO if it has GO SOLO?",
+   "a": "Yes"
   },
   {
-   "q": "Can a Legend in the field use its  effect the turn that it was played to the field area?",
-   "a": "No",
-   "icons_missing": true
+   "q": "Can a Legend in the field use its ⊡: effect the turn that it was played to the field area?",
+   "a": "No"
   },
   {
-   "q": "When a Legend uses  is it still a Legend?",
-   "a": "Yes",
-   "icons_missing": true
+   "q": "When a Legend uses GO SOLO is it still a Legend?",
+   "a": "Yes"
   },
   {
-   "q": "Can I use a  during my turn?",
-   "a": "Yes",
-   "icons_missing": true
+   "q": "Can I use a QUICK during my turn?",
+   "a": "Yes"
   },
   {
-   "q": "Can I use more than 1  during my Rival's attack?",
-   "a": "Yes",
-   "icons_missing": true
+   "q": "Can I use more than 1 QUICK during my Rival's attack?",
+   "a": "Yes"
   },
   {
-   "q": "Does  allow me to use  the turn the Unit is played?",
-   "a": "No",
-   "icons_missing": true
+   "q": "Does QUICK allow me to use ⊡: the turn the Unit is played?",
+   "a": "No"
   },
   {
-   "q": "My Rival plays a  am I allowed to respond with a ?",
-   "a": "No",
-   "icons_missing": true
+   "q": "My Rival plays a QUICK am I allowed to respond with a QUICK?",
+   "a": "No"
   },
   {
-   "q": "When I have mulitple  effects that activate and go into pending at the same time. Can I choose any order to resolve them?",
-   "a": "Yes",
-   "icons_missing": true
+   "q": "When I have mulitple ATTACK effects that activate and go into pending at the same time. Can I choose any order to resolve them?",
+   "a": "Yes"
   },
   {
-   "q": "I have a Unit with  and a Unit with \"When a friendly Unit attacks. Draw 1\". Will I be able to choose the order to resolve them?",
-   "a": "Yes",
-   "icons_missing": true
+   "q": "I have a Unit with ATTACK and a Unit with \"When a friendly Unit attacks. Draw 1\". Will I be able to choose the order to resolve them?",
+   "a": "Yes"
   },
   {
-   "q": "I have a Unit with  and a Unit with \"When a friendly Legend is spent. Draw 1\". Will I be able to choose the order to resolve them?",
-   "a": "Yes",
-   "icons_missing": true
+   "q": "I have a Unit with PLAY and a Unit with \"When a friendly Legend is spent. Draw 1\". Will I be able to choose the order to resolve them?",
+   "a": "Yes"
   },
   {
-   "q": "If a Unit or Legend with  would be defeated but is prevented by an effect. Will I still get the  effect?",
-   "a": "No",
-   "icons_missing": true
+   "q": "If a Unit or Legend with DEFEATED would be defeated but is prevented by an effect. Will I still get the DEFEATED effect?",
+   "a": "No"
   },
   {
-   "q": "Can I use a Unit's  effect the turn it's played?",
-   "a": "No",
-   "icons_missing": true
+   "q": "Can I use a Unit's ⊡: effect the turn it's played?",
+   "a": "No"
   },
   {
-   "q": "Can I use a Legend's  effect the turn it's called?",
-   "a": "Yes",
-   "icons_missing": true
+   "q": "Can I use a Legend's ⊡: effect the turn it's called?",
+   "a": "Yes"
   },
   {
-   "q": "Can I play a Legend to the field from the Legends area without using ?",
-   "a": "Yes, as long as the Legend has a numeric cost value, you may pay its cost to play it to the field. It enters the field with lag, and in the same orientation it was in the Legends area.",
-   "icons_missing": true
+   "q": "Can I play a Legend to the field from the Legends area without using GO SOLO?",
+   "a": "Yes, as long as the Legend has a numeric cost value, you may pay its cost to play it to the field. It enters the field with lag, and in the same orientation it was in the Legends area."
   },
   {
    "q": "Can I choose to adjust a Gig by 0 for \"adjust a Gig by up to X\" effects?",
@@ -134,37 +110,32 @@
   ],
   "adam-smasher-ender-of-legends": [
    {
-    "q": "Does Adam Smasher's  effect trigger when he is called or flipped face-up as a Legend?",
-    "a": "No, the  effect only activates when you play Adam Smasher to the field area.",
-    "icons_missing": true
+    "q": "Does Adam Smasher’s PLAY effect trigger when he is called or flipped face-up as a Legend?",
+    "a": "No, the PLAY effect only activates when you play Adam Smasher to the field area."
    },
    {
-    "q": "Does Adam Smasher's  effect trigger when he Goes Solo?",
-    "a": "Yes.  plays Adam Smasher to the field area and triggers the  effect.",
-    "icons_missing": true
+    "q": "Does Adam Smasher’s PLAY effect trigger when he Goes Solo?",
+    "a": "Yes. GO SOLO plays Adam Smasher to the field area and triggers the PLAY effect."
    },
    {
     "q": "If Adam Smasher is removed from the field area after being played to the field area is Adam Smasher removed from the game instead of being placed in the designated area?",
     "a": "Yes."
    },
    {
-    "q": "If Adam Smasher's cost is reduced does that also reduce cost to activate ?",
-    "a": "Yes.",
-    "icons_missing": true
+    "q": "If Adam Smasher’s cost is reduced does that also reduce cost to activate GO SOLO?",
+    "a": "Yes."
    }
   ],
   "adam-smasher-metal-over-meat": [
    {
-    "q": "If I manage to play Adam Smasher on my Rival's turn. Does it still get the  effect?",
-    "a": "Yes.",
-    "icons_missing": true
+    "q": "If I manage to play Adam Smasher on my Rival's turn. Does it still get the PLAY effect?",
+    "a": "Yes."
    }
   ],
   "adrenaline-converter": [
    {
-    "q": "If my Rival controls exactly 2 more Gigs than me when I play Adreanline Converter but I steal a Gig before I attack with the equipped Unit, does it still have ?",
-    "a": "No, the Unit only has [ADRENALIINE] while the conditions are met.",
-    "icons_missing": true
+    "q": "If my Rival controls exactly 2 more Gigs than me when I play Adrenline Converter but I steal a Gig before I attack with the equipped Unit, does it still have ADRENALINE?",
+    "a": "No, the Unit only has ADRENALINE while the conditions are met."
    }
   ],
   "afterparty-at-lizzies": [
@@ -223,15 +194,14 @@
   ],
   "arasaka-emergency-radioport": [
    {
-    "q": "If the equipped Unit or Legend is spent as part of an attack, can Arasaka Emergency Radioport Call a Legend before that Unit's effect resolves?",
+    "q": "If the equipped Unit or Legend is spent as part of an attack, can Arasaka Emergency Radioport Call a Legend before that Unit’s ATTACK effect resolves?",
     "a": "Yes."
    }
   ],
   "augmented-negotiators": [
    {
-    "q": "Can I use  even if my Rival has no cards in their hand?",
-    "a": "Yes.",
-    "icons_missing": true
+    "q": "Can I use BLOCKER even if my Rival has no cards in their hand?",
+    "a": "Yes."
    }
   ],
   "bonnie-and-clyde": [
@@ -272,11 +242,11 @@
   ],
   "chrome-fang": [
    {
-    "q": "Does Chrome Fang's effect apply to all rival Units?",
+    "q": "Does Chrome Fang’s effect apply to all rival Units?",
     "a": "Yes. Including any new rival Units played after Chrome Fang."
    },
    {
-    "q": "Does Chrome Fang's effect continue to apply if Chrome Fang leaves the field before your next turn?",
+    "q": "Does Chrome Fang’s effect continue to apply if Chrome Fang leaves the field before your next turn?",
     "a": "Yes."
    },
    {
@@ -318,9 +288,8 @@
   ],
   "corpo-security": [
    {
-    "q": "If this Unit gains  the turn it's played, can it attack?",
-    "a": "No.",
-    "icons_missing": true
+    "q": "If this Unit gains ADRENALINE the turn it's played, can it attack?",
+    "a": "No."
    }
   ],
   "cyberpsychosis": [
@@ -329,9 +298,8 @@
     "a": "Yes."
    },
    {
-    "q": "If I play this Program  as a reaction and choose the attacking rival Unit for the effect, what happens?",
-    "a": "The rival Unit gets the power boost for the ensuing fight and is defeated at the end of the turn.",
-    "icons_missing": true
+    "q": "If I play this Program QUICK as a reaction and choose the attacking rival Unit for the effect, what happens?",
+    "a": "The rival Unit gets the power boost for the ensuing fight and is defeated at the end of the turn."
    },
    {
     "q": "If a Unit under the effect of Cyberpsychosis attacks but does not make it to the Fight or Steal step, is it still defeated at the end of the turn?",
@@ -356,7 +324,7 @@
   ],
   "delamain-rideshare-ai": [
    {
-    "q": "Do I have to Draw 2 with this card's effect even if I don't want to?",
+    "q": "Do I have to Draw 2 with this card's PLAY effect even if I don't want to?",
     "a": "Yes."
    }
   ],
@@ -376,21 +344,18 @@
     "a": "No, you can still choose the other effect, it just fails."
    },
    {
-    "q": "If I call Dexter Deshawn as a reaction, can I play a  card that I drew off of Dexter's effect?",
-    "a": "Yes.",
-    "icons_missing": true
+    "q": "If I call Dexter Deshawn as a reaction, can I play a QUICK card that I drew off of Dexter's effect?",
+    "a": "Yes."
    },
    {
-    "q": "Can Dexter Deshawn 's  effect increase either a friendly Gig or a rival Gig?",
-    "a": "Yes.",
-    "icons_missing": true
+    "q": "Can Dexter Deshawn ’s ⊡: effect increase either a friendly Gig or a rival Gig?",
+    "a": "Yes."
    }
   ],
   "dexter-deshawn-one-last-chance": [
    {
-    "q": "With the  and  effect. If I choose to adjust up to 0. Does that still count as adjusting a Gig?",
-    "a": "No.",
-    "icons_missing": true
+    "q": "With the PLAY and ATTACK effect. If I choose to adjust up to 0. Does that still count as adjusting a Gig?",
+    "a": "No."
    }
   ],
   "dont-fear-the-reaper": [
@@ -405,14 +370,12 @@
   ],
   "dum-dum-maelstrom-triggerman": [
    {
-    "q": "Can Dum Dum's  effect choose a friendly Unit with no equipped Gear?",
-    "a": "Yes.",
-    "icons_missing": true
+    "q": "Can Dum Dum’s QUICK effect choose a friendly Unit with no equipped Gear?",
+    "a": "Yes."
    },
    {
-    "q": "If the chosen Unit gains or loses Gear after Dum Dum's  effect resolves, does the power bonus change?",
-    "a": "No.",
-    "icons_missing": true
+    "q": "If the chosen Unit gains or loses Gear after Dum Dum’s QUICK effect resolves, does the power bonus change?",
+    "a": "No."
    }
   ],
   "dying-night-vs-pistol": [
@@ -427,16 +390,16 @@
   ],
   "el-sombreron-la-venganza-lenta": [
    {
-    "q": "If I control multiple friendly max Gigs, can I choose which one El Sombreron's effect uses?",
+    "q": "If I control multiple friendly max Gigs, can I choose which one El Sombrerón's effect uses?",
     "a": "Yes."
    },
    {
-    "q": "If the value of my chosen friendly max Gig changes later in the turn, does El Sombreron's gained power change too?",
+    "q": "If the value of my chosen friendly max Gig changes later in the turn, does El Sombrerón’s gained power change too?",
     "a": "No."
    },
    {
-    "q": "If I do not control a friendly max Gig can I still pay 2 €$ for El Sombreron's effect?",
-    "a": "Yes, but El Sombreron won't gain any power from it."
+    "q": "If I do not control a friendly max Gig can I still pay 2 €$ for El Sombrerón’s effect?",
+    "a": "Yes, but El Sombrerón won't gain any power from it."
    }
   ],
   "evelyn-parker-beautiful-enigma": [
@@ -451,9 +414,8 @@
   ],
   "evelyn-parker-scheming-siren": [
    {
-    "q": "Is Evelyn Parker's  effect mandatory?",
-    "a": "Yes.",
-    "icons_missing": true
+    "q": "Is Evelyn Parker's ATTACK effect mandatory?",
+    "a": "Yes."
    }
   ],
   "field-operator": [
@@ -488,9 +450,8 @@
   ],
   "goro-takemura-hands-unclean": [
    {
-    "q": "Can I use this Legend's  in the Legend area?",
-    "a": "No.",
-    "icons_missing": true
+    "q": "Can I use this Legend's BLOCKER in the Legend area?",
+    "a": "No."
    }
   ],
   "goro-takemura-losing-his-way": [
@@ -501,23 +462,20 @@
   ],
   "goro-takemura-vengeful-bodyguard": [
    {
-    "q": "If I manage to play a Unit during my React step and I give it  from Goro Takemura, can that friendly Unit use immediately?",
-    "a": "Yes.",
-    "icons_missing": true
+    "q": "If I manage to play a Unit during my React step and I give it BLOCKER from Goro Takemura, can that friendly Unit use BLOCKER immediately?",
+    "a": "Yes."
    },
    {
-    "q": "When a friendly Unit uses  am I forced to discard 1?",
-    "a": "No.",
-    "icons_missing": true
+    "q": "When a friendly Unit uses BLOCKER am I forced to discard 1?",
+    "a": "No."
    },
    {
     "q": "If I have no cards in deck may I still discard 1?",
     "a": "Yes, but you must draw 1 after, so you will lose the game."
    },
    {
-    "q": "Does a friendly Unit using  trigger Goro Takemura's second effect even if it's not a result of first effect?",
-    "a": "Yes.",
-    "icons_missing": true
+    "q": "Does a friendly Unit using BLOCKER trigger Goro Takemura's second effect even if it's not a result of first effect?",
+    "a": "Yes."
    }
   ],
   "gunpoint-diplomacy": [
@@ -568,16 +526,14 @@
   ],
   "jacked-in-voodoo-boy": [
    {
-    "q": "If this Unit gains  the turn it's played , can it attack even if I haven't played a Program yet?",
-    "a": "No.",
-    "icons_missing": true
+    "q": "If this Unit gains ADRENALINE the turn it's played, can it attack even if I haven't played a Program yet?",
+    "a": "No."
    }
   ],
   "jackie-welles-mamas-favorite": [
    {
-    "q": "When I defeat Jackie Welles instead of a friendly Unit, does the Unit's  effect trigger?",
-    "a": "No.",
-    "icons_missing": true
+    "q": "When I defeat Jackie Welles instead of a friendly Unit, does the Unit's DEFEATED effect trigger?",
+    "a": "No."
    },
    {
     "q": "Can I use this effect if Jackie Welles is in the Field area as a Unit?",
@@ -585,7 +541,7 @@
    },
    {
     "q": "Can I use this effect if Jackie Welles is in the Legends area?",
-    "a": "Yes."
+    "a": "Yes"
    },
    {
     "q": "If Jackie Welles would be defeated while it's a Unit, could I use Jackie Welle's effect to defeat himself instead of being defeated the other way?",
@@ -618,9 +574,8 @@
   ],
   "japantown-jonin": [
    {
-    "q": "Can Japantown Jonin choose itself with its own  effect?",
-    "a": "Yes.",
-    "icons_missing": true
+    "q": "Can Japantown Jonin choose itself with its own PLAY effect?",
+    "a": "Yes."
    }
   ],
   "johnny-silverhand-never-stop-fighting": [
@@ -629,7 +584,7 @@
     "a": "When Johnny Silvlerhand attacks (or is attacked by) a CORPO Unit, he always wins the fight, regardless of power. So, Johnny Silverhand defeats the opposing CORPO Unit (as long as he has power 1+)."
    },
    {
-    "q": "If Johnny wins a fight during a Rival's turn, does he still ready from his effect?",
+    "q": "If Johnny wins a fight during a Rival’s turn, does he still ready from his effect?",
     "a": "Yes."
    },
    {
@@ -643,7 +598,7 @@
   ],
   "johnny-silverhand-rocking-renegade": [
    {
-    "q": "Can I reduce Johnny Silverhand's effect cost to 0 €$?",
+    "q": "Can I reduce Johnny Silverhand’s effect cost to 0 €$?",
     "a": "Yes, but you still need to spend Johnny Silverhand to activate it."
    },
    {
@@ -669,9 +624,8 @@
     "a": "Yes."
    },
    {
-    "q": "If I play a  BRAINDANCE Program as a reaction on my Rival's turn, does first effect trigger?",
-    "a": "Yes.",
-    "icons_missing": true
+    "q": "If I play a QUICK BRAINDANCE Program as a reaction on my Rival's turn, does first effect trigger?",
+    "a": "Yes."
    }
   ],
   "judy-alvarez-nothing-to-doubt": [
@@ -688,19 +642,16 @@
   ],
   "kerry-eurodyne-the-last-rockerboy": [
    {
-    "q": "Can I activate Kerry's  effect the turn I play him?",
-    "a": "No.",
-    "icons_missing": true
+    "q": "Can I activate Kerry's ⊡: effect the turn I play him?",
+    "a": "No."
    },
    {
-    "q": "Can I activate Kerry's  effect if I do not control an 8+ Gig?",
-    "a": "Yes, but you won't get to draw 2.",
-    "icons_missing": true
+    "q": "Can I activate Kerry’s ⊡: effect if I do not control an 8+ Gig?",
+    "a": "Yes, but you won't get to draw 2."
    },
    {
-    "q": "If Kerry readies after I activated his  effect, can I activate it again on the same turn?",
-    "a": "Yes.",
-    "icons_missing": true
+    "q": "If Kerry readies after I activated his ⊡: effect, can I activate it again on the same turn?",
+    "a": "Yes."
    }
   ],
   "kiroshi-optics": [
@@ -711,14 +662,12 @@
   ],
   "la-llorona-ghost-of-the-past": [
    {
-    "q": "When La Llorona uses , do I increase a Gig for her second effect before or after the ensuing fight?",
-    "a": "Before.",
-    "icons_missing": true
+    "q": "When La Llorona uses BLOCKER, do I increase a Gig for her second effect before or after the ensuing fight?",
+    "a": "Before."
    },
    {
-    "q": "Can I use a different Unit's  effect after I block with La Llorna to redirect the attack again?",
-    "a": "Yes. There is no limit of how many times you can use  in one turn.",
-    "icons_missing": true
+    "q": "Can I use a different Unit's BLOCKER effect after I block with La Llorna to redirect the attack again?",
+    "a": "Yes. There is no limit of how many times you can use BLOCKER in one turn."
    },
    {
     "q": "Can La Llorona increase a Gig by 0, 1, 2, or 3, or must it increase by exactly 3?",
@@ -791,9 +740,8 @@
   ],
   "maxtac-suppression-team": [
    {
-    "q": "I played a friendly Legend to the field area with  this turn. Can it attack even if my rival has a Maxtax Suppression Team?",
-    "a": "No.",
-    "icons_missing": true
+    "q": "I played a friendly Legend to the field area with GO SOLO this turn. Can it attack even if my rival has a Maxtax Suppression Team?",
+    "a": "No."
    }
   ],
   "memory-relapse": [
@@ -882,14 +830,12 @@
     "a": "Before."
    },
    {
-    "q": "If I spend a Unit equipped with Netwatch Netdriver to declare an attack, and the Unit or Legend has an  effect, do I get Netwatch Netdriver's effect before or after the  effect?",
-    "a": "You can choose the order you resolve these effects.",
-    "icons_missing": true
+    "q": "If I spend a Unit equipped with Netwatch Netdriver to declare an attack, and the Unit or Legend has an ATTACK effect, do I get Netwatch Netdriver's effect before or after the ATTACK effect?",
+    "a": "You can choose the order you resolve these effects."
    },
    {
-    "q": "If I spend a Unit or Legend equipped with Netwatch Netdriver to activate the Unit/Legend's  effect, do I resolve Netwatch Netdriver's effect before or after the activated effect?",
-    "a": "After. Resolve the activated  effect first.",
-    "icons_missing": true
+    "q": "If I spend a Unit or Legend equipped with Netwatch Netdriver to activate the Unit/Legend's ⊡: effect, do I resolve Netwatch Netdriver's effect before or after the activated effect?",
+    "a": "After. Resolve the activated ⊡: effect first."
    },
    {
     "q": "If I spend a Legend equipped with Netwatch Netdriver to pay a card's cost, do I resolve Netwatch Netdriver's effect before or after I play the card?",
@@ -938,9 +884,8 @@
   ],
   "overwatch-panams-gift": [
    {
-    "q": "If I use this card's  effect but my hand is empty, can I still do the rest of the effect?",
-    "a": "No, you must discard 1.",
-    "icons_missing": true
+    "q": "If I use this card's ⊡: effect but my hand is empty, can I still do the rest of the effect?",
+    "a": "No, you must discard 1."
    }
   ],
   "pacifica-netrunner": [
@@ -955,9 +900,8 @@
     "a": "No. You can still \"choose\" the other effect, it just fails."
    },
    {
-    "q": "May I use this card's  if all Gigs are already the same value?",
-    "a": "Yes.",
-    "icons_missing": true
+    "q": "May I use this card's ⊡: if all Gigs are already the same value?",
+    "a": "Yes."
    }
   ],
   "panam-palmer-nomad-cavalry": [
@@ -1008,9 +952,8 @@
   ],
   "riot-shield": [
    {
-    "q": "Does this effect force my Rival to use  on their turn if they have enough €$ available?",
-    "a": "No.",
-    "icons_missing": true
+    "q": "Does this effect force my Rival to use GO SOLO on their turn if they have enough €$ available?",
+    "a": "No."
    }
   ],
   "rita-wheeler-no-stupid-questions": [
@@ -1021,9 +964,8 @@
   ],
   "river-ward-detective-on-the-hunt": [
    {
-    "q": "Can I activate River Ward's   effect if I have no Gear cards in hand?",
-    "a": "Yes.",
-    "icons_missing": true
+    "q": "Can I activate River Ward’s QUICK ⊡: effect if I have no Gear cards in hand?",
+    "a": "Yes."
    },
    {
     "q": "Does the Gear have to be equipped to this Legend?",
@@ -1050,9 +992,8 @@
   ],
   "rogue-amendiares-queen-of-the-afterlife": [
    {
-    "q": "If I manage to play Rogue Amendiares on my Rival's turn, can I use her  effect that turn?",
-    "a": "No.",
-    "icons_missing": true
+    "q": "If I manage to play Rogue Amendiares on my Rival's turn, can I use her QUICK effect that turn?",
+    "a": "No."
    }
   ],
   "royce-dont-call-me-simon": [
@@ -1061,7 +1002,7 @@
     "a": "Yes."
    },
    {
-    "q": "If a rival Unit's power is reduced to 2 or 3 by another effect this turn, can Royce defeat it?",
+    "q": "If a rival Unit’s power is reduced to 2 or 3 by another effect this turn, can Royce defeat it?",
     "a": "Yes."
    }
   ],
@@ -1115,9 +1056,8 @@
     "a": "No."
    },
    {
-    "q": "When I declare an attack with Sasha Yakovleva, can I use her  effect before I choose a target?",
-    "a": "No. You must declare the attack target before revealing the card for her  effect.",
-    "icons_missing": true
+    "q": "When I declare an attack with Sasha Yakovleva, can I use her ATTACK effect before I choose a target?",
+    "a": "No. You must declare the attack target before revealing the card for her ATTACK effect."
    }
   ],
   "satori-sword-of-saburo": [
@@ -1212,7 +1152,7 @@
   ],
   "the-relic-experimental-biochip": [
    {
-    "q": "When a Unit or Legend equipped with The Relic is defeated, do I move any equipped Gear on it to the bottom-deck, too?",
+    "q": "When a Unit or Legend equipped with The Relic is defeated, do I move any equipped Gear on it to the bottom- deck, too?",
     "a": "No. The Unit/Legend moves to the trash first, so any Gear (including The Relic) remains in the trash when you bottom-deck the Unit/Legend."
    }
   ],
@@ -1250,12 +1190,11 @@
     "a": "No."
    },
    {
-    "q": "If I manage to play Tyger's Whisper on my Rival's turn, can I Call a Legend for free through its  effect?",
-    "a": "Yes.",
-    "icons_missing": true
+    "q": "If I manage to play Tyger's Whisper on my Rival's turn, can I Call a Legend for free through its PLAY effect?",
+    "a": "Yes."
    },
    {
-    "q": "If I already Called a Legend this turn, can I call another Legend with Tyger's Whisper's effect?",
+    "q": "If I already Called a Legend this turn, can I call another Legend with Tyger's Whisper's PLAY effect?",
     "a": "No."
    }
   ],
@@ -1267,23 +1206,20 @@
   ],
   "valentino-guerrera": [
    {
-    "q": "If Valentino Guerrera attacks a ready rival Unit with , can the attacked Unit use its own  effect?",
-    "a": "No.",
-    "icons_missing": true
+    "q": "If Valentino Guerrera attacks a ready rival Unit with BLOCKER, can the attacked Unit use its own BLOCKER effect?",
+    "a": "No."
    }
   ],
   "valentino-street-racer": [
    {
-    "q": "If I give a friendly Unit  on my Rival's turn, can it make an attack?",
-    "a": "No.",
-    "icons_missing": true
+    "q": "If I give a friendly Unit ADRENALINE on my Rival's turn, can it make an attack?",
+    "a": "No."
    }
   ],
   "v-corporate-exile": [
    {
-    "q": "Can I play this Legend to the Field area without using the  keyword?",
-    "a": "Yes.",
-    "icons_missing": true
+    "q": "Can I play this Legend to the Field area without using the GO SOLO keyword?",
+    "a": "Yes."
    }
   ],
   "viktor-vektor-drop-your-illusions": [
@@ -1304,7 +1240,7 @@
   ],
   "viktor-vektor-you-might-feel-a-little-pinch": [
    {
-    "q": "Can I choose not to use Viktor Vektor's effect?",
+    "q": "Can I choose not to use Viktor Vektor's PLAY effect?",
     "a": "No, the effect is mandatory. If you can do it, you must."
    }
   ],
@@ -1324,9 +1260,8 @@
     "a": "Yes. Trash as many cards as possible, instead."
    },
    {
-    "q": "If V's  effect trashes multiple BRAINDANCE Programs, can I choose more than 1?",
-    "a": "No.",
-    "icons_missing": true
+    "q": "If V’s PLAY effect trashes multiple BRAINDANCE Programs, can I choose more than 1?",
+    "a": "No."
    }
   ],
   "wakako-okada-peace-and-harmony": [
@@ -1335,9 +1270,8 @@
     "a": "No. You can still \"choose\" the other effect, it just fails."
    },
    {
-    "q": "Can I use this card's  effect on an already min Gig?",
-    "a": "Yes.",
-    "icons_missing": true
+    "q": "Can I use this card's ⊡: effect on an already min Gig?",
+    "a": "Yes."
    }
   ],
   "we-gotta-live-together": [
@@ -1388,12 +1322,11 @@
   ],
   "yorinobu-arasaka-steel-dragon": [
    {
-    "q": "If the Unit played by Yorinobu has , can it attack the rival Gig area this turn?",
-    "a": "Yes.",
-    "icons_missing": true
+    "q": "If the Unit played by Yorinobu has ADRENALINE, can it attack the rival Gig area this turn?",
+    "a": "Yes."
    },
    {
-    "q": "Does Yorinobu count itself for \"the first time an ARASAKA Unit is defeated each turn\"?",
+    "q": "Does Yorinobu count itself for “the first time an ARASAKA Unit is defeated each turn”?",
     "a": "Yes."
    },
    {
@@ -1413,18 +1346,16 @@
     "a": "Before. Adjust the Gig for Zetatech Faceplate's effect before moving on to your Rival's react step."
    },
    {
-    "q": "If I spend a Unit equipped with Zetatech Faceplate to declare an attack, and the Unit or Legend has an  effect, do I get Zetatech Faceplacte's effect before or after the  effect?",
-    "a": "You can choose the order you resolve these effects.",
-    "icons_missing": true
+    "q": "If I spend a Unit equipped with Zetatech Faceplate to declare an attack, and the Unit or Legend has an ATTACK effect, do I get Zetatech Faceplacte's effect before or after the ATTACK effect?",
+    "a": "You can choose the order you resolve these effects."
    },
    {
-    "q": "If I spend a Unit or Legend equipped with Zetatech Faceplate to activate the Unit/Legend's  effect, do I get Zetatech Faceplate's effect before or after the activated effect?",
-    "a": "After. Resolve the activated  effect first.",
-    "icons_missing": true
+    "q": "If I spend a Unit or Legend equipped with Zetatech Faceplate to activate the Unit/Legend's ⊡: effect, do I get Zetatech Faceplate's effect before or after the activated effect?",
+    "a": "After. Resolve the activated ⊡: effect first."
    },
    {
     "q": "If I spend a Legend equipped with Zetatech Faceplate to pay a card's cost, do I get Zetatech Faceplate's effect before or after I play the card?",
-    "a": "After. Play the card first, then adjust the Gig."
+    "a": "After Play the card first then adjust the Gig"
    }
   ]
  }

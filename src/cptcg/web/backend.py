@@ -812,6 +812,28 @@ def guide() -> dict:
     return _GUIDE
 
 
+#: The official FAQ, from ``data/faq.json`` (built by ``tools/faq_to_json.py``). Served with each
+#: card so the publisher's own answer is on the card sheet, next to the sandbox's TRY IT button --
+#: which is where the question actually comes up. It outranks the hand-written notes above it and
+#: the engine below it, so it is labelled as what it is rather than folded into the commentary.
+_FAQ: dict | None = None
+
+
+def faq() -> dict:
+    """``{"general": [{q, a}], "cards": {card id: [{q, a}]}}``, read once.
+
+    Missing is not an error, the same as the guide notes and the measurements: a checkout without
+    it still browses the pool and the panel is simply absent.
+    """
+    global _FAQ
+    if _FAQ is None:
+        try:
+            _FAQ = json.loads((ROOT / "data" / "faq.json").read_text(encoding="utf-8"))
+        except Exception:
+            _FAQ = {"general": [], "cards": {}}
+    return _FAQ
+
+
 #: Measured play, from ``tools/playtest.py --publish``. Served beside the hand-written notes so the
 #: guide can say what a card *did* as well as what somebody thinks of it — and so the two can
 #: disagree in public, which is the interesting case.
@@ -898,6 +920,9 @@ def card_json_static(d) -> dict:
     m = (measured().get("cards") or {}).get(d.id)
     if m:
         j["measured"] = m
+    f = (faq().get("cards") or {}).get(d.id)
+    if f:
+        j["faq"] = f
     return j
 
 
@@ -979,6 +1004,11 @@ def dispatch(method: str, path: str, query: dict, body: dict) -> tuple[int, obje
                 return 200, g.view(int(q.get("since", 0)))
         if p == "/api/sandbox":
             return 200, {"tuned": sorted(sandbox_overrides())}
+        if p == "/api/faq":
+            # The keyword rulings that apply to every game. The per-card answers ride along on each
+            # card (card_json_static), because that is where they are wanted; these have no card to
+            # ride on, so the GUIDE page asks for them.
+            return 200, {"general": faq().get("general", [])}
         if p == "/api/replays":
             return 200, list_replays()
         if p == "/api/replay":

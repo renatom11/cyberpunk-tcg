@@ -2045,6 +2045,18 @@ function openCardGuide(id) {
     L.archetypes.forEach(k => a.append(el("span", "tag", k)));
     right.append(a);
   }
+  // The publisher's own answers, above everything written here. When a card looks wrong mid-test
+  // the question is almost always one the FAQ already settles, and it is worth reading BEFORE the
+  // commentary and the measurements, both of which are this project's opinion rather than the
+  // game's. TRY IT is at the top of this same sheet, so the answer is one tap from the board.
+  if (c.faq && c.faq.length) {
+    right.append(el("h4", "", `OFFICIAL FAQ <span class=dim>· ${c.faq.length}</span>`));
+    const dl = el("div", "faq");
+    c.faq.forEach(e => {
+      dl.append(el("p", "faqq", e.q), el("p", "faqa", e.a));
+    });
+    right.append(dl);
+  }
   const guide = c.guide;
   if (guide && guide.guide) {
     right.append(el("h4", "", "HOW IT PLAYS"));
@@ -2593,6 +2605,20 @@ async function init() {
   $("#cardSet").onchange = () => renderCardGrid($("#cardSearch").value);
   $("#cardArch").onchange = () => renderCardGrid($("#cardSearch").value);
   renderCardGrid("");
+  // The keyword rulings on the GUIDE page. Not fatal if they are absent: a checkout without
+  // data/faq.json still runs, and the panel says so rather than sitting on "loading…" forever.
+  const faqBox = $("#faqGeneral");
+  if (faqBox) {
+    try {
+      const gen = (await api("/api/faq")).general || [];
+      faqBox.innerHTML = "";
+      gen.forEach(e => faqBox.append(el("p", "faqq", e.q), el("p", "faqa", e.a)));
+      if (!gen.length) faqBox.append(el("p", "dim", "No FAQ data in this build."));
+    } catch (err) {
+      faqBox.innerHTML = "";
+      faqBox.append(el("p", "dim", "No FAQ data in this build."));
+    }
+  }
   await initBuilder(decks);
   await initLab(decks.filter(d => d.ok), ARCHETYPES || await api("/api/archetypes"));
   document.querySelectorAll("nav button").forEach(b => b.onclick = () => {

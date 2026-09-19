@@ -4,11 +4,11 @@ data/faq.txt is the authority, kept exactly as published. This turns it into som
 the tests and the client can read, and it is the only place a heading is matched to a card id -- so
 a renamed or removed card fails here, loudly, instead of quietly dropping that card's rulings.
 
-The icons are the known defect. The game prints keywords as symbols and they did not survive
-transcription, so a question can read "If a Unit has , can I use its  the turn it's played?". Those
-entries are marked ``icons_missing`` rather than repaired: an icon guessed wrong becomes a test
-asserting the wrong rule, which is worse than no test. Everything downstream skips them until the
-symbols are supplied.
+The icons were the known defect, and are now fixed at the source: the first capture of the FAQ was
+a text paste, which lost every keyword symbol, so a question read "If a Unit has , can I use its
+the turn it's played?". ``tools/faq_from_pdf.py`` rebuilds data/faq.txt from the published PDF and
+recovers them by measurement. ``icons_missing`` reads 0 today; the flag stays because it is the
+cheap guard that would catch the next hand-edit reintroducing a gap.
 """
 
 from __future__ import annotations
@@ -30,9 +30,11 @@ GAP = re.compile(r"  +|\s+[?.,]|^\s|\s$")
 #: Headings the FAQ spells differently from the card data. Kept explicit rather than folded into
 #: norm(), so the disagreement is visible: the card face is the tie-breaker and neither source is
 #: silently "corrected" to match the other.
-#:   MT0D12 / MTOD12 -- the FAQ writes a digit zero, data/cards/wnc.json writes a letter O. One of
-#:   the two transcriptions is wrong about a glyph on the printed card; until the image settles it,
-#:   the alias keeps the card's rulings attached rather than dropping them.
+#:   MT0D12 / MTOD12 -- the FAQ writes a digit zero, data/cards/wnc.json writes a letter O. The PDF
+#:   settles half of it: MT0D12 is the publisher's own TYPED text, not a transcription, so the FAQ
+#:   side is certainly a digit. The card face beside it is still ambiguous -- the display font's O
+#:   and 0 are the same slashless rounded box -- so wnc.json is not "corrected" on that evidence and
+#:   the alias keeps the card's rulings attached either way.
 ALIASES = {"MT0D12 FLATHEAD": "mtod12-flathead"}
 
 

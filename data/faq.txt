@@ -1,90 +1,89 @@
-# Official Cyberpunk TCG FAQ, transcribed verbatim as published.
+# Official Cyberpunk TCG FAQ, rebuilt from the published PDF by tools/faq_from_pdf.py.
 #
 # Format: a heading line naming the card (or GENERAL), then alternating question and answer lines.
 # A line beginning "#" is a comment. Blank lines separate entries and are ignored.
 #
-# PROVENANCE AND A KNOWN DEFECT: this was transcribed from the published FAQ. The keyword ICONS did
-# not survive that transcription -- the game prints them as symbols (the Spend Icon, BLOCKER, LAG,
-# GO SOLO, ADRENALINE, QUICK, the trigger words) and they came through as nothing. So a number of
-# questions read with a gap where the icon was: "If a Unit has , can I use its  the turn it's
-# played?". Those are kept exactly as received rather than repaired by guesswork: an icon guessed
-# wrong here would become a test asserting the wrong rule, which is worse than no test at all.
-# tools/faq_to_json.py flags every entry with a suspected missing icon so the triage can skip them
-# until the symbols are supplied.
+# The keyword icons are here. The game prints them as coloured chips and a Spend Icon glyph, all
+# drawn as vector art rather than typed, so the first capture of this FAQ -- pasted as text -- lost
+# every one of them and 69 answers read with a hole where a keyword should be. They are recovered
+# from the PDF by the fill colour and width of each chip, which identify it exactly; see the tool
+# for the measured table. Nothing here is a guess about which icon was meant.
+
 
 GENERAL
-If a Unit has , can I use its the turn it's played?
+If a Unit has ADRENALINE, can I use its ⊡: the turn it's played?
 No
-Can I use a Unit's  effect the turn it's played?
+Can I use a Unit's BLOCKER effect the turn it's played?
 Yes
-If I have used a friendly Unit's  to redirect an attack, can I use  on another Unit to redirect that attack again to that Unit?
+If I have used a friendly Unit's BLOCKER to redirect an attack, can I use BLOCKER on another Unit to redirect that attack again to that Unit?
 Yes
-If my ready friendly Unit with  is being attacked, can it use ?
+If my ready friendly Unit with BLOCKER is being attacked, can it use BLOCKER?
 No
-Can I use  when my Rival is attacking the Gig area and not another Unit?
+Can I use BLOCKER when my Rival is attacking the Gig area and not another Unit?
 Yes
-Can I use  when my Rival is attacking another Unit and not the friendly Gig area?
+Can I use BLOCKER when my Rival is attacking another Unit and not the friendly Gig area?
 Yes
-Can I use a Legend's  in the Legends area?
-No. The Legend must be on the field to use .
-Can I use  the turn I called my Legend?
+Can I use a Legend's BLOCKER in the Legends area?
+No. The Legend must be on the field to use BLOCKER.
+Can I use GO SOLO the turn I called my Legend?
 Yes
-Can I  on a spent Legend?
+Can I GO SOLO on a spent Legend?
 Yes
-Can I spend a Legend for an Eddie when playing it with it's own ?
+Can I spend a Legend for an Eddie when playing it with it's own GO SOLO?
 Yes
-Can I play a Legend without using  if it has ?
+Can I play a Legend without using GO SOLO if it has GO SOLO?
 Yes
-Can a Legend in the field use its  effect the turn that it was played to the field area?
+Can a Legend in the field use its ⊡: effect the turn that it was played to the field area?
 No
-When a Legend uses  is it still a Legend?
+When a Legend uses GO SOLO is it still a Legend?
 Yes
-Can I use a  during my turn?
+Can I use a QUICK during my turn?
 Yes
-Can I use more than 1  during my Rival's attack?
+Can I use more than 1 QUICK during my Rival's attack?
 Yes
-Does  allow me to use  the turn the Unit is played?
+Does QUICK allow me to use ⊡: the turn the Unit is played?
 No
-My Rival plays a  am I allowed to respond with a ?
+My Rival plays a QUICK am I allowed to respond with a QUICK?
 No
-When I have mulitple  effects that activate and go into pending at the same time. Can I choose any order to resolve them?
+When I have mulitple ATTACK effects that activate and go into pending at the same time. Can I choose any order to resolve them?
 Yes
-I have a Unit with  and a Unit with "When a friendly Unit attacks. Draw 1". Will I be able to choose the order to resolve them?
+I have a Unit with ATTACK and a Unit with "When a friendly Unit attacks. Draw 1". Will I be able to choose the order to resolve them?
 Yes
-I have a Unit with  and a Unit with "When a friendly Legend is spent. Draw 1". Will I be able to choose the order to resolve them?
+I have a Unit with PLAY and a Unit with "When a friendly Legend is spent. Draw 1". Will I be able to choose the order to resolve them?
 Yes
-If a Unit or Legend with  would be defeated but is prevented by an effect. Will I still get the  effect?
+If a Unit or Legend with DEFEATED would be defeated but is prevented by an effect. Will I still get the DEFEATED effect?
 No
-Can I use a Unit's  effect the turn it's played?
+Can I use a Unit's ⊡: effect the turn it's played?
 No
-Can I use a Legend's  effect the turn it's called?
+Can I use a Legend's ⊡: effect the turn it's called?
 Yes
-Can I play a Legend to the field from the Legends area without using ?
+Can I play a Legend to the field from the Legends area without using GO SOLO?
 Yes, as long as the Legend has a numeric cost value, you may pay its cost to play it to the field. It enters the field with lag, and in the same orientation it was in the Legends area.
 Can I choose to adjust a Gig by 0 for "adjust a Gig by up to X" effects?
 Yes, but that does not count as adjusting a Gig for the sake of effects triggered "when you adjust a Gig."
+
 
 6TH STREET RECRUITS
 If a friendly Unit steals two d6s simultaneously, can I increase two Gigs?
 Yes, the effect triggers for each stolen d6.
 
 ADAM SMASHER: ENDER OF LEGENDS
-Does Adam Smasher's  effect trigger when he is called or flipped face-up as a Legend?
-No, the  effect only activates when you play Adam Smasher to the field area.
-Does Adam Smasher's  effect trigger when he Goes Solo?
-Yes.  plays Adam Smasher to the field area and triggers the  effect.
+Does Adam Smasher’s PLAY effect trigger when he is called or flipped face-up as a Legend?
+No, the PLAY effect only activates when you play Adam Smasher to the field area.
+Does Adam Smasher’s PLAY effect trigger when he Goes Solo?
+Yes. GO SOLO plays Adam Smasher to the field area and triggers the PLAY effect.
 If Adam Smasher is removed from the field area after being played to the field area is Adam Smasher removed from the game instead of being placed in the designated area?
 Yes.
-If Adam Smasher's cost is reduced does that also reduce cost to activate ?
+If Adam Smasher’s cost is reduced does that also reduce cost to activate GO SOLO?
 Yes.
 
 ADAM SMASHER: METAL OVER MEAT
-If I manage to play Adam Smasher on my Rival's turn. Does it still get the  effect?
+If I manage to play Adam Smasher on my Rival's turn. Does it still get the PLAY effect?
 Yes.
 
 ADRENALINE CONVERTER
-If my Rival controls exactly 2 more Gigs than me when I play Adreanline Converter but I steal a Gig before I attack with the equipped Unit, does it still have ?
-No, the Unit only has [ADRENALIINE] while the conditions are met.
+If my Rival controls exactly 2 more Gigs than me when I play Adrenline Converter but I steal a Gig before I attack with the equipped Unit, does it still have ADRENALINE?
+No, the Unit only has ADRENALINE while the conditions are met.
 
 AFTERPARTY AT LIZZIE'S
 If I choose not to adjust a Gig, can I still draw 1 if I control 2 or more Gigs with different values?
@@ -119,11 +118,11 @@ If the friendly Unit cannot defeat the rival Unit but still wins the fight, does
 Yes.
 
 ARASAKA EMERGENCY RADIOPORT
-If the equipped Unit or Legend is spent as part of an attack, can Arasaka Emergency Radioport Call a Legend before that Unit's effect resolves?
+If the equipped Unit or Legend is spent as part of an attack, can Arasaka Emergency Radioport Call a Legend before that Unit’s ATTACK effect resolves?
 Yes.
 
 AUGMENTED NEGOTIATORS
-Can I use  even if my Rival has no cards in their hand?
+Can I use BLOCKER even if my Rival has no cards in their hand?
 Yes.
 
 BONNIE AND CLYDE
@@ -149,9 +148,9 @@ When I play this Program for less because of it's effect does that change the co
 No.
 
 CHROME FANG
-Does Chrome Fang's effect apply to all rival Units?
+Does Chrome Fang’s effect apply to all rival Units?
 Yes. Including any new rival Units played after Chrome Fang.
-Does Chrome Fang's effect continue to apply if Chrome Fang leaves the field before your next turn?
+Does Chrome Fang’s effect continue to apply if Chrome Fang leaves the field before your next turn?
 Yes.
 If my rival Unit has power 6 can it steal a friendly Gig with value 6?
 Yes.
@@ -175,13 +174,13 @@ Can I choose a Unit that's already spent for this card's effect?
 Yes.
 
 CORPO SECURITY
-If this Unit gains  the turn it's played, can it attack?
+If this Unit gains ADRENALINE the turn it's played, can it attack?
 No.
 
 CYBERPSYCHOSIS
 Can I choose an equipped rival Unit with this effect?
 Yes.
-If I play this Program  as a reaction and choose the attacking rival Unit for the effect, what happens?
+If I play this Program QUICK as a reaction and choose the attacking rival Unit for the effect, what happens?
 The rival Unit gets the power boost for the ensuing fight and is defeated at the end of the turn.
 If a Unit under the effect of Cyberpsychosis attacks but does not make it to the Fight or Steal step, is it still defeated at the end of the turn?
 No.
@@ -197,7 +196,7 @@ If this Unit steals a Gig but is no longer in the field area at the end of the t
 No.
 
 DELAMAIN: RIDESHARE AI
-Do I have to Draw 2 with this card's effect even if I don't want to?
+Do I have to Draw 2 with this card's PLAY effect even if I don't want to?
 Yes.
 
 DETONATE
@@ -209,13 +208,13 @@ Yes.
 DEXTER DESHAWN: OFF THE GRID
 If I don't have a friendly Unit on the field when I call Dexter Deshawn, do I have to choose Draw 1?
 No, you can still choose the other effect, it just fails.
-If I call Dexter Deshawn as a reaction, can I play a  card that I drew off of Dexter's effect?
+If I call Dexter Deshawn as a reaction, can I play a QUICK card that I drew off of Dexter's effect?
 Yes.
-Can Dexter Deshawn 's  effect increase either a friendly Gig or a rival Gig?
+Can Dexter Deshawn ’s ⊡: effect increase either a friendly Gig or a rival Gig?
 Yes.
 
 DEXTER DESHAWN: ONE LAST CHANCE
-With the  and  effect. If I choose to adjust up to 0. Does that still count as adjusting a Gig?
+With the PLAY and ATTACK effect. If I choose to adjust up to 0. Does that still count as adjusting a Gig?
 No.
 
 (DON'T FEAR) THE REAPER
@@ -225,9 +224,9 @@ Can I defeat a spent Unit that I did not spend with this effect?
 Yes.
 
 DUM DUM: MAELSTROM TRIGGERMAN
-Can Dum Dum's  effect choose a friendly Unit with no equipped Gear?
+Can Dum Dum’s QUICK effect choose a friendly Unit with no equipped Gear?
 Yes.
-If the chosen Unit gains or loses Gear after Dum Dum's  effect resolves, does the power bonus change?
+If the chosen Unit gains or loses Gear after Dum Dum’s QUICK effect resolves, does the power bonus change?
 No.
 
 DYING NIGHT: V'S PISTOL
@@ -236,13 +235,13 @@ Yes.
 If this Gear is attached to a Unit named "V" and the Unit attacks but is defeated before the end of the turn, can I still ready 2 Eddies?
 Yes.
 
-EL SOMBRERON: LA VENGANZA LENTA
-If I control multiple friendly max Gigs, can I choose which one El Sombreron's effect uses?
+EL SOMBRERÓN: LA VENGANZA LENTA
+If I control multiple friendly max Gigs, can I choose which one El Sombrerón's effect uses?
 Yes.
-If the value of my chosen friendly max Gig changes later in the turn, does El Sombreron's gained power change too?
+If the value of my chosen friendly max Gig changes later in the turn, does El Sombrerón’s gained power change too?
 No.
-If I do not control a friendly max Gig can I still pay 2 €$ for El Sombreron's effect?
-Yes, but El Sombreron won't gain any power from it.
+If I do not control a friendly max Gig can I still pay 2 €$ for El Sombrerón’s effect?
+Yes, but El Sombrerón won't gain any power from it.
 
 EVELYN PARKER: BEAUTIFUL ENIGMA
 If a rival Unit chosen by Evenlyn Parker's second effect makes an attack and then readies in the same turn, is it forced to make another attack?
@@ -251,7 +250,7 @@ If I have a Unit chosen by Evelyn Parker's second effect, do I have to attack wi
 You may do other actions but cannot end your turn if the Unit chosen by Evelyn Parker can still legally declare an attack.
 
 EVELYN PARKER: SCHEMING SIREN
-Is Evelyn Parker's  effect mandatory?
+Is Evelyn Parker's ATTACK effect mandatory?
 Yes.
 
 FIELD OPERATOR
@@ -266,7 +265,7 @@ FOOL ON THE HILL
 When I reveal the top 2 cards of my deck, are they still considered part of my deck?
 Yes.
 
-GILDED MATON
+GILDED MATÓN
 If my Rival does not have a Unit, may I still defeat a friendly Gear?
 Yes.
 
@@ -275,7 +274,7 @@ Who steals the Gig with this effect; the player, or the Unit equipped with Goril
 The Unit.
 
 GORO TAKEMURA: HANDS UNCLEAN
-Can I use this Legend's  in the Legend area?
+Can I use this Legend's BLOCKER in the Legend area?
 No.
 
 GORO TAKEMURA: LOSING HIS WAY
@@ -283,13 +282,13 @@ If all my friendly Legends become face-up after I declare an attack, does Goro T
 No.
 
 GORO TAKEMURA: VENGEFUL BODYGUARD
-If I manage to play a Unit during my React step and I give it  from Goro Takemura, can that friendly Unit use immediately?
+If I manage to play a Unit during my React step and I give it BLOCKER from Goro Takemura, can that friendly Unit use BLOCKER immediately?
 Yes.
-When a friendly Unit uses  am I forced to discard 1?
+When a friendly Unit uses BLOCKER am I forced to discard 1?
 No.
 If I have no cards in deck may I still discard 1?
 Yes, but you must draw 1 after, so you will lose the game.
-Does a friendly Unit using  trigger Goro Takemura's second effect even if it's not a result of first effect?
+Does a friendly Unit using BLOCKER trigger Goro Takemura's second effect even if it's not a result of first effect?
 Yes.
 
 GUNPOINT DIPLOMACY
@@ -321,16 +320,16 @@ Can I adjust a rival Gig?
 Yes.
 
 JACKED-IN VOODOO BOY
-If this Unit gains  the turn it's played , can it attack even if I haven't played a Program yet?
+If this Unit gains ADRENALINE the turn it's played, can it attack even if I haven't played a Program yet?
 No.
 
 JACKIE WELLES: MAMA'S FAVORITE
-When I defeat Jackie Welles instead of a friendly Unit, does the Unit's  effect trigger?
+When I defeat Jackie Welles instead of a friendly Unit, does the Unit's DEFEATED effect trigger?
 No.
 Can I use this effect if Jackie Welles is in the Field area as a Unit?
 Yes.
 Can I use this effect if Jackie Welles is in the Legends area?
-Yes.
+Yes
 If Jackie Welles would be defeated while it's a Unit, could I use Jackie Welle's effect to defeat himself instead of being defeated the other way?
 Yes.
 
@@ -349,13 +348,13 @@ If I acquire another friendly even Gig after Jackie Welles attacks, does Jackie 
 No.
 
 JAPANTOWN JONIN
-Can Japantown Jonin choose itself with its own  effect?
+Can Japantown Jonin choose itself with its own PLAY effect?
 Yes.
 
 JOHNNY SILVERHAND: NEVER STOP FIGHTING
 What "This Unit wins all fights against CORPO Units" mean?
 When Johnny Silvlerhand attacks (or is attacked by) a CORPO Unit, he always wins the fight, regardless of power. So, Johnny Silverhand defeats the opposing CORPO Unit (as long as he has power 1+).
-If Johnny wins a fight during a Rival's turn, does he still ready from his effect?
+If Johnny wins a fight during a Rival’s turn, does he still ready from his effect?
 Yes.
 If Johnny wins his first fight this turn but is already ready, can I use the effect on his next attack instead?
 No.
@@ -363,24 +362,24 @@ If Johnny has power 0 when he fights a CORPO Unit., does he still defeat the opp
 No. Johnny Silverhand still wins the fight, but Units at power 0 can't defeat other Units in a fight, so neither Unit is defeated.
 
 JOHNNY SILVERHAND: ROCKING RENEGADE
-Can I reduce Johnny Silverhand's effect cost to 0 €$?
+Can I reduce Johnny Silverhand’s effect cost to 0 €$?
 Yes, but you still need to spend Johnny Silverhand to activate it.
 Can I use Johnny's effect on a Unit that wasn't played this turn?
 Yes.
 Can a Unit played on a previous turn still attack the rival Gig area if I use Johnny's effect on it?
 Yes.
 
-JUDY ALVAREZ: BRAINDANCE MAESTRO
+JUDY ÁLVAREZ: BRAINDANCE MAESTRO
 If I play a Program from my trash, does the first effect still trigger?
 Yes.
 Can I trigger the first effect multiple times in a turn by playing multiple BRAINDANCE Programs?
 Yes.
 Can I choose the same friendly Unit with this card's first effect each time I play a Program?
 Yes.
-If I play a  BRAINDANCE Program as a reaction on my Rival's turn, does first effect trigger?
+If I play a QUICK BRAINDANCE Program as a reaction on my Rival's turn, does first effect trigger?
 Yes.
 
-JUDY ALVAREZ: NOTHING TO DOUBT
+JUDY ÁLVAREZ: NOTHING TO DOUBT
 Can I activate this card's effect if I have no cards left in my deck?
 Yes.
 
@@ -389,11 +388,11 @@ If I roll a 1 on a friendly Gig and choose to reroll with Kerry Eurodyne's effec
 No.
 
 KERRY EURODYNE: THE LAST ROCKERBOY
-Can I activate Kerry's  effect the turn I play him?
+Can I activate Kerry's ⊡: effect the turn I play him?
 No.
-Can I activate Kerry's  effect if I do not control an 8+ Gig?
+Can I activate Kerry’s ⊡: effect if I do not control an 8+ Gig?
 Yes, but you won't get to draw 2.
-If Kerry readies after I activated his  effect, can I activate it again on the same turn?
+If Kerry readies after I activated his ⊡: effect, can I activate it again on the same turn?
 Yes.
 
 KIROSHI OPTICS
@@ -401,14 +400,14 @@ Do I have to look at at friendly face-down Legend even if I don't want to?
 Yes.
 
 LA LLORONA: GHOST OF THE PAST
-When La Llorona uses , do I increase a Gig for her second effect before or after the ensuing fight?
+When La Llorona uses BLOCKER, do I increase a Gig for her second effect before or after the ensuing fight?
 Before.
-Can I use a different Unit's  effect after I block with La Llorna to redirect the attack again?
-Yes. There is no limit of how many times you can use  in one turn.
+Can I use a different Unit's BLOCKER effect after I block with La Llorna to redirect the attack again?
+Yes. There is no limit of how many times you can use BLOCKER in one turn.
 Can La Llorona increase a Gig by 0, 1, 2, or 3, or must it increase by exactly 3?
 Up to means 0, 1, 2, or 3.
 
-LES ELEMENS
+LES ÉLÉMENS
 Who chooses?
 The Player activating the card Chooses.
 Can I play this card if there is no Rival Unit?
@@ -449,7 +448,7 @@ If I ready my Maxtac Squadron with a different end-of-turn effect before I resol
 No. To avoid invalidating Maxtac Squadron's effect, resolve it before any effects that would ready it.
 
 MAXTAC SUPPRESSION TEAM
-I played a friendly Legend to the field area with  this turn. Can it attack even if my rival has a Maxtax Suppression Team?
+I played a friendly Legend to the field area with GO SOLO this turn. Can it attack even if my rival has a Maxtax Suppression Team?
 No.
 
 MEMORY RELAPSE
@@ -490,7 +489,7 @@ Yes.
 If I have lower Street Cred when I attack with MT0D12 Flathead, but triggered effects or reactions make my Rival's Street Cred lower than mine, can my Rival then block the MT0D12 Flathead's attack?
 No.
 
-MUAMAR REYES: EL CAPITAN
+MUAMAR REYES: EL CAPITÁN
 If I do not have a friendly Unit, do I have to choose the Draw 1 effect?
 No. You can still "choose" the other effect, it just fails.
 Does Muamar Reyes's effect each fight the Unit is in this turn?
@@ -505,10 +504,10 @@ No.
 NETWATCH NETDRIVER
 When I spend a Unit equipped with Netwatch Netdriver to declare an attack, do I get Netwatch Netdriver's effect before or after I resolve the attack?
 Before.
-If I spend a Unit equipped with Netwatch Netdriver to declare an attack, and the Unit or Legend has an  effect, do I get Netwatch Netdriver's effect before or after the  effect?
+If I spend a Unit equipped with Netwatch Netdriver to declare an attack, and the Unit or Legend has an ATTACK effect, do I get Netwatch Netdriver's effect before or after the ATTACK effect?
 You can choose the order you resolve these effects.
-If I spend a Unit or Legend equipped with Netwatch Netdriver to activate the Unit/Legend's  effect, do I resolve Netwatch Netdriver's effect before or after the activated effect?
-After. Resolve the activated  effect first.
+If I spend a Unit or Legend equipped with Netwatch Netdriver to activate the Unit/Legend's ⊡: effect, do I resolve Netwatch Netdriver's effect before or after the activated effect?
+After. Resolve the activated ⊡: effect first.
 If I spend a Legend equipped with Netwatch Netdriver to pay a card's cost, do I resolve Netwatch Netdriver's effect before or after I play the card?
 After.
 
@@ -537,7 +536,7 @@ If I do not control a friendly d20, can I play Over the Edge?
 Yes, but you cannot defeat a Unit.
 
 OVERWATCH: PANAM'S GIFT
-If I use this card's  effect but my hand is empty, can I still do the rest of the effect?
+If I use this card's ⊡: effect but my hand is empty, can I still do the rest of the effect?
 No, you must discard 1.
 
 PACIFICA NETRUNNER
@@ -547,7 +546,7 @@ Yes.
 PADRE: MAN OF THE CROSS
 If there are no viable rival Units, do I have to choose the draw effect?
 No. You can still "choose" the other effect, it just fails.
-May I use this card's  if all Gigs are already the same value?
+May I use this card's ⊡: if all Gigs are already the same value?
 Yes.
 
 PANAM PALMER: NOMAD CAVALRY
@@ -581,7 +580,7 @@ If my Unit loses a fight but isn't defeated due to this effect, does it still co
 Yes.
 
 RIOT SHIELD
-Does this effect force my Rival to use  on their turn if they have enough €$ available?
+Does this effect force my Rival to use GO SOLO on their turn if they have enough €$ available?
 No.
 
 RITA WHEELER: NO STUPID QUESTIONS
@@ -589,7 +588,7 @@ If I have no cards left in my deck when I spend a friendly Rita Wheeler, do I lo
 Yes.
 
 RIVER WARD: DETECTIVE ON THE HUNT
-Can I activate River Ward's   effect if I have no Gear cards in hand?
+Can I activate River Ward’s QUICK ⊡: effect if I have no Gear cards in hand?
 Yes.
 Does the Gear have to be equipped to this Legend?
 No.
@@ -605,13 +604,13 @@ Does Rogue Amendiares' effect work while face-up in the Legend area?
 Yes.
 
 ROGUE AMENDIARES: QUEEN OF THE AFTERLIFE
-If I manage to play Rogue Amendiares on my Rival's turn, can I use her  effect that turn?
+If I manage to play Rogue Amendiares on my Rival's turn, can I use her QUICK effect that turn?
 No.
 
 ROYCE: DON'T CALL ME SIMON
 Do I have to defeat a rival Unit even if I don't want to?
 Yes.
-If a rival Unit's power is reduced to 2 or 3 by another effect this turn, can Royce defeat it?
+If a rival Unit’s power is reduced to 2 or 3 by another effect this turn, can Royce defeat it?
 Yes.
 
 ROYCE: PSYCHO ON THE EDGE
@@ -645,8 +644,8 @@ Yes.
 SASHA YAKOVLEVA: WON'T LET YOU DOWN
 If I attack the rival Gig area with Sasha but she has 0 power, does she steal a Gig?
 No.
-When I declare an attack with Sasha Yakovleva, can I use her  effect before I choose a target?
-No. You must declare the attack target before revealing the card for her  effect.
+When I declare an attack with Sasha Yakovleva, can I use her ATTACK effect before I choose a target?
+No. You must declare the attack target before revealing the card for her ATTACK effect.
 
 SATORI: SWORD OF SABURO
 If a friendly Unit equipped with Satori fights a Unit of the same power and they defeat each other, do I still draw 1?
@@ -705,7 +704,7 @@ If I choose a Gear with cost equal to the value of a friendly Gig, do I have to 
 You may add it to your hand if you don't want to play it immediately. (But if you play it later, you must pay its cost normally.)
 
 THE RELIC: EXPERIMENTAL BIOCHIP
-When a Unit or Legend equipped with The Relic is defeated, do I move any equipped Gear on it to the bottom-deck, too?
+When a Unit or Legend equipped with The Relic is defeated, do I move any equipped Gear on it to the bottom- deck, too?
 No. The Unit/Legend moves to the trash first, so any Gear (including The Relic) remains in the trash when you bottom-deck the Unit/Legend.
 
 THREE MOUTHS, ONE DESIRE
@@ -729,9 +728,9 @@ No.
 TYGER'S WHISPER
 If I don't Call a Legend for free when I play this card, can I Call a Legend for free later instead?
 No.
-If I manage to play Tyger's Whisper on my Rival's turn, can I Call a Legend for free through its  effect?
+If I manage to play Tyger's Whisper on my Rival's turn, can I Call a Legend for free through its PLAY effect?
 Yes.
-If I already Called a Legend this turn, can I call another Legend with Tyger's Whisper's effect?
+If I already Called a Legend this turn, can I call another Legend with Tyger's Whisper's PLAY effect?
 No.
 
 UNLIKELY BOND
@@ -739,15 +738,15 @@ If I play this when there are no rival Units do I still have to bottom deck a fr
 Yes.
 
 VALENTINO GUERRERA
-If Valentino Guerrera attacks a ready rival Unit with , can the attacked Unit use its own  effect?
+If Valentino Guerrera attacks a ready rival Unit with BLOCKER, can the attacked Unit use its own BLOCKER effect?
 No.
 
 VALENTINO STREET RACER
-If I give a friendly Unit  on my Rival's turn, can it make an attack?
+If I give a friendly Unit ADRENALINE on my Rival's turn, can it make an attack?
 No.
 
 V: CORPORATE EXILE
-Can I play this Legend to the Field area without using the  keyword?
+Can I play this Legend to the Field area without using the GO SOLO keyword?
 Yes.
 
 VIKTOR VEKTOR: DROP YOUR ILLUSIONS
@@ -761,7 +760,7 @@ When I search the top 5 cards of my deck, can I choose not to reveal any cards a
 Yes.
 
 VIKTOR VEKTOR: YOU MIGHT FEEL A LITTLE PINCH
-Can I choose not to use Viktor Vektor's effect?
+Can I choose not to use Viktor Vektor's PLAY effect?
 No, the effect is mandatory. If you can do it, you must.
 
 V: ROAMER OF THE BADLANDS
@@ -773,13 +772,13 @@ When I trash 3, do I need to add a BRAINDANCE Program from the cards I trashed?
 No. You can add any BRAINDANCE Program from your trash.
 If there are fewer than 3 cards in my deck, can I still call V?
 Yes. Trash as many cards as possible, instead.
-If V's  effect trashes multiple BRAINDANCE Programs, can I choose more than 1?
+If V’s PLAY effect trashes multiple BRAINDANCE Programs, can I choose more than 1?
 No.
 
 WAKAKO OKADA: PEACE AND HARMONY
 If there are no viable rival Units, do I have to choose the draw effect?
 No. You can still "choose" the other effect, it just fails.
-Can I use this card's  effect on an already min Gig?
+Can I use this card's ⊡: effect on an already min Gig?
 Yes.
 
 WE GOTTA LIVE TOGETHER
@@ -811,9 +810,9 @@ If I've already attacked with an ARASAKA Unit this turn before Yorinobu Arasaka 
 No.
 
 YORINOBU ARASAKA: STEEL DRAGON
-If the Unit played by Yorinobu has , can it attack the rival Gig area this turn?
+If the Unit played by Yorinobu has ADRENALINE, can it attack the rival Gig area this turn?
 Yes.
-Does Yorinobu count itself for "the first time an ARASAKA Unit is defeated each turn"?
+Does Yorinobu count itself for “the first time an ARASAKA Unit is defeated each turn”?
 Yes.
 If a friendly Arasaka Unit was defeated previusly during my turn and then play Yorinobu Arasaka. If another friendly Arasaka Unit is then defeated this turn. Will I draw 1 off Yorinobu's effect?
 No.
@@ -825,9 +824,9 @@ No, only the amount you pay.
 ZETATECH FACEPLATE
 When I spend a Unit equipped with Zetatech Faceplate to declare an attack, do I get Zetatech Faceplate's effect before or after I resolve the attack?
 Before. Adjust the Gig for Zetatech Faceplate's effect before moving on to your Rival's react step.
-If I spend a Unit equipped with Zetatech Faceplate to declare an attack, and the Unit or Legend has an  effect, do I get Zetatech Faceplacte's effect before or after the  effect?
+If I spend a Unit equipped with Zetatech Faceplate to declare an attack, and the Unit or Legend has an ATTACK effect, do I get Zetatech Faceplacte's effect before or after the ATTACK effect?
 You can choose the order you resolve these effects.
-If I spend a Unit or Legend equipped with Zetatech Faceplate to activate the Unit/Legend's  effect, do I get Zetatech Faceplate's effect before or after the activated effect?
-After. Resolve the activated  effect first.
+If I spend a Unit or Legend equipped with Zetatech Faceplate to activate the Unit/Legend's ⊡: effect, do I get Zetatech Faceplate's effect before or after the activated effect?
+After. Resolve the activated ⊡: effect first.
 If I spend a Legend equipped with Zetatech Faceplate to pay a card's cost, do I get Zetatech Faceplate's effect before or after I play the card?
-After. Play the card first, then adjust the Gig.
+After Play the card first then adjust the Gig

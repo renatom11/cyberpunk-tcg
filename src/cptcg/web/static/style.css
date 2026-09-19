@@ -1207,3 +1207,10 @@ body.mat { position: fixed; inset: 0; width: 100%; }
 }
 .guideview details.mnote > summary:hover { opacity: 0.9; }
 .guideview details.mnote p { margin: 6px 0 0; }
+
+/* The official FAQ on a card sheet: the question in the page's own voice, the answer indented
+   under it so a long list still scans as pairs rather than as a wall. */
+.faq { margin: 4px 0 10px; }
+.faq .faqq { margin: 8px 0 2px; font-weight: 600; }
+.faq .faqa { margin: 0 0 0 12px; padding-left: 8px; border-left: 2px solid var(--line);
+             color: var(--dim); }
