@@ -458,7 +458,7 @@ function renderBoard(root, v, { interactive, onAct, watching, onSkip, fresh } = 
         else {
           // Same treatment: the Gig adjuster is the other box the game puts up to resolve a
           // situation, and it reads better in the middle than tucked in a column beside the board.
-          const picker = adjustPicker(pend, onAct, me);
+          const picker = adjustPicker(pend, onAct, me) || gigPicker(pend, onAct, me);
           if (picker) { centreOver(picker); (pend.options || []).forEach(claim); }
         }
       }
@@ -1298,12 +1298,95 @@ function revealPicker(pend, onAct) {
 //
 // It builds only when every option really is one Gig (the view ships the structure behind each
 // label); anything else falls back to the buttons, which are still correct, just plainer.
+// Choosing Gigs — stealing them, swapping them, naming them — as the dice they are.
+//
+// adjustPicker handles one die and a delta ("increase a Gig by up to 3"). It bails the moment an
+// option names more than one, which is exactly what stealing looks like: the options are every
+// COMBINATION of the dice you may take, so a 2-Gig steal off a 6-Gig board is fifteen of them. They
+// fell through to the plain button list and came out as a wall of text — "rival d4=4, rival d6=5",
+// "rival d4=4, rival d8=7", and so on — for a choice that is entirely about which dice you want.
+//
+// So: draw the dice once each, let the player toggle them, and match the selection back to the one
+// option that names that exact set. Same shape as revealPicker, which does this for card faces.
+function gigPicker(pend, onAct, me) {
+  const opts = pend.options || [];
+  if (!opts.length || !opts.every(o => Array.isArray(o.pick))) return null;
+  // Only a pure selection. Anything carrying a delta is an adjustment and belongs to adjustPicker.
+  const real = opts.filter(o => o.pick.length && o.pick.every(x => x && x.t === "gig" && !x.delta));
+  const decline = opts.find(o => o.pick.length === 0);
+  if (!real.length || real.length + (decline ? 1 : 0) !== opts.length) return null;
+  if (real.every(o => o.pick.length === 1) && !real.some(o => o.pick.length > 1) && real.length < 2) return null;
+
+  const key = (g) => g.owner + ":" + g.i;
+  const dice = [];
+  real.forEach(o => o.pick.forEach(g => {
+    if (!dice.some(d => d.key === key(g))) dice.push({ key: key(g), g });
+  }));
+  // How many the choice actually takes, so the counter can say so rather than leaving you guessing.
+  const sizes = [...new Set(real.map(o => o.pick.length))].sort((a, b) => a - b);
+  const most = sizes[sizes.length - 1];
+
+  const box = el("div", "reveal gigsel");
+  box.append(el("div", "cmtitle", pend.prompt || "Choose Gigs"));
+  const row = el("div", "dicerow");
+  const count = el("div", "count");
+  const go = el("button", "primary hidden", "CONFIRM");
+  let chosen = [];
+
+  const match = () => real.find(o =>
+    o.pick.length === chosen.length && o.pick.every(g => chosen.includes(key(g))));
+
+  const paint = () => {
+    row.querySelectorAll(".pick").forEach(n => {
+      n.classList.toggle("on", chosen.includes(n.dataset.key));
+      // Dim what can no longer be reached: once you hold the most any option takes, the rest are
+      // not choices any more and saying so beats letting a tap do nothing.
+      const full = chosen.length >= most && !chosen.includes(n.dataset.key);
+      n.classList.toggle("idle", full);
+    });
+    count.textContent = `${chosen.length} of ${sizes.join(" or ")} chosen`;
+    go.classList.toggle("hidden", !match());
+  };
+
+  dice.forEach(d => {
+    const wrap = el("div", "pick");
+    wrap.dataset.key = d.key;
+    wrap.append(dieNode(d.g.sides, d.g.value, d.g.owner === me ? "own" : "rival"),
+                el("span", "whose", d.g.owner === me ? "FRIENDLY" : "OPPONENT"));
+    wrap.onclick = (e) => {
+      e.stopPropagation();
+      const at = chosen.indexOf(d.key);
+      if (at >= 0) chosen.splice(at, 1);
+      else if (chosen.length < most) chosen.push(d.key);
+      paint();
+    };
+    row.append(wrap);
+  });
+  go.onclick = (e) => { e.stopPropagation(); const m = match(); if (m) onAct(m.index); };
+  const buttons = el("div", "opts");
+  buttons.append(go);
+  if (decline) {
+    const b = el("button", "", "DECLINE");
+    b.onclick = (e) => { e.stopPropagation(); onAct(decline.index); };
+    buttons.append(b);
+  }
+  box.append(row, count, buttons);
+  paint();
+  return box;
+}
+
 function adjustPicker(pend, onAct, me) {
   const opts = pend.options || [];
   if (!opts.length || !opts.every(o => Array.isArray(o.pick))) return null;
   const real = opts.filter(o => o.pick.length === 1 && o.pick[0].t === "gig");
   const decline = opts.find(o => o.pick.length === 0);
   if (!real.length || real.length + (decline ? 1 : 0) !== opts.length) return null;
+  // A set in which no option moves a die is not an adjustment, it is a selection -- stealing one
+  // Gig, naming one -- and gigPicker draws that. Without this, a one-die steal was claimed here and
+  // came out as an adjuster whose only step read "+0" over a button reading "CONFIRM +0", for a
+  // choice that adjusts nothing. A real adjuster may still offer 0 as one of its steps (the FAQ
+  // allows choosing 0, it just does not count as adjusting), so this asks whether ANY option moves.
+  if (!real.some(o => o.pick[0].delta)) return null;
 
   const dice = [];                                  // one entry per die, with the amounts it allows
   real.forEach(o => {

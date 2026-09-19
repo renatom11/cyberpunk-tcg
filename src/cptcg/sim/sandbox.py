@@ -438,6 +438,29 @@ def _apply_condition(spec: dict, cond: dict, reg: Registry, card_id: str) -> Non
                 hosts[k] = [host, opts]
             mine["field"] = hosts
 
+    if "rival_equip" in cond:
+        # Gear on the RIVAL's board. `equip` only ever dressed your own Units, so every card that
+        # removes or reads a *rival* Gear had nothing to point at: Detonate ("Defeat a rival Gear
+        # with power 2 or less") was unplayable on its own board. The Gear goes on a rival Unit and,
+        # where there is a face-up rival Legend, on that too — the FAQ says Gear on a face-up Legend
+        # is a legal target and that is the half nobody would think to set up.
+        gear = _pick(reg, 1, type=CardType.GEAR, maxpower=cond.get("rival_gear_power", 2))
+        if gear:
+            hosts = list(rival["field"])
+            for k in range(min(cond["rival_equip"], len(hosts))):
+                host = hosts[k] if isinstance(hosts[k], str) else hosts[k][0]
+                opts = {} if isinstance(hosts[k], str) else dict(hosts[k][1])
+                opts["gear"] = list(opts.get("gear", ())) + gear
+                hosts[k] = [host, opts]
+            rival["field"] = hosts
+            legs = list(rival["legends"])
+            if legs and not isinstance(legs[0], str):
+                lid, lopt = legs[0][0], dict(legs[0][1])
+                if lopt.get("faceup"):
+                    lopt["gear"] = list(lopt.get("gear", ())) + gear
+                    legs[0] = [lid, lopt]
+                    rival["legends"] = legs
+
     if "my_tag" in cond:
         mine["field"] = list(mine["field"]) + _pick(reg, 1, type=CardType.UNIT, tag=cond["my_tag"])
 
@@ -620,8 +643,12 @@ CONDITIONS = {
     "modded-muramasa":        {"gigs": "less_cred", "why": "less ★ than a Rival -> ready this Unit at end of turn"},
     "v-roamer-of-the-badlands": {"gigs": "high_gigs2", "why": "2 or more Gigs with 8+ value -> draw 1"},
     "v-streetkid":            {"trash_tag": "BRAINDANCE", "why": "a BRAINDANCE Program in the trash for CALL to retrieve"},
-    "heywood-ripperdoc":      {"equip_cost_matches_gig": True,
-                               "why": "a Gear on the board priced at one of your Gig values -> draw 1"},
+    # --- a rival Gear to point at ------------------------------------------
+    "detonate":               {"rival_equip": 1,
+                               "why": "a rival Gear with power 2 or less to defeat, including one on a face-up rival Legend"},
+    "heywood-ripperdoc":      {"equip_cost_matches_gig": True, "rival_equip": 1,
+                               "why": "a Gear on the board priced at one of your Gig values -> draw 1; and a rival one, since \"a Gear\" is either side"},
+
     # --- deck searches: something findable where the card looks ------------
     "hacked-corpo":           {"deck_top": [{"type": CardType.PROGRAM, "maxcost": 3, "n": 1}],
                                "why": "a Program in the top 3 it trashes, or the add-to-hand half never fires"},

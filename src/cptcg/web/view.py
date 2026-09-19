@@ -141,25 +141,39 @@ def _anon(s: GameState, inst: int, me: int | None) -> str:
     return "A face-down card"
 
 
-def _pick_labels(s: GameState, me: int | None = None) -> list[str] | None:
-    """For PICK choices, try to describe each option using the continuation's captured values."""
+def _pick_env(s: GameState):
+    """What a PICK's ``picks`` are indices *into*, or None if this choice does not say.
+
+    `effects.choose`/`choose_many` build their options as indices into a list the continuation
+    closes over as `vals`, so reading that cell is how the view recovers what a button means.
+    A steal is the one PICK built elsewhere — `steps.AttackStep._resolve` — and its picks are
+    Gig indices in the victim's own area rather than positions in a list, so it has no `vals`
+    to read. Its `Choice.tag` says what it is (`Choice.tag` is documented as the identity of the
+    question and safe to key on, unlike `prompt`, which may name a hidden card), so name the
+    victim's dice in Gig order and the picks index that. Both callers then have one shape:
+    without this the steal reached the client with `pick: null` on every option, and a picker
+    that draws dice fell back to prose buttons.
+    """
     ch = s.pending
-    cont = ch.cont
     try:
-        cells = cont.__closure__ or ()
-        names = cont.__code__.co_freevars
-        env = {nm: c.cell_contents for nm, c in zip(names, cells)}
+        cells = ch.cont.__closure__ or ()
+        env = {nm: c.cell_contents for nm, c in zip(ch.cont.__code__.co_freevars, cells)}
     except Exception:  # noqa: BLE001
         return None
     vals = env.get("vals")
+    if vals is not None:
+        return vals
+    if (ch.tag or "").endswith("@steal"):
+        victim = 1 - ch.player
+        return tuple((victim, i) for i in range(len(s.gig[victim])))
+    return None
+
+
+def _pick_labels(s: GameState, me: int | None = None) -> list[str] | None:
+    """For PICK choices, try to describe each option using the continuation's captured values."""
+    ch = s.pending
+    vals = _pick_env(s)
     if vals is None:
-        if "Steal" in (ch.prompt or ""):                      # steal picks index the victim's Gig area
-            victim = 1 - ch.player
-            out = []
-            for o in ch.options:
-                out.append(", ".join(f"rival d{s.gig[victim][i][0]}={s.gig[victim][i][1]}" for i in o.picks
-                                     if i < len(s.gig[victim])) or "Decline")
-            return out
         return None
     out = []
     for o in ch.options:
@@ -212,12 +226,7 @@ def _pick_struct(s: GameState, v, me: int | None):
 def _pick_values(s: GameState, me: int | None):
     """Per option, the structured values behind its label (or None where there is no structure)."""
     ch = s.pending
-    try:
-        cells = ch.cont.__closure__ or ()
-        env = {nm: c.cell_contents for nm, c in zip(ch.cont.__code__.co_freevars, cells)}
-    except Exception:  # noqa: BLE001
-        return None
-    vals = env.get("vals")
+    vals = _pick_env(s)
     if vals is None:
         return None
     out = []

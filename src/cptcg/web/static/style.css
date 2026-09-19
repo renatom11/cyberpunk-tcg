@@ -600,6 +600,15 @@ table.rep th { color: var(--cyan); }
 .reveal.centred .shown { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 .gigadj.centred { background: var(--panel); border: 1px solid var(--cyan); border-radius: 10px;
   padding: 12px 14px; max-width: min(520px, 94vw); box-shadow: 0 12px 34px #000d; }
+/* Picking Gigs: the dice, laid out to be tapped, rather than a list of their names. */
+.reveal.gigsel .dicerow { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+  padding: 4px 0 2px; }
+.reveal.gigsel .pick { display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.reveal.gigsel .pick.on { border-color: var(--yellow, #ffe600); background: #ffe6000f; }
+.reveal.gigsel .pick.idle { opacity: .34; }
+.reveal.gigsel .pick .whose { font-size: 9px; letter-spacing: .1em; color: var(--dim); }
+.reveal.gigsel .count { text-align: center; color: var(--dim); font-size: 11.5px; margin: 6px 0 2px; }
 
 /* A search that found nothing: the same row of faces the picker draws, all of them dimmed. */
 .reveal.peek { background: var(--panel); border: 1px solid var(--cyan); border-radius: 10px;
