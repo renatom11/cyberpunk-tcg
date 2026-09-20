@@ -9,6 +9,71 @@ deliberate decisions rather than a list of times the file moved.
 Every entry records the five pieces of evidence from `docs/verification.md`. A regeneration without
 all five is not one.
 
+
+## 2026-09-20 — ruling 027, a Legend may spend itself toward its own cost (G2, engine-wide)
+
+**The change.** `exclude=` dropped from the three *playing* `pay()` sites (CallLegend in the main
+menu and in a reaction, and `go_solo`) and from the two menu subtractions that mirrored it in
+`legal.py`; and a solo'd Legend now arrives ready. `engine.activate` keeps its exclusion, which is
+a different rule. Settled by the FAQ, not by argument: *"Can I spend a Legend for an Eddie when
+playing it with it's own GO SOLO? **Yes**"*.
+
+The first G2 entry in this ledger where the change is not attributable to any card — the closest
+precedent is Mox Inciters, recorded as "G2 by file and unlocalisable by construction: a card script
+cannot remove an option from a menu the engine builds". That entry had no instrument. This one does:
+`golden_impact.py --engine`, added with the fix.
+
+**1. Prediction, written before the change.** Every key. Deck membership predicts nothing here,
+because the change is not about a card: every golden deck brings three Legends, and `main_menu` now
+compares each one's cost against a total it is no longer subtracted from, on every turn of every
+game. So the hard stop inverts — a key that did **not** move would be the thing needing an
+explanation. Observed: all 8, and every game inside them bar one.
+
+**2. Localisation.** The window for `sample_arasaka~sample_fixers~heuristic` (diverges at decision
+6) shows the change outright, three lines in: *"sample_fixers (seat 1) Calls a Legend by spending 1
+Legend"* — turn one, no Eddies on the table, a face-down Legend paying for its own Call. That line
+could not occur on the previous build at all. The other seven keys diverge at decisions 4 to 16,
+which is the first turn in each: a Legend is on the table from the start, so the menu differs from
+the first main phase, and an added option renumbers every index after it.
+
+**3. Revert confirmation.** `engine.py` and `legal.py` restored to their pre-027 state against the
+NEW golden: DIFFERENT on all 8 keys, at actions 4, 4, 4, 4, 5, 6, 4, 16. The regeneration was taken
+on a tree carrying only the intended change.
+
+**4. Aggregate.**
+
+| key | games | winner flips | end-reason | mean turn delta |
+|---|---|---|---|---|
+| sample_arasaka~sample_fixers~heuristic | 16/16 | 4 | 5 | +0.00 |
+| sample_arasaka~sample_fixers~random | 40/40 | 11 | 11 | −0.53 |
+| sample_corpos~sample_nomads~heuristic | 16/16 | 3 | 5 | +0.12 |
+| sample_corpos~sample_nomads~random | 40/40 | 12 | 4 | +0.10 |
+| sample_gangers~sample_netrunners~heuristic | 16/16 | 0 | 4 | +0.31 |
+| sample_gangers~sample_netrunners~random | 39/40 | 8 | 12 | −0.18 |
+| the_heist~embracing_power~heuristic | 16/16 | 8 | 4 | −0.50 |
+| the_heist~embracing_power~random | 40/40 | 17 | 13 | −0.10 |
+
+Much the largest regeneration in this ledger, past even Mox Inciters, and the size is the point.
+This is not a card behaving differently in the games that play it; it is one more legal move
+available to both seats on most turns of every game. 223 of 224 games moving is the expected shape,
+and the turn deltas — all inside half a turn — say the games are otherwise the same games. The one
+unmoved game is worth naming rather than rounding away: `sample_gangers~sample_netrunners~random`
+has a single game in which neither seat ever reached a position where the extra €$ was the
+difference.
+
+**5. Two-sided reachability.** Both instruments move. `fuzz -n 300 --seed 1` (heuristic)
+`2d3fa49cdabadbdb3b6fa1cd` → `0c0b5c1f7e32e9b8d652742c`, 42,668 → 43,261 actions; `fuzz -n 400
+--seed 1 --agent random` `e5b6084fdeaa99c52fe15ff6` → `9fabde15ecca34ffd589536d`, 32,596 → 32,549.
+Both crash-free, 150 of 151 cards reached.
+
+**What it cost outside the golden**, recorded here because the golden is not the only frozen thing a
+rules change invalidates: six of the 79 delayed-reward positions stopped qualifying (two are now
+solved outright by the frozen heuristic — `sell-to-afford-go-solo` is "sell a card to afford the GO
+SOLO", and the Legend now affords itself — three push random play over the 25% floor, and one lost
+its winning line because the *rival* gained the same option), the committed experience sample and
+the demo replay were re-recorded, and two tests were repaired. The commit before this one has the
+detail. The ruleset digest did **not** move, deliberately: see `docs/rulings.md` row 027.
+
 ---
 
 ## 2026-09-14 — `unlikely-bond` (AUD-unlikely-bond-1)
