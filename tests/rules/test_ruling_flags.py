@@ -88,6 +88,71 @@ def test_027_go_solo_takes_a_spent_legend_and_returns_it_ready(reg):
         "go_solo_requires_ready=True should keep a spent Legend off the menu"
 
 
+# ------------------------------------------------------------------- 046 trigger ordering
+def test_046_the_controller_orders_their_own_simultaneous_triggers(pool):
+    """The FAQ: *"When I have mulitple ATTACK effects that activate and go into pending at the
+    same time. Can I choose any order to resolve them? **Yes**"*, and the same answer again for a
+    trigger meeting a differently-worded one.
+
+    The board that raised the ruling in play: two Gear on one Unit, each triggering when its host
+    is spent. Attacking spends the host, both fire, and the controller is asked which first.
+    """
+    from cptcg.core.actions import Attack, Pass, Target
+    from cptcg.core.enums import TARGET_GIG
+    from cptcg.core.engine import apply, legal_actions
+
+    s = board(pool, Side(field=[("psycho-squad",
+                                {"gear": ["zetatech-faceplate", "netwatch-netdriver"]})],
+                         gig=[(6, 3), (8, 5)], deck=["floor-it", "mantis-blades"]),
+              Side(gig=[(4, 2)]))
+    u = find(s, "psycho-squad", Zone.FIELD, 0)
+    asked = None
+    for _ in range(8):
+        legal_actions(s)
+        ch = s.pending
+        if ch is None:
+            break
+        if ch.kind is ChoiceKind.PICK and (ch.tag or "").endswith("@order"):
+            asked = ch
+            break
+        pick = 0
+        for i, o in enumerate(ch.options):
+            if isinstance(o, Attack) and o.inst == u:
+                pick = i
+                break
+            if isinstance(o, Target) and o.kind == TARGET_GIG:
+                pick = i
+                break
+            if isinstance(o, Pass):
+                pick = i
+        apply(s, pick)
+    assert asked is not None, "two Gear triggering on one spend asked nobody which came first"
+    assert asked.player == 0 and len(asked.options) == 2
+    names = {s.card(i).name for i in (find(s, "zetatech-faceplate", Zone.FIELD, 0),
+                                      find(s, "netwatch-netdriver", Zone.FIELD, 0))}
+    assert names == {"Zetatech Faceplate", "NetWatch Netdriver"}
+
+
+def test_046_two_copies_of_one_card_are_not_a_choice(pool):
+    """The restriction, and it is measured rather than assumed — see ``ops.needs_ordering``.
+
+    A third of the events with two of one player's triggers were two copies of the SAME card.
+    Ordering two identical effects has no distinguishable branches, so asking would be a prompt
+    that cannot matter, thousands of times a game set, and a branching factor the search pays for
+    and learns nothing from.
+    """
+    from cptcg.core.ops import needs_ordering
+
+    s = board(pool, Side(field=["psycho-squad", "corpo-security"]), Side())
+    a, b = s.units(0)
+    assert not needs_ordering(s, [(a, None)])                      # one trigger: nothing to order
+    assert needs_ordering(s, [(a, None), (b, None)])               # two different cards: a choice
+    assert not needs_ordering(s, [(a, None), (a, None)])           # the same instance twice
+    other = board(pool, Side(field=["psycho-squad", "psycho-squad"]), Side())
+    c, d = other.units(0)
+    assert not needs_ordering(other, [(c, None), (d, None)]), "two copies of one card is not a choice"
+
+
 # --------------------------------------------------------------- 004 empty_fixer_skips
 def test_004_an_empty_fixer_skips_the_gig_step(reg):
     """With no dice left to roll there is nothing to ask, so the step must not stop for a choice."""

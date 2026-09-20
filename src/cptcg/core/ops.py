@@ -146,13 +146,17 @@ def dispatch(s: GameState, ev: tuple) -> None:
     hooks = act[6][s.active]                         # active player's cards first
     if hooks:
         kind = ev[0]
-        for inst, h, kinds in reversed(hooks):
-            # The game-over test stays ahead of the kind filter: a skipped hook is one that
-            # would have returned without doing anything, so the early return happens at
-            # exactly the same hook as it would without the filter.
-            if s.over:
-                return
-            if kinds is None or kind in kinds:
+        matched = [(i, h) for i, h, kinds in hooks if kinds is None or kind in kinds]
+        if needs_ordering(s, matched):
+            from cptcg.core.steps import OrderTriggersStep
+            s.stack.append(OrderTriggersStep(ev, tuple(matched)))
+        else:
+            for inst, h in reversed(matched):
+                # The game-over test stays ahead of the hook call: a skipped hook is one that
+                # would have returned without doing anything, so the early return happens at
+                # exactly the same hook as it would without the kind filter.
+                if s.over:
+                    return
                 h(_ctx(s, inst), ev)
     # Temporary listeners registered by effects ("the next time ... this turn"): (s, ev) callables.
     # Most dispatches find no mods at all; when there are some, walk a copy (listeners may append).
@@ -162,6 +166,34 @@ def dispatch(s: GameState, ev: tuple) -> None:
                 fn(s, ev)
     if s.log is not None:                            # s.emit("event", ev), inlined
         s.log.append(("event", ev))
+
+
+def needs_ordering(s: GameState, matched: list) -> bool:
+    """Ruling 046: does one player own two or more of the triggers this event just matched?
+
+    The FAQ grants the controller the choice of order in exactly that case — *"When I have
+    mulitple ATTACK effects that activate and go into pending at the same time. Can I choose any
+    order to resolve them? **Yes**"*, and again for a trigger meeting a differently-worded one.
+    Across players there is no choice to make: the turn player's resolve first, which is the order
+    the hook list is already in.
+
+    **Distinct cards only**, and that restriction is measured rather than assumed. Over 287,247
+    dispatched events in 240 golden-deck games, 4.8% matched two of one player's hooks — but a
+    third of those were two or three copies of the SAME card (Rita Wheeler beside Rita Wheeler,
+    Meredith Stout beside Meredith Stout). Ordering two identical effects is a choice whose
+    branches cannot be told apart: it would put a meaningless prompt in front of the player
+    thousands of times and hand the search a branching factor for nothing. Requiring two distinct
+    cards takes it to 3.2%, and every one of those is a real decision.
+    """
+    if len(matched) < 2:
+        return False
+    seen = ({}, {})
+    for inst, _h in matched:
+        by = seen[s.i_owner[inst]]
+        by[s.i_card[inst]] = True
+        if len(by) >= 2:
+            return True
+    return False
 
 
 def ask(s: GameState, choice) -> None:

@@ -275,8 +275,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.07,
-    "when": "2026-09-20 02:47 UTC"
+    "seconds": 0.06,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -557,8 +557,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.34,
-    "when": "2026-09-20 02:47 UTC"
+    "seconds": 0.35,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -728,8 +728,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 4.08,
-    "when": "2026-09-20 02:47 UTC"
+    "seconds": 4.21,
+    "when": "2026-09-20 03:09 UTC"
    },
    "spec": {
     "seed": 23773,
@@ -1093,8 +1093,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 2.63,
-    "when": "2026-09-20 02:47 UTC"
+    "seconds": 2.72,
+    "when": "2026-09-20 03:09 UTC"
    },
    "spec": {
     "seed": 166300,
@@ -1339,9 +1339,10 @@
      1,
      0,
      0,
+     0,
      0
     ],
-    "nodes": 84,
+    "nodes": 159,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -1386,7 +1387,8 @@
        3,
        1,
        0,
-       14
+       0,
+       12
       ]
      },
      {
@@ -1404,7 +1406,8 @@
        4,
        1,
        0,
-       14
+       0,
+       12
       ]
      },
      {
@@ -1422,7 +1425,8 @@
        4,
        1,
        0,
-       14
+       0,
+       12
       ]
      },
      {
@@ -1439,6 +1443,7 @@
        5,
        4,
        1,
+       0,
        0,
        12
       ]
@@ -1470,8 +1475,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 5.25,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 6.92,
+    "when": "2026-09-20 03:09 UTC"
    },
    "spec": {
     "seed": 166302,
@@ -1839,8 +1844,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 1.05,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 1.11,
+    "when": "2026-09-20 03:09 UTC"
    },
    "spec": {
     "seed": 166305,
@@ -2329,8 +2334,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.06,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.07,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -2612,7 +2617,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.25,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -2896,7 +2901,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.06,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -3173,7 +3178,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.07,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -3451,8 +3456,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 1.13,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 1.2,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -3722,8 +3727,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.32,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.37,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -3989,8 +3994,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.05,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.07,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -4260,7 +4265,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.05,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -4537,7 +4542,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.12,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -4814,8 +4819,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 1.32,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 1.35,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -5080,7 +5085,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.06,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -5373,8 +5378,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.32,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.34,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -5666,7 +5671,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.08,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -5954,7 +5959,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.06,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -6252,8 +6257,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 4.71,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 4.86,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -6528,8 +6533,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.13,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.14,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -6814,7 +6819,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.1,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -7098,8 +7103,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.28,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.3,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -7375,7 +7380,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.13,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -7653,8 +7658,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.19,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.2,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -7915,7 +7920,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.03,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -8206,8 +8211,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.13,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.14,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -8487,8 +8492,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.45,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.47,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -8768,8 +8773,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.05,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.06,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -8947,9 +8952,11 @@
      4,
      1,
      1,
+     0,
+     0,
      0
     ],
-    "nodes": 48,
+    "nodes": 89,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -8984,9 +8991,10 @@
        2,
        1,
        1,
-       2,
-       8,
        1,
+       1,
+       1,
+       8,
        0
       ]
      },
@@ -8999,8 +9007,9 @@
        1,
        1,
        1,
+       2,
+       10,
        1,
-       4,
        0
       ]
      },
@@ -9015,6 +9024,7 @@
        1,
        1,
        1,
+       6,
        0
       ]
      },
@@ -9024,11 +9034,12 @@
       "line": [
        2,
        2,
+       0,
        1,
        1,
-       2,
-       3,
        1,
+       1,
+       4,
        0
       ]
      }
@@ -9059,8 +9070,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.07,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.09,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -9348,7 +9359,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.04,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -9626,8 +9637,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 2.5,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 2.57,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -9908,8 +9919,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.07,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.08,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -10198,7 +10209,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.12,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -10486,7 +10497,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.07,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -10784,8 +10795,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.11,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.12,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -11061,8 +11072,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.94,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.96,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -11336,7 +11347,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.02,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -11627,8 +11638,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.18,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.19,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -11916,8 +11927,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.21,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.22,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -12193,7 +12204,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.05,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -12478,7 +12489,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.04,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -12758,7 +12769,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.04,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -13043,7 +13054,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.06,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -13326,7 +13337,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.04,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -13603,7 +13614,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.05,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -13883,8 +13894,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.06,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.07,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -14168,7 +14179,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.55,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -14445,8 +14456,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.8,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.81,
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -14743,7 +14754,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 1.02,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:09 UTC"
    }
   },
   {
@@ -15054,8 +15065,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 5.67,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 6.44,
+    "when": "2026-09-20 03:10 UTC"
    }
   },
   {
@@ -15323,8 +15334,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 8.74,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 9.08,
+    "when": "2026-09-20 03:10 UTC"
    }
   },
   {
@@ -15606,8 +15617,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 1.25,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 1.22,
+    "when": "2026-09-20 03:10 UTC"
    }
   },
   {
@@ -15911,8 +15922,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.98,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 1.0,
+    "when": "2026-09-20 03:10 UTC"
    }
   },
   {
@@ -16239,7 +16250,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.1,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:10 UTC"
    }
   },
   {
@@ -16547,8 +16558,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.45,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.46,
+    "when": "2026-09-20 03:10 UTC"
    }
   },
   {
@@ -16859,8 +16870,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 2.02,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 2.07,
+    "when": "2026-09-20 03:10 UTC"
    }
   },
   {
@@ -17172,8 +17183,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.11,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.12,
+    "when": "2026-09-20 03:10 UTC"
    }
   },
   {
@@ -17491,7 +17502,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.08,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:10 UTC"
    }
   },
   {
@@ -17808,8 +17819,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.15,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.16,
+    "when": "2026-09-20 03:10 UTC"
    }
   },
   {
@@ -18121,8 +18132,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.59,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.6,
+    "when": "2026-09-20 03:10 UTC"
    }
   },
   {
@@ -18436,8 +18447,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.11,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.12,
+    "when": "2026-09-20 03:10 UTC"
    }
   },
   {
@@ -18695,8 +18706,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 2.97,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 3.61,
+    "when": "2026-09-20 03:10 UTC"
    }
   },
   {
@@ -18971,8 +18982,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.13,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.12,
+    "when": "2026-09-20 03:10 UTC"
    }
   },
   {
@@ -19251,7 +19262,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.12,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:10 UTC"
    }
   },
   {
@@ -19518,7 +19529,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.07,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:10 UTC"
    }
   },
   {
@@ -19811,8 +19822,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.15,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.16,
+    "when": "2026-09-20 03:10 UTC"
    }
   },
   {
@@ -20102,8 +20113,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.14,
-    "when": "2026-09-20 02:48 UTC"
+    "seconds": 0.15,
+    "when": "2026-09-20 03:10 UTC"
    }
   },
   {
@@ -20389,7 +20400,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.13,
-    "when": "2026-09-20 02:48 UTC"
+    "when": "2026-09-20 03:10 UTC"
    }
   },
   {
@@ -20555,7 +20566,7 @@
      0,
      0
     ],
-    "nodes": 8269,
+    "nodes": 9713,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -20649,8 +20660,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 57.49,
-    "when": "2026-09-20 02:49 UTC"
+    "seconds": 85.56,
+    "when": "2026-09-20 03:11 UTC"
    }
   },
   {
@@ -20929,7 +20940,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
     "seconds": 0.13,
-    "when": "2026-09-20 02:49 UTC"
+    "when": "2026-09-20 03:11 UTC"
    }
   },
   {
@@ -21099,7 +21110,7 @@
      0,
      0
     ],
-    "nodes": 1132,
+    "nodes": 1198,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -21135,6 +21146,7 @@
        1,
        3,
        0,
+       0,
        1
       ]
      },
@@ -21158,6 +21170,7 @@
        4,
        1,
        3,
+       0,
        0,
        1
       ]
@@ -21201,8 +21214,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "24cfbb7211854d64",
-    "seconds": 0.17,
-    "when": "2026-09-20 02:49 UTC"
+    "seconds": 0.18,
+    "when": "2026-09-20 03:11 UTC"
    }
   }
  ],

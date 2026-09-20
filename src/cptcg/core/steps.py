@@ -487,6 +487,71 @@ class HookStep(Step):
         self.hook(_ctx(s, self.inst))
 
 
+class OrderTriggersStep(Step):
+    """Ruling 046: the controller orders their own triggers that landed on the same event.
+
+    ``ops.dispatch`` calls hooks inline and in a fixed order, which is right for the 96.8% of
+    events where nobody has a choice to make and is what keeps dispatch cheap. When one player
+    owns two or more triggers on distinct cards (``ops.needs_ordering``), the walk moves here
+    instead: ask that player which resolves next, resolve exactly that one, and re-push with the
+    rest. That is the shape ``ReactionWindowStep`` uses — re-push a menu until there is nothing
+    left to ask — and it uses the existing ``Pick`` action, because a new Action class would move
+    ``learn.policy.action_feature_digest()`` and every fitted policy head would be refused on load.
+
+    Two things this deliberately does not do, both because the FAQ does not grant them. Across
+    players there is no choice: the turn player's triggers resolve first, which is the order the
+    hook list already has, so a group is always one player's. And it is only for triggers that
+    land *together* — the FAQ is explicit the other way round for a trigger meeting an activated
+    ⊡ effect ("After. Resolve the activated effect first") or a cost being paid ("After. Play the
+    card first").
+
+    The cost of moving a group here is that its hooks run as a step rather than inside the
+    caller's remaining code. That is the one behaviour change beyond the ordering itself, it is
+    confined to the 3.2%, and it is arguably the more correct sequencing: the rules put a trigger
+    in a pending queue that resolves after the current effect finishes.
+    """
+    __slots__ = ("ev", "left")
+
+    def __init__(self, ev: tuple, left: tuple) -> None:
+        self.ev = ev
+        self.left = left                              # ((inst, hook), ...) in default order
+
+    def key(self) -> tuple:
+        return ("OrderTriggersStep", self.ev[0], tuple(i for i, _ in self.left))
+
+    def run(self, s: GameState) -> None:
+        if s.over or not self.left:
+            return
+        # One player's group at a time, in the order dispatch already put them in.
+        p = s.i_owner[self.left[0][0]]
+        group = tuple(x for x in self.left if s.i_owner[x[0]] == p)
+        rest = tuple(x for x in self.left if s.i_owner[x[0]] != p)
+        if len({s.i_card[i] for i, _ in group}) < 2:
+            # Nothing to choose: copies of one card, or a lone trigger. Resolve the group the way
+            # dispatch would have, then carry on with the other player's.
+            if rest:
+                s.stack.append(OrderTriggersStep(self.ev, rest))
+            for inst, h in reversed(group):
+                if s.over:
+                    return
+                h(_ctx(s, inst), self.ev)
+            return
+        # `vals` is read by web.view._pick_env to draw the buttons as the cards they name, which is
+        # the same convention effects.choose uses. Keep the name.
+        vals = tuple(i for i, _ in group)
+        hks = tuple(h for _, h in group)
+
+        def cont(st: GameState, act: Pick, rest=rest, ev=self.ev) -> None:
+            k = act.picks[0]
+            remaining = tuple((vals[j], hks[j]) for j in range(len(vals)) if j != k)
+            if remaining or rest:
+                st.stack.append(OrderTriggersStep(ev, remaining + rest))
+            hks[k](_ctx(st, vals[k]), ev)
+
+        ask(s, Choice(ChoiceKind.PICK, p, tuple(Pick((k,)) for k in range(len(vals))), cont,
+                      prompt="Resolve which trigger first?", tag=f"{self.ev[0]}@order"))
+
+
 class FnStep(Step):
     """Run an arbitrary fn(state) later — used to sequence effects after a choice resolves."""
     __slots__ = ("fn",)

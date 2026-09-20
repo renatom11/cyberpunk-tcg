@@ -390,7 +390,11 @@ def test_dying_night_gear_attack_trigger_and_v_ready(pool):
     do(s, Pick((0,)))                                       # (rival d6, -2) -> 1
     do(s, Pick((4,)))                                       # V steals it: increase by +5 -> 6
     assert s.gig[0] == [(6, 6)]
-    do(s, EndTurn())                                        # host is named "V": ready 2 Eddies
+    do(s, EndTurn())
+    # Ruling 046: V and her Pistol both trigger at end of turn, so the controller is asked which
+    # resolves first. Either answer readies the Eddies — which is the point of asserting the
+    # outcome rather than the order.
+    do(s, Pick((0,)))                                       # host is named "V": ready 2 Eddies
     assert available(s, 0) == 2
 
 def test_kiroshi_optics_look(pool):
