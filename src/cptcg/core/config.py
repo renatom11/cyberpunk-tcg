@@ -57,7 +57,11 @@ class RulesConfig:
     attack_triggers_before_target: bool = False  # 023: CR 9.3 — the target is part of the declaration
     explicit_payment: bool = False         # 025
     field_limit: int | None = None         # 026
-    go_solo_requires_ready: bool = False   # 027: CR 4.5.1 — it enters in the same orientation
+    go_solo_requires_ready: bool = False   # 027: a SPENT Legend may still GO SOLO — FAQ, "Can I GO
+    #                                      SOLO on a spent Legend? Yes". This gates LEGALITY only;
+    #                                      the orientation it arrives in is settled and hard-coded
+    #                                      (engine.go_solo), because a field here is hashed into
+    #                                      digest() and every fitted artifact would be refused.
     go_solo_enters_lagged: bool = True     # 033: CR 4.5.2 — with Lag; the keyword still lets it attack
     legends_removed_when_leaving: bool = True   # 034: CR 4.4.1 — any Legend in an invalid area is removed
     programs_resolve_outside_areas: bool = True # 035: CR 4.14.2 — not in the trash while resolving

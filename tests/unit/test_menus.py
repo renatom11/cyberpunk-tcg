@@ -1,8 +1,14 @@
-"""main_menu / reaction_menu call available() once per menu and derive every per-Legend
-``available(s, p, exclude=i)`` arithmetically (see payable_sources). These tests pin the fast
-menus to straightforward reference versions - the pre-optimisation code, pasted verbatim - at
-every decision of random games on the test card set and on the whole pool, and on hand-built
-boards that isolate each branch of the arithmetic."""
+"""main_menu / reaction_menu call available() once per menu and compare every Legend's cost
+against that one number. These tests pin the fast menus to straightforward reference versions -
+the pre-optimisation code, pasted verbatim - at every decision of random games on the test card
+set and on the whole pool, and on hand-built boards that isolate each branch.
+
+Until ruling 027 was settled by the FAQ the menus subtracted a Legend from its own funds, and the
+reference versions mirrored that with ``available(s, p, exclude=i)``. A Legend may spend itself
+toward its own cost, so both sides now read the plain total. ``available(..., exclude=)`` is still
+the engine's function and still correct; ``_check_exclusion_arithmetic`` below still pins it,
+because ``activate`` uses it for an ability whose ⊡ cost spends the card itself - which is a
+different rule and was not touched."""
 import json
 from collections import Counter
 from pathlib import Path
@@ -57,9 +63,9 @@ def _ref_main_menu(s):
         if s.i_faceup[i]:
             if (Keyword.GO_SOLO in d.keywords and d.cost is not None and not field_full
                     and (not s.cfg.go_solo_requires_ready or not s.i_spent[i])
-                    and available(s, p, exclude=i) >= play_cost(s, p, i, go_solo=True)):
+                    and available(s, p) >= play_cost(s, p, i, go_solo=True)):
                 opts.append(GoSolo(i))
-        elif not once & ONCE_CALLED and available(s, p, exclude=i) >= 1:
+        elif not once & ONCE_CALLED and available(s, p) >= 1:
             opts.append(CallLegend(i))
 
     opts += ability_options(s, p, quick_only=False)
@@ -76,7 +82,7 @@ def _ref_reaction_menu(s):
     opts = [Pass()]
     if not s.once[d] & ONCE_CALLED:
         opts += [CallLegend(i) for i in s.legends(d)
-                 if not s.i_faceup[i] and available(s, d, exclude=i) >= 1]
+                 if not s.i_faceup[i] and available(s, d) >= 1]
     asc = s.card(atk.attacker).script
     unblockable = asc is not None and asc.unblockable is not None and asc.unblockable(_ctx(s, atk.attacker))
     if not unblockable and atk.redirects < s.cfg.max_redirects_per_attack and (
@@ -97,7 +103,12 @@ def _ref_reaction_menu(s):
 
 # ------------------------------------------------------------------ helpers
 def _check_exclusion_arithmetic(s):
-    """available(s, p, exclude=i) is available(s, p) minus one iff Legend i is a payable source."""
+    """available(s, p, exclude=i) is available(s, p) minus one iff Legend i is a payable source.
+
+    The menus no longer ask this (ruling 027: a Legend may pay toward its own cost), but
+    ``engine.activate`` still does, for an ability whose ⊡ cost spends the card itself — that card
+    cannot also be spent for €$. So the arithmetic stays pinned.
+    """
     for p in (0, 1):
         base = available(s, p)
         srcs = payable_sources(s, p)
@@ -215,21 +226,29 @@ def _same_main_menu(s):
     return ref
 
 
-def test_go_solo_face_up_legend_with_sell_tag_cannot_pay_for_itself(reg):
-    # T-L1: GO SOLO 5, sell tag. Ready and face-up it is a payable source - but not for its own cost.
-    s = board(reg, Side(legends=[("T-L1", {"faceup": True})], eddies=5), Side())
-    l1 = find(s, "T-L1")
-    assert available(s, 0) == 6 and available(s, 0, exclude=l1) == 5
-    assert GoSolo(l1) in _same_main_menu(s)
+def test_go_solo_face_up_legend_with_sell_tag_pays_for_itself(reg):
+    """Ruling 027, settled by the FAQ: *"Can I spend a Legend for an Eddie when playing it with
+    it's own GO SOLO? **Yes**"*. This test asserted the opposite until then.
 
+    T-L1: GO SOLO 5, sell tag. Ready and face-up it is a payable source — including for its own
+    cost, which is the whole change.
+    """
     s = board(reg, Side(legends=[("T-L1", {"faceup": True})], eddies=4), Side())
-    assert GoSolo(find(s, "T-L1")) not in _same_main_menu(s)
+    l1 = find(s, "T-L1")
+    assert available(s, 0) == 5                  # 4 Eddies and the Legend itself
+    assert GoSolo(l1) in _same_main_menu(s)      # ... and the fifth €$ is the Legend
+
+    s = board(reg, Side(legends=[("T-L1", {"faceup": True})], eddies=3), Side())
+    assert GoSolo(find(s, "T-L1")) not in _same_main_menu(s)   # one short even counting itself
 
     # Spent, it is no source at all; the 5 Eddies still pay (go_solo_requires_ready is off).
     s = board(reg, Side(legends=[("T-L1", {"faceup": True, "spent": True})], eddies=5), Side())
     l1 = find(s, "T-L1")
     assert available(s, 0) == available(s, 0, exclude=l1) == 5
     assert GoSolo(l1) in _same_main_menu(s)
+
+    s = board(reg, Side(legends=[("T-L1", {"faceup": True, "spent": True})], eddies=4), Side())
+    assert GoSolo(find(s, "T-L1")) not in _same_main_menu(s)   # and a spent one cannot help itself
 
 
 def test_go_solo_face_up_legend_without_sell_tag_is_not_a_source(reg_untagged_legend):
@@ -244,12 +263,22 @@ def test_go_solo_face_up_legend_without_sell_tag_is_not_a_source(reg_untagged_le
 
 
 def test_call_legend_with_a_spent_face_down_legend(reg):
-    # The only ready source is T-L4 itself: it can pay to call T-L2 but not to call itself.
+    """The only ready source is T-L4 itself, and it may pay for its own Call (ruling 027).
+
+    CR 5.7.2.2 restricts only *face-up* Legends, so a ready face-down one needs no Sell Tag to be
+    spent — which makes a lone ready Legend able to Call itself with no Eddies on the table at all.
+    That case used to be unreachable and is the one a player hits first.
+    """
     s = board(reg, Side(legends=[("T-L2", {"spent": True}), "T-L4"], eddies=0), Side())
     l2, l4 = find(s, "T-L2"), find(s, "T-L4")
     assert available(s, 0) == 1
     opts = _same_main_menu(s)
-    assert CallLegend(l2) in opts and CallLegend(l4) not in opts
+    assert CallLegend(l2) in opts and CallLegend(l4) in opts
+
+    # The spent one cannot pay for anything, its own Call included.
+    s = board(reg, Side(legends=[("T-L2", {"spent": True}), ("T-L4", {"spent": True})], eddies=0), Side())
+    assert available(s, 0) == 0
+    assert not any(isinstance(a, CallLegend) for a in _same_main_menu(s))
 
     # One Eddie: both calls are affordable.
     s = board(reg, Side(legends=[("T-L2", {"spent": True}), "T-L4"], eddies=1), Side())
@@ -275,12 +304,13 @@ def _reaction_board(pool, defender):
 def test_reaction_quick_program_needs_a_ready_source(pool):
     defender = dict(field=["secondhand-bombus"], hand=["floor-it"], gig=[(6, 3)],
                     legends=[("v-streetkid", {"spent": True}), "rogue-amendiares-preem-solo"])
-    # No Eddies: the ready face-down Legend can pay to call the spent one, not itself nor the Program.
+    # No Eddies: the ready face-down Legend is the only €$ on the table, and under ruling 027 it may
+    # spend itself — so it can pay to call the spent one, to call ITSELF, or for the Program.
     s, ref = _reaction_board(pool, Side(eddies=0, **defender))
     prog, spent_leg, ready_leg = (find(s, "floor-it", Zone.HAND), find(s, "v-streetkid"),
                                   find(s, "rogue-amendiares-preem-solo"))
     assert Block(find(s, "secondhand-bombus")) in ref
-    assert CallLegend(spent_leg) in ref and CallLegend(ready_leg) not in ref
+    assert CallLegend(spent_leg) in ref and CallLegend(ready_leg) in ref
     assert Play(prog) in ref                                   # cost 1: the ready Legend pays
 
     both_spent = dict(defender, legends=[("v-streetkid", {"spent": True}),

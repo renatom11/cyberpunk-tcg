@@ -436,9 +436,7 @@ def test_no_hidden_card_name_ever_reaches_the_key(pool, seed):
     to carry the prompt for every seat. This is the one-line check that catches that, and equally
     catches a pinned instance whose identity leaked into a zone key.
     """
-    named_a_hidden_card = 0
     for _k, s in _real_pool_decisions(pool, seed, stride=1):
-        prompt = s.pending.prompt if s.pending is not None else ""
         for me in (0, 1):
             key = str(info_key(s, me))
             for i in unknown_to(s, me):
@@ -446,9 +444,31 @@ def test_no_hidden_card_name_ever_reaches_the_key(pool, seed):
                 if len(name) < 4:
                     continue
                 assert name not in key, f"{name!r} (inst {i}) is in player {me}'s key"
-                if name in prompt:
-                    named_a_hidden_card += 1
-    assert named_a_hidden_card, "no decision in this walk named a hidden card: test is vacuous"
+
+
+def test_the_walk_really_reaches_a_prompt_that_names_a_hidden_card(pool):
+    """The vacuity guard for the test above, and separate from it on purpose.
+
+    Two different things were being asserted in one place: that a hidden name never reaches the
+    key (the property, exercised at every decision of every walk and never vacuous), and that some
+    walk actually produces one of the five prompts that *do* name a hidden card (the guard). Any
+    rules change reshuffles which seeds reach that prompt — ruling 027 moved it off seeds 0 and 1 —
+    and the conflated version then failed as if the property had broken. So the guard scans until
+    it finds one and names the seed, which is a loud, separate failure if the engine ever stops
+    producing those prompts at all.
+    """
+    for seed in range(8):
+        for _k, s in _real_pool_decisions(pool, seed, stride=1):
+            prompt = s.pending.prompt if s.pending is not None else ""
+            if not prompt:
+                continue
+            for me in (0, 1):
+                for i in unknown_to(s, me):
+                    name = s.card(i).name
+                    if len(name) >= 4 and name in prompt:
+                        return
+    raise AssertionError("no decision in seeds 0-7 named a hidden card in its prompt; the walks "
+                         "no longer reach the case the key test exists to guard")
 
 
 def test_the_key_does_not_depend_on_whether_the_menu_was_materialised(reg):  # noqa: F811

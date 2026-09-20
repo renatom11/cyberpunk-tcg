@@ -16,6 +16,15 @@ leave ``check`` IDENTICAL. If it does not, the edit escaped its card, which is a
 
     tier G0   no golden deck contains the card    check MUST stay IDENTICAL
     tier G1   some golden deck contains it        only keys whose decks contain it may differ
+    tier G2   the change is in core/**            deck membership predicts nothing; --engine
+
+``--engine`` is for the third case, which the ledger has hit before (Mox Inciters: "G2 by file and
+unlocalisable by construction — a card script cannot remove an option from a menu the engine
+builds"). There the prediction cannot come from deck membership, because the change is not about a
+card: it is every key, and the hard stop is inverted — a key that did *not* move is the surprise,
+because a rule the engine applies to every game should reach every game. Localisation still runs,
+naming the decision each key parted company at, so the aggregate and the windows are read the same
+way. The written justification the tier table asks for goes in REGEN.md, not here.
 
 ``predict`` is evidence 1 of the protocol: write down the key set that *may* change, from deck
 membership alone, before touching anything. ``verify`` runs the check, and refuses the result when
@@ -131,7 +140,19 @@ def _offers(s, ch, cards: set) -> bool:
     return False
 
 
+def _all_keys() -> set[str]:
+    return {f"{x}~{y}~{ag}" for x, y in MATCHUPS for ag in AGENTS}
+
+
 def cmd_predict(a) -> int:
+    if getattr(a, "engine", False):
+        keys = _all_keys()
+        print("tier G2 — a core/** change; deck membership predicts nothing.\n")
+        print(f"{len(keys)} key(s) may differ, which is all of them:")
+        for k in sorted(keys):
+            print(f"  {k}")
+        print("\nA key that does NOT move is the thing to explain here, not one that does.")
+        return 0
     keys, why = predict(a.cards)
     print(f"cards: {', '.join(a.cards)}")
     if not keys:
@@ -149,7 +170,8 @@ def cmd_predict(a) -> int:
 
 
 def cmd_verify(a) -> int:
-    predicted, _ = predict(a.cards)
+    engine = getattr(a, "engine", False)
+    predicted = _all_keys() if engine else predict(a.cards)[0]
     golden = json.loads(GOLDEN.read_text(encoding="utf-8"))
     now = play_all()
 
@@ -161,8 +183,14 @@ def cmd_verify(a) -> int:
             observed.add(key)
             detail[key] = diffs
 
-    print(f"cards: {', '.join(a.cards)}")
+    print("tier G2 — a core/** change" if engine else f"cards: {', '.join(a.cards)}")
     print(f"predicted {len(predicted)} key(s) may change; {len(observed)} changed.\n")
+    if engine and (quiet := predicted - observed):
+        print("These keys did NOT move. A rule the engine applies to every game should reach every")
+        print("game, so each one needs an explanation in REGEN.md:")
+        for k in sorted(quiet):
+            print(f"  {k}")
+        print()
 
     escaped = observed - predicted
     if escaped:
@@ -191,10 +219,12 @@ def cmd_verify(a) -> int:
         i, x, y = detail[key][0]
         at = next((k for k, (p, q) in enumerate(zip(x["actions"], y["actions"])) if p != q),
                   min(len(x["actions"]), len(y["actions"])))
-        lines, offered, where = _narrate_new_game(key, x, a.window, set(a.cards))
+        lines, offered, where = _narrate_new_game(key, x, a.window, set(a.cards or ()))
         print(f"\n  --- {key} game {i} (seed {x['seed']}, seat {x['seat']}), diverges at "
               f"decision {where} — shown as the CURRENT engine plays it")
-        if offered is None:
+        if engine:
+            pass                                  # no named card to look for; the window is the evidence
+        elif offered is None:
             print(f"      NO NAMED CARD WAS EVER AN OPTION before the divergence. "
                   f"The change here is unexplained — stop.")
         else:
@@ -215,10 +245,14 @@ def main(argv=None) -> int:
                                  description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("predict", help="which golden keys may change, from deck membership alone")
-    p.add_argument("cards", nargs="+")
+    p.add_argument("cards", nargs="*")
+    p.add_argument("--engine", action="store_true",
+                   help="a core/** change: predict every key instead of reading deck membership")
     p.set_defaults(fn=cmd_predict)
     v = sub.add_parser("verify", help="run the check and hold the result against the prediction")
-    v.add_argument("cards", nargs="+")
+    v.add_argument("cards", nargs="*")
+    v.add_argument("--engine", action="store_true",
+                   help="a core/** change: predict every key instead of reading deck membership")
     v.add_argument("--window", type=int, default=12, help="narration lines before the divergence")
     v.set_defaults(fn=cmd_verify)
     a = ap.parse_args(argv)

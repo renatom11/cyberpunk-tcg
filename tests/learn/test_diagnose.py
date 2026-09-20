@@ -29,6 +29,11 @@ def rows():
 #: The four the gen-1 agent solved when this diagnostic was written and the suite was eight
 #: positions. It is a fixed historical set, not a live score: the suite has grown since, and
 #: re-measuring which positions the agent solves is the arena's job, not this file's.
+#:
+#: Two of the four — ``gear-before-the-raid`` and ``mined-23767-79`` — stopped qualifying when
+#: ruling 027 landed (a Legend may pay toward its own cost) and were dropped from the suite. The
+#: historical set is kept whole, because that is what it is; the control below runs over whichever
+#: of them the suite still holds.
 SOLVED = {"gear-before-the-raid", "sell-to-afford-the-raid", "mined-23767-79",
           "mined-166302-115"}
 
@@ -86,10 +91,12 @@ def test_the_control_can_distinguish_the_two_groups_if_there_is_anything_to_dist
     less separation, and it did not (median ratio 0.25 vs 0.24). Pinning the prediction here would
     have turned a refutation into a failing test.
     """
+    present = SOLVED & {r["id"] for r in rows}
     solved = [r for r in rows if r["id"] in SOLVED]
     unsolved = [r for r in rows if r["id"] not in SOLVED]
-    assert len(solved) == len(SOLVED), [r["id"] for r in solved]
-    assert len(unsolved) == len(rows) - len(SOLVED) and unsolved
+    assert solved, f"none of the historical solved set is still in the suite: {sorted(SOLVED)}"
+    assert len(solved) == len(present), [r["id"] for r in solved]
+    assert len(unsolved) == len(rows) - len(present) and unsolved
     for r in rows:
         assert r["ratio"] >= 0.0 and r["options"] > 1
         assert 1 <= r["value_rank"] <= r["options"]

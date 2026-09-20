@@ -160,7 +160,13 @@ def _main_action(s: GameState, p: int, a: Action) -> None:
         s.once[p] |= ONCE_SOLD
         s.emit("sell", p, a.inst)
     elif isinstance(a, CallLegend):
-        pay(s, p, 1, exclude=a.inst)
+        # No exclude: a ready face-down Legend may spend itself for its own Call (5.7.2.2 restricts
+        # only face-up Legends, so no Sell Tag is needed). It is still face-down and ready here, so
+        # `payable_sources` already offers it; `call_legend` then flips it face-up WITHOUT touching
+        # its orientation, which is CR 11.11.1.3 -- so a Legend that paid for itself arrives spent
+        # and cannot pay again or use a Spend Icon until it readies next Start Phase (8.6.3). Its
+        # CALL trigger still fires, because that is tied to the flip (11.11.1.4).
+        pay(s, p, 1)
         call_legend(s, p, a.inst)
     elif isinstance(a, GoSolo):
         go_solo(s, p, a.inst, cost=play_cost(s, p, a.inst, go_solo=True))
@@ -202,11 +208,31 @@ def play_card(s: GameState, p: int, inst: int, host: int = NO_INST, cost: int = 
 
 
 def go_solo(s: GameState, p: int, inst: int, cost: int) -> None:
-    pay(s, p, cost, exclude=inst)
+    # No exclude: a face-up, ready Legend with a Sell Tag may spend ITSELF for 1 €$ toward its own
+    # cost and pay any remainder from other Eddies and Legends. `payable_sources` already encodes
+    # those three conditions, and puts a face-up Legend last, so it is spent only when the other
+    # sources do not cover the cost.
+    pay(s, p, cost)
     consume_cost_mods(s, p, inst, True)
-    move(s, inst, Zone.FIELD)                     # CR 4.5.1: keeps its orientation (spent stays spent)
-    if s.cfg.go_solo_requires_ready:
-        s.i_spent[inst] = 0
+    move(s, inst, Zone.FIELD)
+    # ...and it arrives READY. CR 4.5.1 would carry its orientation onto the field, but GO SOLO says
+    # "play it as a ready Unit" (11.25.1) and that is the more specific rule, so the spent state
+    # does not follow it. The FAQ settles which rule applies to which action (ruling 047): the play
+    # WITHOUT the keyword is the one that keeps "the same orientation it was in the Legends area",
+    # which would be nothing worth saying if GO SOLO did too. It matters most when the Legend paid
+    # for itself: it is spent the instant before it moves, and would otherwise arrive as a Unit that
+    # cannot attack.
+    #
+    # Hard-coded rather than flagged, deliberately. `go_solo_requires_ready` is NOT this question --
+    # that one gates whether a spent Legend may GO SOLO at all, which the FAQ answers Yes, so
+    # reusing it would make the two answers contradict each other. And a new RulesConfig field is
+    # not free: every field is hashed into `RulesConfig.digest()`, which `Replay.load`,
+    # `experience.read_games`, `learn.model` and the delayed suite all ENFORCE -- so adding one
+    # refuses the shipped weights (fitted on 80,000 games whose harvest no longer exists), the
+    # committed experience corpus, the demo replay and the tactics suite, all at once. A flag is
+    # for a ruling that might still be switched; this one is Settled (FAQ), so it lives in
+    # docs/rulings.md and in this comment instead.
+    s.i_spent[inst] = 0
     s.i_lag[inst] = 1 if s.cfg.go_solo_enters_lagged else 0   # CR 4.5.2; GO SOLO still lets it attack
     s.i_faceup[inst] = 1
     s._active = None
@@ -255,7 +281,7 @@ def _reaction(s: GameState, d: int, a: Action) -> None:
         s.emit("block", d, a.inst)
         dispatch(s, ("blocked", a.inst, atk.attacker))
     elif isinstance(a, CallLegend):
-        pay(s, d, 1, exclude=a.inst)
+        pay(s, d, 1)                              # as above: it may pay for its own Call
         call_legend(s, d, a.inst)
     elif isinstance(a, Play):
         play_card(s, d, a.inst, cost=play_cost(s, d, a.inst))

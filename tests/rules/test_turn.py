@@ -65,13 +65,16 @@ def test_go_solo_plays_legend_as_ready_unit_that_can_attack(reg):
     assert s.gig[0] == [(6, 3)]
 
 
-def test_a_legend_may_not_spend_itself_toward_its_own_go_solo(reg):
-    """Ruling 027 (CR 4.5): the Legend going solo is being played, not spent.
+def test_a_legend_may_spend_itself_toward_its_own_go_solo(reg):
+    """Ruling 027, settled by the FAQ: *"Can I spend a Legend for an Eddie when playing it with
+    it's own GO SOLO? **Yes**"*.
 
-    The board this came off: two Eddies and three Legends, one of them the cost-5 GO SOLO Legend,
-    already Called. Five ready sources of €$ are sitting on the table and the cost is five, so it
-    reads like it should be payable — but one of those five is the card being played, and the
-    menu is right to leave GO SOLO off it.
+    This test used to assert the opposite, derived from CR 5.7.2.2 before the FAQ existed. The
+    board it came off: two Eddies and three Legends, one of them the cost-5 GO SOLO Legend, already
+    Called. Five ready sources of €$ are on the table and the cost is five — and one of those five
+    *is* the card being played, which the rules let it spend. `ops.payable_sources` already encodes
+    the three conditions (ready, face-up, carrying a Sell Tag) and puts a face-up Legend last, so
+    it pays for itself only when the others do not cover the cost.
     """
     def table(eddies):
         s = board(reg, Side(eddies=eddies, legends=[("T-L1", {"faceup": True}), "T-L5", "T-L6"]),
@@ -81,23 +84,33 @@ def test_a_legend_may_not_spend_itself_toward_its_own_go_solo(reg):
     s, l = table(2)
     assert play_cost(s, 0, l, go_solo=True) == 5
     assert available(s, 0) == 5                  # 2 Eddies + 2 face-down Legends + the face-up one
-    assert available(s, 0, exclude=l) == 4       # ... but not the one going solo
+    assert GoSolo(l) in s.pending.options        # ... and the fifth may be the Legend itself
+    do(s, GoSolo(l))
+    assert s.i_zone[l] == Zone.FIELD
+
+    s, l = table(1)                              # one Eddie short even counting itself
+    assert available(s, 0) == 4
     assert GoSolo(l) not in s.pending.options
 
-    s, l = table(3)                              # one more Eddie and the same Legend can go
-    assert available(s, 0, exclude=l) == 5
-    assert GoSolo(l) in s.pending.options
 
+def test_spent_legend_may_go_solo_and_arrives_ready(reg):
+    """Two FAQ answers, and they are different questions.
 
-def test_spent_legend_may_go_solo_and_arrives_spent(reg):
-    """CR 4.5.1: a Legend played to the field keeps its orientation."""
+    *"Can I GO SOLO on a spent Legend? **Yes**"* — so being spent is no bar to playing it
+    (`go_solo_requires_ready` stays false). And GO SOLO's own reminder plays it *as a ready Unit*
+    (CR 11.25.1), so it arrives ready however it stood in the Legends area
+    (`go_solo_arrives_ready`). CR 4.5.1's "same orientation" belongs to the keyword-less play
+    instead, which is ruling 047 — the FAQ spells that out there and nowhere else.
+
+    It still has Lag (CR 4.5.2) and GO SOLO still lets it attack through it (ruling 033).
+    """
     s = board(reg, Side(eddies=5, legends=[("T-L1", {"faceup": True, "spent": True}), "T-L5", "T-L6"]),
               Side(gig=[(6, 3)]))
     l = find(s, "T-L1")
     assert GoSolo(l) in s.pending.options
     do(s, GoSolo(l))
-    assert s.i_zone[l] == Zone.FIELD and s.i_spent[l] == 1 and s.i_lag[l] == 1
-    assert Attack(l) not in s.pending.options
+    assert s.i_zone[l] == Zone.FIELD and s.i_spent[l] == 0 and s.i_lag[l] == 1
+    assert Attack(l) in s.pending.options
 
 
 def test_any_legend_leaving_play_is_removed_and_its_gear_stays_behind(reg):

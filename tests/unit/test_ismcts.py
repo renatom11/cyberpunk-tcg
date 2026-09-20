@@ -7,6 +7,9 @@ appears once several of its moves are on the board is invisible to it at any str
 """
 
 import pytest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
 
 from cptcg.agents.base import CHEAT_PREFIX, make_agent
 from cptcg.agents.search.ismcts import IsmctsAgent
@@ -147,10 +150,17 @@ def test_it_plays_a_two_move_line_where_the_first_move_gains_nothing(pool):
 
     This is deliberately **not** a claim that the search beats the greedy agent overall. It does not
     yet; the suite score and what it cost are in docs/learning.md.
+
+    The position lives in ``tests/fixtures/positions/`` rather than in the delayed suite. It was in
+    the suite until ruling 027, which pushed random play over the suite's 25% floor on it — and
+    that is a statistical bar for measuring *delayed reward*, not a statement about whether the
+    board still needs a two-move line. It does. Reading a behaviour fixture out of a file governed
+    by another suite's membership rules is the coupling that broke here, so it is gone.
     """
+    import json
     from cptcg.learn import delayed
-    suite = delayed.load_suite(delayed.SUITE_PATH)
-    entry = next(e for e in suite["positions"] if e["id"] == "gear-before-the-raid")
+    entry = json.loads((ROOT / "tests/fixtures/positions/gear-before-the-raid.json")
+                       .read_text(encoding="utf-8"))
     s = delayed.build_entry(pool, entry)
     me = entry.get("player", s.pending.player)
     horizon = delayed.entry_horizon(entry)

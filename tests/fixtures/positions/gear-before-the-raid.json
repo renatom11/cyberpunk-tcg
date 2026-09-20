@@ -1,0 +1,149 @@
+{
+ "id": "gear-before-the-raid",
+ "kind": "board",
+ "player": 0,
+ "max_turns": 1,
+ "source": "hand-built",
+ "why": "Five Gigs and one ready 8-power Unit. Attacking now steals one Gig, which is the biggest immediate gain on the board and is what a one-ply agent takes; it ends the turn on six. Equipping the +2 Gear first is worth almost nothing on the board, but it lifts the attacker to 10 power, and steal_count(10) is two Gigs, which is the game. The plan's A-then-C in its smallest honest form \u2014 and the whole of it inside one turn, which is why the horizon is 1. Built like a real mid-game board \u2014 three Legends and a real remaining deck a side \u2014 so a value head reading list size, undrawn fraction and Legend RAM is not extrapolating on it.",
+ "spec": {
+  "turn": 9,
+  "active": 0,
+  "seed": 7,
+  "turns_taken": [
+   4,
+   4
+  ],
+  "sides": [
+   {
+    "field": [
+     [
+      "rockn-rockerboy",
+      {}
+     ]
+    ],
+    "hand": [
+     "mantis-blades"
+    ],
+    "legends": [
+     "goro-takemura-hands-unclean",
+     "v-corporate-exile",
+     "hanako-arasaka-daughter-of-the-emperor"
+    ],
+    "deck": [
+     "field-operator",
+     "valentino-street-racer",
+     "corpo-security",
+     "valentino-street-racer",
+     "valentino-street-racer",
+     "peace-offering",
+     "dying-night-vs-pistol",
+     "emergency-atlus",
+     "maxtac-av",
+     "corporate-surveillance",
+     "corpo-security",
+     "delamain-cab",
+     "dying-night-vs-pistol",
+     "modded-muramasa",
+     "emergency-atlus",
+     "tetratronic-rippler",
+     "tetratronic-rippler",
+     "hacked-corpo",
+     "hacked-corpo",
+     "dying-night-vs-pistol",
+     "emergency-atlus",
+     "maxtac-av",
+     "corpo-security",
+     "field-operator",
+     "delamain-cab",
+     "corporate-surveillance",
+     "floor-it",
+     "delamain-cab"
+    ],
+    "eddies": 2,
+    "gig": [
+     [
+      4,
+      3
+     ],
+     [
+      6,
+      2
+     ],
+     [
+      8,
+      5
+     ],
+     [
+      10,
+      7
+     ],
+     [
+      12,
+      1
+     ]
+    ],
+    "fixer": [
+     20
+    ]
+   },
+   {
+    "legends": [
+     "goro-takemura-hands-unclean",
+     "v-corporate-exile",
+     "royce-psycho-on-the-edge"
+    ],
+    "deck": [
+     "mox-inciters",
+     "ruthless-lowlife",
+     "mantis-blades",
+     "rita-wheeler-no-stupid-questions",
+     "japantown-jonin",
+     "mantis-blades",
+     "gunpoint-diplomacy",
+     "mantis-blades",
+     "appetite-for-destruction",
+     "rita-wheeler-no-stupid-questions",
+     "ruthless-lowlife",
+     "tetratronic-rippler",
+     "unlikely-bond",
+     "el-sombreron-la-venganza-lenta",
+     "ruthless-lowlife",
+     "tetratronic-rippler",
+     "appetite-for-destruction",
+     "gunpoint-diplomacy",
+     "chrome-fang",
+     "gunpoint-diplomacy",
+     "all-is-lost",
+     "la-llorona-ghost-of-the-past",
+     "valentino-guerrera",
+     "el-sombreron-la-venganza-lenta",
+     "japantown-jonin",
+     "japantown-jonin",
+     "valentino-guerrera",
+     "valentino-guerrera"
+    ],
+    "eddies": 1,
+    "gig": [
+     [
+      4,
+      2
+     ],
+     [
+      6,
+      5
+     ],
+     [
+      8,
+      3
+     ]
+    ],
+    "fixer": [
+     10,
+     12,
+     20
+    ]
+   }
+  ]
+ },
+ "retired": "Dropped from data/arena/delayed.json when ruling 027 landed: random play now wins it 6 of 16 trials, over the suite\u2019s 25% floor, because a Legend that may pay for its own Call gives random another way through. It is still exactly what this test needs \u2014 a setup move that must precede a payoff \u2014 so it lives here now. An ISMCTS behaviour test should not depend on a position clearing a different suite\u2019s statistical bar; that coupling is what broke, and moving the file fixes it."
+}

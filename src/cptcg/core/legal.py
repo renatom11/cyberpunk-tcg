@@ -142,17 +142,21 @@ def main_menu(s: GameState) -> list:
                 hosts = gear_hosts(s, p)
             opts += [Play(i, h) for h in hosts]
 
-    # available(s, p, exclude=i) is avail minus one iff Legend i is itself a payable source
-    # (payable_sources): ready and face-down, or ready, face-up and carrying a sell tag (CR 5.7.2.2).
+    # A Legend may spend ITSELF toward its own cost, so it is not excluded from its own payment.
+    # The conditions for doing so are already exactly `payable_sources`: for GO SOLO it must be
+    # face-up (CR 5.7.6, which is the only branch that offers GO SOLO), carry a Sell Tag
+    # (CR 5.7.2.2) and be ready; for Call a Legend it must be face-down and ready, and needs no
+    # Sell Tag because 5.7.2.2 restricts only face-up Legends. The engine used to subtract the
+    # Legend from its own funds, which made a lone ready Legend unable to Call itself or to GO SOLO
+    # for 1 even though it was the €$ the rules let it spend.
     for i in s.legends(p):
         d = defs[i_card[i]]
         if s.i_faceup[i]:
             if (Keyword.GO_SOLO in d.keywords and d.cost is not None and not field_full
                     and (not s.cfg.go_solo_requires_ready or not i_spent[i])
-                    and avail - (1 if (not i_spent[i] and d.sell_tag) else 0)
-                    >= play_cost(s, p, i, go_solo=True)):
+                    and avail >= play_cost(s, p, i, go_solo=True)):
                 opts.append(GoSolo(i))
-        elif not once & ONCE_CALLED and avail - (0 if i_spent[i] else 1) >= 1:
+        elif not once & ONCE_CALLED and avail >= 1:
             opts.append(CallLegend(i))
 
     opts += ability_options(s, p, quick_only=False)
@@ -185,9 +189,9 @@ def reaction_menu(s: GameState) -> list:
             if not i_faceup[i]:
                 if avail is None:
                     avail = available(s, d)
-                # available(s, d, exclude=i): a face-down Legend is a payable source iff it is
-                # ready (payable_sources)
-                if avail - (0 if i_spent[i] else 1) >= 1:
+                # As in the main menu: a ready face-down Legend may spend itself to pay for its
+                # own Call, so it is not subtracted from its own funds.
+                if avail >= 1:
                     opts.append(CallLegend(i))
     asc = defs[i_card[atk.attacker]].script
     unblockable = asc is not None and asc.unblockable is not None and asc.unblockable(_ctx(s, atk.attacker))

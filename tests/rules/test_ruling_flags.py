@@ -15,6 +15,7 @@ rather than pretending to a stronger check than it makes.
 """
 import re
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -23,6 +24,7 @@ from conftest import Side, board, find, options
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from cptcg.core.actions import ChoiceKind, Sell  # noqa: E402
+from cptcg.core.engine import apply  # noqa: E402
 from cptcg.core.config import DEFAULT_CONFIG, DESCRIPTIVE, RulesConfig  # noqa: E402
 from cptcg.core.enums import Zone  # noqa: E402
 from cptcg.core.view import PUBLIC_ZONES, knows_identity  # noqa: E402
@@ -50,6 +52,38 @@ def test_003_a_spent_legend_is_still_callable(reg):
     calls = [o for o in options(s) if type(o).__name__ == "CallLegend"]
     assert any(getattr(o, "inst", None) == spent for o in calls), \
         "a spent Legend is not offered as a Call target"
+
+
+# ------------------------------------------------------------ 027 go_solo_requires_ready
+def test_027_go_solo_takes_a_spent_legend_and_returns_it_ready(reg):
+    """Two questions the FAQ answers separately, and only one of them is a flag.
+
+    *"Can I GO SOLO on a spent Legend? **Yes**"* is about **legality**, and is what
+    ``go_solo_requires_ready`` gates — both branches exercised below, which is what keeps it a
+    switch rather than decoration. What **orientation** it then arrives in is a different
+    question: GO SOLO's own reminder plays it *as a ready Unit* (CR 11.25.1), while CR 4.5.1's
+    "same orientation" belongs to the keyword-less play (ruling 047) — the distinction the FAQ
+    draws by spelling it out only there. That half is settled and hard-coded, because a second
+    field would move ``RulesConfig.digest()`` and every fitted artifact enforces it.
+
+    Reusing the one flag for both was tried and is wrong: turning it on to get a ready arrival
+    takes the spent Legend off the menu entirely, which is the opposite of what the FAQ says.
+    """
+    assert DEFAULT_CONFIG.go_solo_requires_ready is False
+
+    def solo(cfg):
+        s = board(reg, Side(legends=[("T-L1", {"faceup": True, "spent": True})], eddies=5),
+                  Side(gig=[(6, 3)]), cfg=cfg)
+        leg = find(s, "T-L1", Zone.LEGENDS, 0)
+        go = next((o for o in options(s) if type(o).__name__ == "GoSolo"), None)
+        if go is None:
+            return None
+        apply(s, s.pending.index_of(go))
+        return s.i_spent[leg]
+
+    assert solo(DEFAULT_CONFIG) == 0, "a spent Legend could not GO SOLO, or did not arrive ready"
+    assert solo(replace(DEFAULT_CONFIG, go_solo_requires_ready=True)) is None, \
+        "go_solo_requires_ready=True should keep a spent Legend off the menu"
 
 
 # --------------------------------------------------------------- 004 empty_fixer_skips
