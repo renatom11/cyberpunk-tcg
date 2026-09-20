@@ -10,6 +10,79 @@ Every entry records the five pieces of evidence from `docs/verification.md`. A r
 all five is not one.
 
 
+## 2026-09-20 — ruling 044, a solo'd Legend is a Unit (six scripts, seven findings)
+
+**The fix.** Six card scripts decided Unit-hood by ``CardDef.type``, which excludes a Legend
+standing on the field through GO SOLO; forty-eight asked by zone, which includes it. The FAQ
+settles it and settles it *inclusively* — *"When a Legend uses GO SOLO is it still a Legend?
+**Yes**"*, and Synapse Burnout's answer calls the same card "now also a Unit" — so zone is the
+right side and the six were the defect. `EffectCtx.is_unit` is now the one way to ask.
+
+Seven strict-xfail findings go green with it, and their deleted markers are the record:
+`AUD-saburo-arasaka-stubborn-patriarch-1`, `AUD-6th-street-recruits-1`,
+`AUD-satori-sword-of-saburo-1`, `AUD-river-ward-detective-on-the-hunt-1`,
+`AUD-jackie-welles-mamas-favorite-1` and `-2`, `AUD-jackie-welles-pour-one-out-for-me-1`.
+
+**One of the six could not be fixed the same way, and that is the interesting part.** River Ward
+*Detective on the Hunt* listens for `("defeated", ...)`, and by the time that fires `ops.defeat`
+has already moved the card out of the field **and** `move` has cleared `F_GO_SOLO`, the flag that
+recorded it was standing there. So there is neither a zone nor a flag left to read: a zone test
+would answer No for every card including an ordinary Unit, and the printed-type test it replaced
+answered No for exactly the case the FAQ says is Yes. `defeat` now answers the question itself,
+before the move, and carries it as the event's fifth element. The field is appended, so every
+existing listener indexes as it did.
+
+A second thing the fix exposed: `tests/conftest.board` and `learn.delayed.build_position` were
+placing a Legend in the FIELD area without `F_GO_SOLO`, which is a board no game can reach — it is
+the flag that sends such a Legend out of the game rather than to the trash. Both set it now, and
+River Ward's test passes for the right reason rather than by accident.
+
+**1. Prediction.** Tier G1 by cards, all 8 keys: `sample_arasaka` holds Saburo and Satori,
+`sample_corpos` holds Jackie *Mama's Favorite*, `sample_gangers` and `the_heist` hold Jackie *Pour
+One Out For Me*. (The change also touches `core/**` — `ops.defeat`'s event field and the new
+`EffectCtx.is_unit` — but both are additive and neither alters a game on its own, which step 3
+below is the evidence for.) Observed: 5, all predicted, nothing outside.
+
+**2. Localisation.** `sample_arasaka~sample_fixers~random` game 2 diverges at decision 89, and the
+window says it outright: *"Goro Takemura — Hands Unclean GOES SOLO onto the field … attacks with
+Goro Takemura … steals a d4 showing 4 … steals a d8 showing 3"* — a solo'd ARASAKA Legend
+attacking, which is precisely the card Saburo's aura now reaches, and two stolen dice is what the
++1 power buys at the `steal_count` boundary. `sample_corpos~sample_nomads~heuristic` game 1 shows
+*"attacks with Jackie Welles — Mama's Favorite"* from the field. The other three keys diverge at
+decisions 66, 73 and 87, with a named card first a legal option 62 to 93 decisions earlier.
+
+**3. Revert confirmation.** The six script hunks reverted against the new golden, leaving the two
+`core/**` edits in place: DIFFERENT on exactly those 5 keys, at exactly actions 66, 73, 87, 89 and
+101. That is also the evidence that the engine edits move nothing on their own.
+
+**4. Aggregate.**
+
+| key | games | winner flips | end-reason | mean turn delta |
+|---|---|---|---|---|
+| sample_arasaka~sample_fixers~heuristic | 7/16 | 0 | 2 | +0.00 |
+| sample_arasaka~sample_fixers~random | 2/40 | 0 | 1 | −1.00 |
+| sample_corpos~sample_nomads~heuristic | 9/16 | 1 | 0 | +0.00 |
+| the_heist~embracing_power~heuristic | 14/16 | 0 | 0 | +0.00 |
+| the_heist~embracing_power~random | 21/40 | 4 | 6 | −0.05 |
+
+Five winner flips over 224 games and turn deltas at or near zero: these are the same games, played
+slightly differently in the ones where a Legend stood on the field. Three keys did not move at all,
+which at G1 is ordinary — the cards are in those decks and never mattered. The contrast with the
+027 entry above (223 of 224 games, 55 flips) is the difference between a rule that adds an option
+to every menu and a rule that changes what six cards do when a particular board arises.
+
+**5. Two-sided reachability.** Both instruments move. `fuzz -n 300 --seed 1` (heuristic)
+`0c0b5c1f7e32e9b8d652742c` → `9ee8e3cc046f0c1af07847fd`, 43,261 → 43,182 actions; `fuzz -n 400
+--seed 1 --agent random` `9fabde15ecca34ffd589536d` → `d711b635731a993f789bc554`, 32,549 → 32,517.
+Crash-free, 150 of 151 cards reached.
+
+The delayed suite was re-derived and **all 73 positions still qualify** — unlike ruling 027, which
+dissolved six. The committed experience sample and the demo replay were re-recorded again: their
+action streams are indices, and six cards asking a different question changes what those indices
+mean.
+
+---
+
 ## 2026-09-20 — ruling 027, a Legend may spend itself toward its own cost (G2, engine-wide)
 
 **The change.** `exclude=` dropped from the three *playing* `pay()` sites (CallLegend in the main
