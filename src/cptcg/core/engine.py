@@ -6,7 +6,8 @@ from cptcg.cards.registry import Registry
 from cptcg.core.actions import (Action, Activate, Attack, Block, CallLegend, Choice, ChoiceKind,
                                 ChooseOrder, EndTurn, GoSolo, Pass, Play, Sell)
 from cptcg.core.config import DEFAULT_CONFIG, RulesConfig
-from cptcg.core.enums import (DICE, F_GO_SOLO, F_NO_READY_NEXT, NO_INST, TARGET_UNIT, CardType,
+from cptcg.core.enums import (DICE, F_GO_SOLO, F_NO_READY_NEXT, F_NO_SOLO_KEYWORD, NO_INST,
+                              TARGET_UNIT, CardType,
                               EndReason, Keyword, Trigger, Zone)
 from cptcg.core.ops import (_ctx, call_legend, consume_cost_mods, dispatch, draw, end_game,
                             gain_gig, move, pay, play_cost, push_trigger, shuffle_deck, spend)
@@ -169,7 +170,10 @@ def _main_action(s: GameState, p: int, a: Action) -> None:
         pay(s, p, 1)
         call_legend(s, p, a.inst)
     elif isinstance(a, GoSolo):
-        go_solo(s, p, a.inst, cost=play_cost(s, p, a.inst, go_solo=True))
+        # Ruling 047: `keyword=False` is the plain play, so it pays the PRINTED cost -- a
+        # "GO SOLO costs 1 less" effect names the keyword and must not apply to a play that does
+        # not use it, which is exactly the difference `play_cost(go_solo=...)` draws.
+        go_solo(s, p, a.inst, cost=play_cost(s, p, a.inst, go_solo=a.keyword), keyword=a.keyword)
     elif isinstance(a, Activate):
         activate(s, p, a.inst, a.ability)
     else:
@@ -207,7 +211,13 @@ def play_card(s: GameState, p: int, inst: int, host: int = NO_INST, cost: int = 
     dispatch(s, ("played", inst, p))
 
 
-def go_solo(s: GameState, p: int, inst: int, cost: int) -> None:
+def go_solo(s: GameState, p: int, inst: int, cost: int, keyword: bool = True) -> None:
+    """Play a face-up Legend to the field, with GO SOLO (``keyword``) or without it (ruling 047).
+
+    Everything except orientation and the attack permission is shared, and deliberately so: both
+    are *playing a card to the field*, so both set F_GO_SOLO (which is what sends a Legend that
+    leaves the field out of the game, CR 4.4.1), both log a play, and both fire PLAY triggers.
+    """
     # No exclude: a face-up, ready Legend with a Sell Tag may spend ITSELF for 1 €$ toward its own
     # cost and pay any remainder from other Eddies and Legends. `payable_sources` already encodes
     # those three conditions, and puts a face-up Legend last, so it is spent only when the other
@@ -221,7 +231,8 @@ def go_solo(s: GameState, p: int, inst: int, cost: int) -> None:
     # WITHOUT the keyword is the one that keeps "the same orientation it was in the Legends area",
     # which would be nothing worth saying if GO SOLO did too. It matters most when the Legend paid
     # for itself: it is spent the instant before it moves, and would otherwise arrive as a Unit that
-    # cannot attack.
+    # cannot attack. Without the keyword it keeps its orientation instead, which is the FAQ's own
+    # wording for that play and the whole of what ruling 047 distinguishes.
     #
     # Hard-coded rather than flagged, deliberately. `go_solo_requires_ready` is NOT this question --
     # that one gates whether a spent Legend may GO SOLO at all, which the FAQ answers Yes, so
@@ -232,13 +243,14 @@ def go_solo(s: GameState, p: int, inst: int, cost: int) -> None:
     # committed experience corpus, the demo replay and the tactics suite, all at once. A flag is
     # for a ruling that might still be switched; this one is Settled (FAQ), so it lives in
     # docs/rulings.md and in this comment instead.
-    s.i_spent[inst] = 0
+    if keyword:
+        s.i_spent[inst] = 0
     s.i_lag[inst] = 1 if s.cfg.go_solo_enters_lagged else 0   # CR 4.5.2; GO SOLO still lets it attack
     s.i_faceup[inst] = 1
     s._active = None
-    s.i_flags[inst] |= F_GO_SOLO
+    s.i_flags[inst] |= F_GO_SOLO if keyword else (F_GO_SOLO | F_NO_SOLO_KEYWORD)
     s.played_log.append((inst, p))                # GO SOLO is the other way a Legend enters play
-    s.emit("go_solo", p, inst)
+    s.emit("go_solo", p, inst, keyword)
     s.played.append(inst)
     push_trigger(s, Trigger.PLAY, inst)           # "play it as a ready Unit": PLAY triggers (ruling 032)
     dispatch(s, ("played", inst, p))

@@ -62,7 +62,23 @@ class Play(Action):
 
 @dataclass(frozen=True, slots=True)
 class GoSolo(Action):
+    """Play a face-up Legend to the field. Two ways, and ruling 047 is that they are different.
+
+    ``keyword=True`` is GO SOLO itself: it arrives as a ready Unit (CR 11.25.1) and the keyword
+    lets it attack through its Lag. ``keyword=False`` is the plain play the FAQ describes — *"Can I
+    play a Legend to the field from the Legends area without using GO SOLO? **Yes**, as long as the
+    Legend has a numeric cost value… It enters the field **with lag**, and **in the same
+    orientation** it was in the Legends area."* — so it keeps its orientation and cannot attack
+    this turn.
+
+    A FIELD on the existing class rather than a new Action class, deliberately.
+    ``learn.policy.KINDS`` is a tuple of Action *classes* that ``_SPEC`` one-hots over, so adding
+    ``PlayLegend`` would move ``action_feature_digest()`` and every fitted policy head would be
+    rejected on load. The default keeps every existing ``GoSolo(i)`` comparison working.
+    """
+
     inst: int                # the face-up Legend instance
+    keyword: bool = True     # False: pay the printed cost without using GO SOLO (ruling 047)
 
 
 @dataclass(frozen=True, slots=True)

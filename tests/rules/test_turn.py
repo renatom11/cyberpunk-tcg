@@ -93,6 +93,52 @@ def test_a_legend_may_spend_itself_toward_its_own_go_solo(reg):
     assert GoSolo(l) not in s.pending.options
 
 
+def test_a_costed_legend_has_two_ways_onto_the_field(reg):
+    """Ruling 047. The FAQ: *"Can I play a Legend to the field from the Legends area without using
+    GO SOLO? **Yes**, as long as the Legend has a numeric cost value… It enters the field **with
+    lag**, and **in the same orientation** it was in the Legends area."*
+
+    A second action on the same eight cards, not a rewording of GO SOLO: the two differ on
+    orientation and on whether it may attack this turn. Both carry Lag; only the keyword lets it
+    attack through it (ruling 033), and the card still *prints* GO SOLO either way — which is why
+    the permission cannot be read off the keyword alone.
+    """
+    def table(spent=False):
+        s = board(reg, Side(legends=[("T-L1", {"faceup": True, "spent": spent})], eddies=9),
+                  Side(gig=[(6, 3)]))
+        return s, find(s, "T-L1")
+
+    s, l = table()
+    assert GoSolo(l) in s.pending.options and GoSolo(l, keyword=False) in s.pending.options
+    assert GoSolo(l) == GoSolo(l, keyword=True), "the default has to stay the keyword play"
+
+    s, l = table()
+    do(s, GoSolo(l))                                    # with the keyword
+    assert s.i_zone[l] == Zone.FIELD and s.i_spent[l] == 0 and s.i_lag[l] == 1
+    assert Attack(l) in s.pending.options
+
+    s, l = table()
+    do(s, GoSolo(l, keyword=False))                     # without it
+    assert s.i_zone[l] == Zone.FIELD and s.i_spent[l] == 0 and s.i_lag[l] == 1
+    assert Attack(l) not in s.pending.options, "the plain play does not grant the keyword's attack"
+
+    s, l = table(spent=True)                            # ... and it keeps the orientation it had
+    do(s, GoSolo(l, keyword=False))
+    assert s.i_zone[l] == Zone.FIELD and s.i_spent[l] == 1
+
+
+def test_the_plain_play_pays_the_printed_cost_not_the_go_solo_one(reg):
+    """A "GO SOLO costs less" effect names the keyword, so it cannot discount a play that does not
+    use it. ``play_cost(go_solo=...)`` already draws exactly that line — `cost_go_solo` mods on one
+    side, the card's own `self_cost` hook on the other — and ruling 047 is what makes the
+    distinction reachable."""
+    s = board(reg, Side(legends=[("T-L1", {"faceup": True})], eddies=9), Side())
+    l = find(s, "T-L1")
+    s.add_mod("cost_go_solo", 0, -2)
+    assert play_cost(s, 0, l, go_solo=True) == 3        # the keyword play is discounted
+    assert play_cost(s, 0, l) == 5                      # the plain one is not
+
+
 def test_spent_legend_may_go_solo_and_arrives_ready(reg):
     """Two FAQ answers, and they are different questions.
 

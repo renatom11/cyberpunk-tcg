@@ -75,7 +75,9 @@ def test_027_go_solo_takes_a_spent_legend_and_returns_it_ready(reg):
         s = board(reg, Side(legends=[("T-L1", {"faceup": True, "spent": True})], eddies=5),
                   Side(gig=[(6, 3)]), cfg=cfg)
         leg = find(s, "T-L1", Zone.LEGENDS, 0)
-        go = next((o for o in options(s) if type(o).__name__ == "GoSolo"), None)
+        # Ruling 047 offers the same Legend twice; this is about the KEYWORD play.
+        go = next((o for o in options(s)
+                   if type(o).__name__ == "GoSolo" and getattr(o, "keyword", True)), None)
         if go is None:
             return None
         apply(s, s.pending.index_of(go))

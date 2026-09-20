@@ -583,7 +583,12 @@ function wireDrag(root, pend, onAct) {
   pend.options.forEach(o => {
     if (o.inst == null || o.inst < 0) return;
     if (o.kind === "Play" && o.host >= 0) (gear[o.inst] = gear[o.inst] || {})[o.host] = o;
-    else if (o.kind === "Play" || o.kind === "GoSolo") plays[o.inst] = o;
+    // Ruling 047 offers a costed Legend TWICE, keyword and not. Keying by instance alone would
+    // let the later one silently win the drag, so the keyword play -- the headline action, the one
+    // that can attack -- is what the gesture does, and both stay in the button list below.
+    else if (o.kind === "Play" || o.kind === "GoSolo") {
+      if (!(plays[o.inst] && o.kind === "GoSolo" && o.keyword === false)) plays[o.inst] = o;
+    }
     else if (o.kind === "Sell") sells[o.inst] = o;
     else if (o.kind === "Attack") attacks[o.inst] = o;
   });
@@ -949,6 +954,11 @@ const VERB = { Sell: "SELL", Play: "PLAY", GoSolo: "GO SOLO", Call: "CALL A LEGE
 function verbFor(o) {
   if (o.kind === "Activate") { const i = o.label.indexOf(": "); return i < 0 ? o.label : o.label.slice(i + 2); }
   if (o.kind === "Play" && o.host >= 0) { const i = o.label.indexOf(" on "); return i < 0 ? "EQUIP" : "EQUIP TO" + o.label.slice(i + 3); }
+  // Ruling 047: the same Legend offers two plays, and VERB keys on kind alone — so both buttons
+  // would have read "GO SOLO" and one of the two moves would have been unreachable from the card
+  // sheet. That is the Misty Olszewski defect this client has already met once: two options that
+  // read the same are still two options, and the difference is the whole point here.
+  if (o.kind === "GoSolo" && o.keyword === false) return "PLAY FOR ITS COST (LAGGED)";
   return VERB[o.kind] || o.label;
 }
 // Tapping a card opens the card, full size: its face, where it is standing, what is bolted to it

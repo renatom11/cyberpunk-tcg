@@ -61,10 +61,13 @@ def _ref_main_menu(s):
     for i in s.legends(p):
         d = s.card(i)
         if s.i_faceup[i]:
-            if (Keyword.GO_SOLO in d.keywords and d.cost is not None and not field_full
-                    and (not s.cfg.go_solo_requires_ready or not s.i_spent[i])
-                    and available(s, p) >= play_cost(s, p, i, go_solo=True)):
-                opts.append(GoSolo(i))
+            if d.cost is not None and not field_full:
+                if (Keyword.GO_SOLO in d.keywords
+                        and (not s.cfg.go_solo_requires_ready or not s.i_spent[i])
+                        and available(s, p) >= play_cost(s, p, i, go_solo=True)):
+                    opts.append(GoSolo(i))
+                if available(s, p) >= play_cost(s, p, i):        # ruling 047: the plain play
+                    opts.append(GoSolo(i, keyword=False))
         elif not once & ONCE_CALLED and available(s, p) >= 1:
             opts.append(CallLegend(i))
 

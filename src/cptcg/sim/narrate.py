@@ -46,7 +46,11 @@ def narrate(s: GameState, events: list, names: tuple[str, str]) -> list[str]:
                 host = f" on {_name(s, a.host)}" if a.host >= 0 else ""
                 out.append(f"{P(p)} plays {_name(s, a.inst)} ({d.type.name.title()}){host}.")
             elif isinstance(a, GoSolo):
-                out.append(f"{P(p)}: {_name(s, a.inst)} GOES SOLO onto the field.")
+                # Ruling 047: two ways onto the field, and a log that called both "GOES SOLO" would
+                # hide the one thing that differs -- whether it can attack this turn.
+                how = "GOES SOLO onto the field" if a.keyword else \
+                      "is played to the field for its cost, lagged"
+                out.append(f"{P(p)}: {_name(s, a.inst)} {how}.")
             elif isinstance(a, CallLegend):
                 # Two sentences, because the cost is paid for the Call and the reveal is its result:
                 # "Calls a Legend by spending 1 Eddie. Royce is revealed."

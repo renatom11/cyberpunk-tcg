@@ -69,6 +69,11 @@ F_MUST_ATTACK = 1 << 3    # "must attack next turn if it can"
 #: through it. The first-player handicap keeps F_NO_READY_NEXT, because that one really is only
 #: about the next Ready step.
 F_CANT_READY = 1 << 4
+#: Ruling 047: this Legend reached the field by paying its printed cost, NOT by using GO SOLO, so
+#: the keyword's permission to attack through Lag does not apply to it. It is a separate bit from
+#: F_GO_SOLO because that one means "a Legend standing on the field", which is true of both plays
+#: and is what sends it out of the game when it leaves (CR 4.4.1).
+F_NO_SOLO_KEYWORD = 1 << 5
 
 # Attack target kinds
 TARGET_UNIT = 0

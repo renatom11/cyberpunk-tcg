@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from cptcg.core.actions import (Activate, Attack, Block, CallLegend, EndTurn, GoSolo, Pass, Play,
                                 Sell, Target)
-from cptcg.core.enums import (NO_INST, NZONE, TARGET_GIG, TARGET_UNIT, CardType, Keyword, Zone)
+from cptcg.core.enums import (F_NO_SOLO_KEYWORD, NO_INST, NZONE, TARGET_GIG, TARGET_UNIT,
+                               CardType, Keyword, Zone)
 from cptcg.core.ops import _ctx, _rebuild_active, active_cards, available, has_keyword, payable_sources, play_cost
 from cptcg.core.state import ONCE_CALLED, ONCE_SOLD, GameState
 
@@ -38,7 +39,11 @@ def attack_permission(s: GameState, unit: int) -> tuple[bool, bool]:
             act = _rebuild_active(s)
         if act[10][rival]:
             return False, False
-        if not (has_keyword(s, unit, Keyword.ADRENALINE) or has_keyword(s, unit, Keyword.GO_SOLO)):
+        # Ruling 047: the keyword grants this, so a Legend that reached the field by paying its
+        # printed cost instead does not get it -- the card still PRINTS GO SOLO, which is why the
+        # test cannot be `has_keyword` alone. ADRENALINE is the card's own and applies either way.
+        solo_ok = has_keyword(s, unit, Keyword.GO_SOLO) and not s.i_flags[unit] & F_NO_SOLO_KEYWORD
+        if not (has_keyword(s, unit, Keyword.ADRENALINE) or solo_ok):
             units_ok = s.has_mod("attack_units_now", unit)
             gigs_ok = s.has_mod("attack_gigs_now", unit)
     if d.script is not None and d.script.attack_perm is not None:
@@ -152,10 +157,23 @@ def main_menu(s: GameState) -> list:
     for i in s.legends(p):
         d = defs[i_card[i]]
         if s.i_faceup[i]:
-            if (Keyword.GO_SOLO in d.keywords and d.cost is not None and not field_full
-                    and (not s.cfg.go_solo_requires_ready or not i_spent[i])
-                    and avail >= play_cost(s, p, i, go_solo=True)):
-                opts.append(GoSolo(i))
+            # Ruling 047: a face-up Legend with a numeric cost has TWO ways onto the field, and
+            # they resolve differently. GO SOLO plays it as a ready Unit that may attack through
+            # its Lag; paying the printed cost without the keyword keeps its orientation, adds Lag
+            # and grants nothing. The FAQ: "Can I play a Legend to the field from the Legends area
+            # without using GO SOLO? Yes, as long as the Legend has a numeric cost value... It
+            # enters the field with lag, and in the same orientation it was in the Legends area."
+            # All 8 costed Legends in the set carry GO SOLO, so this adds a second choice on eight
+            # cards rather than enabling any card that could not be played before.
+            if d.cost is not None and not field_full:
+                if (Keyword.GO_SOLO in d.keywords
+                        and (not s.cfg.go_solo_requires_ready or not i_spent[i])
+                        and avail >= play_cost(s, p, i, go_solo=True)):
+                    opts.append(GoSolo(i))
+                # The plain play is not gated on the keyword and not gated on being ready: it is
+                # "pay its cost", and a spent Legend paying it simply arrives spent.
+                if avail >= play_cost(s, p, i):
+                    opts.append(GoSolo(i, keyword=False))
         elif not once & ONCE_CALLED and avail >= 1:
             opts.append(CallLegend(i))
 

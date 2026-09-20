@@ -52,7 +52,13 @@ def _label(s: GameState, a) -> tuple[str, str, int | None]:
             return f"Play {n(a.inst)} on {n(a.host)}", "Play", a.inst
         return f"Play {n(a.inst)}", "Play", a.inst
     if isinstance(a, GoSolo):
-        return f"GO SOLO: {n(a.inst)}", "GoSolo", a.inst
+        # Ruling 047: the same Legend is offered twice, so the two labels have to say what differs.
+        # They are the same class and the same `kind`, and a client that keys options by instance
+        # alone would show one and hide the other -- which is the Misty Olszewski failure this view
+        # has met before, where two buttons read the same and one move became unreachable.
+        if a.keyword:
+            return f"GO SOLO: {n(a.inst)}", "GoSolo", a.inst
+        return f"Play {n(a.inst)} to the field (lagged, cannot attack)", "GoSolo", a.inst
     if isinstance(a, CallLegend):
         return "Call a Legend (1 €$)", "Call", a.inst
     if isinstance(a, Activate):
@@ -103,7 +109,7 @@ def _cost(s: GameState, player: int, a) -> int:
     if isinstance(a, Play):
         return play_cost(s, player, a.inst)
     if isinstance(a, GoSolo):
-        return play_cost(s, player, a.inst, go_solo=True)
+        return play_cost(s, player, a.inst, go_solo=a.keyword)
     if isinstance(a, CallLegend):
         return 1
     if isinstance(a, Activate):
@@ -369,6 +375,8 @@ def view_state(s: GameState, perspective: int | None, names: tuple[str, str], lo
             row = {"index": idx, "label": label, "kind": kind, "inst": inst,
                    "cost": _cost(s, ch.player, a),
                    "host": getattr(a, "host", -1) if isinstance(a, Play) else -1}
+            if isinstance(a, GoSolo):
+                row["keyword"] = a.keyword            # ruling 047: which of the two plays this is
             if pick_values is not None and idx < len(pick_values):
                 row["pick"] = pick_values[idx]
             opts.append(row)
