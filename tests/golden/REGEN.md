@@ -10,6 +10,76 @@ Every entry records the five pieces of evidence from `docs/verification.md`. A r
 all five is not one.
 
 
+## 2026-09-20 — ruling 046, the controller orders their own triggers (G2, a new decision point)
+
+**The change.** Two of a player's cards triggering on one event now resolve in the order that
+player chooses. `steps.OrderTriggersStep` asks, resolves exactly one, and re-pushes with the
+remainder — the shape `ReactionWindowStep` uses — on the existing `Pick` action, so
+`action_feature_digest()` is unmoved and fitted policy heads still load. `ops.dispatch` keeps
+calling hooks inline where there is no choice to make, which is most events and is what keeps
+dispatch cheap.
+
+**The restriction is the part worth reading, and it is measured rather than argued.** Over 287,247
+dispatched events across 240 golden-deck games, 4.8% matched two or more of one player's hooks —
+but a third of those were two or three copies of the *same card*: Rita Wheeler beside Rita Wheeler,
+Meredith Stout beside Meredith Stout. Ordering two identical effects is a choice whose branches
+cannot be told apart. Asking would have put a meaningless prompt in front of the player thousands
+of times and handed the search a branching factor it pays for and learns nothing from. Requiring
+two **distinct** cards takes it to 3.2%, and every one of those is a real decision. In play:
+**10.2 prompts per game, 7.2% of decisions**, 607 of 815 of them binary, the widest five options.
+
+The FAQ is also explicit about what this does *not* cover, and the step does not overreach: a
+trigger meeting an **activated** ⊡ effect is ordered ("After. Resolve the activated effect first"),
+as is one meeting a cost being paid ("After. Play the card first"). Only triggers that land
+together are a choice. Across players there is none either — the turn player's resolve first, which
+is the order `act[6][s.active]` already has.
+
+**The one behaviour change beyond the ordering**, stated plainly: a group that moves to the step
+runs as a step rather than inside the caller's remaining code. It is confined to the 3.2%, and it
+is arguably the more correct sequencing — the rules put a trigger in a pending queue that resolves
+after the current effect finishes.
+
+**1. Prediction.** Every key. Observed: all 8.
+
+**2. Localisation.** `steal` and `spent` were the two commonest ordering sites in the measurement
+(5,058 and 3,879), and the windows match: `sample_arasaka~sample_fixers~heuristic` diverges at
+decision 55 three lines after a Gig-area attack and a steal; the `random` key at 81, likewise on a
+steal. The board that raised the ruling in the first place — two Gear on one Unit, both triggering
+when the host is spent — is pinned as a test rather than left to the golden:
+`test_046_the_controller_orders_their_own_simultaneous_triggers`.
+
+**3. Revert confirmation.** `ops.py` and `steps.py` restored against the NEW golden: DIFFERENT on
+all 8 keys, at actions 39, 55, 66, 81, 82, 86, 88 and 93.
+
+**4. Aggregate.**
+
+| key | games | winner flips | end-reason | mean turn delta |
+|---|---|---|---|---|
+| sample_arasaka~sample_fixers~heuristic | 7/16 | 0 | 1 | +0.29 |
+| sample_arasaka~sample_fixers~random | 10/40 | 0 | 1 | +0.20 |
+| sample_corpos~sample_nomads~heuristic | 5/16 | 0 | 0 | +0.00 |
+| sample_corpos~sample_nomads~random | 17/40 | 1 | 1 | +0.24 |
+| sample_gangers~sample_netrunners~heuristic | 16/16 | 0 | 3 | +0.06 |
+| sample_gangers~sample_netrunners~random | 40/40 | 9 | 6 | −0.07 |
+| the_heist~embracing_power~heuristic | 5/16 | 0 | 0 | +0.00 |
+| the_heist~embracing_power~random | 16/40 | 3 | 4 | −0.75 |
+
+Smaller than 027 or 047 and for a clear reason: this adds a decision only where two distinct
+triggers actually land together, so a key moves in proportion to how often its decks do that.
+`sample_gangers~sample_netrunners` moves in every game — it is the pairing holding Evelyn Parker
+beside Rogue Amendiares, the commonest pair in the measurement at 3,322 occurrences — and
+`sample_corpos~sample_nomads~heuristic` in five of sixteen. Thirteen winner flips over 224 games.
+
+**5. Two-sided reachability.** Both instruments move, and upward, which is the signature of a new
+decision rather than a changed outcome. `fuzz -n 300 --seed 1` (heuristic)
+`c5be361c42116422b76a6cce` → `590b01a340045483d5445fa9`, 43,176 → **45,488** actions; `fuzz -n 400
+--seed 1 --agent random` `907adf81e67f6ff1b096e61d` → `a70eb43fb4524c97167d14b8`, 32,179 →
+**33,954**. Those +2,312 and +1,775 actions are the ordering prompts themselves.
+
+The delayed suite was re-derived and **all 73 positions still qualify**.
+
+---
+
 ## 2026-09-20 — ruling 047, a second way onto the field (G2, engine-wide)
 
 **The change.** A face-up Legend with a numeric cost can be played to the field **without** using
