@@ -10,6 +10,70 @@ Every entry records the five pieces of evidence from `docs/verification.md`. A r
 all five is not one.
 
 
+## 2026-09-20 — ruling 047, a second way onto the field (G2, engine-wide)
+
+**The change.** A face-up Legend with a numeric cost can be played to the field **without** using
+GO SOLO. The FAQ: *"Can I play a Legend to the field from the Legends area without using GO SOLO?
+**Yes**, as long as the Legend has a numeric cost value… It enters the field **with lag**, and **in
+the same orientation** it was in the Legends area."* All 8 costed Legends in the set carry GO SOLO,
+so this is a second choice on eight cards, not a new card becoming playable.
+
+**Not a new Action class.** `learn.policy.KINDS` is a tuple of Action *classes* that `_SPEC`
+one-hots over, so `PlayLegend` would move `action_feature_digest()` and every fitted policy head
+would be refused on load — the same hazard ruling 046 flagged. `GoSolo` gains a
+`keyword: bool = True` field instead. Measured before and after the edit: `2ea962c9a03712d4` both
+times.
+
+The keyword's permission to attack through Lag needed its own flag, and that is the part worth
+recording. `attack_permission` granted it on `has_keyword(GO_SOLO)`, and the card still *prints*
+GO SOLO whichever way it was played — so the keyword alone cannot tell the two plays apart, and the
+plain play would have silently kept the benefit the FAQ withholds from it. `F_NO_SOLO_KEYWORD` is
+set only by the keyword-less play. `F_GO_SOLO` stays on both, because it means "a Legend standing
+on the field" and is what sends it out of the game when it leaves (CR 4.4.1).
+
+**1. Prediction.** Every key. A second option on every costed face-up Legend, on every turn one is
+face-up, renumbers every action index after it in any game where that happens — and a Legend is
+Called in most games. Observed: all 8.
+
+**2. Localisation.** The narration names the new play in as many words: *"… played to the field for
+its cost, lagged"*. It is reached: over 160 random games across the eight golden matchups, the new
+action was taken **32 times** — a play that could not be made at all on the previous build.
+Divergences land at decisions 29 to 55, which is the first turn a Legend is face-up in each key.
+
+**3. Revert confirmation.** `actions.py`, `legal.py` and `engine.py` restored against the NEW
+golden: DIFFERENT on all 8 keys, at actions 29, 29, 31, 31, 40, 41, 45 and 55.
+
+**4. Aggregate.**
+
+| key | games | winner flips | end-reason | mean turn delta |
+|---|---|---|---|---|
+| sample_arasaka~sample_fixers~heuristic | 12/16 | 0 | 0 | +0.00 |
+| sample_arasaka~sample_fixers~random | 31/40 | 5 | 2 | +0.00 |
+| sample_corpos~sample_nomads~heuristic | 16/16 | 0 | 0 | +0.00 |
+| sample_corpos~sample_nomads~random | 39/40 | 8 | 6 | +0.18 |
+| sample_gangers~sample_netrunners~heuristic | 15/16 | 0 | 0 | +0.00 |
+| sample_gangers~sample_netrunners~random | 24/40 | 6 | 6 | +0.04 |
+| the_heist~embracing_power~heuristic | 15/16 | 0 | 0 | +0.00 |
+| the_heist~embracing_power~random | 40/40 | 17 | 13 | +0.30 |
+
+The shape is the telling part and it is not the same as 027's. **Zero winner flips in all four
+heuristic keys**, 36 in the random ones. The frozen heuristic scores a ply deep and the new play is
+strictly worse than GO SOLO on the turn you make it — lagged, cannot attack, same cost — so the
+greedy agent sees the extra option, never takes it, and its games diverge only by renumbering.
+Random takes it about one time in five that it is offered, and that is where the flips are. An
+option a one-ply agent correctly refuses is exactly what the delayed-reward suite exists to
+measure, and a reminder that these numbers are conditional on that opponent.
+
+**5. Two-sided reachability.** Both instruments move. `fuzz -n 300 --seed 1` (heuristic)
+`9ee8e3cc046f0c1af07847fd` → `c5be361c42116422b76a6cce`, 43,182 → 43,176 actions; `fuzz -n 400
+--seed 1 --agent random` `d711b635731a993f789bc554` → `907adf81e67f6ff1b096e61d`, 32,517 → 32,179.
+The random drop of 338 actions is the new play being taken: it ends a Legend's turn sooner than GO
+SOLO does, since the arrival cannot attack.
+
+The delayed suite was re-derived and **all 73 positions still qualify**.
+
+---
+
 ## 2026-09-20 — ruling 044, a solo'd Legend is a Unit (six scripts, seven findings)
 
 **The fix.** Six card scripts decided Unit-hood by ``CardDef.type``, which excludes a Legend
