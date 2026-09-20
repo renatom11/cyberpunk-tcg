@@ -123,13 +123,21 @@ def test_river_ward_searches_when_an_equipped_unit_dies(pool):
     assert s.i_zone[find(s, "animals-wrecker")] == Zone.TRASH
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-river-ward-detective-on-the-hunt-1: the trigger tests CardType.UNIT, so an equipped Legend on the field — a Unit by ruling 015 — never fires it")
 def test_river_ward_searches_when_an_equipped_legend_on_the_field_dies(pool):
     """A Legend on the field has been played as a Unit: ruling 027 ('play it as a ready Unit')
     and ruling 015 ('it is a Unit now' — which is why it stops being spendable as an Eddie).
     ``GameState.units`` lists it, attacks target it as a Unit, and it fights as one. So an
     equipped V *Streetkid* dying on the field is 'a friendly equipped Unit is defeated' and
     River Ward should search.
+
+    Fixed: AUD-river-ward-detective-on-the-hunt-1, by ruling 044 — settled by the FAQ, which says a Legend played to the
+    field with GO SOLO is BOTH a Unit and a Legend, so Unit-hood is answered by the zone
+    and never by the printed card type. Held as a strict xfail until the FAQ arrived; the
+    deleted marker is the red-to-green record.
+
+    The one of the seven that could not be read off the board: `ops.defeat` moves the card out
+    of play, and `move` clears the flag recording that it was there, before the event fires. So
+    `defeat` answers the question itself and carries it as the fifth element of the event.
     """
     s = board(pool, Side(legends=[("river-ward-detective-on-the-hunt", {"faceup": True})],
                          field=[("v-streetkid", {"faceup": True, "gear": ["mantis-blades"]})],

@@ -22,9 +22,6 @@ E = 9
 
 
 # ------------------------------------------------------------ 6th-street-recruits
-@pytest.mark.xfail(strict=True, reason="AUD-6th-street-recruits-1: a GO SOLO Legend on the field is "
-                                       "'a friendly Unit' (GO SOLO: 'play it as a ready Unit'), but the "
-                                       "script gates on CardDef.type is UNIT and never fires for it")
 def test_6th_street_recruits_fires_when_a_go_solo_legend_steals_a_d6(pool):
     """'When a friendly Unit steals a d6, increase a Gig by up to 6.'
 
@@ -33,6 +30,11 @@ def test_6th_street_recruits_fires_when_a_go_solo_legend_steals_a_d6(pool):
     as "(it is a Unit now)". The engine agrees: s.units(0) lists the solo'd Legend. So a d6
     stolen by Goro Takemura on the field is a d6 stolen by a friendly Unit, and 6th Street
     Recruits must offer its increase.
+
+    Fixed: AUD-6th-street-recruits-1, by ruling 044 — settled by the FAQ, which says a Legend played to the
+    field with GO SOLO is BOTH a Unit and a Legend, so Unit-hood is answered by the zone
+    and never by the printed card type. Held as a strict xfail until the FAQ arrived; the
+    deleted marker is the red-to-green record.
     """
     s = board(pool, Side(field=["6th-street-recruits"], eddies=E,
                          legends=[("goro-takemura-hands-unclean", {"faceup": True})]),

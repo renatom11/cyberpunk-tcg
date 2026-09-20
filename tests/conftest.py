@@ -37,7 +37,7 @@ def decks():
 # ---------------------------------------------------------------- board builder
 from cptcg.core.actions import Choice, ChoiceKind  # noqa: E402
 from cptcg.core.config import DEFAULT_CONFIG  # noqa: E402
-from cptcg.core.enums import DICE, NZONE, Zone  # noqa: E402
+from cptcg.core.enums import DICE, F_GO_SOLO, NZONE, CardType, Zone  # noqa: E402
 from cptcg.core.legal import main_menu  # noqa: E402
 from cptcg.core.state import GameState  # noqa: E402
 from cptcg.core.steps import EndTurnStep  # noqa: E402
@@ -66,6 +66,13 @@ def _place(s, reg, p, spec, zone):
     s.i_lag[inst] = 1 if opts.get("lag") else 0
     s.i_faceup[inst] = 1 if opts.get("faceup") else 0
     s.i_flags[inst] = opts.get("flags", 0)
+    # A Legend standing in the FIELD area got there by being played as a Unit, and `F_GO_SOLO` is
+    # what records that: `ops.defeat` reads it to send such a Legend out of the game rather than to
+    # the trash, and ruling 044's `EffectCtx.was_unit` reads it to answer "was that a Unit?" after
+    # the card has already left the field. A hand-built board that omits it describes a position no
+    # game can reach, and the card scripts then behave differently on it than on a real one.
+    if zone is Zone.FIELD and reg.get(cid).type is CardType.LEGEND:
+        s.i_flags[inst] |= F_GO_SOLO
     for gid in opts.get("gear", ()):
         g = s.new_instance(reg.get(gid).idx, p, zone)
         s.i_host[g] = inst

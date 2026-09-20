@@ -24,10 +24,6 @@ TARGET_GIG = 1
 
 
 # ------------------------------------------------- jackie-welles-pour-one-out-for-me
-@pytest.mark.xfail(strict=True, reason="AUD-jackie-welles-pour-one-out-for-me-1: GO SOLO dispatches "
-                                       "'played' for a Legend, and GO SOLO is playing it as a Unit "
-                                       "(ruling 032/015), but the hook gates on CardDef.type in "
-                                       "(UNIT, GEAR) and so never fires for a Blue Legend")
 def test_jackie_fires_when_a_blue_legend_goes_solo(pool):
     """'The first time you play a Blue Unit or Blue Gear each turn, you may decrease a friendly
     Gig by up to 2. If it becomes a min Gig, draw 1.'
@@ -42,6 +38,11 @@ def test_jackie_fires_when_a_blue_legend_goes_solo(pool):
     The same reading has already been accepted for three other event kinds — 6th Street Recruits on
     ``steal`` (a11), Satori on ``fight_won`` (a12), River Ward on ``defeated`` (a13). Jackie is the
     fourth kind, ``played``, and the only hook in the set that names a Unit there.
+
+    Fixed: AUD-jackie-welles-pour-one-out-for-me-1, by ruling 044 — settled by the FAQ, which says a Legend played to the
+    field with GO SOLO is BOTH a Unit and a Legend, so Unit-hood is answered by the zone
+    and never by the printed card type. Held as a strict xfail until the FAQ arrived; the
+    deleted marker is the red-to-green record.
     """
     s = board(pool, Side(legends=[("jackie-welles-pour-one-out-for-me", {"faceup": True}),
                                   ("v-corporate-exile", {"faceup": True})],

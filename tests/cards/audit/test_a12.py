@@ -43,7 +43,6 @@ def test_gorilla_arms_steal_is_extra_not_a_replacement(pool):
 
 
 # --------------------------------------------------------- satori-sword-of-saburo
-@pytest.mark.xfail(strict=True, reason="AUD-satori-sword-of-saburo-1: the loser is tested with CardDef.type is UNIT, so a GO SOLO Legend on the field — a Unit per the GO SOLO reminder and ruling 015 — never triggers the draw")
 def test_satori_draws_when_its_host_beats_a_go_solo_legend(pool):
     """'When this Unit wins a fight against a rival Unit, draw 1.'
 
@@ -52,6 +51,11 @@ def test_satori_draws_when_its_host_beats_a_go_solo_legend(pool):
     legal attack targets, and V Corporate Exile's printed text is the GO SOLO reminder alone, so
     nothing else moves here. Animals Wrecker (10) beats its 8 power and it is removed from the game
     (ruling 034), which is what makes it a rival Unit defeated in a fight.
+
+    Fixed: AUD-satori-sword-of-saburo-1, by ruling 044 — settled by the FAQ, which says a Legend played to the
+    field with GO SOLO is BOTH a Unit and a Legend, so Unit-hood is answered by the zone
+    and never by the printed card type. Held as a strict xfail until the FAQ arrived; the
+    deleted marker is the red-to-green record.
     """
     s = board(pool, Side(field=[("animals-wrecker", {"gear": ["satori-sword-of-saburo"]})],
                          deck=["floor-it"]),

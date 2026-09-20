@@ -87,6 +87,25 @@ class EffectCtx:
     def is_type(self, inst: int, t: CardType) -> bool:
         return self.s.card(inst).type is t
 
+    def is_unit(self, inst: int) -> bool:
+        """Is this instance a Unit **right now**? Ruling 044, settled by the FAQ.
+
+        By zone, never by ``CardDef.type``. A Legend played to the field with GO SOLO *is* a Unit
+        — the FAQ says so four separate times, and says it is still a Legend too, so the two
+        answers are not exclusive — and reading the printed type gets that wrong. Six scripts used
+        to ask the printed type while forty-eight asked the zone, and the seven audit findings that
+        turn on the word were all on the six.
+
+        ``s.units`` is the same list every zone-based site reads, so this cannot drift from them:
+        it already excludes equipped Gear, which shares the field zone with its host.
+
+        This needs the card to still BE somewhere, so it is no use to a DEFEATED listener: `defeat`
+        moves the card out of play, and `move` clears the flag that recorded it had been on the
+        field, before the event is dispatched. That case is answered by `defeat` itself and carried
+        as the fifth element of the ``("defeated", ...)`` event.
+        """
+        return inst in self.s.units(self.s.i_owner[inst])
+
     def cred(self, player: int | None = None) -> int:
         return self.s.street_cred(self.player if player is None else player)
 

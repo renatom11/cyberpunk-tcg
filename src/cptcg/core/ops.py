@@ -457,7 +457,15 @@ def defeat(s: GameState, inst: int, *, allow_replace: bool = True) -> bool:
             if h(_ctx(s, i), inst):
                 return False
     d = s.reg.defs[s.i_card[inst]]
-    dest = Zone.REMOVED if s.i_flags[inst] & F_GO_SOLO else Zone.TRASH
+    solo = bool(s.i_flags[inst] & F_GO_SOLO)
+    dest = Zone.REMOVED if solo else Zone.TRASH
+    # Ruling 044: was this card a *Unit*? It has to be answered here, before the move, and carried
+    # in the event. `move` clears i_flags for anything leaving play, and it is F_GO_SOLO that marks
+    # a Legend which was standing on the field as a Unit — so by the time a listener runs there is
+    # neither a zone nor a flag left to read, and a listener testing CardDef.type would answer No
+    # for exactly the case the FAQ says is Yes. River Ward *Detective on the Hunt* is the card this
+    # matters to; the field is appended, so every existing listener indexes as it did.
+    was_unit = d.type is CardType.UNIT or solo
     s.emit("defeated", inst)
     gear = s.gear_on(inst)
     move(s, inst, dest)
@@ -466,7 +474,7 @@ def defeat(s: GameState, inst: int, *, allow_replace: bool = True) -> bool:
             s.add_mod("was_host", g, inst)
             push_trigger(s, Trigger.DEFEATED, g)
         push_trigger(s, Trigger.DEFEATED, inst)
-        dispatch(s, ("defeated", inst, owner, bool(gear)))
+        dispatch(s, ("defeated", inst, owner, bool(gear), was_unit))
     return True
 
 

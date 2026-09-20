@@ -47,12 +47,16 @@ def test_jackie_offers_the_swap_for_an_ordinary_unit(pool):
     assert s.i_zone[jackie] == Zone.REMOVED            # ... and Jackie left the game instead
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-jackie-welles-mamas-favorite-1: the replacement is gated on card type UNIT, so it never offers to save a Legend played as a Unit with GO SOLO")
 def test_jackie_can_save_a_legend_played_as_a_unit(pool):
     """'If a friendly Unit would be defeated, you may pay 1 €$ to defeat this Legend instead.'
 
     A Legend played with GO SOLO is on the field as a Unit — rules.md: 'Pay this Legend's cost to
     play it as a ready Unit'; ruling 015: 'it is a Unit now'. Sasha here is exactly that, so the
+
+    Fixed: AUD-jackie-welles-mamas-favorite-1, by ruling 044 — settled by the FAQ, which says a Legend played to the
+    field with GO SOLO is BOTH a Unit and a Legend, so Unit-hood is answered by the zone
+    and never by the printed card type. Held as a strict xfail until the FAQ arrived; the
+    deleted marker is the red-to-green record.
     offer is due before she is defeated."""
     s = board(pool, Side(legends=[(JACKIE, {"faceup": True}),
                                   ("sasha-yakovleva-wont-let-you-down", {"faceup": True}),
@@ -68,11 +72,18 @@ def test_jackie_can_save_a_legend_played_as_a_unit(pool):
     assert s.i_zone[jackie] == Zone.REMOVED
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-jackie-welles-mamas-favorite-2: the replacement is gated on Jackie sitting in the Legends area, so it switches off once she GOES SOLO")
 def test_jackie_still_protects_after_she_goes_solo(pool):
     """'If a friendly Unit would be defeated, you may pay 1 €$ to defeat this Legend instead.'
 
     Nothing in the text limits the replacement to the Legends area, and a Legend on the field
+
+    Fixed: AUD-jackie-welles-mamas-favorite-2, by ruling 044 — settled by the FAQ, which says a Legend played to the
+    field with GO SOLO is BOTH a Unit and a Legend, so Unit-hood is answered by the zone
+    and never by the printed card type. Held as a strict xfail until the FAQ arrived; the
+    deleted marker is the red-to-green record.
+
+    The gate is `in_play()`, not "sitting in the Legends area": the FAQ says the effect works
+    "in the field area as a Unit" *and* in the Legends area.
     through GO SOLO keeps its text (ruling 032: its PLAY trigger fires there)."""
     s = board(pool, Side(legends=[(JACKIE, {"faceup": True})] + NOCALL[:2],
                          field=["psycho-squad"], eddies=E), Side())

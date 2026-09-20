@@ -37,13 +37,17 @@ def test_viktor_discounts_only_the_first_cyberware_gear_of_the_turn(pool):
     assert available(s, 0) == 20 - 1 - 5 - 4
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-saburo-arasaka-stubborn-patriarch-1: the aura tests card type is UNIT, so an ARASAKA Legend played as a Unit with GO SOLO never gets the +1")
 def test_saburo_aura_reaches_an_arasaka_legend_that_went_solo(pool):
     """'Friendly ARASAKA Units have +1 power while attacking.'
 
     GO SOLO (docs/rules.md): 'Pay this Legend's cost to play it as a ready Unit'; ruling 015's
     default says the Legend on the field 'is a Unit now'. Goro Takemura (Hands Unclean) is
     ARASAKA and friendly, so while attacking he is 7 + 1 = 8.
+
+    Fixed: AUD-saburo-arasaka-stubborn-patriarch-1, by ruling 044 — settled by the FAQ, which says a Legend played to the
+    field with GO SOLO is BOTH a Unit and a Legend, so Unit-hood is answered by the zone
+    and never by the printed card type. Held as a strict xfail until the FAQ arrived; the
+    deleted marker is the red-to-green record.
     """
     s = board(pool, Side(legends=[("saburo-arasaka-stubborn-patriarch", {"faceup": True}),
                                   ("goro-takemura-hands-unclean", {"faceup": True})], eddies=E),

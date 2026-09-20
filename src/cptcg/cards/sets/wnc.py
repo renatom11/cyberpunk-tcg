@@ -946,8 +946,10 @@ def _():
 
 @script("saburo-arasaka-stubborn-patriarch")
 def _():
+    # Ruling 044: Unit-hood is answered by the zone, so an ARASAKA Legend that has GONE SOLO onto
+    # the field is a friendly ARASAKA Unit and gets the +1 too.
     return CardScript(power_mod=lambda c, unit, sit: 1 if sit & ATTACKING and c.s.i_owner[unit] == c.player
-                      and "ARASAKA" in c.d(unit).tags and c.d(unit).type is UNIT else 0)
+                      and "ARASAKA" in c.d(unit).tags and c.is_unit(unit) else 0)
 
 
 @script("meredith-stout-stone-cold-corpo")
@@ -1045,8 +1047,10 @@ def _():
         # "increase a Gig" is unscoped here, as it is on La Llorona and Dexter Deshawn in this
         # set, so either player's Gig may be increased; only text that says "a friendly Gig"
         # (Jackie Welles) narrows it. Increase only, hence 1..6.
+        # Ruling 044: by zone. The thief is still on the field when "steal" is dispatched, so a
+        # solo'd Legend that takes a d6 is a friendly Unit that stole one.
         if e[0] == "steal" and e[3] == 6 and c.s.i_owner[e[1]] == c.player \
-                and c.d(e[1]).type is UNIT:
+                and c.is_unit(e[1]):
             c.adjust_up_to([c.player, c.rival], 1, 6, prompt="Increase a Gig")
     return CardScript(on_event=ev, events=frozenset({"steal"}))
 
@@ -1210,7 +1214,9 @@ def _():
 @script("satori-sword-of-saburo")
 def _():
     def ev(c, e):
-        if e[0] == "fight_won" and e[1] == c.host() and c.d(e[2]).type is UNIT:
+        # Ruling 044: by zone. `fight_won` is dispatched before either combatant is defeated, so
+        # the loser is still on the field and a solo'd Legend reads as the rival Unit it is.
+        if e[0] == "fight_won" and e[1] == c.host() and c.is_unit(e[2]):
             c.draw(1)
     return CardScript(on_event=ev, events=frozenset({"fight_won"}))
 
@@ -1324,7 +1330,10 @@ def _():
                  lambda c2, g: c2.play_free(g), prompt="Play a Gear for free")
 
     def ev(c, e):
-        if e[0] == "defeated" and e[2] == c.player and e[3] and c.d(e[1]).type is UNIT:
+        # Ruling 044, and the one place it cannot be read off the board: `ops.defeat` has already
+        # moved the card out of the field by the time this fires, and `move` clears the flag that
+        # said it was there, so `defeat` answers "was that a Unit?" and hands it over as e[4].
+        if e[0] == "defeated" and e[2] == c.player and e[3] and e[4]:
             from cptcg.core.ops import move
             top = c.top(2)
             c.choose(top, lambda c2, i: move(c2.s, i, Zone.TRASH), revealed=top,
@@ -1472,8 +1481,13 @@ def _():
     from cptcg.core.ops import available, pay
 
     def would_defeat(c, inst):
-        if c.s.i_owner[inst] != c.player or c.d(inst).type is not UNIT or not c.in_play() \
-                or c.s.i_zone[c.inst] is not Zone.LEGENDS or available(c.s, c.player, exclude=c.inst) < 1:
+        # Ruling 044, twice over. The card being saved is a Unit by ZONE, so a solo'd Legend
+        # qualifies (AUD-jackie-welles-mamas-favorite-1). And Jackie herself works from either
+        # area -- the FAQ says the effect applies "in the field area as a Unit" *and* in the
+        # Legends area -- so the gate is `in_play()`, which covers both, rather than a test that
+        # she is sitting in the Legends area (AUD-jackie-welles-mamas-favorite-2).
+        if c.s.i_owner[inst] != c.player or not c.is_unit(inst) or not c.in_play() \
+                or available(c.s, c.player, exclude=c.inst) < 1:
             return False
         from cptcg.core.ops import defeat, move
         me = c.inst
@@ -1497,8 +1511,11 @@ def _():
 @script("jackie-welles-pour-one-out-for-me")
 def _():
     def ev(c, e):
+        # Ruling 044, and the FAQ names this card: "Does playing a Legend from the Legends area
+        # to the field, trigger Jackie Welles's effect? Yes". `go_solo` moves the Legend to the
+        # field before dispatching "played", so by zone it is the Blue Unit that was played.
         if e[0] == "played" and e[2] == c.player and c.d(e[1]).color.name == "BLUE" \
-                and c.d(e[1]).type in (UNIT, GEAR) and c.once("blue"):
+                and (c.is_unit(e[1]) or c.is_type(e[1], GEAR)) and c.once("blue"):
             def after(c2, o, i):
                 if c2.gigs(o)[i][1] == 1:
                     c2.draw(1)

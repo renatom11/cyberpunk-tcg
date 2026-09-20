@@ -493,30 +493,30 @@ def test_the_event_filter_lints_can_fire_and_read_named_hooks():
     assert tested - ev == {"start_turn"}, "the named-hook body was not read"
 
 
-# ------------------------------------- one word, two answers: "Unit" and the solo'd Legend
-#: The six places a card script decides Unit-hood by the PRINTED CARD TYPE, which excludes a Legend
-#: standing on the field through GO SOLO. Everywhere else — 48 sites — the question is answered by
-#: zone, through ``c.units()`` / ``c.rival_units()``, which includes it. Both answers cannot be
-#: right, and ``docs/rulings.md`` row 044 records that the word is unsettled. This list is frozen
-#: until it is: a seventh type-gate, or one of these six quietly changing sides, is a decision
-#: nobody made.
-TYPE_GATED_UNIT = {
-    "saburo-arasaka-stubborn-patriarch",      # "Friendly ARASAKA Units have +1 power while attacking"
-    "6th-street-recruits",                    # "When a friendly Unit steals a d6, ..."
-    "satori-sword-of-saburo",                 # "When this Unit wins a fight against a rival Unit, draw 1"
-    "river-ward-detective-on-the-hunt",       # "When a friendly equipped Unit is defeated, ..."
-    "jackie-welles-mamas-favorite",           # "If a friendly Unit would be defeated, ..."
-    "jackie-welles-pour-one-out-for-me",      # "the first time you play a Blue Unit or Blue Gear ..."
-}
+# ------------------------------------- one word, one answer: "Unit" and the solo'd Legend
+#: Empty, and that is the point. Six card scripts used to decide Unit-hood by the PRINTED CARD
+#: TYPE, which excludes a Legend standing on the field through GO SOLO, while forty-eight asked by
+#: zone, which includes it. Ruling 044 — settled by the FAQ, which answers **both**: it is a Unit
+#: *and* still a Legend — says zone is the right side, so the six were the defect and are fixed.
+#: This set stays here, pinned at empty, because the failure mode it was written for has not gone
+#: away: a new script reaching for ``CardDef.type`` to ask "is this a Unit" is a decision nobody
+#: made, and it would be invisible in review.
+TYPE_GATED_UNIT: set[str] = set()
 
 
-def test_the_split_over_what_counts_as_a_unit_has_not_moved():
-    """Ruling 044 is Uncertain; this keeps the ambiguity from spreading while it is.
+def test_no_script_decides_unit_hood_by_the_printed_card_type():
+    """Ruling 044: Unit-hood is a question about the zone, and the FAQ settled it.
 
-    A solo'd Legend is a Unit everywhere the engine asks the question by *zone* and is not one in the
-    six places it asks by ``CardDef.type``. Seven audit findings turn on the difference and are held
-    open because fixing them one at a time would freeze a guess into six scripts. What this test can
-    check, and what nobody can check by reading, is that the split stays exactly where it is.
+    *"When a Legend uses GO SOLO is it still a Legend? **Yes**"* — and Synapse Burnout's answer
+    calls the same card "now also a Unit". Both at once, so a script that reads ``CardDef.type`` to
+    answer "is this a Unit" gets the GO SOLO case wrong every time. Seven audit findings turned on
+    exactly that and were held as strict xfails until the FAQ arrived.
+
+    Two escapes this cannot see, both noted so the next reader does not assume it covers them:
+    ``type is LEGEND`` tests are legitimate and untouched, because Legend-ness *is* answered by the
+    card; and a listener on ``("defeated", ...)`` cannot read the zone at all — the card has been
+    moved out of play before the event fires — so that one is answered by ``ops.defeat`` and
+    carried in the event.
     """
     src = (SETS_DIR / "wnc.py").read_text(encoding="utf-8")
     tree = ast.parse(src)
@@ -534,9 +534,9 @@ def test_the_split_over_what_counts_as_a_unit_has_not_moved():
         if "units()" in body:
             zoned.add(card)
     assert gated == TYPE_GATED_UNIT, (
-        "the type-gated set moved; ruling 044 is still Uncertain, so this is a decision somebody "
-        f"made without recording it.\n  added: {sorted(gated - TYPE_GATED_UNIT)}\n  gone: "
-        f"{sorted(TYPE_GATED_UNIT - gated)}")
+        "a script decides Unit-hood by CardDef.type. Ruling 044 is settled — a Legend on the field "
+        "through GO SOLO is a Unit — so this is a card that will be wrong about it.\n  added: "
+        f"{sorted(gated - TYPE_GATED_UNIT)}\n  gone: {sorted(TYPE_GATED_UNIT - gated)}")
     assert len(zoned) >= 35, (
         f"only {len(zoned)} cards answer 'is it a Unit' by zone; the majority idiom this test "
         "contrasts with has changed shape")
