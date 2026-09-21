@@ -905,7 +905,8 @@ def score_agent(reg: Registry, suite: dict, agent: str, *, trial_seeds=SCORE_SEE
 #: Position families, by id prefix, longest first. A family is what a Stage 0 instrument reads
 #: (race, dice, card semantics, play-around); ids outside the table belong to their first word.
 FAMILIES = ("card-semantics", "play-around", "removal-first", "legend-call", "recursion-trade",
-            "defensive-setup", "defend", "race", "dice", "mined")
+            "defensive-setup", "gig-shaping", "sell-to-afford", "steal-threshold", "defend", "race",
+            "dice", "mined")
 
 
 def family_of(pid: str) -> str:
