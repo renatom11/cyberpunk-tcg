@@ -175,6 +175,18 @@ The gap is 0.9 points against the heuristic and −0.5 against random, both insi
 this budget the inferred list costs the search nothing measurable, so the default of decision 3
 stands at no cost. Confirmed.
 
+**Kill test 2 — is the deck metagame non-transitive?** Round robin over the twelve frozen panel
+lists plus the eight `data/decks` lists (20 decks, 190 pairs), `--no-sprt`, meta-report with a
+1,000-draw transitive null (`tools/meta_report.py`).
+
+| agent | games | residual RMS | null mean / 95th pct | p | Nash support (weights) |
+|---|---:|---:|---|---:|---|
+| heuristic, n = 40 a pair | 7,600 | 0.0892 | 0.0688 / 0.0751 | < 0.001 | 3: panel-3-b 0.54, panel-5-b 0.38, panel-0-b 0.08 |
+| ismcts:32, n = 20 a pair | *(running)* | | | | |
+
+Under the heuristic the field is **non-transitive** by Part 6's criterion (residual RMS above the
+null at p < 0.05 and a Nash support of at least three). The `ismcts:32` row decides the test.
+
 
 ## 5. Day-0 baselines
 
