@@ -134,15 +134,23 @@ def test_hand_built_positions_look_like_real_games(pool, suite):
             assert len(side["deck"]) >= 20, f"{e['id']}: {len(side['deck'])} cards left in deck"
 
 
+def _goal_and_horizon(e):
+    """A defend position is judged by ``held`` at horizon 1; every other by a win at its horizon."""
+    goal = delayed.entry_goal(e)
+    return goal, (1 if goal is not None else delayed.entry_horizon(e))
+
+
 def test_every_stored_position_still_has_its_winning_line(pool, suite):
-    """Half one of the claim: the stored line, replayed, really wins the game."""
+    """Half one of the claim: the stored line, replayed, really wins the game (or, for a defend
+    position, holds the rival short of the count)."""
     for e in suite["positions"]:
         s = delayed.build_entry(pool, e)
         me = e["player"]
-        assert s.pending is not None and s.pending.player == me
+        goal, h = _goal_and_horizon(e)
+        assert s.pending is not None and (s.pending.player == me or goal is not None)
         line = e["verified"]["line"]
-        assert line, e["id"]
-        assert delayed.replay_line(s, me, line, max_turns=delayed.entry_horizon(e)), (
+        assert line or goal is not None, e["id"]
+        assert delayed.replay_line(s, me, line, max_turns=h, goal=goal), (
             f"{e['id']}: the stored line no longer wins")
 
 
@@ -150,9 +158,10 @@ def test_the_frozen_heuristic_still_misses_every_position(pool, suite):
     """Half two: a position only belongs here while the greedy agent cannot find the win."""
     for e in suite["positions"]:
         s = delayed.build_entry(pool, e)
+        goal, h = _goal_and_horizon(e)
         for seed in e["verified"]["heuristic_seeds"]:
             won, _line = delayed.play_turn(s, e["player"], "heuristic", seed=seed,
-                                           max_turns=delayed.entry_horizon(e))
+                                           max_turns=h, goal=goal)
             assert not won, f"{e['id']}: the heuristic now wins it on seed {seed}"
         assert set(delayed.SCORE_SEEDS) <= set(e["verified"]["heuristic_seeds"]), (
             f"{e['id']}: the heuristic was never checked on the seeds agents are scored on")
@@ -167,9 +176,9 @@ def test_every_stored_floor_is_low_and_still_the_number_in_the_file(pool, suite)
     for e in suite["positions"]:
         s = delayed.build_entry(pool, e)
         v = e["verified"]
+        goal, h = _goal_and_horizon(e)
         wins, trials = delayed.floor_rate(s, e["player"], seeds=v["floor_seeds"],
-                                          agent=v["floor_agent"],
-                                          max_turns=delayed.entry_horizon(e))
+                                          agent=v["floor_agent"], max_turns=h, goal=goal)
         assert trials == v["floor_trials"] and wins == v["floor_wins"], (
             f"{e['id']}: the random floor moved from {v['floor_wins']} to {wins} of {trials}")
         assert wins <= delayed.MAX_FLOOR * trials, (
@@ -220,7 +229,7 @@ def test_a_delayed_position_really_is_delayed(pool, suite):
     the position would be a within-turn puzzle wearing a "delayed" label, and a generation that
     learned nothing about setup could score on it.
     """
-    late = [e for e in suite["positions"] if delayed.entry_horizon(e) > 1]
+    late = [e for e in suite["positions"] if delayed.entry_horizon(e) > 1 and delayed.entry_goal(e) is None]
     assert late, "no position with a horizon past this turn"
     for e in late:
         s = delayed.build_entry(pool, e)
@@ -234,7 +243,7 @@ def test_a_delayed_position_really_is_delayed(pool, suite):
 def test_the_horizon_is_counted_in_my_own_turns(pool, suite):
     """``confirmed_win`` at a wider horizon must be a superset of the narrower one, never a
     different question: anything won by the next turn is still won two turns out."""
-    e = next(p for p in suite["positions"] if delayed.entry_horizon(p) == 1)
+    e = next(p for p in suite["positions"] if delayed.entry_horizon(p) == 1 and delayed.entry_goal(p) is None)
     s = delayed.build_entry(pool, e)
     me = e["player"]
     line = e["verified"]["line"]
@@ -249,10 +258,10 @@ def test_the_solver_rediscovers_a_win_in_every_hand_built_position(pool, suite):
         if not _authored(e):
             continue                              # mined positions are covered by their stored line
         s = delayed.build_position(pool, e["spec"])
-        h = delayed.entry_horizon(e)
-        sol = delayed.turn_search(s, e["player"], max_nodes=delayed.MAX_NODES, max_turns=h)
+        goal, h = _goal_and_horizon(e)
+        sol = delayed.turn_search(s, e["player"], max_nodes=delayed.MAX_NODES, max_turns=h, goal=goal)
         assert sol.won and sol.exhausted, e["id"]
-        assert delayed.replay_line(s, e["player"], sol.line, max_turns=h), e["id"]
+        assert delayed.replay_line(s, e["player"], sol.line, max_turns=h, goal=goal), e["id"]
 
 
 def test_a_node_cap_reports_that_it_proved_nothing(pool, suite):
