@@ -20,8 +20,8 @@ reproduced in `docs/stage0.md` with the final report.
 | E7 Bootleg's sold card hidden from both seats | done (G0 IDENTICAL; ledger entry); bootstrap sample re-recorded | see git log |
 | E8 trigger ordering over printed hooks and listeners (+ `wants` on every hook; 046's spurious prompts gone) | done with E9, golden regenerated (all 8 keys) | see git log |
 | E9 activation / payment ordering | done with E8 | see git log |
-| E10 reaction window always opens | pending | — |
-| E11 root dedup without hidden identities | pending | — |
+| E10 reaction window always opens (re-window after a Block excepted; residual recorded) | golden cycle done, commit pending | — |
+| E11 root dedup without hidden identities (`neural.seat_key`) | code + tests green, commit pending | — |
 | 1c pay-events (kill test 4) | after the first corpus | — |
 | 1d requalify, bootstrap sample, site build, rulings rows | pending | — |
 

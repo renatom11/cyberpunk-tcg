@@ -10,6 +10,62 @@ Every entry records the five pieces of evidence from `docs/verification.md`. A r
 all five is not one.
 
 
+## 2026-09-21 — Stage 0 E10: the reaction window always opens (G2, engine-wide)
+
+**The change.** `steps.ReactionWindowStep` no longer returns silently when the defender's only
+option is Pass. That skip was a tell no table has: the window's absence proved the defender held
+no affordable QUICK, no ready BLOCKER and no Call, and its presence proved they did (the design's
+leak 1.3b-11, removed per the owner's decision 2d) — and inside a search it made the attacker's
+tree branch by what each sampled world had dealt the defender. A Pass-only window is now a
+decision with one answer, recorded in the stream like any other. `tests/conftest.do` answers
+such a window for the scenario tests, whose question is what the attack does. Reproduced red
+first (`test_the_reaction_window_opens_even_when_the_defender_can_only_pass`).
+
+**One window is left as it was, and it is written down as a residual.** The window that
+*re-opens* after a Block (a redirect, ruling 012) still closes silently when the defender has
+nothing further. The first version of this change opened it too, and the delayed suite lost
+`defensive-setup-shield-the-wrecker` to it: the frozen heuristic's preview of a Block runs to the
+next pending decision and stops (`HeuristicAgent._resolve` returns as soon as the turn is not its
+own), so a Pass-only re-window left every Block looking like a spent Unit and an unresolved
+fight (preview −17.75 against Pass's −10.80 on that board; −10.75 with the fight resolved), and
+the heuristic stopped blocking. The heuristic is frozen and is the yardstick, so the engine keeps
+that one window closed. What it still reveals is whether a defender who has already blocked
+could have reacted again — after a Block only, and only to that attack's owner. Recorded in
+`docs/stage0.md` under the tells not removed.
+
+**1. Prediction.** Every key. Observed: all 8.
+
+**2. Localisation.** All eight first divergences are the new decision itself — a `REACTION` with
+the single option `Pass` (e.g. `the_heist~embracing_power~heuristic` game 0 at decision 23,
+`sample_corpos~sample_nomads~random` game 1 at 23). 224 games hold 1,845 more decisions than
+before (24,944 → 26,789), about eight Pass-only windows a game; the ordering-prompt count is
+unchanged at 455.
+
+**3. Revert confirmation.** `steps.py` stashed against the NEW golden: DIFFERENT on all 8 keys.
+
+**4. Aggregate.**
+
+| key | games | winner flips | end-reason | mean turn delta |
+|---|---|---|---|---|
+| sample_arasaka~sample_fixers~heuristic | 16/16 | 0 | 0 | +0.00 |
+| sample_arasaka~sample_fixers~random | 40/40 | 0 | 0 | +0.00 |
+| sample_corpos~sample_nomads~heuristic | 11/16 | 0 | 0 | +0.00 |
+| sample_corpos~sample_nomads~random | 39/40 | 0 | 0 | +0.00 |
+| sample_gangers~sample_netrunners~heuristic | 16/16 | 0 | 0 | +0.00 |
+| sample_gangers~sample_netrunners~random | 40/40 | 0 | 0 | +0.00 |
+| the_heist~embracing_power~heuristic | 16/16 | 0 | 0 | +0.00 |
+| the_heist~embracing_power~random | 40/40 | 0 | 0 | +0.00 |
+
+Every stream moves (a Pass inserted at every attack) and **nothing else does**: no winner, no
+end reason, no turn count. That is the signature of a decision with one answer.
+
+**5. Two-sided reachability.** Both digests moved, upward by the inserted Passes: `fuzz -n 300
+--seed 1` (heuristic) `e8d0c4e2881afafea7962ebe` → `014fdb7214d1b2cd95fb49bc`, 43,390 → 48,449
+actions; `fuzz -n 400 --seed 1 --agent random` `cefbabf3d4080dc639aad834` →
+`b45f5d44a3ee37f69f860373`, 32,342 → 34,539. The delayed suite was re-derived and **all 72 positions still qualify** (the defensive position that the first version lost is back). The bootstrap sample was re-recorded.
+
+---
+
 ## 2026-09-21 — Stage 0 E8 + E9: trigger ordering over every queue, and costs resolve after what they paid for (G2, engine-wide)
 
 **The change.** Ruling 046's ordering now covers every queue its row said it must: the printed

@@ -51,3 +51,15 @@ One line each: what was decided and why. Rules questions are not here; they go t
   the filter lives on the function rather than in a tuple value.
 - **A Call's spend triggers resolve after the Call and join its CALL group** — by analogy with
   the FAQ's "play the card first"; no FAQ answer names the Call case (listed in the questions file).
+- **Pass-only reaction windows are real decisions in the stream, and `conftest.do` answers them
+  for scenario tests** — auto-resolving them in the engine would keep the tell in the action
+  stream (the very thing E10 removes); hiding them from card tests keeps 148 attack-driving tests
+  readable without asserting a Pass each.
+- **E11's seat key lives in `agents/neural.py` (`seat_key`) and the frozen heuristic keeps
+  `_equiv_key`** — the heuristic is frozen and is the yardstick; the neural greedy and the search
+  root are the agents being built. `tests/unit/test_neural_agent.py` now pins the dedup key as the
+  second deliberate difference between the two `_greedy` bodies.
+- **The Pass-only window that re-opens after a Block stays closed** — opening it made the frozen
+  heuristic stop blocking (its preview cannot see past a pending decision on the rival's turn)
+  and cost the suite a defensive position; the residual tell is recorded in the report. The first
+  window, the one the leak was about, always opens.
