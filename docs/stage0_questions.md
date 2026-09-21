@@ -17,3 +17,7 @@ Way* with an empty Legends area.)
 
 Raised by the play-around proposals (Overwatch: Panam's Gift). The engine spends the **Gear instance** (`legal.ability_options` / `engine.activate` test and spend `inst`, the Gear), so a Gear's ⊡ can be used while its host is spent, and using it leaves the host ready to BLOCK afterwards. The glossary says any card can be spent, which makes this defensible, but the printed ⊡ on a Gear could also be read as spending the host it is attached to. Not changed (no rule changes after E12); one verified position (`play-around-overwatch-on-the-lowlife`) depends on the current reading and would need re-qualifying if the ruling went the other way.
 
+## Q4 — may a spent face-down Legend be Called?
+
+Raised by the defend proposals. `legal.main_menu` / `reaction_menu` offer a Call for any face-down Legend when 1 €$ is available, without checking the target's orientation, so a spent face-down Legend can be Called (it flips face-up and stays spent, CR 11.11.1.3). The rules text does not forbid it and the FAQ does not address it. Several defend positions use spent face-down Legends as Eddie-eating decoys for the frozen heuristic; they hold either way. Not changed.
+

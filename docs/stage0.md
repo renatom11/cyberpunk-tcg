@@ -100,7 +100,7 @@ All under `tools/` unless marked (numpy/torch never under `src/cptcg`; the stdli
   `oracle.py` (sample / label / agree), `belief_ll.py`, `monotonicity.py`, `plan_regret.py`.
 * The `append_section` fix: renderers put fixed prose after a marker and it is written once.
 * `learn/delayed.py`: `mode: "defend"` positions (the defender family) and per-family reporting.
-* Suite: 68 → 120 positions (dice 12, race 12, play-around 13, card-semantics 15), every one
+* Suite: 68 → 133 positions (dice 12, race 12, play-around 13, card-semantics 15, defend 13), every one
   accepted only by `qualify`.
 
 Every module has a test; the full suite passes at every commit.
@@ -138,7 +138,7 @@ Every module has a test; the full suite passes at every commit.
 * The frozen heuristic's reaction model (it blocks only when the naive attack would take all its
   dice) is now documented; several suite positions lean on it, and revising the heuristic would
   re-qualify them.
-* Defender family: the position kind exists; positions are being authored at the time of writing.
+* Defender family: 13 positions merged under `mode: "defend"`; the rules question it raised (a spent face-down Legend may be Called) is parked as Q4.
 
 ## 8. Recommendation on Stage 1
 

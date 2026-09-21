@@ -35389,6 +35389,3731 @@
     "seconds": 0.06,
     "when": "2026-09-21 08:09 UTC"
    }
+  },
+  {
+   "id": "defend-call-goro-then-deputise",
+   "kind": "board",
+   "mode": "defend",
+   "player": 0,
+   "source": "proposed",
+   "why": "Defend, three moves deep. Six Gigs for the Rival and Minotaur ready at 9. I have Emergency Atlus (cost 3, 4 power, no Blocker), two Eddies, and three face-down Legends of which only Goro Takemura: Vengeful Bodyguard is ready; the other two are spent. The heuristic Calls one of the three at random for the face-up score; if it is Goro it then scores his QUICK as nothing (a spent Legend and a spent Eddie are both invisible to it) and, whether or not it grants BLOCKER, refuses the Block because Atlus dies to Minotaur. The holding line Calls Goro (1 Eddie), activates him (1 Eddie) to give Atlus BLOCKER, and blocks: Atlus is defeated and the Gig stays. Calling Padre or Hanako leaves one Eddie and no way to make a Blocker.",
+   "spec": {
+    "turn": 10,
+    "active": 1,
+    "first_player": 0,
+    "seed": 11,
+    "turns_taken": [
+     5,
+     4
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "emergency-atlus",
+        {}
+       ]
+      ],
+      "hand": [
+       "maxtac-heavy"
+      ],
+      "eddies": 2,
+      "legends": [
+       "goro-takemura-vengeful-bodyguard",
+       [
+        "padre-man-of-the-cross",
+        {
+         "spent": true
+        }
+       ],
+       [
+        "hanako-arasaka-daughter-of-the-emperor",
+        {
+         "spent": true
+        }
+       ]
+      ],
+      "deck": [
+       "field-operator",
+       "corpo-security",
+       "corporate-surveillance",
+       "memory-relapse",
+       "tygers-whisper",
+       "peace-offering",
+       "wraith-marauders",
+       "maxtac-av",
+       "emergency-atlus",
+       "field-operator",
+       "corpo-security",
+       "corpo-security",
+       "field-operator",
+       "emergency-atlus",
+       "maxtac-av",
+       "wraith-marauders",
+       "peace-offering",
+       "tygers-whisper",
+       "memory-relapse",
+       "corporate-surveillance"
+      ],
+      "gig": [
+       [
+        4,
+        4
+       ],
+       [
+        6,
+        2
+       ],
+       [
+        8,
+        7
+       ],
+       [
+        12,
+        5
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "field": [
+       [
+        "minotaur",
+        {}
+       ]
+      ],
+      "hand": [
+       "screw-lovelorn-fool"
+      ],
+      "eddies": 1,
+      "legends": [
+       [
+        "rebecca-having-a-moment",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "dexter-deshawn-off-the-grid",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "yorinobu-arasaka-embracing-destruction",
+        {
+         "faceup": true
+        }
+       ]
+      ],
+      "deck": [
+       "ruthless-lowlife",
+       "swordwise-huscle",
+       "la-llorona-ghost-of-the-past",
+       "industrial-assembly",
+       "all-is-lost",
+       "satori-sword-of-saburo",
+       "mantis-blades",
+       "minotaur",
+       "6th-street-recruits",
+       "ruthless-lowlife",
+       "swordwise-huscle",
+       "swordwise-huscle",
+       "ruthless-lowlife",
+       "6th-street-recruits",
+       "minotaur",
+       "mantis-blades",
+       "satori-sword-of-saburo",
+       "all-is-lost",
+       "industrial-assembly",
+       "la-llorona-ghost-of-the-past"
+      ],
+      "gig": [
+       [
+        4,
+        3
+       ],
+       [
+        6,
+        1
+       ],
+       [
+        8,
+        5
+       ],
+       [
+        10,
+        6
+       ],
+       [
+        12,
+        11
+       ],
+       [
+        10,
+        4
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "mode": "defend",
+    "gigs_before": 4,
+    "line": [
+     1,
+     1,
+     1,
+     0
+    ],
+    "nodes": 7,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       2,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       2,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       1,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       3,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 1,
+    "floor_trials": 16,
+    "floor_rate": 0.062,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "cards": "5d7e69a39a9b0e56",
+    "seconds": 0.1,
+    "when": "2026-09-21 08:28 UTC"
+   }
+  },
+  {
+   "id": "defend-detonate-the-blades",
+   "kind": "board",
+   "mode": "defend",
+   "player": 0,
+   "source": "proposed",
+   "why": "Defend. Five Gigs for the Rival and Rockn Rockerboy ready with Mantis Blades: 8 plus 2 is 10 power, a two-Gig steal that reaches seven. Maelstrom Goons, lagged, wear Kiroshi Optics. I have one Eddie, Detonate in hand (QUICK: defeat a rival Gear with power 2 or less), and three spent Legends, two face-down. The heuristic Calls a spent Legend with the Eddie at the first window for the +2 face-up score and, with nothing left to pay for Detonate, Passes; Rockn takes two. The holding line plays Detonate on the Mantis Blades: Rockn is back to 8 power, steals one, and the Rival ends on six. Detonate on the Kiroshi Optics is a legal play of the same card that changes nothing.",
+   "spec": {
+    "turn": 12,
+    "active": 1,
+    "first_player": 0,
+    "seed": 11,
+    "turns_taken": [
+     6,
+     5
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "swordwise-huscle",
+        {}
+       ]
+      ],
+      "hand": [
+       "detonate",
+       "all-is-lost",
+       "minotaur"
+      ],
+      "eddies": 1,
+      "legends": [
+       [
+        "rebecca-having-a-moment",
+        {
+         "faceup": true,
+         "spent": true
+        }
+       ],
+       [
+        "dexter-deshawn-off-the-grid",
+        {
+         "spent": true
+        }
+       ],
+       [
+        "yorinobu-arasaka-embracing-destruction",
+        {
+         "spent": true
+        }
+       ]
+      ],
+      "deck": [
+       "ruthless-lowlife",
+       "swordwise-huscle",
+       "la-llorona-ghost-of-the-past",
+       "industrial-assembly",
+       "all-is-lost",
+       "satori-sword-of-saburo",
+       "mantis-blades",
+       "minotaur",
+       "6th-street-recruits",
+       "ruthless-lowlife",
+       "swordwise-huscle",
+       "swordwise-huscle",
+       "ruthless-lowlife",
+       "6th-street-recruits",
+       "minotaur",
+       "mantis-blades",
+       "satori-sword-of-saburo",
+       "all-is-lost",
+       "industrial-assembly",
+       "la-llorona-ghost-of-the-past"
+      ],
+      "gig": [
+       [
+        4,
+        2
+       ],
+       [
+        6,
+        4
+       ],
+       [
+        8,
+        6
+       ],
+       [
+        10,
+        3
+       ],
+       [
+        12,
+        7
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "field": [
+       [
+        "rockn-rockerboy",
+        {
+         "gear": [
+          "mantis-blades"
+         ]
+        }
+       ],
+       [
+        "maelstrom-goons",
+        {
+         "lag": true,
+         "gear": [
+          "kiroshi-optics"
+         ]
+        }
+       ]
+      ],
+      "hand": [
+       "heywood-ripperdoc"
+      ],
+      "eddies": 1,
+      "legends": [
+       [
+        "kerry-eurodyne-axe-attitude-audience",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "muamar-reyes-el-capitan",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "rebecca-having-a-moment",
+        {
+         "faceup": true
+        }
+       ]
+      ],
+      "deck": [
+       "maelstrom-goons",
+       "rockn-rockerboy",
+       "swordwise-huscle",
+       "satori-sword-of-saburo",
+       "mantis-blades",
+       "heywood-ripperdoc",
+       "caliber-totentanzs-top-dog",
+       "viktor-vektor-drop-your-illusions",
+       "augmented-negotiators",
+       "maelstrom-goons",
+       "rockn-rockerboy",
+       "rockn-rockerboy",
+       "maelstrom-goons",
+       "augmented-negotiators",
+       "viktor-vektor-drop-your-illusions",
+       "caliber-totentanzs-top-dog",
+       "heywood-ripperdoc",
+       "mantis-blades",
+       "satori-sword-of-saburo",
+       "swordwise-huscle"
+      ],
+      "gig": [
+       [
+        4,
+        4
+       ],
+       [
+        6,
+        1
+       ],
+       [
+        8,
+        5
+       ],
+       [
+        10,
+        9
+       ],
+       [
+        12,
+        3
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "mode": "defend",
+    "gigs_before": 5,
+    "line": [
+     3,
+     0,
+     0
+    ],
+    "nodes": 11,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       1,
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       2,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 2,
+    "floor_trials": 16,
+    "floor_rate": 0.125,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "cards": "5d7e69a39a9b0e56",
+    "seconds": 0.19,
+    "when": "2026-09-21 08:28 UTC"
+   }
+  },
+  {
+   "id": "defend-floor-it-the-one-power-thief",
+   "kind": "board",
+   "mode": "defend",
+   "player": 0,
+   "source": "proposed",
+   "why": "Defend. Six Gigs across the table, Hanako Arasaka: In a Gilded Cage (1 power) and Rockn Rockerboy (8) both ready, Maelstrom Goons lagged behind them. I have Lizzy Wizzy as my only Blocker, one Eddie, three spent Legends (two face-down) and Floor It. The heuristic Calls a spent face-down Legend with the Eddie at the first window (+2 face-up, the Eddie invisible), after which Floor It cannot be paid for; it will not block Rockn with a 2-power Unit that dies, and blocking Hanako looks like a spent Blocker for a 1-power kill. The holding line is Floor It on Hanako, the one Unit it turns into a 0-power body that steals nothing, and Lizzy Wizzy blocking Rockn. Floor It on Rockn or on the Goons is the same Eddie for nothing.",
+   "spec": {
+    "turn": 10,
+    "active": 1,
+    "first_player": 0,
+    "seed": 11,
+    "turns_taken": [
+     5,
+     4
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "lizzy-wizzy-delicate-weapon",
+        {}
+       ]
+      ],
+      "hand": [
+       "floor-it",
+       "trust-no-one",
+       "placide-voodoo-sentinel"
+      ],
+      "eddies": 1,
+      "legends": [
+       [
+        "alt-cunningham-soulkiller-architect",
+        {
+         "faceup": true,
+         "spent": true
+        }
+       ],
+       [
+        "jackie-welles-pour-one-out-for-me",
+        {
+         "spent": true
+        }
+       ],
+       [
+        "evelyn-parker-beautiful-enigma",
+        {
+         "spent": true
+        }
+       ]
+      ],
+      "deck": [
+       "delamain-cab",
+       "psycho-squad",
+       "floor-it",
+       "westbrook-netrunner",
+       "hacked-corpo",
+       "unlikely-bond",
+       "reboot-optics",
+       "trust-no-one",
+       "rita-wheeler-no-stupid-questions",
+       "delamain-cab",
+       "psycho-squad",
+       "psycho-squad",
+       "delamain-cab",
+       "rita-wheeler-no-stupid-questions",
+       "trust-no-one",
+       "reboot-optics",
+       "unlikely-bond",
+       "hacked-corpo",
+       "westbrook-netrunner",
+       "floor-it"
+      ],
+      "gig": [
+       [
+        4,
+        4
+       ],
+       [
+        6,
+        2
+       ],
+       [
+        10,
+        7
+       ],
+       [
+        12,
+        3
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "field": [
+       [
+        "hanako-arasaka-in-a-gilded-cage",
+        {}
+       ],
+       [
+        "rockn-rockerboy",
+        {}
+       ],
+       [
+        "maelstrom-goons",
+        {
+         "lag": true
+        }
+       ]
+      ],
+      "hand": [
+       "trauma-team-operatives"
+      ],
+      "eddies": 1,
+      "legends": [
+       [
+        "kerry-eurodyne-axe-attitude-audience",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "muamar-reyes-el-capitan",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "viktor-vektor-sit-down-and-relax",
+        {
+         "faceup": true
+        }
+       ]
+      ],
+      "deck": [
+       "maelstrom-goons",
+       "rockn-rockerboy",
+       "sketchy-ripper",
+       "the-heist",
+       "afterparty-at-lizzies",
+       "heywood-ripperdoc",
+       "caliber-totentanzs-top-dog",
+       "viktor-vektor-drop-your-illusions",
+       "augmented-negotiators",
+       "maelstrom-goons",
+       "rockn-rockerboy",
+       "rockn-rockerboy",
+       "maelstrom-goons",
+       "augmented-negotiators",
+       "viktor-vektor-drop-your-illusions",
+       "caliber-totentanzs-top-dog",
+       "heywood-ripperdoc",
+       "afterparty-at-lizzies",
+       "the-heist",
+       "sketchy-ripper"
+      ],
+      "gig": [
+       [
+        4,
+        1
+       ],
+       [
+        6,
+        3
+       ],
+       [
+        8,
+        5
+       ],
+       [
+        10,
+        2
+       ],
+       [
+        12,
+        12
+       ],
+       [
+        8,
+        4
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "mode": "defend",
+    "gigs_before": 4,
+    "line": [
+     4,
+     0,
+     0,
+     1
+    ],
+    "nodes": 66,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       2,
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       2,
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       1,
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       2,
+       0,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 0,
+    "floor_trials": 16,
+    "floor_rate": 0.0,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "cards": "5d7e69a39a9b0e56",
+    "seconds": 0.21,
+    "when": "2026-09-21 08:28 UTC"
+   }
+  },
+  {
+   "id": "defend-johnny-comes-back-block-with-the-wrecker",
+   "kind": "board",
+   "mode": "defend",
+   "player": 0,
+   "source": "proposed",
+   "why": "Defend. Six Gigs on the Rival's side, Johnny Silverhand: Never Stop Fighting (8 power, 'the first time this Unit wins a fight each turn, ready it') and Valentino Guerrera (4) both ready. I have two Blockers: Animals Wrecker wearing a Riot Shield (11 power) and Corpo Security (2). All my Legends are face-up, so the window is Pass or Block. The heuristic scores blocking Johnny with the Wrecker as a spent 11-power body and a lost Blocker against a dead 8-power Unit, which is slightly negative, and Passes; blocking with Corpo Security is worse still. The holding line is the assignment: the Wrecker takes Johnny, who loses and stays down, and Corpo Security takes Valentino. Block Johnny with Corpo Security and he wins, readies and attacks again into a board with nothing left to block him.",
+   "spec": {
+    "turn": 10,
+    "active": 1,
+    "first_player": 0,
+    "seed": 11,
+    "turns_taken": [
+     5,
+     4
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "animals-wrecker",
+        {
+         "gear": [
+          "riot-shield"
+         ]
+        }
+       ],
+       [
+        "corpo-security",
+        {}
+       ]
+      ],
+      "hand": [
+       "minotaur"
+      ],
+      "eddies": 1,
+      "legends": [
+       [
+        "rebecca-having-a-moment",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "yorinobu-arasaka-embracing-destruction",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "hanako-arasaka-daughter-of-the-emperor",
+        {
+         "faceup": true
+        }
+       ]
+      ],
+      "deck": [
+       "ruthless-lowlife",
+       "swordwise-huscle",
+       "riot-shield",
+       "field-operator",
+       "corpo-security",
+       "satori-sword-of-saburo",
+       "mantis-blades",
+       "minotaur",
+       "6th-street-recruits",
+       "ruthless-lowlife",
+       "swordwise-huscle",
+       "swordwise-huscle",
+       "ruthless-lowlife",
+       "6th-street-recruits",
+       "minotaur",
+       "mantis-blades",
+       "satori-sword-of-saburo",
+       "corpo-security",
+       "field-operator",
+       "riot-shield"
+      ],
+      "gig": [
+       [
+        4,
+        2
+       ],
+       [
+        6,
+        5
+       ],
+       [
+        8,
+        6
+       ],
+       [
+        12,
+        9
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "field": [
+       [
+        "johnny-silverhand-never-stop-fighting",
+        {}
+       ],
+       [
+        "valentino-guerrera",
+        {}
+       ]
+      ],
+      "hand": [
+       "screw-lovelorn-fool"
+      ],
+      "eddies": 1,
+      "legends": [
+       [
+        "rebecca-having-a-moment",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "dexter-deshawn-off-the-grid",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "johnny-silverhand-rocking-renegade",
+        {
+         "faceup": true
+        }
+       ]
+      ],
+      "deck": [
+       "ruthless-lowlife",
+       "swordwise-huscle",
+       "la-llorona-ghost-of-the-past",
+       "industrial-assembly",
+       "all-is-lost",
+       "satori-sword-of-saburo",
+       "mantis-blades",
+       "minotaur",
+       "6th-street-recruits",
+       "ruthless-lowlife",
+       "swordwise-huscle",
+       "swordwise-huscle",
+       "ruthless-lowlife",
+       "6th-street-recruits",
+       "minotaur",
+       "mantis-blades",
+       "satori-sword-of-saburo",
+       "all-is-lost",
+       "industrial-assembly",
+       "la-llorona-ghost-of-the-past"
+      ],
+      "gig": [
+       [
+        4,
+        1
+       ],
+       [
+        6,
+        4
+       ],
+       [
+        8,
+        3
+       ],
+       [
+        10,
+        8
+       ],
+       [
+        12,
+        2
+       ],
+       [
+        10,
+        7
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "mode": "defend",
+    "gigs_before": 4,
+    "line": [
+     2,
+     0,
+     1
+    ],
+    "nodes": 22,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       0,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 1,
+    "floor_trials": 16,
+    "floor_rate": 0.062,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "cards": "5d7e69a39a9b0e56",
+    "seconds": 0.25,
+    "when": "2026-09-21 08:28 UTC"
+   }
+  },
+  {
+   "id": "defend-overwatch-discards-the-big-card",
+   "kind": "board",
+   "mode": "defend",
+   "player": 0,
+   "source": "proposed",
+   "why": "Defend. The Rival is on six Gigs and attacks with MaxTac AV (cost 5, 8 power). My Emergency Atlus wears Overwatch: Panam's Gift, whose QUICK reads 'discard 1, defeat a spent rival Unit with cost equal to or less than the discarded card's cost', and an attacker is spent the moment it attacks. I have one Eddie, all Legends spent, and three cards in hand of which only MaxTac Heavy (cost 7) covers a cost-5 Unit. The heuristic spends the Eddie Calling a spent face-down Legend for the +2 face-up score, leaving Overwatch unpaid, and Passes. The holding line activates Overwatch and discards MaxTac Heavy: the attacker is defeated in the reaction window and the attack fizzles. Discarding Field Operator or Corpo Security defeats nothing.",
+   "spec": {
+    "turn": 10,
+    "active": 1,
+    "first_player": 0,
+    "seed": 11,
+    "turns_taken": [
+     5,
+     4
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "emergency-atlus",
+        {
+         "gear": [
+          "overwatch-panams-gift"
+         ]
+        }
+       ]
+      ],
+      "hand": [
+       "maxtac-heavy",
+       "field-operator",
+       "corpo-security"
+      ],
+      "eddies": 1,
+      "legends": [
+       [
+        "panam-palmer-nomad-cavalry",
+        {
+         "faceup": true,
+         "spent": true
+        }
+       ],
+       [
+        "goro-takemura-vengeful-bodyguard",
+        {
+         "spent": true
+        }
+       ],
+       [
+        "hanako-arasaka-daughter-of-the-emperor",
+        {
+         "spent": true
+        }
+       ]
+      ],
+      "deck": [
+       "field-operator",
+       "corpo-security",
+       "corporate-surveillance",
+       "memory-relapse",
+       "tygers-whisper",
+       "peace-offering",
+       "wraith-marauders",
+       "maxtac-av",
+       "emergency-atlus",
+       "field-operator",
+       "corpo-security",
+       "corpo-security",
+       "field-operator",
+       "emergency-atlus",
+       "maxtac-av",
+       "wraith-marauders",
+       "peace-offering",
+       "tygers-whisper",
+       "memory-relapse",
+       "corporate-surveillance"
+      ],
+      "gig": [
+       [
+        4,
+        2
+       ],
+       [
+        6,
+        5
+       ],
+       [
+        8,
+        1
+       ],
+       [
+        12,
+        10
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "field": [
+       [
+        "maxtac-av",
+        {}
+       ]
+      ],
+      "hand": [
+       "sandayu-oda-hanakos-guardian"
+      ],
+      "eddies": 1,
+      "legends": [
+       [
+        "saburo-arasaka-stubborn-patriarch",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "hanako-arasaka-daughter-of-the-emperor",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "padre-man-of-the-cross",
+        {
+         "faceup": true
+        }
+       ]
+      ],
+      "deck": [
+       "field-operator",
+       "corpo-security",
+       "corporate-surveillance",
+       "memory-relapse",
+       "tygers-whisper",
+       "peace-offering",
+       "wraith-marauders",
+       "maxtac-av",
+       "emergency-atlus",
+       "field-operator",
+       "corpo-security",
+       "corpo-security",
+       "field-operator",
+       "emergency-atlus",
+       "maxtac-av",
+       "wraith-marauders",
+       "peace-offering",
+       "tygers-whisper",
+       "memory-relapse",
+       "corporate-surveillance"
+      ],
+      "gig": [
+       [
+        4,
+        3
+       ],
+       [
+        6,
+        2
+       ],
+       [
+        8,
+        7
+       ],
+       [
+        10,
+        4
+       ],
+       [
+        12,
+        6
+       ],
+       [
+        10,
+        8
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "mode": "defend",
+    "gigs_before": 4,
+    "line": [
+     3,
+     0
+    ],
+    "nodes": 7,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       2,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 1,
+    "floor_trials": 16,
+    "floor_rate": 0.062,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "cards": "5d7e69a39a9b0e56",
+    "seconds": 0.32,
+    "when": "2026-09-21 08:28 UTC"
+   }
+  },
+  {
+   "id": "defend-padre-benches-the-second-raider",
+   "kind": "board",
+   "mode": "defend",
+   "player": 0,
+   "source": "proposed",
+   "why": "Defend. Six Gigs on the Rival's side and two ready attackers, Valentino Guerrera (4) and Octant (8). I have Corpo Security (2-power Blocker), one Eddie and Padre face-down among three Legends. The heuristic Calls at the first window (face-up is +2, the Eddie spent is invisible), and when the Legend is Padre it takes 'Draw 1' over 'Spend a rival Unit' because the spend is still an unresolved pick; it then Passes rather than lose Corpo Security in a fight. The holding line Calls Padre during the first attack, spends the OTHER raider so it never attacks, and blocks the current one with Corpo Security, which dies for the Gig. Either attack order works, but only that assignment does.",
+   "spec": {
+    "turn": 10,
+    "active": 1,
+    "first_player": 0,
+    "seed": 11,
+    "turns_taken": [
+     5,
+     4
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "corpo-security",
+        {}
+       ]
+      ],
+      "hand": [
+       "maxtac-av"
+      ],
+      "eddies": 1,
+      "legends": [
+       "padre-man-of-the-cross",
+       "hanako-arasaka-daughter-of-the-emperor",
+       "panam-palmer-nomad-cavalry"
+      ],
+      "deck": [
+       "field-operator",
+       "corpo-security",
+       "corporate-surveillance",
+       "memory-relapse",
+       "tygers-whisper",
+       "peace-offering",
+       "wraith-marauders",
+       "maxtac-av",
+       "emergency-atlus",
+       "field-operator",
+       "corpo-security",
+       "corpo-security",
+       "field-operator",
+       "emergency-atlus",
+       "maxtac-av",
+       "wraith-marauders",
+       "peace-offering",
+       "tygers-whisper",
+       "memory-relapse",
+       "corporate-surveillance"
+      ],
+      "gig": [
+       [
+        4,
+        1
+       ],
+       [
+        6,
+        6
+       ],
+       [
+        10,
+        3
+       ],
+       [
+        12,
+        11
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "field": [
+       [
+        "valentino-guerrera",
+        {}
+       ],
+       [
+        "octant",
+        {}
+       ]
+      ],
+      "hand": [
+       "screw-lovelorn-fool"
+      ],
+      "eddies": 1,
+      "legends": [
+       [
+        "rebecca-having-a-moment",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "yorinobu-arasaka-embracing-destruction",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "dexter-deshawn-off-the-grid",
+        {
+         "faceup": true
+        }
+       ]
+      ],
+      "deck": [
+       "ruthless-lowlife",
+       "swordwise-huscle",
+       "la-llorona-ghost-of-the-past",
+       "industrial-assembly",
+       "all-is-lost",
+       "satori-sword-of-saburo",
+       "mantis-blades",
+       "minotaur",
+       "6th-street-recruits",
+       "ruthless-lowlife",
+       "swordwise-huscle",
+       "swordwise-huscle",
+       "ruthless-lowlife",
+       "6th-street-recruits",
+       "minotaur",
+       "mantis-blades",
+       "satori-sword-of-saburo",
+       "all-is-lost",
+       "industrial-assembly",
+       "la-llorona-ghost-of-the-past"
+      ],
+      "gig": [
+       [
+        4,
+        4
+       ],
+       [
+        6,
+        2
+       ],
+       [
+        8,
+        7
+       ],
+       [
+        10,
+        9
+       ],
+       [
+        12,
+        5
+       ],
+       [
+        8,
+        2
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "mode": "defend",
+    "gigs_before": 4,
+    "line": [
+     1,
+     0,
+     1,
+     1
+    ],
+    "nodes": 39,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       2,
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       2,
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       1,
+       1,
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       3,
+       0,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 2,
+    "floor_trials": 16,
+    "floor_rate": 0.125,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "cards": "5d7e69a39a9b0e56",
+    "seconds": 0.15,
+    "when": "2026-09-21 08:28 UTC"
+   }
+  },
+  {
+   "id": "defend-rogue-drains-the-thief",
+   "kind": "board",
+   "mode": "defend",
+   "player": 0,
+   "source": "proposed",
+   "why": "Defend. The Rival holds six Gigs and attacks with Delamain Cab (4 power); Psycho Squad next to it is lagged. I have Rogue Amendiares: Queen of the Afterlife ready (4 power, QUICK '2 Eddies, spend: a rival Unit loses power equal to this Unit's power this turn'), exactly two Eddies, and three spent Legends, two face-down. The heuristic spends an Eddie Calling a spent Legend at the first window for the +2 face-up score, after which Rogue's ability is unaffordable; even with the Eddies it scores the activation as a 4-power Unit gone spent and Passes. The holding line activates Rogue on the Cab: 4 minus 4 is a 0-power attacker, and a 0-power Unit steals nothing. Naming Psycho Squad instead is the same two Eddies for nothing.",
+   "spec": {
+    "turn": 10,
+    "active": 1,
+    "first_player": 0,
+    "seed": 11,
+    "turns_taken": [
+     5,
+     4
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "rogue-amendiares-queen-of-the-afterlife",
+        {}
+       ]
+      ],
+      "hand": [
+       "three-mouths-one-desire"
+      ],
+      "eddies": 2,
+      "legends": [
+       [
+        "jackie-welles-pour-one-out-for-me",
+        {
+         "faceup": true,
+         "spent": true
+        }
+       ],
+       [
+        "judy-alvarez-braindance-maestro",
+        {
+         "spent": true
+        }
+       ],
+       [
+        "evelyn-parker-beautiful-enigma",
+        {
+         "spent": true
+        }
+       ]
+      ],
+      "deck": [
+       "delamain-cab",
+       "psycho-squad",
+       "floor-it",
+       "westbrook-netrunner",
+       "hacked-corpo",
+       "unlikely-bond",
+       "reboot-optics",
+       "trust-no-one",
+       "rita-wheeler-no-stupid-questions",
+       "delamain-cab",
+       "psycho-squad",
+       "psycho-squad",
+       "delamain-cab",
+       "rita-wheeler-no-stupid-questions",
+       "trust-no-one",
+       "reboot-optics",
+       "unlikely-bond",
+       "hacked-corpo",
+       "westbrook-netrunner",
+       "floor-it"
+      ],
+      "gig": [
+       [
+        4,
+        2
+       ],
+       [
+        6,
+        5
+       ],
+       [
+        8,
+        4
+       ],
+       [
+        12,
+        7
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "field": [
+       [
+        "delamain-cab",
+        {}
+       ],
+       [
+        "psycho-squad",
+        {
+         "lag": true
+        }
+       ]
+      ],
+      "hand": [
+       "placide-voodoo-sentinel"
+      ],
+      "eddies": 1,
+      "legends": [
+       [
+        "alt-cunningham-soulkiller-architect",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "jackie-welles-pour-one-out-for-me",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "wakako-okada-peace-and-harmony",
+        {
+         "faceup": true
+        }
+       ]
+      ],
+      "deck": [
+       "delamain-cab",
+       "psycho-squad",
+       "floor-it",
+       "westbrook-netrunner",
+       "hacked-corpo",
+       "unlikely-bond",
+       "reboot-optics",
+       "trust-no-one",
+       "rita-wheeler-no-stupid-questions",
+       "delamain-cab",
+       "psycho-squad",
+       "psycho-squad",
+       "delamain-cab",
+       "rita-wheeler-no-stupid-questions",
+       "trust-no-one",
+       "reboot-optics",
+       "unlikely-bond",
+       "hacked-corpo",
+       "westbrook-netrunner",
+       "floor-it"
+      ],
+      "gig": [
+       [
+        4,
+        1
+       ],
+       [
+        6,
+        3
+       ],
+       [
+        8,
+        8
+       ],
+       [
+        10,
+        2
+       ],
+       [
+        12,
+        6
+       ],
+       [
+        10,
+        9
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "mode": "defend",
+    "gigs_before": 4,
+    "line": [
+     3,
+     0,
+     0
+    ],
+    "nodes": 8,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       2,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 2,
+    "floor_trials": 16,
+    "floor_rate": 0.125,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "cards": "5d7e69a39a9b0e56",
+    "seconds": 0.1,
+    "when": "2026-09-21 08:28 UTC"
+   }
+  },
+  {
+   "id": "defend-safety-override-kills-johnny",
+   "kind": "board",
+   "mode": "defend",
+   "player": 0,
+   "source": "proposed",
+   "why": "Defend. The Rival is on six Gigs with Johnny Silverhand: Never Stop Fighting ready at 8 power, a Unit that readies itself the first time it wins a fight each turn; Swordwise Huscle beside him is lagged. I have Augmented Negotiators (2-power Blocker), two Eddies, three spent face-down Legends and Safety Override, the QUICK that reads 'the next time a friendly Unit loses a fight this turn, defeat the opposing rival Unit'. The heuristic Calls a spent Legend with one Eddie for the face-up score, which leaves Safety Override unaffordable, and then will not block because the Negotiators die and Johnny readies for a second attack. The holding line plays Safety Override and blocks: the Negotiators lose, Johnny readies and is defeated in the same fight, and the Gig stays. Block without the Program and he comes straight back.",
+   "spec": {
+    "turn": 10,
+    "active": 1,
+    "first_player": 0,
+    "seed": 11,
+    "turns_taken": [
+     5,
+     4
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "augmented-negotiators",
+        {}
+       ]
+      ],
+      "hand": [
+       "safety-override",
+       "the-heist",
+       "gilded-maton"
+      ],
+      "eddies": 2,
+      "legends": [
+       [
+        "kerry-eurodyne-axe-attitude-audience",
+        {
+         "spent": true
+        }
+       ],
+       [
+        "muamar-reyes-el-capitan",
+        {
+         "spent": true
+        }
+       ],
+       [
+        "river-ward-detective-on-the-hunt",
+        {
+         "spent": true
+        }
+       ]
+      ],
+      "deck": [
+       "maelstrom-goons",
+       "rockn-rockerboy",
+       "sketchy-ripper",
+       "the-heist",
+       "afterparty-at-lizzies",
+       "heywood-ripperdoc",
+       "caliber-totentanzs-top-dog",
+       "viktor-vektor-drop-your-illusions",
+       "augmented-negotiators",
+       "maelstrom-goons",
+       "rockn-rockerboy",
+       "rockn-rockerboy",
+       "maelstrom-goons",
+       "augmented-negotiators",
+       "viktor-vektor-drop-your-illusions",
+       "caliber-totentanzs-top-dog",
+       "heywood-ripperdoc",
+       "afterparty-at-lizzies",
+       "the-heist",
+       "sketchy-ripper"
+      ],
+      "gig": [
+       [
+        4,
+        1
+       ],
+       [
+        6,
+        6
+       ],
+       [
+        10,
+        4
+       ],
+       [
+        12,
+        8
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "field": [
+       [
+        "johnny-silverhand-never-stop-fighting",
+        {}
+       ],
+       [
+        "swordwise-huscle",
+        {
+         "lag": true
+        }
+       ]
+      ],
+      "hand": [
+       "minotaur"
+      ],
+      "eddies": 1,
+      "legends": [
+       [
+        "rebecca-having-a-moment",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "dexter-deshawn-off-the-grid",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "yorinobu-arasaka-embracing-destruction",
+        {
+         "faceup": true
+        }
+       ]
+      ],
+      "deck": [
+       "ruthless-lowlife",
+       "swordwise-huscle",
+       "la-llorona-ghost-of-the-past",
+       "industrial-assembly",
+       "all-is-lost",
+       "satori-sword-of-saburo",
+       "mantis-blades",
+       "minotaur",
+       "6th-street-recruits",
+       "ruthless-lowlife",
+       "swordwise-huscle",
+       "swordwise-huscle",
+       "ruthless-lowlife",
+       "6th-street-recruits",
+       "minotaur",
+       "mantis-blades",
+       "satori-sword-of-saburo",
+       "all-is-lost",
+       "industrial-assembly",
+       "la-llorona-ghost-of-the-past"
+      ],
+      "gig": [
+       [
+        4,
+        3
+       ],
+       [
+        6,
+        2
+       ],
+       [
+        8,
+        7
+       ],
+       [
+        10,
+        5
+       ],
+       [
+        12,
+        10
+       ],
+       [
+        8,
+        1
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "mode": "defend",
+    "gigs_before": 4,
+    "line": [
+     4,
+     4
+    ],
+    "nodes": 42,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       2,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       2,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       3,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 4,
+    "floor_trials": 16,
+    "floor_rate": 0.25,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "cards": "5d7e69a39a9b0e56",
+    "seconds": 0.13,
+    "when": "2026-09-21 08:28 UTC"
+   }
+  },
+  {
+   "id": "defend-synapse-outmuscles-johnny",
+   "kind": "board",
+   "mode": "defend",
+   "player": 0,
+   "source": "proposed",
+   "why": "Defend. Six Gigs for the Rival, whose only attacker is Johnny Silverhand: Never Stop Fighting at 8 power, the Unit that readies itself the first time it wins a fight each turn. My only Blocker is 6th Street Recruits wearing a Riot Shield, 7 power, which loses to Johnny; Field Operator and Emergency Atlus stand beside it without BLOCKER. All three of my Legends are face-up but spent, I have one Eddie, and I hold Synapse Burnout (QUICK: a friendly Unit has +1 power for each friendly face-up Legend while fighting rival Units this turn) beside two Detonates with no Gear to hit. The heuristic will not block, because the Recruits die and Johnny readies for a second attack into an empty board, and will not spend a card from hand on a Program whose pick has not resolved, so it Passes and the seventh Gig goes. The holding line plays Synapse Burnout on the Recruits, 7 plus 3 is 10, and blocks: Johnny loses the fight, is defeated, and never readies. Synapse on Field Operator or Atlus, or a Detonate, is the Eddie gone for nothing.",
+   "spec": {
+    "turn": 10,
+    "active": 1,
+    "first_player": 0,
+    "seed": 11,
+    "turns_taken": [
+     5,
+     4
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "6th-street-recruits",
+        {
+         "gear": [
+          "riot-shield"
+         ]
+        }
+       ],
+       [
+        "field-operator",
+        {}
+       ],
+       [
+        "emergency-atlus",
+        {}
+       ]
+      ],
+      "hand": [
+       "synapse-burnout",
+       "detonate",
+       "detonate",
+       "minotaur"
+      ],
+      "eddies": 1,
+      "legends": [
+       [
+        "saburo-arasaka-stubborn-patriarch",
+        {
+         "faceup": true,
+         "spent": true
+        }
+       ],
+       [
+        "hanako-arasaka-daughter-of-the-emperor",
+        {
+         "faceup": true,
+         "spent": true
+        }
+       ],
+       [
+        "rebecca-having-a-moment",
+        {
+         "faceup": true,
+         "spent": true
+        }
+       ]
+      ],
+      "deck": [
+       "swordwise-huscle",
+       "emergency-atlus",
+       "field-operator",
+       "corpo-security",
+       "all-is-lost",
+       "peace-offering",
+       "la-llorona-ghost-of-the-past",
+       "mantis-blades",
+       "swordwise-huscle",
+       "emergency-atlus",
+       "field-operator",
+       "corpo-security",
+       "corpo-security",
+       "field-operator",
+       "emergency-atlus",
+       "swordwise-huscle",
+       "mantis-blades",
+       "la-llorona-ghost-of-the-past",
+       "peace-offering",
+       "all-is-lost"
+      ],
+      "gig": [
+       [
+        4,
+        3
+       ],
+       [
+        6,
+        2
+       ],
+       [
+        8,
+        7
+       ],
+       [
+        12,
+        4
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "field": [
+       [
+        "johnny-silverhand-never-stop-fighting",
+        {}
+       ]
+      ],
+      "hand": [
+       "minotaur"
+      ],
+      "eddies": 1,
+      "legends": [
+       [
+        "rebecca-having-a-moment",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "dexter-deshawn-off-the-grid",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "yorinobu-arasaka-embracing-destruction",
+        {
+         "faceup": true
+        }
+       ]
+      ],
+      "deck": [
+       "ruthless-lowlife",
+       "swordwise-huscle",
+       "la-llorona-ghost-of-the-past",
+       "industrial-assembly",
+       "all-is-lost",
+       "satori-sword-of-saburo",
+       "mantis-blades",
+       "minotaur",
+       "6th-street-recruits",
+       "ruthless-lowlife",
+       "swordwise-huscle",
+       "swordwise-huscle",
+       "ruthless-lowlife",
+       "6th-street-recruits",
+       "minotaur",
+       "mantis-blades",
+       "satori-sword-of-saburo",
+       "all-is-lost",
+       "industrial-assembly",
+       "la-llorona-ghost-of-the-past"
+      ],
+      "gig": [
+       [
+        4,
+        1
+       ],
+       [
+        6,
+        5
+       ],
+       [
+        8,
+        2
+       ],
+       [
+        10,
+        6
+       ],
+       [
+        12,
+        8
+       ],
+       [
+        8,
+        3
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "mode": "defend",
+    "gigs_before": 4,
+    "line": [
+     1,
+     1,
+     0
+    ],
+    "nodes": 13,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 0,
+    "floor_trials": 16,
+    "floor_rate": 0.0,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "cards": "5d7e69a39a9b0e56",
+    "seconds": 0.16,
+    "when": "2026-09-21 08:28 UTC"
+   }
+  },
+  {
+   "id": "defend-t-bug-dies-calling-padre",
+   "kind": "board",
+   "mode": "defend",
+   "player": 0,
+   "source": "proposed",
+   "why": "Defend. Six Gigs against me, Rockn Rockerboy (8) and Viktor Vektor (5) both ready. My only Unit is T-Bug: Amateur Philosopher wearing a Mandibular Upgrade (BLOCKER), 4 power, which loses to either attacker; I have no Eddies and all three face-down Legends are spent, so there is no Call in the window. The heuristic sees a Block as a dead Unit, a lost Gear and a lost Blocker against a Pass whose die-pick has not resolved, and Passes. The holding line blocks the first attacker with T-Bug on purpose: T-Bug is defeated, its DEFEATED trigger looks at the face-down Legends and Calls one for free, and the right one is Padre, whose CALL spends the other raider before it can attack. Blocking is worth nothing until the Legend under it is chosen.",
+   "spec": {
+    "turn": 10,
+    "active": 1,
+    "first_player": 0,
+    "seed": 11,
+    "turns_taken": [
+     5,
+     4
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "t-bug-amateur-philosopher",
+        {
+         "gear": [
+          "mandibular-upgrade"
+         ]
+        }
+       ]
+      ],
+      "hand": [
+       "gilded-maton"
+      ],
+      "eddies": 0,
+      "legends": [
+       [
+        "padre-man-of-the-cross",
+        {
+         "spent": true
+        }
+       ],
+       [
+        "kerry-eurodyne-axe-attitude-audience",
+        {
+         "spent": true
+        }
+       ],
+       [
+        "muamar-reyes-el-capitan",
+        {
+         "spent": true
+        }
+       ]
+      ],
+      "deck": [
+       "maelstrom-goons",
+       "rockn-rockerboy",
+       "sketchy-ripper",
+       "the-heist",
+       "afterparty-at-lizzies",
+       "heywood-ripperdoc",
+       "caliber-totentanzs-top-dog",
+       "viktor-vektor-drop-your-illusions",
+       "augmented-negotiators",
+       "maelstrom-goons",
+       "rockn-rockerboy",
+       "rockn-rockerboy",
+       "maelstrom-goons",
+       "augmented-negotiators",
+       "viktor-vektor-drop-your-illusions",
+       "caliber-totentanzs-top-dog",
+       "heywood-ripperdoc",
+       "afterparty-at-lizzies",
+       "the-heist",
+       "sketchy-ripper"
+      ],
+      "gig": [
+       [
+        4,
+        3
+       ],
+       [
+        6,
+        1
+       ],
+       [
+        10,
+        8
+       ],
+       [
+        12,
+        6
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "field": [
+       [
+        "rockn-rockerboy",
+        {}
+       ],
+       [
+        "viktor-vektor-drop-your-illusions",
+        {}
+       ]
+      ],
+      "hand": [
+       "trauma-team-operatives"
+      ],
+      "eddies": 1,
+      "legends": [
+       [
+        "kerry-eurodyne-axe-attitude-audience",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "river-ward-detective-on-the-hunt",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "viktor-vektor-sit-down-and-relax",
+        {
+         "faceup": true
+        }
+       ]
+      ],
+      "deck": [
+       "maelstrom-goons",
+       "rockn-rockerboy",
+       "sketchy-ripper",
+       "the-heist",
+       "afterparty-at-lizzies",
+       "heywood-ripperdoc",
+       "caliber-totentanzs-top-dog",
+       "viktor-vektor-drop-your-illusions",
+       "augmented-negotiators",
+       "maelstrom-goons",
+       "rockn-rockerboy",
+       "rockn-rockerboy",
+       "maelstrom-goons",
+       "augmented-negotiators",
+       "viktor-vektor-drop-your-illusions",
+       "caliber-totentanzs-top-dog",
+       "heywood-ripperdoc",
+       "afterparty-at-lizzies",
+       "the-heist",
+       "sketchy-ripper"
+      ],
+      "gig": [
+       [
+        4,
+        4
+       ],
+       [
+        6,
+        5
+       ],
+       [
+        8,
+        2
+       ],
+       [
+        10,
+        3
+       ],
+       [
+        12,
+        8
+       ],
+       [
+        8,
+        7
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "mode": "defend",
+    "gigs_before": 4,
+    "line": [
+     1,
+     0,
+     0,
+     0
+    ],
+    "nodes": 17,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       0,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 2,
+    "floor_trials": 16,
+    "floor_rate": 0.125,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "cards": "5d7e69a39a9b0e56",
+    "seconds": 0.06,
+    "when": "2026-09-21 08:28 UTC"
+   }
+  },
+  {
+   "id": "defend-take-control-not-the-call",
+   "kind": "board",
+   "mode": "defend",
+   "player": 0,
+   "source": "proposed",
+   "why": "Defend. The Rival has five Gigs and Saul Bright ready at 14 power, a two-Gig steal that lands on seven; Emergency Atlus beside him is lagged. I have exactly two Eddies, every Legend spent (two of them still face-down), and Take Control plus Floor It in hand. The heuristic spends its first Eddie Calling a spent face-down Legend, because face-up is +2 and a spent Eddie costs nothing in its score; with one Eddie left Take Control is unaffordable and Floor It is a card out of hand for a preview that resolves nothing, so it Passes and Saul takes two. The holding line plays Take Control on Saul: he steals one fewer, the Rival ends on six, and the Legends stay face-down. Floor It on Saul (14 to 13) is still two Gigs and wastes the Eddie the real answer needs.",
+   "spec": {
+    "turn": 12,
+    "active": 1,
+    "first_player": 0,
+    "seed": 11,
+    "turns_taken": [
+     6,
+     5
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "field-operator",
+        {}
+       ]
+      ],
+      "hand": [
+       "take-control",
+       "floor-it",
+       "maxtac-heavy"
+      ],
+      "eddies": 2,
+      "legends": [
+       [
+        "goro-takemura-vengeful-bodyguard",
+        {
+         "faceup": true,
+         "spent": true
+        }
+       ],
+       [
+        "padre-man-of-the-cross",
+        {
+         "spent": true
+        }
+       ],
+       [
+        "hanako-arasaka-daughter-of-the-emperor",
+        {
+         "spent": true
+        }
+       ]
+      ],
+      "deck": [
+       "field-operator",
+       "corpo-security",
+       "corporate-surveillance",
+       "memory-relapse",
+       "tygers-whisper",
+       "peace-offering",
+       "wraith-marauders",
+       "maxtac-av",
+       "emergency-atlus",
+       "field-operator",
+       "corpo-security",
+       "corpo-security",
+       "field-operator",
+       "emergency-atlus",
+       "maxtac-av",
+       "wraith-marauders",
+       "peace-offering",
+       "tygers-whisper",
+       "memory-relapse",
+       "corporate-surveillance"
+      ],
+      "gig": [
+       [
+        4,
+        2
+       ],
+       [
+        6,
+        3
+       ],
+       [
+        8,
+        8
+       ],
+       [
+        10,
+        5
+       ],
+       [
+        12,
+        4
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "field": [
+       [
+        "saul-bright-stormrider",
+        {}
+       ],
+       [
+        "emergency-atlus",
+        {
+         "lag": true
+        }
+       ]
+      ],
+      "hand": [
+       "wraith-marauders"
+      ],
+      "eddies": 1,
+      "legends": [
+       [
+        "saburo-arasaka-stubborn-patriarch",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "hanako-arasaka-daughter-of-the-emperor",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "panam-palmer-nomad-cavalry",
+        {
+         "faceup": true
+        }
+       ]
+      ],
+      "deck": [
+       "field-operator",
+       "corpo-security",
+       "corporate-surveillance",
+       "memory-relapse",
+       "tygers-whisper",
+       "peace-offering",
+       "wraith-marauders",
+       "maxtac-av",
+       "emergency-atlus",
+       "field-operator",
+       "corpo-security",
+       "corpo-security",
+       "field-operator",
+       "emergency-atlus",
+       "maxtac-av",
+       "wraith-marauders",
+       "peace-offering",
+       "tygers-whisper",
+       "memory-relapse",
+       "corporate-surveillance"
+      ],
+      "gig": [
+       [
+        4,
+        3
+       ],
+       [
+        6,
+        1
+       ],
+       [
+        8,
+        6
+       ],
+       [
+        10,
+        10
+       ],
+       [
+        12,
+        2
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "mode": "defend",
+    "gigs_before": 5,
+    "line": [
+     3,
+     0,
+     0
+    ],
+    "nodes": 34,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       1,
+       1,
+       1,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       2,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 1,
+    "floor_trials": 16,
+    "floor_rate": 0.062,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "cards": "5d7e69a39a9b0e56",
+    "seconds": 0.21,
+    "when": "2026-09-21 08:28 UTC"
+   }
+  },
+  {
+   "id": "defend-vengeful-bodyguard-deputises",
+   "kind": "board",
+   "mode": "defend",
+   "player": 0,
+   "source": "proposed",
+   "why": "Defend. Six Gigs for the Rival and Minotaur ready at 9 power. I have no Blocker: Field Operator (cost 3, 2 power) stands ready, Goro Takemura: Vengeful Bodyguard is face-up and ready with his QUICK '1 Eddie, spend: give a friendly Unit with cost 4 or less BLOCKER this turn', and I hold one Eddie with the other two Legends spent face-down. The heuristic Calls one of those spent Legends with the Eddie (+2 face-up, the Eddie is free in its score); Goro cannot pay for his own ability and nothing else can, so it Passes. The holding line activates Goro, names Field Operator, and blocks Minotaur with a 2-power Unit that dies for the Gig. The only visible result at the time is a spent Legend, a spent Eddie and a Unit that is about to be defeated.",
+   "spec": {
+    "turn": 10,
+    "active": 1,
+    "first_player": 0,
+    "seed": 11,
+    "turns_taken": [
+     5,
+     4
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "field-operator",
+        {}
+       ]
+      ],
+      "hand": [
+       "maxtac-heavy"
+      ],
+      "eddies": 1,
+      "legends": [
+       [
+        "goro-takemura-vengeful-bodyguard",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "padre-man-of-the-cross",
+        {
+         "spent": true
+        }
+       ],
+       [
+        "hanako-arasaka-daughter-of-the-emperor",
+        {
+         "spent": true
+        }
+       ]
+      ],
+      "deck": [
+       "field-operator",
+       "corpo-security",
+       "corporate-surveillance",
+       "memory-relapse",
+       "tygers-whisper",
+       "peace-offering",
+       "wraith-marauders",
+       "maxtac-av",
+       "emergency-atlus",
+       "field-operator",
+       "corpo-security",
+       "corpo-security",
+       "field-operator",
+       "emergency-atlus",
+       "maxtac-av",
+       "wraith-marauders",
+       "peace-offering",
+       "tygers-whisper",
+       "memory-relapse",
+       "corporate-surveillance"
+      ],
+      "gig": [
+       [
+        4,
+        1
+       ],
+       [
+        6,
+        4
+       ],
+       [
+        8,
+        6
+       ],
+       [
+        12,
+        2
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "field": [
+       [
+        "minotaur",
+        {}
+       ]
+      ],
+      "hand": [
+       "screw-lovelorn-fool"
+      ],
+      "eddies": 1,
+      "legends": [
+       [
+        "rebecca-having-a-moment",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "yorinobu-arasaka-embracing-destruction",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "johnny-silverhand-rocking-renegade",
+        {
+         "faceup": true
+        }
+       ]
+      ],
+      "deck": [
+       "ruthless-lowlife",
+       "swordwise-huscle",
+       "la-llorona-ghost-of-the-past",
+       "industrial-assembly",
+       "all-is-lost",
+       "satori-sword-of-saburo",
+       "mantis-blades",
+       "minotaur",
+       "6th-street-recruits",
+       "ruthless-lowlife",
+       "swordwise-huscle",
+       "swordwise-huscle",
+       "ruthless-lowlife",
+       "6th-street-recruits",
+       "minotaur",
+       "mantis-blades",
+       "satori-sword-of-saburo",
+       "all-is-lost",
+       "industrial-assembly",
+       "la-llorona-ghost-of-the-past"
+      ],
+      "gig": [
+       [
+        4,
+        2
+       ],
+       [
+        6,
+        6
+       ],
+       [
+        8,
+        3
+       ],
+       [
+        10,
+        7
+       ],
+       [
+        12,
+        9
+       ],
+       [
+        10,
+        5
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "mode": "defend",
+    "gigs_before": 4,
+    "line": [
+     3,
+     1,
+     0
+    ],
+    "nodes": 12,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       2,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       1,
+       1,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       3,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 1,
+    "floor_trials": 16,
+    "floor_rate": 0.062,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "cards": "5d7e69a39a9b0e56",
+    "seconds": 0.06,
+    "when": "2026-09-21 08:28 UTC"
+   }
+  },
+  {
+   "id": "defend-wakako-weakens-the-runt",
+   "kind": "board",
+   "mode": "defend",
+   "player": 0,
+   "source": "proposed",
+   "why": "Defend. The Rival sits on six Gigs with two ready raiders, Augmented Negotiators (2 power) and Viktor Vektor (5 power); either steal is the seventh Gig. I hold one Blocker, Mox Inciters (2 power), one Eddie and three face-down Legends. The frozen heuristic, reacting, Calls a face-down Legend at the first window because a face-up Legend scores +2 while a spent Eddie scores nothing; if the Legend happens to be Wakako it takes 'Draw 1' over '-2 power' (1.2 against a pick that has not resolved yet), and it never Blocks because a losing fight is visible and a pending die-pick is not. The holding line Calls Wakako and gives the 2-power Negotiators -2 (a 0-power Unit steals nothing), and spends Mox Inciters to block Viktor, whichever order they attack in. Two attacks, two different answers.",
+   "spec": {
+    "turn": 10,
+    "active": 1,
+    "first_player": 0,
+    "seed": 11,
+    "turns_taken": [
+     5,
+     4
+    ],
+    "sides": [
+     {
+      "field": [
+       [
+        "mox-inciters",
+        {}
+       ]
+      ],
+      "hand": [
+       "psycho-squad"
+      ],
+      "eddies": 1,
+      "legends": [
+       "wakako-okada-peace-and-harmony",
+       "jackie-welles-pour-one-out-for-me",
+       "judy-alvarez-braindance-maestro"
+      ],
+      "deck": [
+       "delamain-cab",
+       "psycho-squad",
+       "floor-it",
+       "westbrook-netrunner",
+       "hacked-corpo",
+       "unlikely-bond",
+       "reboot-optics",
+       "trust-no-one",
+       "rita-wheeler-no-stupid-questions",
+       "delamain-cab",
+       "psycho-squad",
+       "psycho-squad",
+       "delamain-cab",
+       "rita-wheeler-no-stupid-questions",
+       "trust-no-one",
+       "reboot-optics",
+       "unlikely-bond",
+       "hacked-corpo",
+       "westbrook-netrunner",
+       "floor-it"
+      ],
+      "gig": [
+       [
+        4,
+        3
+       ],
+       [
+        6,
+        4
+       ],
+       [
+        10,
+        6
+       ],
+       [
+        12,
+        9
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     },
+     {
+      "field": [
+       [
+        "augmented-negotiators",
+        {}
+       ],
+       [
+        "viktor-vektor-drop-your-illusions",
+        {}
+       ]
+      ],
+      "hand": [
+       "heywood-ripperdoc"
+      ],
+      "eddies": 2,
+      "legends": [
+       [
+        "kerry-eurodyne-axe-attitude-audience",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "muamar-reyes-el-capitan",
+        {
+         "faceup": true
+        }
+       ],
+       [
+        "viktor-vektor-sit-down-and-relax",
+        {
+         "faceup": true
+        }
+       ]
+      ],
+      "deck": [
+       "maelstrom-goons",
+       "rockn-rockerboy",
+       "sketchy-ripper",
+       "the-heist",
+       "afterparty-at-lizzies",
+       "heywood-ripperdoc",
+       "caliber-totentanzs-top-dog",
+       "viktor-vektor-drop-your-illusions",
+       "augmented-negotiators",
+       "maelstrom-goons",
+       "rockn-rockerboy",
+       "rockn-rockerboy",
+       "maelstrom-goons",
+       "augmented-negotiators",
+       "viktor-vektor-drop-your-illusions",
+       "caliber-totentanzs-top-dog",
+       "heywood-ripperdoc",
+       "afterparty-at-lizzies",
+       "the-heist",
+       "sketchy-ripper"
+      ],
+      "gig": [
+       [
+        4,
+        2
+       ],
+       [
+        6,
+        5
+       ],
+       [
+        8,
+        3
+       ],
+       [
+        10,
+        4
+       ],
+       [
+        12,
+        7
+       ],
+       [
+        8,
+        6
+       ]
+      ],
+      "fixer": [
+       20
+      ]
+     }
+    ]
+   },
+   "verified": {
+    "ok": true,
+    "player": 0,
+    "max_turns": 1,
+    "reward_is_late": true,
+    "mode": "defend",
+    "gigs_before": 4,
+    "line": [
+     1,
+     0,
+     0,
+     1,
+     0
+    ],
+    "nodes": 80,
+    "exhausted": true,
+    "solver_found_win": true,
+    "heuristic_seeds": [
+     1,
+     2,
+     3,
+     4,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "heuristic_wins": 0,
+    "heuristic_lines": [
+     {
+      "seed": 1,
+      "won": false,
+      "line": [
+       2,
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 2,
+      "won": false,
+      "line": [
+       2,
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 3,
+      "won": false,
+      "line": [
+       1,
+       1,
+       2,
+       0,
+       0,
+       0,
+       0
+      ]
+     },
+     {
+      "seed": 4,
+      "won": false,
+      "line": [
+       3,
+       0,
+       0
+      ]
+     }
+    ],
+    "floor_agent": "random",
+    "floor_seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116
+    ],
+    "floor_wins": 0,
+    "floor_trials": 16,
+    "floor_rate": 0.0,
+    "max_floor": 0.25,
+    "policy": "heuristic(seed 20260910) for the rival and the reply",
+    "rules": "149b39c8f55e9d41",
+    "cards": "5d7e69a39a9b0e56",
+    "seconds": 0.19,
+    "when": "2026-09-21 08:28 UTC"
+   }
   }
  ],
  "cards": "5d7e69a39a9b0e56"
