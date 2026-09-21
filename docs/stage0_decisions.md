@@ -33,3 +33,10 @@ One line each: what was decided and why. Rules questions are not here; they go t
   eight is what stops the phrase meaning two things. Viktor's conversion turned the audit's open
   finding AUD-viktor-vektor-drop-your-illusions-1 green, which is the reading the audit had
   already reached from the text alone.
+- **E7's fuzz digests cannot move and the ledger says so** — the fuzz hashes outcomes of
+  perfect-information play and nothing reads an Eddie's identity; the change is to who may name a
+  card, which the determinization property tests and the scenario test observe. Treated as
+  satisfying the G0 rule's intent (the change is provably not a no-op) rather than its letter.
+- **The bootstrap sample is re-recorded whenever the full suite says it no longer replays**, in the
+  regeneration commit of the item that caught it (here E7, for streams E5/E6 moved); the ledger
+  entry names it.

@@ -10,6 +10,36 @@ Every entry records the five pieces of evidence from `docs/verification.md`. A r
 all five is not one.
 
 
+## 2026-09-21 — Stage 0 E7: Bootleg's sold card is nobody's to see (G0, no golden movement)
+
+**The change.** A card sold from the deck without being looked at (Bootleg Black Sapphire Show;
+FAQ: *"Do I reveal or get to look at the card I am selling? **No**"*) carries `F_FACEDOWN` in the
+Eddies area. `view.knows_identity` answers No for both seats; `_hidden_groups` permutes it with the
+owner's deck (owner's mask) and with the rival's hand+deck pool (rival's mask); `info_key` counts it
+in the Eddies multiset without naming it and in the pool it belongs to; `learn.features` counts it
+among the undrawn so every feature stays a function of the information set; the web view sends it
+without a name. Reproduced red first (`test_bootleg_sells_the_top_card_unseen`).
+
+**1. Prediction.** G0 — Bootleg is in no golden deck. **Observed: IDENTICAL**, as required.
+
+**2–4.** Not applicable.
+
+**5. Two-sided reachability.** Neither fuzz digest moved (`5c2396bc999e8eb6aa87cde5` /
+`fa05c56621a1bd4484e71fef`, unchanged action counts) — and cannot: the fuzz hashes actions and
+outcomes of perfect-information heuristic play, and no card and no agent reads the identity of a
+card in an Eddies area (ruling 025's note). The change is to *information* — who may name the
+card — and is reached by the scenario test and the determinization property tests
+(`tests/props/test_determinization.py`, which pin `info_key` stable across sampled worlds), not by
+outcomes. Stated here rather than pretending a digest moved.
+
+**Also in this regeneration:** `data/experience/bootstrap-sample.jsonl.gz` re-recorded (same
+command as its sidecar: 100 heuristic games, seed 1, then `compact`). Its stored action streams
+stopped replaying after E5/E6 moved the golden — `test_the_committed_sample_still_replays` caught
+it after E6 — and should have been re-recorded with those entries; it is re-recorded here, once,
+and the delayed suite was re-derived (**all 73 positions still qualify**).
+
+---
+
 ## 2026-09-21 — Stage 0 E6: "the first time … each turn" counts events, not a card's memory (G2)
 
 **The change.** `GameState.turn_events` logs every dispatched event of the turn (cleared with the
