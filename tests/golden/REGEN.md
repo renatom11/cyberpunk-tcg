@@ -10,6 +10,51 @@ Every entry records the five pieces of evidence from `docs/verification.md`. A r
 all five is not one.
 
 
+## 2026-09-21 — Stage 0 E6: "the first time … each turn" counts events, not a card's memory (G2)
+
+**The change.** `GameState.turn_events` logs every dispatched event of the turn (cleared with the
+turn, in `info_key`), and `EffectCtx.first_this_turn(pred, ev)` answers "is this the first event
+this turn that satisfies pred" from it. The eight scripts that print the phrase use it instead of
+a per-instance `once` key: Yorinobu Arasaka *Steel Dragon* and *Embracing Destruction*, Jackie
+Welles *Pour One Out For Me* (the three the FAQ answers by name: a card that arrives mid-turn does
+not get a fresh count), Johnny Silverhand, Rita Wheeler, Gorilla Arms, Rogue Amendiares and Viktor
+Vektor *Drop Your Illusions* (the audit's open finding AUD-viktor-…-1, now green). `ops.defeat`
+also hands the "defeated" event to the dead card's own listener, which is how Yorinobu counts
+itself (FAQ). Reproduced red first (three S0-E6 markers, plus a new self-count test).
+
+**1. Prediction.** By deck membership six keys (the three pairings holding Yorinobu ED, Jackie
+POOFM, Rita or Rogue). **Observed: three** — `the_heist~embracing_power~heuristic`,
+`sample_gangers~sample_netrunners~heuristic`, `sample_arasaka~sample_fixers~random`.
+
+**2. Localisation.** Each window is the FAQ's own case. `sample_arasaka~sample_fixers~random`
+game 17, decision 69: Goro (ARASAKA) attacks, *then* Yorinobu *Embracing Destruction* is Called,
+then Goro *Hands Unclean* attacks — the old engine drew for the second ARASAKA attack, the new one
+does not. `sample_gangers~sample_netrunners~heuristic` game 6, decision 61: Westbrook Netrunner
+(Blue) is played, *then* Jackie *Pour One Out For Me* is Called, then Tetratronic Rippler (Blue
+Gear) — the old engine offered Jackie's adjust, the new one does not. `the_heist~embracing_power~heuristic`
+game 1, decision 47: V *Corporate Exile* goes solo (a Blue Unit played) with Jackie in the deck.
+
+**3. Revert confirmation.** `state.py`, `steps.py`, `ops.py`, `view.py`, `effects.py` and `wnc.py`
+stashed against the NEW golden: DIFFERENT on exactly the same three keys, at actions 47, 61, 69.
+
+**4. Aggregate.**
+
+| key | games | winner flips | end-reason | mean turn delta |
+|---|---|---|---|---|
+| sample_arasaka~sample_fixers~random | 1/40 | 0 | 0 | +0.00 |
+| sample_gangers~sample_netrunners~heuristic | 1/16 | 0 | 0 | +0.00 |
+| the_heist~embracing_power~heuristic | 2/16 | 0 | 0 | +0.00 |
+
+Four games in 224, no winner or end-reason moved: the phrase only differs when a card arrives
+between two matching events of one turn.
+
+**5. Two-sided reachability.** Both digests moved: `fuzz -n 300 --seed 1` (heuristic)
+`66bf558a9a8f2cf16af3427b` → `5c2396bc999e8eb6aa87cde5`, 45,451 → 45,456 actions; `fuzz -n 400
+--seed 1 --agent random` `efecec525b2d5cf1e7e78897` → `fa05c56621a1bd4484e71fef`, 33,890 → 33,886.
+The delayed suite was re-derived and **all 73 positions still qualify**.
+
+---
+
 ## 2026-09-21 — Stage 0 E5: "friendly Legends" includes a Legend standing on the field (G1)
 
 **The change.** `EffectCtx.all_legends` / `faceup_legends` read the Legends area **and** the field

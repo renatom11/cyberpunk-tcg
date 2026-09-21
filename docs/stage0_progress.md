@@ -16,7 +16,7 @@ reproduced in `docs/stage0.md` with the final report.
 | E3 Flathead unblockable fixed at declaration | done (no golden movement; ledger entry) | 68f8036, + suite commit |
 | E4 Dying Night pays out after V died | done (no golden movement; ledger entry) | 374191a, 4c6b091 |
 | E5 face-up Legends on the field (six readers incl. Goro and Pepe) | done, golden regenerated (2 keys) | see git log |
-| E6 "first time each turn" by event count | pending | — |
+| E6 "first time each turn" by event count (eight scripts; Yorinobu counts itself) | done, golden regenerated (3 keys) | see git log |
 | E7 Bootleg's sold card hidden | pending | — |
 | E8 trigger ordering over printed hooks and listeners | pending | — |
 | E9 activation / payment ordering | pending | — |
