@@ -281,8 +281,23 @@ class ReactionWindowStep(Step):
                 atk.target_kind == TARGET_UNIT and s.i_zone[atk.target] is not Zone.FIELD):
             atk.fizzled = True
             return
+        # The window always opens, even when the defender can only Pass (Stage 0 E10). It used to
+        # be skipped then, and the skip was a tell no table has: the attacker could read from the
+        # window's absence that the defender held no affordable QUICK, no ready BLOCKER and no
+        # Call, and from its presence that they did. A Pass-only window is a decision with one
+        # answer, recorded in the stream like any other, so its existence says nothing -- and
+        # inside a search every sampled world now has the same node here, whatever it dealt the
+        # defender, which is what keeps the attacker's tree consistent across worlds.
+        #
+        # The one exception is the window that RE-OPENS after a Block (a redirect, ruling 012):
+        # with nothing further to react with it still closes silently. The frozen heuristic's
+        # preview of a Block runs to the next pending decision and no further, and a Pass-only
+        # re-window made every Block look like a spent Unit and an unresolved fight; the
+        # heuristic is frozen, so the engine keeps that one window as it was. What it reveals --
+        # whether a defender who already blocked could have reacted again -- is recorded in
+        # docs/stage0.md as the residual of this tell.
         opts = reaction_menu(s)
-        if len(opts) == 1:                                 # only Pass: no real decision
+        if atk.redirects and len(opts) == 1:
             return
         s.pending = Choice(ChoiceKind.REACTION, 1 - atk.attacker_ctrl, tuple(opts),
                            prompt="React?")

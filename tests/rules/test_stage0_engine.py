@@ -368,16 +368,19 @@ def _pick_rival_decrease(s, ch):
 
 
 # ====================================================================== engine tells (E10, E11)
-@pytest.mark.xfail(strict=True, reason="S0-E10: the reaction window is skipped when the defender can only Pass, which tells the attacker the defender has nothing")
 def test_the_reaction_window_opens_even_when_the_defender_can_only_pass(pool):
+    """The window's absence used to prove the defender held no affordable QUICK, no ready BLOCKER
+    and no Call -- a tell no table has. It opens regardless now; ``conftest.do`` answers a
+    Pass-only window for the scenario tests, so this one drives the engine directly."""
     s = board(pool, Side(field=["psycho-squad"], deck=FILLER), Side(gig=[(6, 3)], deck=FILLER))
-    attack(s, find(s, "psycho-squad", Zone.FIELD, 0))
+    u = find(s, "psycho-squad", Zone.FIELD, 0)
+    legal_actions(s)
+    apply(s, s.pending.index_of(Attack(u)))
     assert drive(s, lambda st: st.pending is not None and st.pending.kind is ChoiceKind.REACTION), \
         "no reaction window: the attacker learns the defender has no reaction"
-    assert [type(o) for o in s.pending.options] == [Pass]
+    assert s.pending.player == 1 and [type(o) for o in s.pending.options] == [Pass]
 
 
-@pytest.mark.xfail(strict=True, reason="S0-E11: root dedup keys on true identities of face-down slots the seat cannot tell apart")
 def test_root_dedup_does_not_read_identities_the_seat_does_not_know(pool):
     """Two different face-down Legends whose slots the owner has not looked at are one choice
     from the owner's seat (the multiset is known, the slot order is not: ``view``)."""

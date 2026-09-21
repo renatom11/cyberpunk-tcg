@@ -131,6 +131,14 @@ def do(s, action):
         return s        # the only legal target: the engine declared it without asking (CR 9.3.2)
     apply(s, s.pending.index_of(action))
     legal_actions(s)                                    # materialise the next menu for assertions
+    # Since Stage 0 E10 the reaction window opens even when the defender can only Pass. For a
+    # scenario test that is noise -- the board's question is what the attack does, not whether the
+    # rival was shown a Pass button -- so a Pass-only window is answered here. A window with a
+    # real choice (Block, Call, a QUICK) is left pending for the test to answer.
+    ch = s.pending
+    if ch is not None and ch.kind is ChoiceKind.REACTION and len(ch.options) == 1:
+        apply(s, 0)
+        legal_actions(s)
     return s
 
 
