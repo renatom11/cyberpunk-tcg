@@ -12,9 +12,9 @@ reproduced in `docs/stage0.md` with the final report.
 |---|---|---|
 | 1a verification tests (23 red, 5 documenting) | done | a8c3624 |
 | E1 Sketchy Ripper / Misty / El Sombrerón | done, golden regenerated | 0c98b30, 2d72c6a |
-| E2 Take Control reaches effect steals | code committed; regeneration pending requalify | a393c3a |
-| E3 Flathead unblockable fixed at declaration | code written, tests green; golden cycle next | — |
-| E4 Dying Night pays out after V died | next | — |
+| E2 Take Control reaches effect steals | done (no golden movement; ledger entry) | a393c3a, + suite commit |
+| E3 Flathead unblockable fixed at declaration | done (no golden movement; ledger entry) | 68f8036, + suite commit |
+| E4 Dying Night pays out after V died | code written, tests green, golden IDENTICAL; requalify + fuzz running | — |
 | E5 face-up Legends on the field (incl. Goro per owner ruling) | pending | — |
 | E6 "first time each turn" by event count | pending | — |
 | E7 Bootleg's sold card hidden | pending | — |
