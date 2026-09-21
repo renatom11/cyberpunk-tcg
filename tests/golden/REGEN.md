@@ -10,6 +10,26 @@ Every entry records the five pieces of evidence from `docs/verification.md`. A r
 all five is not one.
 
 
+## 2026-09-21 — owner ruling Q2 (055), Deadman Transmitter: two on one host ask which is destroyed (G0)
+
+**The change.** `deadman-transmitter`'s replacement effect, when two or more copies sit on the
+defeated host, asks the owner which copy is destroyed (FAQ: "do I have to defeat both? No, choose
+one of them"; owner ruling Q2: which one is a choice). One copy behaves as before. Reproduced red
+first (`test_two_deadman_transmitters_on_one_host_offer_the_choice`).
+
+**1. Prediction.** G0 — no golden deck holds the card. Observed: IDENTICAL, as required.
+
+**2–4.** Not applicable: nothing moved.
+
+**5. Two-sided reachability.** Neither fuzz digest moved (`861ce22bd25946ea1f292868` /
+`876c5cf08af59529417ff3e8`, unchanged action counts) — and cannot: the change is reachable only
+when two copies of the Gear sit on the same host at its defeat, which 300 heuristic and 400
+random games over random legal decks never produce. The scenario test is the reachability
+evidence here, as for the earlier entries that end the same way. The cards digest moves, so the
+suite is re-derived after the last ruling lands.
+
+---
+
 ## 2026-09-21 — owner ruling Q2 (055): two copies of one card that trigger together are ordered (G2, engine-wide)
 
 **The change.** `ops.needs_ordering` asks for two or more *separate instances* of one owner among

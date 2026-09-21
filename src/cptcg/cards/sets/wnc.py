@@ -1283,10 +1283,20 @@ def _():
 @script("deadman-transmitter")
 def _():
     def would_defeat(c, inst):
-        if inst == c.host():
-            c.defeat(c.inst)
+        if inst != c.host():
+            return False
+        # Two or more on one host: "do I have to defeat both? No, choose one of them" (FAQ), and
+        # which one is the owner's choice (Stage 0, owner ruling Q2). The first copy asked takes
+        # the replacement and asks; the others see the host is already saved.
+        copies = [g for g in c.s.gear_on(inst) if c.d(g).id == "deadman-transmitter"]
+        if len(copies) > 1:
+            if c.inst != copies[0]:
+                return False
+            c.choose(copies, lambda c2, g: c2.defeat(g), prompt="Destroy which Deadman Transmitter?",
+                     tag=f"{c.inst}@deadman")
             return True
-        return False
+        c.defeat(c.inst)
+        return True
     return CardScript(would_defeat=would_defeat)
 
 

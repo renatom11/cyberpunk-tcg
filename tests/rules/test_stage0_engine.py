@@ -395,16 +395,74 @@ def test_root_dedup_does_not_read_identities_the_seat_does_not_know(pool):
 
 
 # ============================================== documented approximations (category ii, no change)
-def test_two_deadman_transmitters_on_one_host_are_not_asked_about(pool):
+def test_two_deadman_transmitters_on_one_host_offer_the_choice(pool):
     """Deadman Transmitter: *"...with two or more Deadman Transmitters is defeated, do I have to
-    defeat both? No, choose one of them."* Two copies of one card: the choice has no
-    distinguishable branch (ruling 046's own argument), so the engine takes the first. Recorded,
-    not changed; awaiting the ruling."""
+    defeat both? No, choose one of them."* Owner ruling Q2: two copies are separate cards, so
+    which one is destroyed is the owner's choice. The host survives either way."""
     s = board(pool, Side(field=[("psycho-squad", {"gear": ["deadman-transmitter", "deadman-transmitter"]})]), Side())
     u = find(s, "psycho-squad", Zone.FIELD, 0)
+    copies = [g for g in s.gear_on(u)]
     defeat_now(s, u)
-    assert s.i_zone[u] is Zone.FIELD and s.pending.kind is ChoiceKind.MAIN
-    assert sum(1 for i in s.zone(0, Zone.TRASH) if s.card(i).id == "deadman-transmitter") == 1
+    assert s.pending.kind is ChoiceKind.PICK and s.pending.player == 0 and s.pending.tag.endswith("@deadman")
+    assert len(s.pending.options) == 2
+    apply(s, 1)
+    assert s.i_zone[u] is Zone.FIELD
+    assert s.i_zone[copies[1]] is Zone.TRASH and s.i_zone[copies[0]] is Zone.FIELD
+
+
+# ------------------------------------------------------------- owner rulings Q1–Q4 (Stage 0, KT1 rerun)
+def test_q1_a_call_and_the_spend_trigger_that_paid_for_it_are_one_ordering_group(pool):
+    """Q1: a Call paid by spending a Legend that hosts Netwatch Netdriver — the CALL effect and the
+    Gear's spend trigger happen at the same time, so the controller orders them. Evelyn (face-up,
+    Sell Tag, hosting the Netdriver) is the only source of the 1 €$; V *Streetkid* has a CALL."""
+    s = board(pool, Side(eddies=0,
+                         legends=[("evelyn-parker-beautiful-enigma", {"faceup": True, "gear": ["netwatch-netdriver"]}),
+                                  "v-streetkid"],
+                         deck=FILLER, trash=["chrome-reverie"]), Side())
+    called = find(s, "v-streetkid", Zone.LEGENDS, 0)
+    do(s, CallLegend(called))
+    # E12 asks which Legend pays: V itself (plan 0, face-down first) or Evelyn (plan 1). Evelyn.
+    assert s.pending.kind is ChoiceKind.PICK and s.pending.tag == "pay@calllegend"
+    apply(s, 1)
+    assert drive(s, order_prompt), "the CALL effect and the payment's spend trigger were not offered for ordering"
+    assert s.pending.player == 0 and len(s.pending.options) == 2
+
+
+def test_q2_two_copies_of_one_card_triggering_together_are_ordered(pool):
+    """Q2: copies are separate cards. Two Meredith Stouts both hear the rival swap a friendly Gig
+    (MaxTac AV's PLAY), so the owner orders them."""
+    s = board(pool, Side(field=["meredith-stout-stone-cold-corpo", "meredith-stout-stone-cold-corpo"],
+                         trash=["floor-it", "mantis-blades"], gig=[(6, 3)], deck=FILLER),
+              Side(hand=["maxtac-av"], eddies=E, gig=[(4, 1)], deck=FILLER), active=1)
+    do(s, Play(find(s, "maxtac-av", Zone.HAND, 1), NO_INST))
+    found = drive(s, order_prompt, limit=60)
+    assert found, "two copies of one card were not offered for ordering"
+    assert s.pending.player == 0 and len(s.pending.options) == 2
+
+
+def test_q3_overwatch_spends_its_host_and_needs_the_host_ready(pool):
+    """Q3: a Gear's spend icon spends the Unit or Legend it is attached to."""
+    s = board(pool, Side(field=["animals-wrecker"]),
+              Side(field=[("corpo-security", {"gear": ["overwatch-panams-gift"], "spent": True})],
+                   eddies=1, hand=["towerfall"], gig=[(4, 1)]))
+    do(s, Attack(find(s, "animals-wrecker")))
+    g = find(s, "overwatch-panams-gift")
+    assert Activate(g, 0) not in s.pending.options, "a spent host cannot be spent again for the Gear's icon"
+    s = board(pool, Side(field=["animals-wrecker"]),
+              Side(legends=[("v-streetkid", {"faceup": True, "gear": ["overwatch-panams-gift"]})],
+                   eddies=0, hand=["towerfall"], gig=[(4, 1)]))
+    do(s, Attack(find(s, "animals-wrecker")))
+    g = find(s, "overwatch-panams-gift")
+    assert Activate(g, 0) not in s.pending.options, "the host Legend is what the icon spends, so it cannot also pay the 1 €$"
+
+
+def test_q4_a_spent_face_down_legend_may_still_be_called(pool):
+    """Q4 (engine already correct, recorded): a face-down Legend spent for Eddies can be Called."""
+    s = board(pool, Side(eddies=2, legends=[("goro-takemura-hands-unclean", {"spent": True}), LEG_B]), Side())
+    a = find(s, "goro-takemura-hands-unclean", Zone.LEGENDS, 0)
+    assert CallLegend(a) in s.pending.options
+    do(s, CallLegend(a))
+    assert s.i_faceup[a] and s.i_spent[a]
 
 
 def test_kiroshi_optics_hosts_are_friendly_only(pool):
