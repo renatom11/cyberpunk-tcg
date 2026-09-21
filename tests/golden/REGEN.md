@@ -10,6 +10,46 @@ Every entry records the five pieces of evidence from `docs/verification.md`. A r
 all five is not one.
 
 
+## 2026-09-21 — Stage 0 E5: "friendly Legends" includes a Legend standing on the field (G1)
+
+**The change.** `EffectCtx.all_legends` / `faceup_legends` read the Legends area **and** the field
+(a solo'd or plainly-played Legend is a face-up Legend), and the six scripts that count or pick
+friendly Legends use them: Synapse Burnout (FAQ: counts field Legends and counts itself), Zetatech
+Berserk's discount, Panam Palmer *Strength Through Family*'s draw, MaxTac Squadron's ready, Pepe
+Najarro's ready, and Goro Takemura *Losing His Way* — whose empty-area case the owner settled the
+same day (ruling 042: a field Legend counts, and with none left there is nothing to be face-up, so
+no bonus). Reproduced red first (four S0-E5 markers), and AUD-goro-takemura-losing-his-way-1's
+vacuous reading is retired in favour of the settled one.
+
+**1. Prediction.** By deck membership six keys may change (`sample_arasaka~sample_fixers` and
+`the_heist~embracing_power` via Goro; `sample_corpos~sample_nomads` via Panam, Pepe and Synapse).
+**Observed: the two `sample_corpos~sample_nomads` keys.** Goro's keys did not move: his condition
+only differs when a Legend stands on the field, and in those decks' golden games he never attacks
+with one there.
+
+**2. Localisation.** `sample_corpos~sample_nomads~heuristic` game 1 diverges at decision 168 on
+*"sample_nomads attacks with Panam Palmer — Strength Through Family"* (the draw now counts a
+field Legend); the `random` key at decision 84 on *"attacks with Pepe Najarro — Working Doubles"*
+immediately after *"Jackie Welles — Mama's Favorite is played to the field for its cost"* — a
+spent field Legend Pepe may now ready.
+
+**3. Revert confirmation.** `effects.py` and `wnc.py` stashed against the NEW golden: DIFFERENT on
+exactly the same two keys, at actions 168 and 84.
+
+**4. Aggregate.**
+
+| key | games | winner flips | end-reason | mean turn delta |
+|---|---|---|---|---|
+| sample_corpos~sample_nomads~heuristic | 5/16 | 1 | 0 | +0.00 |
+| sample_corpos~sample_nomads~random | 2/40 | 1 | 0 | +0.00 |
+
+**5. Two-sided reachability.** Both digests moved: `fuzz -n 300 --seed 1` (heuristic)
+`c9e5062374f3027ce660cbfb` → `66bf558a9a8f2cf16af3427b`, 45,441 → 45,451 actions; `fuzz -n 400
+--seed 1 --agent random` `2e54e2c3c5448a6898b8cc0f` → `efecec525b2d5cf1e7e78897`, 33,880 → 33,890.
+The delayed suite was re-derived and **all 73 positions still qualify**.
+
+---
+
 ## 2026-09-21 — Stage 0 E4: Dying Night pays out after V died (G1, no golden movement)
 
 **The change.** The ATTACK trigger of Dying Night on a host named "V" books the end-of-turn
