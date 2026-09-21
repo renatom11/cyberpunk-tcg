@@ -66,7 +66,7 @@ def cmd_sample(a) -> None:
     rng = Pcg32(a.seed, seq=17)
     wanted: dict[tuple[int, int], list[int]] = {}
     # draw ticket numbers, map to (game, ply), with 3x oversampling for the skipped kinds
-    draws = a.n * 3
+    draws = a.n * 8                       # MAIN decisions with a choice are about a third of all plies
     cum = []
     c = 0
     for fi, gi, n in games:

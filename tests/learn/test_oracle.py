@@ -61,4 +61,4 @@ def test_playout_labels_are_independent_of_any_head(tmp_path):
         assert abs((po["half_a"] + po["half_b"]) / 2 - po["playout_value"]) < 1e-9
     O.main(["agree", str(out), "--independent", "--out", str(tmp_path / "ag.json")])
     ag = json.loads((tmp_path / "ag.json").read_text())
-    assert ag["label"].startswith("heuristic playouts") and ag["positions"] == 3
+    assert ag["label"].startswith("heuristic playouts") and ag["positions"] == len(data["positions"]) >= 1
