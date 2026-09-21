@@ -229,9 +229,32 @@ steal mean 0.0006, chosen best 79.5%.
 **Identity ablation on the 114 head**: not applicable — the 114 features carry no card identity,
 so the ablation is flat by construction; reported as such rather than measured.
 
-**Delayed suite per family and horizon, plan regret, deck round-robin residuals and rank
-agreement, play-around / card-semantics / race / dice / defend suites**: filled in below as the
-runs complete.
+**Delayed suite, 133 positions, solved on all 16 scoring seeds** (`arena.py delayed AGENT`;
+floor: uniform random 163 of 2,128 trials). Per family (solved/positions) and horizon:
+
+| agent | solved | h1 | h2 | card-sem | play-around | race | dice | defend | removal-first | legend-call | steal-thr | sell-to-afford | gig-shaping | recursion | def-setup |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| heuristic (frozen) | 0/133 | 0/110 | 0/23 | 0/15 | 0/13 | 0/12 | 0/12 | 0/13 | 0/9 | 0/11 | 0/11 | 0/14 | 0/9 | 0/8 | 0/4 |
+| neural (shipped) | 28/133 | 21 | 7 | 3 | 1 | 3 | 1 | 0 | 7 | 3 | 4 | 2 | 0 | 2 | 1 |
+| ismcts:32 (shipped) | **31/133** | 24 | 7 | 3 | 1 | 3 | 2 | 3 | 7 | 3 | 4 | 3 | 0 | 0 | 1 |
+| neural@w114 | 16/133 | 12 | 4 | 2 | 1 | 1 | 1 | 1 | 3 | 1 | 3 | 1 | 0 | 0 | 1 |
+| neural-cards | 9/133 | 6 | 3 | 1 | 0 | 1 | 1 | 0 | 3 | 0 | 0 | 2 | 0 | 1 | 0 |
+| neural-cards ablated | 16/133 | 9 | 7 | 2 | 1 | 1 | 1 | 0 | 6 | 0 | 1 | 2 | 0 | 1 | 1 |
+
+(Also `mined` 1/1 for the shipped heads and w114, 0 for the card heads; `two-pieces-of-gear` 0
+for all.) The new families are hard for every day-0 agent: the search solves 3 of 13 defend and
+1 of 13 play-around positions; nothing solves a gig-shaping position. Day-0 numbers, not a
+verdict.
+
+**Plan regret** (`plan_regret.py out/s0/h20k --turns 500`, 500 sampled turn starts, both agents'
+turns scored by the shipped head): mean regret **−0.038** win-probability points (median −0.002):
+the `ismcts:32` turn scores at least the `plan-deep:32` line's in 70.8% of turns, mean scores
+0.611 vs 0.574. Cost 1.7 s vs 8.9 s a turn on the loaded machine. Uncertain what the sign means
+beyond day 0: the scorer is the same head the search optimises against, so a negative regret
+partly says the search is better at pleasing its own evaluator.
+
+**Deck round-robin residuals, Nash support and two-player rank agreement**: kill test 2 above and
+the `ismcts:32` row when its run completes.
 
 ## 6. Deviations from the plan
 
