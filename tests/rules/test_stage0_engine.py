@@ -325,7 +325,6 @@ def test_el_sombreron_chooses_which_max_gig(pool):
 
 
 # ======================================================================= Dying Night (E4)
-@pytest.mark.xfail(strict=True, reason="S0-E4: Dying Night's end-of-turn ready needs its host on the field; FAQ pays out after V died")
 def test_dying_night_readies_eddies_even_if_v_died(pool):
     """Dying Night: *"If this Gear is attached to a Unit named 'V' and the Unit attacks but is
     defeated before the end of the turn, can I still ready 2 Eddies? Yes."*"""
@@ -342,7 +341,6 @@ def test_dying_night_readies_eddies_even_if_v_died(pool):
 
 
 # ===================================================================== Flathead (E3)
-@pytest.mark.xfail(strict=True, reason="S0-E3: unblockability is re-read when the reaction menu is built; FAQ fixes it at declaration")
 def test_flathead_stays_unblockable_when_cred_flips_after_declaration(pool):
     """MTOD12 Flathead: *"If I have lower Street Cred when I attack with MT0D12 Flathead, but
     triggered effects or reactions make my Rival's Street Cred lower than mine, can my Rival then
@@ -358,21 +356,20 @@ def test_flathead_stays_unblockable_when_cred_flips_after_declaration(pool):
     while s.pending is not None and s.pending.kind is not ChoiceKind.REACTION and s.pending.kind is not ChoiceKind.MAIN:
         apply(s, 0)
         legal_actions(s)
-    assert s.gig[1] == [(6, 2)], "the ATTACK trigger should have made the rival's cred lower"
     if s.pending is not None and s.pending.kind is ChoiceKind.REACTION:
+        assert s.gig[1] == [(6, 2)], "the ATTACK trigger should have made the rival's cred lower"
         assert not any(isinstance(o, Block) for o in s.pending.options), "Flathead became blockable mid-attack"
+    else:                                                  # no window: the attack went through
+        assert len(s.gig[0]) == 2 and not s.i_spent[find(s, "corpo-security", Zone.FIELD, 1)]
 
 
 def _pick_rival_decrease(s, ch):
     """Index of the adjust option that lowers the rival's first Gig by 2 (closure of adjust_up_to)."""
-    vals = None
-    for cell in (ch.cont.__closure__ or ()):
-        v = cell.cell_contents
-        if isinstance(v, list) and v and isinstance(v[0], tuple) and len(v[0]) == 3:
-            vals = v
+    env = {nm: c.cell_contents for nm, c in zip(ch.cont.__code__.co_freevars, ch.cont.__closure__ or ())}
+    vals = env.get("vals")                                 # (owner, index, amount, sides, value)
     assert vals is not None, "could not read the adjust options"
     for i, o in enumerate(ch.options):
-        if o.picks and vals[o.picks[0]] == (1, 0, -2):
+        if o.picks and vals[o.picks[0]][:3] == (1, 0, -2):
             return i
     raise AssertionError(f"no option decreases the rival's Gig by 2: {vals}")
 

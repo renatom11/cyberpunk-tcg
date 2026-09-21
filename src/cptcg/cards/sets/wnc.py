@@ -800,18 +800,40 @@ def _():
 # =============================================================================
 @script("dying-night-vs-pistol")
 def _():
+    ATTACKED = "dying_night_attacked"
+
+    def attack(c):
+        # The FAQ pays the end-of-turn ready even when V is gone by then -- *"the Unit attacks but
+        # is defeated before the end of the turn, can I still ready 2 Eddies? **Yes**"*. A Gear
+        # that dies with its host has no hook left to fire, so the attack itself books the payout:
+        # a listener on the player that outlives the card, and a mark in `s.used` so the hook
+        # below does not pay a second time when the host survives. Both clear with the turn.
+        h = c.host()
+        if h >= 0 and c.d(h).name == "V":
+            me, s = c.player, c.s
+            s.used.add((c.inst, ATTACKED))
+
+            def listen(st, ev):
+                if ev[0] == "end_turn" and ev[1] == me:
+                    st.mods = [m for m in st.mods if not (m[0] == "listener" and m[2] is listen)]
+                    from cptcg.core.ops import ready_eddies
+                    ready_eddies(st, me, 2)
+            c.mod("listener", c.inst, listen)
+        c.adjust_up_to([c.player, c.rival], -2, -1, prompt="Decrease a Gig")
+
     def ev(c, e):
         # "if this Unit is named V". A face-up Legend is a legal host for Gear and this Gear will
         # happily sit on one, but a Legend in the Legends area is not a Unit -- the five Gear in
         # this set that mean both say "this Unit or Legend" in so many words. The test is the host's
         # zone rather than its type, because a V Legend that has GONE SOLO onto the field *is* a
-        # Unit (ruling 015) and must keep paying out.
+        # Unit (ruling 015) and must keep paying out. If V attacked this turn the listener above
+        # already owns the payout.
         h = c.host()
         if (e[0] == "end_turn" and e[1] == c.player and h >= 0
-                and c.s.i_zone[h] is Zone.FIELD and c.d(h).name == "V"):
+                and c.s.i_zone[h] is Zone.FIELD and c.d(h).name == "V"
+                and (c.inst, ATTACKED) not in c.s.used):
             c.ready_eddies(2)
-    return CardScript(on_attack=lambda c: c.adjust_up_to([c.player, c.rival], -2, -1, prompt="Decrease a Gig"),
-                      on_event=ev, events=frozenset({"end_turn"}))
+    return CardScript(on_attack=attack, on_event=ev, events=frozenset({"end_turn"}))
 
 
 @script("kiroshi-optics")
