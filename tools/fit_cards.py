@@ -307,7 +307,7 @@ def cmd_fit(a) -> None:
     rows, metas = load_rows(a.rows)
     reg = load_default()
     static = CM.static_card_table(reg)
-    model = CM.torch_model(static)
+    model = CM.torch_model(static, emb=a.embed, dropout=a.dropout)
     train_idx, hold_idx = split_by_game(rows["game"], a.holdout, a.seed)
     print(f"rows {len(rows['label'])}: train {len(train_idx)} holdout {len(hold_idx)}; "
           f"params {sum(p.numel() for p in model.parameters())}")
@@ -380,7 +380,8 @@ def cmd_fit(a) -> None:
             "holdout": {"const": const, "network": ev["brier"], "policy_top1": ev["policy_top1"],
                         "ablated_network": abl["brier"], "ablated_policy_top1": abl["policy_top1"]},
             "history": history, "epochs": len(history), "lr": a.lr, "batch": a.batch, "l2": a.l2,
-            "policy_weight": a.policy_weight, "seed": a.seed, "seconds": round(time.time() - t0, 1)}
+            "policy_weight": a.policy_weight, "embed": a.embed, "dropout": a.dropout, "seed": a.seed,
+            "seconds": round(time.time() - t0, 1)}
     out = Path(a.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     model.export_npz(str(out), meta)
@@ -462,8 +463,8 @@ def cmd_eval(a) -> None:
     rows, _ = load_rows(a.rows)
     reg = load_default()
     static = CM.static_card_table(reg)
-    model = CM.torch_model(static)
     z = np.load(a.weights, allow_pickle=False)
+    model = CM.torch_model(static, emb=int(json.loads(str(z["meta"])).get("EMB", CM.EMB)))
     with torch.no_grad():
         for k in z.files:
             if k != "meta":
@@ -496,6 +497,9 @@ def main(argv=None) -> None:
     f.add_argument("--holdout", type=float, default=0.2)
     f.add_argument("--policy-weight", type=float, default=0.5)
     f.add_argument("--patience", type=int, default=5)
+    f.add_argument("--embed", type=int, default=CM.EMB, help="identity embedding width")
+    f.add_argument("--dropout", type=float, default=0.0,
+                   help="training-time dropout on the token MLP outputs and the pooled vector")
     f.add_argument("--seed", type=int, default=0)
     f.add_argument("--threads", type=int, default=4)
     f.set_defaults(fn=cmd_fit)

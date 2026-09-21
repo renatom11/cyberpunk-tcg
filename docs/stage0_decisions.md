@@ -145,3 +145,18 @@ the label itself moved under the four rulings — mean |Δ cheat_value| 0.0004, 
 them, the remaining 1,250 are labelled with `oracle.py label --resume` after the labels of positions 750–1999 are
 stripped (`out/s1/oracle_partial.json`); the labellers, budget and seed are identical, so the result is the same
 file a full run would produce. The committed `data/arena/oracle.json` is restored to HEAD until the run finishes.
+
+## KT1 rerun: card-model configs d and e added before any panel result
+
+Added 2026-09-21 18:50 UTC, while config a was still fitting and before `CHOOSE` fired. Reason: config a's
+holdout Brier was best at epoch 2 (0.1364) and rose to 0.1524 at epoch 3 while train Brier fell to 0.092 —
+the 141k-parameter model memorises 806k rows from 10k games within three epochs. Two regularised configs
+join the queue: **d** (lr 5e-4, l2 1e-3, dropout 0.2 on the token MLP outputs and the pooled vector,
+identity embedding 16 wide, policy weight 0.5) and **e** (the same, policy weight 1.0). They run at the
+front of `rerun2.sh`, i.e. after a/b/c and before the head choice; the selection rule is unchanged (holdout
+Brier, tie-break legal monotonicity, never the panel). `tools/cards_model.py` gained `emb` and `dropout`
+arguments on `torch_model` (defaults reproduce the previous arithmetic exactly; the numpy twin reads the
+width from the weights; dropout is training-mode only), `tools/fit_cards.py fit` gained `--embed` and
+`--dropout`, and `cmd_eval` builds the torch twin at the weights' width. Pinned by
+`test_the_twin_agrees_at_another_embedding_width_and_dropout_is_off_at_inference`. Configs b and c will
+import the edited module when they start; the defaults are untouched, so their fits are unaffected.

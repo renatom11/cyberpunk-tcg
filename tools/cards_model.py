@@ -246,12 +246,12 @@ class NumpyCardsModel:
         return _softmax(logits, axis=-1) * b["opt_m"]
 
 
-def init_shapes(static_cols: int) -> dict:
-    """Parameter shapes shared by both implementations."""
-    cin = EMB + static_cols + CARD_STATE
-    oin = EMB + static_cols + 3 + NAFEAT
+def init_shapes(static_cols: int, emb: int = EMB) -> dict:
+    """Parameter shapes shared by both implementations (``emb`` = identity embedding width)."""
+    cin = emb + static_cols + CARD_STATE
+    oin = emb + static_cols + 3 + NAFEAT
     sin = 3 * D + 114 + 151 + CTX_FEATS
-    return {"emb": (NCARDS + 1, EMB), "card_w1": (cin, D), "card_b1": (D,), "card_w2": (D, D), "card_b2": (D,),
+    return {"emb": (NCARDS + 1, emb), "card_w1": (cin, D), "card_b1": (D,), "card_w2": (D, D), "card_b2": (D,),
             "die_w1": (DIE_FEATS, D), "die_b1": (D,), "die_w2": (D, D), "die_b2": (D,), "cls": (1, 1, D),
             "attn_q": (D, D), "attn_k": (D, D), "attn_v": (D, D), "attn_o": (D, D),
             "ff_w1": (D, 2 * D), "ff_b1": (2 * D,), "ff_w2": (2 * D, D), "ff_b2": (D,),
@@ -260,17 +260,22 @@ def init_shapes(static_cols: int) -> dict:
             "opt_w1": (oin, D), "opt_b1": (D,), "opt_w2": (D, D), "opt_b2": (D,), "opt_bias": (D, 1)}
 
 
-def n_params(static_cols: int) -> int:
-    return sum(int(np.prod(v)) for v in init_shapes(static_cols).values())
+def n_params(static_cols: int, emb: int = EMB) -> int:
+    return sum(int(np.prod(v)) for v in init_shapes(static_cols, emb).values())
 
 
 # ----------------------------------------------------------------------------- torch model
-def torch_model(static: np.ndarray):
-    """Build the torch twin. Imported lazily so numpy-only users never need torch."""
+def torch_model(static: np.ndarray, emb: int = EMB, dropout: float = 0.0):
+    """Build the torch twin. Imported lazily so numpy-only users never need torch.
+
+    ``emb`` is the identity embedding width (the numpy twin reads it from the weights);
+    ``dropout`` (training mode only) is applied to the token MLP outputs and to the pooled
+    vector, so an exported model is the same arithmetic as before with ``dropout=0``."""
     import torch
     import torch.nn as nn
+    import torch.nn.functional as F
 
-    shapes = init_shapes(static.shape[1])
+    shapes = init_shapes(static.shape[1], emb)
 
     class TorchCardsModel(nn.Module):
         def __init__(self) -> None:
@@ -302,6 +307,9 @@ def torch_model(static: np.ndarray):
             cv = torch.cat([self._card_vec(ids), b["card_st"]], dim=-1)
             ct = torch.relu(cv @ w["card_w1"] + w["card_b1"]) @ w["card_w2"] + w["card_b2"]
             dt = torch.relu(b["die"] @ w["die_w1"] + w["die_b1"]) @ w["die_w2"] + w["die_b2"]
+            if dropout > 0:
+                ct = F.dropout(ct, dropout, self.training)
+                dt = F.dropout(dt, dropout, self.training)
             n = ids.shape[0]
             x = torch.cat([w["cls"].expand(n, 1, D), ct, dt], dim=1)
             m = torch.cat([torch.ones(n, 1, device=ids.device), cmask, b["die_m"]], dim=1)
@@ -320,7 +328,10 @@ def torch_model(static: np.ndarray):
             mm = m[:, :, None]
             pooled_mean = (x * mm).sum(1) / mm.sum(1).clamp(min=1.0)
             pooled_max = torch.where(mm > 0, x, torch.full_like(x, -1e9)).max(1).values
-            sin = torch.cat([x[:, 0], pooled_mean, pooled_max, b["agg"], b["bel"], b["ctx"]], dim=-1)
+            pooled = torch.cat([x[:, 0], pooled_mean, pooled_max], dim=-1)
+            if dropout > 0:
+                pooled = F.dropout(pooled, dropout, self.training)
+            sin = torch.cat([pooled, b["agg"], b["bel"], b["ctx"]], dim=-1)
             h = torch.relu(sin @ w["sum_w1"] + w["sum_b1"])
             return torch.relu(h @ w["sum_w2"] + w["sum_b2"])
 
@@ -337,6 +348,7 @@ def torch_model(static: np.ndarray):
 
         def export_npz(self, path, meta: dict) -> None:
             arrays = {k: v.detach().cpu().numpy().astype(np.float32) for k, v in self.p.items()}
-            np.savez_compressed(path, meta=json.dumps(dict(meta, format=FORMAT, D=D, EMB=EMB, HEADS=HEADS)), **arrays)
+            np.savez_compressed(path, meta=json.dumps(dict(meta, format=FORMAT, D=D, EMB=emb, HEADS=HEADS,
+                                                           dropout=dropout)), **arrays)
 
     return TorchCardsModel()

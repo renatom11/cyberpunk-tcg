@@ -114,6 +114,33 @@ def test_the_torch_twin_agrees_with_numpy(tmp_path):
     assert np.allclose(tp * b["opt_m"], nm.policy(b), atol=1e-4)
 
 
+def test_the_twin_agrees_at_another_embedding_width_and_dropout_is_off_at_inference(tmp_path):
+    """``--embed`` and ``--dropout`` (the rerun's configs d and e): the numpy twin reads the width
+    from the weights, and a model fitted with dropout exports the same arithmetic as one without."""
+    torch = pytest.importorskip("torch")
+    reg = load_default()
+    static = CM.static_card_table(reg)
+    tm = CM.torch_model(static, emb=16, dropout=0.2)
+    tm.eval()
+    path = tmp_path / "w16.npz"
+    tm.export_npz(path, {"rules": "test"})
+    nm = CM.NumpyCardsModel.load(path, reg)
+    assert nm.emb.shape == (CM.NCARDS + 1, 16) and nm.meta["EMB"] == 16 and nm.meta["dropout"] == 0.2
+    decs = _decisions(reg)
+    b = CM.batch_tokens(decs)
+    with torch.no_grad():
+        tv = tm.value_logit(FC._to_torch(b, torch)).numpy()
+        tv2 = tm.value_logit(FC._to_torch(b, torch)).numpy()
+    assert np.allclose(tv, tv2)                       # eval mode: dropout is off, so it is deterministic
+    assert np.allclose(tv, nm.raw(b), atol=1e-4)
+    tm.train()
+    with torch.no_grad():
+        a1 = tm.value_logit(FC._to_torch(b, torch)).numpy()
+        a2 = tm.value_logit(FC._to_torch(b, torch)).numpy()
+    assert not np.allclose(a1, a2)                    # train mode: dropout is live
+    assert nm.ablate_identity().emb.shape == nm.emb.shape
+
+
 @pytest.mark.skipif(not SAMPLE.exists(), reason="no bootstrap sample")
 def test_rows_count_every_multi_option_decision_at_rate_one():
     recs = []
