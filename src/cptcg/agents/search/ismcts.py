@@ -54,8 +54,8 @@ from __future__ import annotations
 import math
 
 from cptcg.agents.base import register
-from cptcg.agents.heuristic import _default_index, _equiv_key
-from cptcg.agents.neural import NeuralAgent, _same_position, position_key
+from cptcg.agents.heuristic import _default_index
+from cptcg.agents.neural import NeuralAgent, _same_position, position_key, seat_key
 from cptcg.core.actions import Action, Choice, ChoiceKind
 from cptcg.core.engine import apply, legal_actions
 from cptcg.core.rng import Pcg32
@@ -219,8 +219,10 @@ class IsmctsAgent(NeuralAgent):
 
         **Copies.** ``_equiv_key`` reads ``s.i_card``, so it means something different in every
         sampled world and must not be used inside the tree. At the root there is exactly one world
-        — the real one — so it is both safe and worth it: three identical face-down Legends are one
-        choice.
+        — the real one — but the seat may not read all of it: ``neural.seat_key`` collapses the
+        options that name an identity this seat does not know (its own face-down slots it has not
+        looked at), so the number of root choices never depends on what lies face-down (Stage 0
+        E11). Three identical face-down Legends are one choice, and so are three different ones.
 
         **Moves that do nothing.** This is the fix for a hang. The pool contains a free no-op:
         ``panam-palmer-strength-through-family`` has a zero-cost ability with no spend and no
@@ -265,7 +267,7 @@ class IsmctsAgent(NeuralAgent):
         """
         seen, keep = set(), []
         for a in choice.options:
-            key = _equiv_key(s, a)
+            key = seat_key(s, self.me, a)        # E11: never keyed on an identity the seat lacks
             if key in seen:
                 continue
             seen.add(key)

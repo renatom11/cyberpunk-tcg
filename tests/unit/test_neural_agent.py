@@ -82,11 +82,16 @@ def test_only_the_scoring_line_differs():
     # the docstrings differ and the scoring line differs; the loop body must not
     for marker in ("c = s.clone()", "c.rng = Pcg32(rng.next_u32(), seq=3)", "apply(c, i)",
                    "self._resolve(c, depth)", "if v > best_v:", "best_i, best_v = i, v",
-                   "key = _equiv_key(s, options[i])", "seen.add(key)", "best_i, best_v = 0, -1e18",
+                   "seen.add(key)", "best_i, best_v = 0, -1e18",
                    "for i in range(len(options)):", "return best_i"):
         assert marker in a_code and marker in b_code, marker
     assert sum(1 for ln in a_code if "evaluate(" in ln) == 1
     assert sum(1 for ln in b_code if "self._value(" in ln) == 1
+    # Stage 0 E11: the dedup key is the second deliberate difference. The frozen heuristic keys on
+    # `_equiv_key`, which reads identities the seat may not know; the neural agent keys on the
+    # seat's view (`seat_key`) so the number of options never depends on what lies face-down.
+    assert "key = _equiv_key(s, options[i])" in a_code
+    assert "key = seat_key(s, self.me, options[i])" in b_code
 
 
 # ------------------------------------------------------------------ it plays

@@ -48,12 +48,32 @@ from cptcg.core.actions import Choice
 from cptcg.core.engine import apply
 from cptcg.core.rng import Pcg32
 from cptcg.core.state import GameState
+from cptcg.core.view import knows_identity
 from cptcg.learn.features import features
 from cptcg.learn.model import WEIGHTS_PATH, ValueModel, load_weights
 
 #: A decided preview is worth more than any opinion about an undecided one. In log-odds, and far
 #: enough out that no accumulation of hidden units can reach it.
 WIN = 1e6
+
+
+def seat_key(s: GameState, me: int | None, a) -> tuple:
+    """``heuristic._equiv_key`` as the seat may read it (Stage 0 E11).
+
+    ``_equiv_key`` reads ``s.i_card`` of the instance an option names, which for a face-down
+    Legend slot the seat has not looked at is an identity the seat does not know: two different
+    face-down Legends became two root options and two identical ones became one, so the *number*
+    of choices told the seat what lay face-down — a tell no table has, and one the frozen heuristic
+    keeps because it is frozen. Here an option naming an instance the seat may not identify
+    collapses with every other such option of the same kind in the same zone: from the seat's
+    side they are interchangeable, and the preview of the one that is kept is the preview of "a
+    face-down slot", not of a particular card. ``me=None`` (or a seat not yet assigned) reads
+    everything, which is what the omniscient tools want.
+    """
+    inst = getattr(a, "inst", None)
+    if inst is None or inst < 0 or me is None or me < 0 or knows_identity(s, me, inst):
+        return _equiv_key(s, a)
+    return (type(a), None, s.i_zone[inst], s.i_owner[inst], getattr(a, "ability", -1), "unknown")
 
 
 def _same_position(a: GameState, b: GameState) -> bool:
@@ -187,7 +207,7 @@ class NeuralAgent(HeuristicAgent):
 
     # ------------------------------------------------------------------ search
     def _greedy(self, s: GameState, choice: Choice, depth: int) -> int:
-        """``HeuristicAgent._greedy`` with the scoring line swapped, and nothing else.
+        """``HeuristicAgent._greedy`` with the scoring line and the dedup key swapped, and nothing else.
 
         Kept as a copy rather than factored into the frozen file: ``heuristic.py`` is frozen, and a
         refactor there — however harmless it looked — would be a change to the thing this agent is
@@ -203,7 +223,7 @@ class NeuralAgent(HeuristicAgent):
         model = self.model; noise = self.noise                        # noqa: E702
         here = s
         for i in range(len(options)):
-            key = _equiv_key(s, options[i])
+            key = seat_key(s, self.me, options[i])           # not _equiv_key: the seat's view (E11)
             if key in seen:
                 continue                                     # identical to an option already tried
             seen.add(key)
