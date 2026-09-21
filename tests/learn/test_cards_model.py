@@ -170,3 +170,24 @@ def test_the_card_agent_reads_a_position_as_if_at_its_own_main(tmp_path, monkeyp
     v_own = CA._value_batch(m, [s], 0, context=own)[0]
     assert abs(v_default - v_neutral) < 1e-6
     assert v_default != v_own
+
+
+@pytest.mark.skipif(not SAMPLE.exists(), reason="no bootstrap sample")
+def test_fit114_writes_a_loadable_head_from_the_card_rows(tmp_path):
+    pytest.importorskip("torch")
+    from cptcg.learn.model import ValueModel
+    recs = []
+    for rec in read_games(SAMPLE):
+        recs.append(rec)
+        if len(recs) == 6:
+            break
+    out = FC.rows_chunk(([(i, r) for i, r in enumerate(recs)], 0.5, 7, True))
+    n_dec = out.pop("n_decisions")
+    meta = {"rules": __import__("cptcg.core.config", fromlist=["DEFAULT_CONFIG"]).DEFAULT_CONFIG.digest(),
+            "tokens_digest": T.tokens_digest(), "seconds": 0}
+    np.savez_compressed(tmp_path / "rows.npz", meta=json.dumps(meta), **out)
+    FC.main(["fit114", str(tmp_path / "rows.npz"), "--out", str(tmp_path / "w.json"), "--epochs", "3", "--threads", "1"])
+    m = ValueModel.load(tmp_path / "w.json")
+    reg = load_default()
+    s = new_game(reg, sample_pair(reg, Pcg32(3)), 3)
+    assert 0.0 < m.value(s, 0) < 1.0

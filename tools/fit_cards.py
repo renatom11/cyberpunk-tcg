@@ -388,6 +388,75 @@ def cmd_fit(a) -> None:
     print(f"wrote {out}")
 
 
+def cmd_fit114(a) -> None:
+    """Fit the 114-feature head (``learn.model.ValueModel``: tanh hidden layer, Brier loss) on the
+    SAME rows and the SAME by-game split as ``fit`` uses for the card-aware model, so the two
+    heads in kill test 1 differ only in what they read. Exported in ``weights.json`` format."""
+    import torch
+    from cptcg.learn.features import FEATURE_NAMES
+    from cptcg.learn.model import feature_digest, FORMAT as VFORMAT
+    torch.manual_seed(a.seed)
+    torch.set_num_threads(a.threads)
+    rows, metas = load_rows(a.rows)
+    train_idx, hold_idx = split_by_game(rows["game"], a.holdout, a.seed)
+    X = torch.from_numpy(rows["agg"].astype(np.float32))
+    y = torch.from_numpy(rows["label"].astype(np.float32))
+    n_in = X.shape[1]
+    w1 = torch.nn.Parameter(torch.randn(a.hidden, n_in) * (1.0 / n_in) ** 0.5)
+    b1 = torch.nn.Parameter(torch.zeros(a.hidden))
+    w2 = torch.nn.Parameter(torch.randn(a.hidden) * (1.0 / a.hidden) ** 0.5)
+    b2 = torch.nn.Parameter(torch.zeros(1))
+    params = [w1, b1, w2, b2]
+    opt = torch.optim.Adam(params, lr=a.lr, weight_decay=a.l2)
+
+    def fwd(xb):
+        return torch.sigmoid(torch.tanh(xb @ w1.T + b1) @ w2 + b2)
+
+    def brier(idx):
+        with torch.no_grad():
+            tot = 0.0
+            for k in range(0, len(idx), 8192):
+                sl = idx[k:k + 8192]
+                tot += float(((fwd(X[sl]) - y[sl]) ** 2).sum())
+            return tot / max(1, len(idx))
+    best, best_state, since = 1e9, None, 0
+    rng = np.random.default_rng(a.seed)
+    t0 = time.time()
+    ep = 0
+    for ep in range(1, a.epochs + 1):
+        order = train_idx.copy()
+        rng.shuffle(order)
+        for k in range(0, len(order), a.batch):
+            sl = order[k:k + a.batch]
+            opt.zero_grad()
+            loss = ((fwd(X[sl]) - y[sl]) ** 2).mean()
+            loss.backward()
+            opt.step()
+        hb = brier(hold_idx)
+        print(f"epoch {ep:3d}  train brier {brier(train_idx):.5f}  holdout brier {hb:.5f}  {time.time() - t0:.0f}s", flush=True)
+        if hb < best - 1e-5:
+            best, since = hb, 0
+            best_state = [p.detach().clone() for p in params]
+        else:
+            since += 1
+            if since >= a.patience:
+                print(f"early stop: no held-out improvement for {a.patience} epochs")
+                break
+    w1v, b1v, w2v, b2v = [p.numpy() for p in best_state]
+    out = {"run": {"tool": "fit_cards.py fit114", "rows": [str(r) for r in a.rows], "seed": a.seed,
+                   "holdout": a.holdout, "train_rows": int(len(train_idx)), "holdout_rows": int(len(hold_idx)),
+                   "holdout_brier": best},
+           "train": {"lr": a.lr, "l2": a.l2, "batch": a.batch, "epochs": ep, "patience": a.patience},
+           "format": VFORMAT, "kind": "value", "hidden": a.hidden, "activation": "tanh",
+           "features": list(FEATURE_NAMES), "feature_digest": feature_digest(),
+           "rules": DEFAULT_CONFIG.digest(), "cards": cards_digest(),
+           "w1": [[float(v) for v in row] for row in w1v], "b1": [float(v) for v in b1v],
+           "w2": [float(v) for v in w2v], "b2": float(b2v[0])}
+    Path(a.out).parent.mkdir(parents=True, exist_ok=True)
+    Path(a.out).write_text(json.dumps(out), encoding="utf-8")
+    print(f"wrote {a.out}: hidden {a.hidden}, holdout Brier {best:.5f}")
+
+
 def cmd_eval(a) -> None:
     import torch
     rows, _ = load_rows(a.rows)
@@ -430,6 +499,19 @@ def main(argv=None) -> None:
     f.add_argument("--seed", type=int, default=0)
     f.add_argument("--threads", type=int, default=4)
     f.set_defaults(fn=cmd_fit)
+    h = sub.add_parser("fit114", help="the 114-feature head on the same rows and split")
+    h.add_argument("rows", nargs="+")
+    h.add_argument("--out", required=True)
+    h.add_argument("--hidden", type=int, default=16)
+    h.add_argument("--epochs", type=int, default=200)
+    h.add_argument("--batch", type=int, default=256)
+    h.add_argument("--lr", type=float, default=1e-3)
+    h.add_argument("--l2", type=float, default=1e-5)
+    h.add_argument("--holdout", type=float, default=0.2)
+    h.add_argument("--patience", type=int, default=10)
+    h.add_argument("--seed", type=int, default=1)
+    h.add_argument("--threads", type=int, default=4)
+    h.set_defaults(fn=cmd_fit114)
     e = sub.add_parser("eval")
     e.add_argument("rows", nargs="+")
     e.add_argument("--weights", required=True)
