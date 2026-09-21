@@ -48,6 +48,19 @@ a G2 regeneration) and the width of a rival-hidden PICK in the information key (
 change with no golden movement). My judgement: both are small; neither was measured for frequency
 in this task beyond the coverage matrix, which lists the decline branches offered.
 
+### 1b. Owner rulings Q1–Q4 (received after the first report; landed before any new corpus)
+
+| ruling | what changed | golden | fuzz | suite |
+|---|---|---|---|---|
+| Q1 (054) a Call and the spend trigger that paid for it are one ordering group | engine already built the group; test `test_q1_…` and the `call_legend` docstring | — | — | — |
+| Q2 (055) copies of one card that trigger together are ordered | `needs_ordering` over separate instances; `OrderTriggersStep` offers each instance (9142d8c, regen e858584) | all 8 keys, 23/224 games, 3 winner flips (random keys); `@order` prompts 455 → 519 (2.32 a game) | both moved | — |
+| Q2 (055) two Deadman Transmitters on one host | the owner chooses which is destroyed (script) | IDENTICAL (G0) | unchanged — unreachable by random decks; scenario test | — |
+| Q3 (056) a Gear's ⊡ spends the equipped card | `engine.ability_spender`; Overwatch needs a ready host, spends it, a host Legend cannot also pay (cf2e048) | IDENTICAL (G0 by deck) | both moved | `play-around-overwatch-on-the-lowlife` lost (heuristic now wins it): 133 → 132 |
+| Q4 (057) a spent face-down Legend may be Called | engine already correct; test | — | — | — |
+
+The only Gear with a spend-icon ability is Overwatch *Panam's Gift*, whose text names no card, so no
+card was parked. Bootstrap sample re-recorded; oracle set re-labelled. **No further rule changes.**
+
 ## 2. Timing table and the Stage 1 projection
 
 n = 20 games per agent, seat 0 against the frozen heuristic, one process per agent group on its
