@@ -4,16 +4,17 @@ from __future__ import annotations
 
 from cptcg.cards.registry import Registry
 from cptcg.core.actions import (Action, Activate, Attack, Block, CallLegend, Choice, ChoiceKind,
-                                ChooseOrder, EndTurn, GoSolo, Pass, Play, Sell)
+                                ChooseOrder, EndTurn, GoSolo, Pass, Pick, Play, Sell)
 from cptcg.core.config import DEFAULT_CONFIG, RulesConfig
 from cptcg.core.enums import (DICE, F_GO_SOLO, F_NO_READY_NEXT, F_NO_SOLO_KEYWORD, NO_INST,
                               TARGET_UNIT, CardType,
                               EndReason, Keyword, Trigger, Zone)
+from cptcg.core import ops
 from cptcg.core.ops import (_ctx, call_legend, consume_cost_mods, deferred_entries, deferring, dispatch,
-                            draw, end_game, gain_gig, move, pay, play_cost, push_trigger,
+                            draw, end_game, gain_gig, move, pay, payment_plans, play_cost, push_trigger,
                             resolve_triggers, settle_entry, shuffle_deck, spend)
 from cptcg.core.state import ONCE_SOLD, AttackContext, GameState
-from cptcg.core.steps import (AttackDeclaredStep, DeclareTargetStep, EndAttackStep, FnStep, HookStep, MainPhaseStep,
+from cptcg.core.steps import (AskStep, AttackDeclaredStep, DeclareTargetStep, EndAttackStep, FnStep, HookStep, MainPhaseStep,
                               attack_triggers,
                               MulliganStep, ReactionWindowStep, ResolveAttackStep, StartGameStep,
                               set_target)
@@ -127,11 +128,11 @@ def apply(s: GameState, index: int) -> None:
     if kind is ChoiceKind.MAIN:
         if not isinstance(action, EndTurn):
             s.stack.append(MainPhaseStep())            # come back to the menu afterwards
-            _main_action(s, ch.player, action)
+            _with_payment(s, ch.player, action, _main_action)
     elif kind is ChoiceKind.REACTION:
         if not isinstance(action, Pass):
             s.stack.append(ReactionWindowStep())       # the window stays open
-            _reaction(s, ch.player, action)
+            _with_payment(s, ch.player, action, _reaction)
     elif kind is ChoiceKind.PICK:
         ch.cont(s, action)
     elif kind is ChoiceKind.TARGET:
@@ -149,6 +150,59 @@ def apply(s: GameState, index: int) -> None:
     elif kind is ChoiceKind.ORDER:
         _set_order(s, ch.player if action.go_first else 1 - ch.player)
     advance(s)
+
+
+# ---------------------------------------------------------- payment (E12)
+def _payment_of(s: GameState, p: int, a: Action) -> tuple[int, int]:
+    """``(amount, exclude)`` the action will hand to ``pay`` — the same arithmetic the action
+    itself does, computed once more here so the question can be asked before anything moves."""
+    if isinstance(a, Play):
+        return play_cost(s, p, a.inst), NO_INST
+    if isinstance(a, CallLegend):
+        return 1, NO_INST
+    if isinstance(a, GoSolo):
+        return play_cost(s, p, a.inst, go_solo=a.keyword), NO_INST
+    if isinstance(a, Activate):
+        ab = s.card(a.inst).script.abilities[a.ability]
+        excl = a.inst if (ab.self_spend and s.card(a.inst).type is CardType.LEGEND) else NO_INST
+        cost = ab.cost(_ctx(s, a.inst)) if callable(ab.cost) else ab.cost
+        return cost, excl
+    return 0, NO_INST
+
+
+def _with_payment(s: GameState, p: int, a: Action, run) -> None:
+    """Run ``run(s, p, a)``, first asking which Legends pay when that is a real choice.
+
+    Ruling 025 auto-paid. Stage 0's measurement (kill test 4) found a Legend with something left to
+    do — a usable ability, a Gear whose trigger fires when its host is spent, the last face-down
+    Legend a reaction Call could still use — spent while another source stayed ready in 14% of
+    the payments of heuristic play, so the choice is now the player's: a ``PICK`` tagged
+    ``pay@<action>`` over ``ops.payment_plans``, asked only when Eddies do not cover the cost and
+    more than one set of Legends could. A front end that already recorded the player's answer
+    through ``ops.PAY_PREF`` is not asked again. Effects that pay from inside a script (two
+    cards) still pay automatically.
+    """
+    amount, excl = _payment_of(s, p, a)
+    plans = payment_plans(s, p, amount, excl) if amount > 0 else []
+    pref = ops.PAY_PREF
+    if len(plans) < 2 or (pref is not None and pref[0] == id(s) and pref[1] == p):
+        run(s, p, a)
+        return
+    vals = plans
+    what = type(a).__name__.lower()
+
+    def _cont(st: GameState, act: Pick) -> None:
+        st.pay_plan = tuple(vals[act.picks[0]])
+        try:
+            run(st, p, a)
+        finally:
+            st.pay_plan = None
+
+    # The prompt names no card: it is sent to both seats and the payer's face-down Legends are
+    # theirs alone to read. The option labels (web.view._pick_labels) describe each plan through
+    # the identity gate instead.
+    s.stack.append(AskStep(Choice(ChoiceKind.PICK, p, tuple(Pick((k,)) for k in range(len(plans))), _cont,
+                                  prompt=f"Pay {amount} €$: which Legends?", tag=f"pay@{what}")))
 
 
 # ---------------------------------------------------------- main actions

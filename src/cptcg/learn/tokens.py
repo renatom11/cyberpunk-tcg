@@ -48,8 +48,8 @@ SUBMODE_VOCAB = ("", "gear:unit", "gear:legend", "quick", "keyword", "plain", "r
                  "ab0", "ab1", "ab0:quick", "ab1:quick", "gig", "unit", "d4", "d6", "d8", "d10", "d12",
                  "d20", "keep", "mulligan", "first", "second")
 PICK_VOCAB = ("", "decline", "die", "trigger", "index", "yes", "card", "amount", "adjust:up",
-              "adjust:down", "tuple", "type")
-TAG_CLASSES = ("", "steal", "order", "adjust_gig", "equip", "call_free", "effect")
+              "adjust:down", "tuple", "type", "payplan")
+TAG_CLASSES = ("", "steal", "order", "adjust_gig", "equip", "call_free", "effect", "pay")
 
 
 def tokens_digest() -> str:
@@ -113,6 +113,8 @@ def die_tokens(s: GameState, me: int) -> list[tuple]:
 def _tag_class(tag: str) -> int:
     if not tag:
         return 0
+    if tag.startswith("pay@"):
+        return 7
     if tag.endswith("@steal"):
         return 1
     if tag.endswith("@order"):

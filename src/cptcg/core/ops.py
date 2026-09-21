@@ -431,6 +431,11 @@ def payable_sources(s: GameState, player: int, exclude: int = NO_INST) -> list[i
     facedown = [i for i in legs if not s.i_faceup[i]]
     faceup = [i for i in legs if s.i_faceup[i] and s.card(i).sell_tag]   # CR 5.7.2.2
     srcs = eddies + facedown + faceup
+    plan = s.pay_plan
+    if plan is not None:
+        # Chosen by the payment PICK (E12): the named Legends first, the rest in the usual order.
+        first = [i for i in plan if i in srcs]
+        return first + [i for i in srcs if i not in first]
     pref = PAY_PREF
     if pref is not None and pref[1] == player and pref[0] == id(s):
         # Only sources that are still legal right now; the rest keep their usual order behind them,
@@ -439,6 +444,38 @@ def payable_sources(s: GameState, player: int, exclude: int = NO_INST) -> list[i
         if first:
             return first + [i for i in srcs if i not in first]
     return srcs
+
+
+class PayPlan(tuple):
+    """The Legend instances one payment plan spends. A tuple subclass so a PICK's value list
+    can be told apart from the other tuple shapes the views describe."""
+    __slots__ = ()
+
+
+def payment_plans(s: GameState, player: int, amount: int, exclude: int = NO_INST) -> list[PayPlan]:
+    """The distinct ways to pay ``amount`` (Stage 0 E12, ruling 025 revised).
+
+    Ready Eddies are interchangeable and always spent first: no card reads an Eddie's identity,
+    and keeping an Eddie back to spend a Legend instead is a plan the measurement found in 0.02%
+    of payments (a Legend whose spend has a trigger). What is left to decide is *which* Legends
+    cover the remainder when the Eddies do not, and every subset is a different plan: a face-down
+    Legend kept ready can still be Called, a face-up one can still use its ability, one may host
+    Gear. Plans are listed with the automatic order first (``payable_sources``'s priority), so
+    the first plan is what the engine used to pay before it asked. One plan means no question.
+    """
+    if amount <= 0:
+        return [PayPlan()]
+    srcs = payable_sources(s, player, exclude)
+    if len(srcs) < amount:
+        return []
+    base = player * NZONE
+    eddies = [i for i in srcs if s.i_zone[i] == Zone.EDDIES]
+    legs = [i for i in srcs if s.i_zone[i] != Zone.EDDIES]
+    need = amount - len(eddies)
+    if need <= 0 or need >= len(legs):
+        return [PayPlan(legs[:max(0, need)])]
+    from itertools import combinations
+    return [PayPlan(c) for c in combinations(legs, need)]
 
 
 def available(s: GameState, player: int, exclude: int = NO_INST) -> int:

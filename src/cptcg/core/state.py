@@ -93,6 +93,7 @@ class GameState:
         "_ctxs",
         # trigger collection in progress (ops.deferring): None, or the list dispatch appends to
         "deferred",
+        "pay_plan",
     )
 
     def __init__(self, cfg: RulesConfig, reg: "Registry", seed: int) -> None:
@@ -130,6 +131,10 @@ class GameState:
         self.used: set = set()
         self.played: list[int] = []
         self.turn_events: list[tuple] = []
+        #: The payment plan a PICK chose for the action being applied (Stage 0 E12): the Legend
+        #: instances to spend first. Set and cleared inside one apply(); never survives into a
+        #: pending state, so it is not part of the information key.
+        self.pay_plan: tuple | None = None
         self.drawn: list[int] = []
         self.played_log: list[tuple[int, int]] = []
         self.log: list | None = None
@@ -188,6 +193,7 @@ class GameState:
         s._active = self._active                       # immutable tuple-of-tuples, shareable
         s._ctxs = {}
         s.deferred = None                              # collection never spans a clone
+        s.pay_plan = None
         return s
 
     # -------------------------------------------------------------- instances

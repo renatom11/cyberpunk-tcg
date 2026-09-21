@@ -63,7 +63,7 @@ def cmd_pay_events(a) -> None:
     (a) hosts a Gear with a spend trigger, (b) has an activated ability usable this turn, or
     (c) is the last ready face-down Legend while a Call is still available this turn, or (d) is
     face-up with a Sell Tag when a face-down alternative existed — the cases where *which* source
-    pays changes what happens next. Ruling 025 auto-pays; the design wires ``explicit_payment``
+    pays changes what happens next. Ruling 025 auto-pays; the design wires ``the payment Pick (E12)``
     only if this share is at least 2%.
     """
     from cptcg.core.actions import Activate, CallLegend, GoSolo, Play
@@ -137,7 +137,7 @@ def cmd_pay_events(a) -> None:
           f"({100.0 * strategic / max(with_choice, 1):.1f}% of the choices)")
     for k, v in cats.items():
         print(f"  {k:20s} {v}")
-    print("gate: wire explicit_payment only if >= 2% of payments" +
+    print("gate: wire the payment Pick (E12) only if >= 2% of payments" +
           ("  -> WIRE" if strategic >= 0.02 * max(payments, 1) else "  -> leave auto-payment"))
 
 

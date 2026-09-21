@@ -26,7 +26,7 @@ def _mid(pool, seed=21, decisions=30):
 
 
 def test_the_layout_digest_is_pinned():
-    assert T.tokens_digest() == "ae121dc0ed23616c", "token layout moved: bump the pin and refit"
+    assert T.tokens_digest() == "1c4b67e7c9000efc", "token layout moved: bump the pin and refit"
 
 
 def test_shapes(pool):

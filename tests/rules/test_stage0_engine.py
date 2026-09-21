@@ -438,3 +438,96 @@ def test_search_leftovers_go_to_the_bottom_in_their_original_order(pool):
     drive(s, lambda st: False)
     deck = [s.card(i).id for i in s.zone(0, Zone.DECK)]      # index 0 is the bottom
     assert deck == ["floor-it", "psycho-squad", "corpo-security", "riot-shield"]
+
+
+# ------------------------------------------------------------- E12: payment is a choice (ruling 025 revised)
+LEG_A, LEG_B, LEG_C = "goro-takemura-hands-unclean", "dexter-deshawn-off-the-grid", "evelyn-parker-beautiful-enigma"
+
+
+def pay_prompt(s):
+    ch = s.pending
+    return ch is not None and ch.kind is ChoiceKind.PICK and (ch.tag or "").startswith("pay@")
+
+
+def test_e12_no_question_when_eddies_cover_the_cost(pool):
+    s = board(pool, Side(hand=["secondhand-bombus"], eddies=2, legends=[LEG_A, LEG_B]), Side())
+    play(s, "secondhand-bombus")
+    assert not pay_prompt(s)
+    assert not any(s.i_spent[i] for i in s.legends(0))
+
+
+def test_e12_which_legend_pays_is_asked_and_honoured(pool):
+    s = board(pool, Side(hand=["secondhand-bombus"], eddies=1, legends=[LEG_A, LEG_B]), Side())
+    a, b = s.legends(0)
+    play(s, "secondhand-bombus")
+    assert pay_prompt(s) and s.pending.tag == "pay@play" and s.pending.player == 0
+    assert len(s.pending.options) == 2
+    apply(s, 1)                                   # the second plan: the other Legend pays
+    assert s.i_spent[b] and not s.i_spent[a]
+    assert s.i_zone[find(s, "secondhand-bombus", Zone.FIELD)] == Zone.FIELD
+    assert all(s.i_spent[i] for i in s.z[0 * 0 + Zone.EDDIES])   # Eddies are always spent first
+
+
+def test_e12_the_first_plan_is_the_old_automatic_order(pool):
+    s = board(pool, Side(hand=["secondhand-bombus"], eddies=1, legends=[LEG_A, LEG_B]), Side())
+    a, b = s.legends(0)
+    play(s, "secondhand-bombus")
+    apply(s, 0)
+    assert s.i_spent[a] and not s.i_spent[b]
+
+
+def test_e12_every_subset_of_legends_is_a_plan(pool):
+    s = board(pool, Side(hand=["secondhand-bombus"], eddies=0, legends=[LEG_A, LEG_B, LEG_C]), Side())
+    play(s, "secondhand-bombus")
+    assert pay_prompt(s) and len(s.pending.options) == 3      # C(3, 2)
+
+
+def test_e12_no_question_when_every_legend_must_pay(pool):
+    s = board(pool, Side(hand=["secondhand-bombus"], eddies=0, legends=[LEG_A, LEG_B]), Side())
+    play(s, "secondhand-bombus")
+    assert not pay_prompt(s)
+    assert all(s.i_spent[i] for i in s.legends(0))
+
+
+def test_e12_a_call_may_pay_for_itself_or_with_the_other_legend(pool):
+    s = board(pool, Side(eddies=0, legends=[LEG_A, LEG_B]), Side())
+    a, b = s.legends(0)
+    do(s, CallLegend(a))
+    assert pay_prompt(s) and s.pending.tag == "pay@calllegend" and len(s.pending.options) == 2
+    apply(s, 0)                                   # face-down priority order: a itself pays
+    assert s.i_faceup[a] and s.i_spent[a] and not s.i_spent[b]
+    s = board(pool, Side(eddies=0, legends=[LEG_A, LEG_B]), Side())
+    a, b = s.legends(0)
+    do(s, CallLegend(a))
+    apply(s, 1)
+    assert s.i_faceup[a] and not s.i_spent[a] and s.i_spent[b]
+
+
+def test_e12_a_self_spending_ability_cannot_pay_with_itself(pool):
+    s = board(pool, Side(eddies=0, legends=[("alt-cunningham-soulkiller-architect", {"faceup": 1}), LEG_A, LEG_B]), Side())
+    alt, a, b = s.legends(0)
+    do(s, Activate(alt, 1))                       # 1 €$ and spend this Legend
+    assert pay_prompt(s) and s.pending.tag == "pay@activate" and len(s.pending.options) == 2
+    apply(s, 1)
+    assert s.i_spent[alt] and s.i_spent[b] and not s.i_spent[a]
+
+
+def test_e12_a_front_end_that_already_chose_is_not_asked(pool):
+    from cptcg.core import ops
+    s = board(pool, Side(hand=["secondhand-bombus"], eddies=1, legends=[LEG_A, LEG_B]), Side())
+    a, b = s.legends(0)
+    ops.PAY_PREF = (id(s), 0, (b,))
+    try:
+        play(s, "secondhand-bombus")
+    finally:
+        ops.PAY_PREF = None
+    assert not pay_prompt(s)
+    assert s.i_spent[b] and not s.i_spent[a]
+
+
+def test_e12_the_plan_never_survives_into_a_pending_state(pool):
+    s = board(pool, Side(hand=["secondhand-bombus"], eddies=1, legends=[LEG_A, LEG_B]), Side())
+    play(s, "secondhand-bombus")
+    apply(s, 1)
+    assert s.pay_plan is None
+    assert s.clone().pay_plan is None

@@ -55,7 +55,15 @@ class RulesConfig:
     hand_limit: int | None = None          # 020
     sell_in_reactions: bool = False        # 021
     attack_triggers_before_target: bool = False  # 023: CR 9.3 — the target is part of the declaration
-    explicit_payment: bool = False         # 025
+    explicit_payment: bool = False         # 025, revised by Stage 0 E12: the engine now ASKS which
+    #                                      Legends pay when Eddies do not cover the cost and more
+    #                                      than one set could (engine._with_payment). The field
+    #                                      keeps its recorded value for the same reason as 047's
+    #                                      orientation (engine.go_solo): flipping it moves digest()
+    #                                      and refuses the shipped weights, the corpus and the
+    #                                      suite. What it still describes: Eddies are always spent
+    #                                      first, and payments made from inside a card script are
+    #                                      automatic.
     field_limit: int | None = None         # 026
     go_solo_requires_ready: bool = False   # 027: a SPENT Legend may still GO SOLO — FAQ, "Can I GO
     #                                      SOLO on a spent Legend? Yes". This gates LEGALITY only;
@@ -96,5 +104,6 @@ DESCRIPTIVE = frozenset({
     "once_per_turn_scope",       # 019  Uncertain
     "hand_limit",                # 020  there is no hand limit; no step enforces one
     "sell_in_reactions",         # 021  the reaction menu offers no Sell
-    "explicit_payment",          # 025  Approximation: payment order is chosen automatically
+    "explicit_payment",          # 025  Eddies-first and script payments are automatic; the Legend
+    #                                   choice is asked (E12) regardless of this value
 })

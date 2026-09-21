@@ -1,7 +1,9 @@
 """Turn structure, economy, Legends and win conditions."""
 from conftest import Side, board, do, find
 
-from cptcg.core.actions import Attack, CallLegend, EndTurn, GoSolo, Play, Sell, TakeGigDie
+from cptcg.core.engine import apply
+
+from cptcg.core.actions import Attack, CallLegend, ChoiceKind, EndTurn, GoSolo, Play, Sell, TakeGigDie
 from cptcg.core.enums import EndReason, F_GO_SOLO, Zone
 from cptcg.core.ops import available, play_cost
 
@@ -34,6 +36,10 @@ def test_cannot_afford(reg):
 def test_legends_pay_one_eddie_each(reg):
     s = board(reg, Side(hand=["T-U3"], eddies=1, legends=["T-L2", "T-L5", "T-L6"]), Side())
     do(s, Play(find(s, "T-U3")))
+    # Three Legends could cover the 2 €$ the Eddie does not: which two is now asked (Stage 0 E12);
+    # the first plan is the old automatic order.
+    assert s.pending.kind is ChoiceKind.PICK and s.pending.tag == "pay@play"
+    apply(s, 0)
     assert sum(s.i_spent[i] for i in s.legends(0)) == 2
 
 

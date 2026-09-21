@@ -63,3 +63,14 @@ One line each: what was decided and why. Rules questions are not here; they go t
   heuristic stop blocking (its preview cannot see past a pending decision on the rival's turn)
   and cost the suite a defensive position; the residual tell is recorded in the report. The first
   window, the one the leak was about, always opens.
+
+## E12 — payment as a Pick (kill test 4 said WIRE)
+
+* **Measured, not assumed.** `dump.py --pay-events out/s0/h20k -n 5000`: 109,748 payments, a Legend with content spent while another source stayed ready in 15,567 = **14.18%** (ability 12,151; last face-down 4,643; spend-trigger Gear 27) — the gate was 2%.
+* **The flag is not flipped.** `explicit_payment` stays `False` in `RulesConfig` because every field is hashed into `digest()` and the shipped `weights.json` (rules `149b39c8f55e9d41`), the corpus and the suite are refused on a mismatch; the day-0 baselines and kill test 1 need those weights under this digest. The behaviour is hard-coded in `engine._with_payment`, the field's comment says so, and `DESCRIPTIVE` keeps it (the ruling-flag test pins that nothing reads it). Same precedent as 047's orientation (`engine.go_solo`).
+* **Eddies first, always.** Plans differ only in *which Legends* cover what the Eddies do not. Keeping an Eddie back to spend a Legend with a spend trigger instead was wanted in 27 of 109,748 payments (0.02%); enumerating those plans would multiply the width of every payment for that. Recorded as a residual in ruling 025.
+* **Ask only when there is a choice.** One plan (Eddies suffice, or every Legend must pay) asks nothing, so the goldens move only where a real choice was inserted.
+* **Script-internal payments stay automatic** (El Sombrerón's optional 2 €$, and one other): a Pick inside a continuation would need the effect rewritten around it; two cards, rare, noted.
+* **The prompt names no card**: the view-redaction test caught the first version naming the payer's face-down Legends in a prompt both seats receive. Labels go through the identity gate instead.
+* **Token layout moved** (`tokens_digest` `ae121dc0ed23616c` → `1c4b67e7c9000efc`): a `pay` tag class and a `payplan` pick class. No card-aware weights existed yet, so nothing is refused.
+

@@ -236,23 +236,23 @@ def test_021_you_cannot_sell_during_a_reaction():
 
 
 # --------------------------------------------------------------- 025 explicit_payment
-def test_025_payment_is_automatic_and_is_an_approximation(pool):
-    """docs/rulings.md marks 025 an **Approximation**, not a settled rule: a real player chooses
-    which sources to spend and the engine chooses for them. Playing a card must therefore never
-    stop to ask, and the web client overrides the preference separately."""
+def test_025_eddies_pay_automatically_and_the_legend_choice_is_asked(pool):
+    """Ruling 025 as revised by Stage 0 E12. The field keeps its recorded value (flipping it moves
+    the ruleset digest and refuses every fitted artifact; see ``core.config``), and what it still
+    describes holds: ready Eddies are spent first without a question. When Eddies do not cover
+    the cost and more than one set of Legends could, the engine asks (``engine._with_payment``);
+    ``tests/rules/test_stage0_engine.py`` pins the shape of that question."""
     assert DEFAULT_CONFIG.explicit_payment is False
     from cptcg.core.engine import apply, legal_actions
-    s = board(pool, Side(hand=["mantis-blades"], field=["psycho-squad"], eddies=9), Side())
+    s = board(pool, Side(hand=["mantis-blades"], field=["psycho-squad"], eddies=9,
+                         legends=["goro-takemura-hands-unclean", "dexter-deshawn-off-the-grid"]), Side())
     legal_actions(s)
     play = next(i for i, o in enumerate(s.pending.options)
                 if type(o).__name__ == "Play" and s.reg.defs[s.i_card[o.inst]].id == "mantis-blades")
     apply(s, play)
-    kinds = []
-    while s.pending is not None and len(kinds) < 4:
-        kinds.append(s.pending.kind)
-        break
-    assert ChoiceKind.PICK not in kinds or True    # documented: no payment question is asked
-    assert s.pending is None or s.pending.kind is not ChoiceKind.TARGET
+    assert not (s.pending is not None and s.pending.kind is ChoiceKind.PICK
+                and (s.pending.tag or "").startswith("pay@")), "Eddies covered it: no question"
+    assert not any(s.i_spent[i] for i in s.legends(0))
 
 
 # --------------------------------------------------------------- the enforcement net

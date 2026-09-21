@@ -7,7 +7,7 @@ from cptcg.core.actions import (Activate, Attack, Block, CallLegend, ChoiceKind,
 from cptcg.core.engine import legal_actions
 from cptcg.core.legal import attack_permission
 from cptcg.core.enums import NO_INST, NZONE, TARGET_GIG, CardType, Keyword, Zone
-from cptcg.core.ops import ATTACKING, available, has_keyword, payable_sources, play_cost, power
+from cptcg.core.ops import ATTACKING, PayPlan, available, has_keyword, payable_sources, play_cost, power
 from cptcg.core.state import ONCE_CALLED, ONCE_SOLD, GameState
 from cptcg.core.view import hand_visible, knows_identity, legend_identity_known
 
@@ -267,6 +267,10 @@ def _describe_value(s: GameState, v, me: int | None = None) -> str:
             return _anon(s, v, me)
         d = s.card(v)
         return d.name + (f" ({d.subtitle})" if d.subtitle else "")
+    if isinstance(v, PayPlan):                                          # E12: which Legends pay
+        if not v:
+            return "Eddies only"
+        return "Spend " + ", ".join(_describe_value(s, i, me) for i in v)
     if isinstance(v, tuple):
         if len(v) == 5 and all(isinstance(x, int) for x in v):        # (owner, index, amount, sides, value)
             o, i, a, k, val = v
