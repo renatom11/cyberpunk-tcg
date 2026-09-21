@@ -471,6 +471,15 @@ def steal_count(pwr: int) -> int:
     return 0 if pwr <= 0 else 1 + pwr // 10
 
 
+def steal_reduction(s: GameState, unit: int) -> int:
+    """How many fewer Gigs ``unit`` steals this turn (Take Control: "A rival Unit steals 1 fewer
+    Gig this turn"). The FAQ applies it to every steal the Unit makes, by attack or by effect --
+    *"Does this apply to Units stealing Gigs through effects outside of attacking? **Yes**"* --
+    so both paths subtract it, and a steal reduced to nothing emits no ``steal`` event, which is
+    why Gorilla Arms cannot fire off it (*"0 Gigs ... Gorilla Arms does not activate"*)."""
+    return sum(s.mod_values("steal_fewer", unit)) if s.mods else 0
+
+
 # ------------------------------------------------------------------ combat
 def defeat(s: GameState, inst: int, *, allow_replace: bool = True) -> bool:
     """Send a card in play to the trash (or out of the game for a GO SOLO Legend).

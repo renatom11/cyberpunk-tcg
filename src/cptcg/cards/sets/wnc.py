@@ -292,6 +292,9 @@ def _():
         def listen(s, ev):
             if ev[0] == "fight_won" and s.i_owner[ev[1]] == me and ev[3] >= 3 and s.i_zone[ev[1]] is Zone.FIELD:
                 s.mods = [m for m in s.mods if not (m[0] == "listener" and m[2] is listen)]
+                from cptcg.core.ops import steal_reduction
+                if steal_reduction(s, ev[1]) >= 1:       # Take Control reaches effect steals (FAQ)
+                    return
                 cands = stealable(s, ev[1], 1 - me)
                 if cands:
                     from cptcg.core.actions import Choice, ChoiceKind, Pick
@@ -1142,7 +1145,10 @@ def _host_spent(c, e):
 def _():
     def ev(c, e):
         if e[0] == "steal" and e[1] == c.host() and c.once("steal"):
+            from cptcg.core.ops import steal_reduction
             from cptcg.core.steps import push_steals, stealable
+            if steal_reduction(c.s, c.host()) >= 1:        # Take Control reaches effect steals (FAQ)
+                return
             # Through the protection gate, like the set's other effect-driven steal
             # (appetite-for-destruction). Chrome Fang and Westbrook Netrunner print unqualified
             # prohibitions -- "rival Units can't steal friendly Gigs with value higher than their

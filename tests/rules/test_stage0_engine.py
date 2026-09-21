@@ -244,7 +244,6 @@ def test_panam_strength_draws_for_a_legend_on_the_field(pool):
 
 
 # ===================================================================== Take Control (E2)
-@pytest.mark.xfail(strict=True, reason="S0-E2: 'steals 1 fewer' is applied on the attack path only; effect steals bypass it")
 def test_take_control_applies_to_an_effect_steal(pool):
     """Take Control: *"Does this apply to Units stealing Gigs through effects outside of
     attacking? Yes."* Appetite for Destruction's bonus steal is such an effect."""

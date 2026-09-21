@@ -17,7 +17,7 @@ from cptcg.core.enums import (F_CANT_READY, F_NO_READY_NEXT, NO_INST, NZONE, TAR
 from cptcg.core.legal import attack_targets, gig_die_options, main_menu, reaction_menu
 from cptcg.core.ops import (ATTACKING, FIGHTING, VS_LEGEND, VS_UNIT, _ctx, _rebuild_active,
                             active_cards, ask, defeat, dispatch, draw, end_game, gain_gig, power,
-                            push_trigger, spend, steal_count, steal_gig)
+                            push_trigger, spend, steal_count, steal_gig, steal_reduction)
 from cptcg.core.state import GameState
 
 
@@ -379,9 +379,7 @@ class ResolveAttackStep(Step):
         elif atk.target_kind == TARGET_GIG and atk.gig_steal_allowed:
             thief = atk.attacker_ctrl
             victim = 1 - thief
-            n = steal_count(power(s, a, ATTACKING))
-            for v in s.mod_values("steal_fewer", a):
-                n -= v
+            n = steal_count(power(s, a, ATTACKING)) - steal_reduction(s, a)
             cands = stealable(s, a, victim)
             if n <= 0 or not cands:
                 return
