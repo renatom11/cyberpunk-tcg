@@ -18,8 +18,8 @@ reproduced in `docs/stage0.md` with the final report.
 | E5 face-up Legends on the field (six readers incl. Goro and Pepe) | done, golden regenerated (2 keys) | see git log |
 | E6 "first time each turn" by event count (eight scripts; Yorinobu counts itself) | done, golden regenerated (3 keys) | see git log |
 | E7 Bootleg's sold card hidden from both seats | done (G0 IDENTICAL; ledger entry); bootstrap sample re-recorded | see git log |
-| E8 trigger ordering over printed hooks and listeners | pending | — |
-| E9 activation / payment ordering | pending | — |
+| E8 trigger ordering over printed hooks and listeners (+ `wants` on every hook; 046's spurious prompts gone) | done with E9, golden regenerated (all 8 keys) | see git log |
+| E9 activation / payment ordering | done with E8 | see git log |
 | E10 reaction window always opens | pending | — |
 | E11 root dedup without hidden identities | pending | — |
 | 1c pay-events (kill test 4) | after the first corpus | — |

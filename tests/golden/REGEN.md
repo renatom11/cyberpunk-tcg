@@ -10,6 +10,79 @@ Every entry records the five pieces of evidence from `docs/verification.md`. A r
 all five is not one.
 
 
+## 2026-09-21 — Stage 0 E8 + E9: trigger ordering over every queue, and costs resolve after what they paid for (G2, engine-wide)
+
+**The change.** Ruling 046's ordering now covers every queue its row said it must: the printed
+ATTACK triggers of a Unit and its Gear together with the "attacks" hooks and spend triggers of the
+same act (`steps.attack_triggers`); the printed DEFEATED triggers of a host and its Gear with the
+"defeated" hooks and the dead card's own listener (`ops.defeat`); a card's PLAY or CALL trigger with
+the "played"/"called" hooks **and the spend triggers of whatever paid for it** (`ops.settle_entry`);
+and temporary listeners, which now carry the instance that registered them and the event kinds
+they act on. `OrderTriggersStep` takes any `(inst, fn)` entries. Dispatch gains a ``deferring``
+mode that collects a block's events instead of running them, which is also what E9 needed: an
+activated ⊡ effect resolves before the spend triggers its cost raised, and a card is played (or a
+Legend Called) before the spend triggers of what paid for it — *"After. Resolve the activated ⊡:
+effect first"*, *"After. Play the card first then adjust the Gig"*. Reproduced red first (four
+S0-E8 and two S0-E9 markers).
+
+**What the measurement changed.** Building the groups exposed that 046's implementation counted a
+hook as a pending trigger whenever it matched an event's *kind*: a Gear's "when its host is spent"
+hook heard every spend, V Roamer's "when this Unit steals" hook heard every steal, and each such
+no-op was offered for ordering against a real trigger. Groups of 5–14 entries appeared, and the
+046 entry's own figure of **10.2 prompts per game (7.2% of decisions)** was mostly that. Every
+`on_event` script now declares `wants(ctx, ev)` (`CardScript.wants`, read by `ops._matched`), so
+only a trigger that would act is pending. On the new golden: **455 ordering prompts in 224 games,
+2.03 per game, 1.82% of decisions** (attack 178, play 273, call 1, end-turn 2, spent 1), 406 of
+them binary, the widest 5. The steal/spent/end-turn groups of the old golden (98/138/156) were
+almost entirely inactive hooks.
+
+**1. Prediction.** Every key. Observed: all 8.
+
+**2. Localisation.** Two kinds of divergence, both expected. New prompts:
+`the_heist~embracing_power~heuristic` game 0 diverges at decision 81 and the `random` key at 60 on
+an `attack@order` (a spend-trigger Gear on an attacker with an ATTACK trigger). Removed prompts:
+`sample_gangers~sample_netrunners~heuristic` game 0 at decision 39 and `random` at 88 are MAIN
+menus where the old stream held a spurious 046 prompt; `sample_arasaka~sample_fixers~heuristic` at
+55 a TARGET; `sample_corpos~sample_nomads~heuristic` game 3 at 93 a MAIN. The remaining two are
+effect picks reached after an earlier shift. The board that raised 046 (two Gear on one attacker)
+still asks: `test_046_the_controller_orders_their_own_simultaneous_triggers`.
+
+**3. Revert confirmation.** `state.py`, `ops.py`, `steps.py`, `engine.py`, `effects.py`,
+`registry.py` and `wnc.py` stashed against the NEW golden: DIFFERENT on all 8 keys.
+
+**4. Aggregate.**
+
+| key | games | winner flips | end-reason | mean turn delta |
+|---|---|---|---|---|
+| sample_arasaka~sample_fixers~heuristic | 13/16 | 0 | 1 | −0.15 |
+| sample_arasaka~sample_fixers~random | 22/40 | 1 | 3 | +0.09 |
+| sample_corpos~sample_nomads~heuristic | 5/16 | 0 | 0 | +0.00 |
+| sample_corpos~sample_nomads~random | 24/40 | 3 | 3 | +0.00 |
+| sample_gangers~sample_netrunners~heuristic | 16/16 | 3 | 2 | +0.00 |
+| sample_gangers~sample_netrunners~random | 40/40 | 6 | 5 | +0.10 |
+| the_heist~embracing_power~heuristic | 14/16 | 0 | 1 | −0.21 |
+| the_heist~embracing_power~random | 35/40 | 13 | 6 | −0.14 |
+
+Twenty-six winner flips in 224 games; the streams move in almost every game because inactive
+prompts vanished and real ones appeared, but the outcomes barely do.
+
+**5. Two-sided reachability.** Both digests moved, and *downward* in actions — the inverse of the
+046 entry's signature, for the same reason: `fuzz -n 300 --seed 1` (heuristic)
+`5c2396bc999e8eb6aa87cde5` → `e8d0c4e2881afafea7962ebe`, 45,456 → **43,390**; `fuzz -n 400
+--seed 1 --agent random` `fa05c56621a1bd4484e71fef` → `cefbabf3d4080dc639aad834`, 33,886 →
+**32,342**. Fewer decisions per game, each of them a real one.
+
+**The delayed suite: 73 → 72.** Re-derived, **one position no longer qualifies**: `mined-23773-81`
+(mined from heuristic self-play, horizon 1). Its exhaustive turn search hit the node cap without
+finding the win — at the default 30,000 nodes and again at 300,000 (8 minutes) — so the result is
+"unproven", not "lost": the turn's tree grew under the new ordering (a play paid with Legends can
+now ask which trigger resolves first, and every such prompt is a branch). A position the solver
+cannot re-prove has no verified line to score against, so it is removed rather than kept on an
+old claim; the other 72 requalify. The committed bootstrap sample was re-recorded (its streams
+moved with every key).
+
+---
+
 ## 2026-09-21 — Stage 0 E7: Bootleg's sold card is nobody's to see (G0, no golden movement)
 
 **The change.** A card sold from the deck without being looked at (Bootleg Black Sapphire Show;
