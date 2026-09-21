@@ -10,6 +10,29 @@ Every entry records the five pieces of evidence from `docs/verification.md`. A r
 all five is not one.
 
 
+## 2026-09-21 — Stage 0 E3: "can't be blocked" fixed at declaration (G2, no golden movement)
+
+**The change.** `AttackContext.unblockable` is set once in `engine._attack` and read by
+`legal.reaction_menu`, instead of the menu re-evaluating the attacker's `unblockable(ctx)` each time
+it is built. MTOD12 Flathead is the only card with the hook and its condition is Street Cred, so
+the FAQ's case — *"triggered effects or reactions make my Rival's Street Cred lower than mine, can
+my Rival then block? **No**"* — is exactly a Flathead whose ATTACK trigger (Dying Night, here)
+moved a Gig. The field is in `view._atk_key`. Reproduced red first
+(`test_flathead_stays_unblockable_when_cred_flips_after_declaration`).
+
+**1. Prediction.** `core/**`, so every key in principle; by deck membership Flathead is only in
+`the_heist~embracing_power`. **Observed: none** — the golden never has a Flathead's cred flip inside
+its own attack.
+
+**2–4.** Not applicable: `bench.py check` IDENTICAL.
+
+**5. Two-sided reachability.** Neither fuzz digest moved (`c9e5062374f3027ce660cbfb` /
+`2e54e2c3c5448a6898b8cc0f`, unchanged action counts), re-run on the clean E3 tree after a
+sequencing slip (see `docs/stage0_decisions.md`). Reached by its scenario test alone. The delayed
+suite was re-derived and **all 73 positions still qualify**.
+
+---
+
 ## 2026-09-21 — Stage 0 E2: Take Control reaches effect steals (G1, no golden movement)
 
 **The change.** `ops.steal_reduction` — the sum of "steals 1 fewer" modifiers on a Unit — is now
