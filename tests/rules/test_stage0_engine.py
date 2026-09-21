@@ -285,7 +285,6 @@ def test_bootleg_sells_the_top_card_unseen(pool):
 
 
 # ============================================================== small script corrections (E1)
-@pytest.mark.xfail(strict=True, reason="S0-E1: Sketchy Ripper must take a Gear if there is one; FAQ allows revealing none")
 def test_sketchy_ripper_may_reveal_nothing(pool):
     """Sketchy Ripper: *"...can I choose not to reveal any cards and bottom-deck them all even
     if there's a Gear among them? Yes."*"""
@@ -296,7 +295,6 @@ def test_sketchy_ripper_may_reveal_nothing(pool):
     assert Pick(()) in s.pending.options, "no way to decline the Gear"
 
 
-@pytest.mark.xfail(strict=True, reason="S0-E1: Misty offers three card types; FAQ says Legend is a fourth")
 def test_misty_may_name_legend(pool):
     """Misty Olszewski: *"Can I choose 'Legends' for this effect? Yes."*"""
     s = board(pool, Side(field=["misty-olszewski-mender-of-broken-spirits"], deck=FILLER), Side(deck=FILLER))
@@ -305,7 +303,6 @@ def test_misty_may_name_legend(pool):
     assert len(s.pending.options) == 4
 
 
-@pytest.mark.xfail(strict=True, reason="S0-E1: El Sombrerón's pay is not offered without a max Gig; FAQ allows paying for nothing")
 def test_el_sombreron_may_pay_with_no_max_gig(pool):
     """El Sombrerón: *"If I do not control a friendly max Gig can I still pay 2 €$ for El
     Sombrerón's effect? Yes, but El Sombrerón won't gain any power from it."*"""
@@ -315,7 +312,6 @@ def test_el_sombreron_may_pay_with_no_max_gig(pool):
         "no offer to pay"
 
 
-@pytest.mark.xfail(strict=True, reason="S0-E1: El Sombrerón takes the largest max Gig; FAQ lets the player choose which")
 def test_el_sombreron_chooses_which_max_gig(pool):
     """El Sombrerón: *"If I control multiple friendly max Gigs, can I choose which one El
     Sombrerón's effect uses? Yes."*"""

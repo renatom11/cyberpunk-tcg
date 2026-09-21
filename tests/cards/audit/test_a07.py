@@ -39,26 +39,32 @@ def test_el_sombreron_gains_the_value_of_a_max_gig_not_the_largest_value(pool):
     assert power(s, u) == 8
 
 
-def test_sketchy_ripper_must_take_the_gear_it_finds(pool):
+def test_sketchy_ripper_may_take_the_gear_it_finds_or_leave_it(pool):
     """'ATTACK: Search the top 3 cards of your deck. Reveal a Gear and add it to your hand.
     Bottom-deck the rest.'
 
-    The clause is imperative and singular. The set says so explicitly when a search is optional
-    or open-ended — Viktor Vektor reads 'Reveal **up to 2** Gears ... and add them', Hanako
-    reads 'Reveal **any number** of cards ... and add them', and Three Mouths One Desire's
-    mandatory half ('Add 1 to your hand') is scripted with `lo=1` (wnc.py:179). Sketchy Ripper
-    has neither hedge, so a Gear among the top 3 must go to hand.
+    AUD-sketchy-ripper-1 read the clause as imperative and made the Gear mandatory (`lo=1`). The
+    published FAQ answers this card by name and goes the other way: *"When I search the top 3
+    cards of my deck, can I choose not to reveal any cards and bottom-deck them all even if
+    there's a Gear among them? **Yes**."* The FAQ outranks the reading, so the search now takes
+    zero or one: the Gear is offered, and so is declining it.
 
-    Top 3 of the deck hold exactly one Gear (Mantis Blades). With `lo=1` that pick is the only
-    option and auto-resolves, leaving the Gear in hand as the attack continues. wnc.py:627 asks
-    with `lo=0`, so the engine offers `Pick(())` — decline — and the Gear is still in the deck.
-
-    Fixed: AUD-sketchy-ripper-1.
+    Top 3 of the deck hold exactly one Gear (Mantis Blades). Taking it puts it in hand; declining
+    bottom-decks all three.
     """
+    from cptcg.core.actions import ChoiceKind, Pick
     s = board(pool, Side(field=["sketchy-ripper"], deck=["floor-it", "mantis-blades", "floor-it"]),
               Side(gig=[(4, 1)]))
     do(s, Attack(find(s, "sketchy-ripper")))
+    assert s.pending.kind is ChoiceKind.PICK and Pick(()) in s.pending.options
+    do(s, Pick((0,)))
     assert s.i_zone[find(s, "mantis-blades")] == Zone.HAND
+
+    s = board(pool, Side(field=["sketchy-ripper"], deck=["floor-it", "mantis-blades", "floor-it"]),
+              Side(gig=[(4, 1)]))
+    do(s, Attack(find(s, "sketchy-ripper")))
+    do(s, Pick(()))
+    assert s.i_zone[find(s, "mantis-blades")] == Zone.DECK
 
 
 @pytest.mark.xfail(strict=True, reason="AUD-goro-takemura-losing-his-way-1: with an empty Legends area 'all friendly Legends are face-up' is vacuously true, but the script requires at least one Legend")

@@ -270,12 +270,13 @@ def test_evelyn_siren_attack(pool):
 def test_sketchy_ripper_finds_gear(pool):
     """'ATTACK: Search the top 3 cards of your deck. Reveal a Gear and add it to your hand.'
 
-    No "may", so with exactly one Gear in the top 3 there is nothing to decide and the engine asks
-    nothing. This test used to answer a Pick, which only existed because the search was scripted
-    with a lower bound of zero (AUD-sketchy-ripper-1).
+    The FAQ makes the reveal optional ("can I choose not to reveal any cards and bottom-deck them
+    all even if there's a Gear among them? Yes"), so with one Gear in the top 3 the engine asks:
+    take it, or decline. Taking it puts it in hand.
     """
     s = board(pool, Side(field=["sketchy-ripper"], deck=["floor-it", "mantis-blades", "floor-it"]), Side(gig=[(4, 1)]))
     do(s, Attack(find(s, "sketchy-ripper")))
+    do(s, Pick((0,)))                                       # the Gear (Pick(()) would decline it)
     assert s.card(s.zone(0, Zone.HAND)[0]).id == "mantis-blades"
 
 
@@ -342,13 +343,21 @@ def test_el_sombreron_pays_for_power(pool):
     assert len(s.gig[0]) == 2                                                  # 16 power steals 2; 1 was there
 
 
-def test_el_sombreron_offers_nothing_without_a_max_gig(pool):
-    """Control for the test above. A d12 showing 9 is not a max Gig, so there is no bonus to buy
-    and the card does not ask — the attack proceeds straight to its target."""
+def test_el_sombreron_may_pay_for_nothing_without_a_max_gig(pool):
+    """Control for the test above. A d12 showing 9 is not a max Gig, so there is no bonus — but the
+    FAQ still lets the player pay: "If I do not control a friendly max Gig can I still pay 2 €$ for
+    El Sombrerón's effect? Yes, but El Sombrerón won't gain any power from it." The offer is made;
+    paying costs 2 and gains nothing, declining costs nothing."""
     s = board(pool, Side(field=["el-sombreron-la-venganza-lenta"], eddies=2, gig=[(12, 9)]), Side(gig=[(4, 1)]))
     u = find(s, "el-sombreron-la-venganza-lenta")
     do(s, Attack(u))
+    do(s, Pick(()))                                                            # decline
     assert power(s, u) == 4 and available(s, 0) == 2                           # nothing paid, nothing gained
+    s = board(pool, Side(field=["el-sombreron-la-venganza-lenta"], eddies=2, gig=[(12, 9)]), Side(gig=[(4, 1)]))
+    u = find(s, "el-sombreron-la-venganza-lenta")
+    do(s, Attack(u))
+    do(s, Pick((0,)))                                                          # pay
+    assert power(s, u) == 4 and available(s, 0) == 0                           # paid, nothing gained
 
 
 def test_goro_losing_his_way(pool):

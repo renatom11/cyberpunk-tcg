@@ -700,11 +700,11 @@ def _():
 
 @script("sketchy-ripper")
 def _():
-    # "Reveal a Gear and add it to your hand" carries no "may", and Sasha Yakovleva's identical
-    # verb phrase is already scripted as mandatory. `lo=1` is safe when the top 3 hold no Gear:
-    # `choose_many` clamps hi to the candidates available and then lo to hi, so an empty search
-    # resolves with an empty pick and still bottom-decks the three.
-    return CardScript(on_attack=lambda c: c.search_top(3, lambda i: c.is_type(i, GEAR), 1, 1))
+    # The FAQ makes the reveal optional -- "can I choose not to reveal any cards and bottom-deck
+    # them all even if there's a Gear among them? **Yes**" -- so the search takes zero or one.
+    # (It was `lo=1`, reading the verb phrase as mandatory the way Sasha Yakovleva's is scripted;
+    # the FAQ answers this card by name, and Sasha's row has no such answer.)
+    return CardScript(on_attack=lambda c: c.search_top(3, lambda i: c.is_type(i, GEAR), 0, 1))
 
 
 @script("swordwise-huscle")
@@ -752,13 +752,20 @@ def _():
         # implements the same way. It is not "the largest value in your Gig area": with a d12 on 9
         # and a d4 on 4, the max Gig is the d4 and the bonus is +4, not +9. `EffectCtx.max_gigs`
         # already existed and was unused.
-        if available(c.s, c.player) < 2 or not c.max_gigs():
+        # Two FAQ answers shape the offer. "If I do not control a friendly max Gig can I still pay
+        # 2 €$ for El Sombrerón's effect? **Yes**, but El Sombrerón won't gain any power from it" --
+        # so the pay is offered whenever it can be paid, max Gig or not. And "If I control multiple
+        # friendly max Gigs, can I choose which one El Sombrerón's effect uses? **Yes**" -- so with
+        # several the player names one rather than the engine taking the largest.
+        if available(c.s, c.player) < 2:
             return
 
         def yes(c2):
             pay(c2.s, c2.player, 2)
-            gigs = c2.gigs()
-            c2.temp_power(c2.inst, max(gigs[i][1] for i in c2.max_gigs()))
+
+            def gain(c3, i):
+                c3.temp_power(c3.inst, c3.gigs()[i][1])
+            c2.choose(c2.max_gigs(), gain, prompt="Gain power equal to which max Gig?")
         c.maybe(yes, prompt="Pay 2 €$ for +power?")
     return CardScript(on_attack=attack)
 
@@ -856,7 +863,10 @@ def _():
                 c2.ready_eddies(1)
             else:
                 move(c2.s, top[0], Zone.TRASH)
-        c.choose([UNIT, GEAR, PROGRAM], chosen, prompt="Choose a card type")
+        # The FAQ: "Do card types include Legends? **Yes**" and "Can I choose 'Legends' for this
+        # effect? **Yes**". Legends never sit in a deck, so naming Legend always misses -- it is a
+        # legal choice, not a good one, and the engine offers it because the player may make it.
+        c.choose([UNIT, GEAR, PROGRAM, LEGEND], chosen, prompt="Choose a card type")
     return CardScript(extra={"cant_attack": True}, on_event=ev, events=frozenset({"end_turn"}))
 
 
