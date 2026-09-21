@@ -107,7 +107,74 @@ Every module has a test; the full suite passes at every commit.
 
 ## 4. The six kill tests
 
-*(filled in as the runs complete — see the progress log for the commands as run)*
+Each run once, criterion as written in Part 6, commands as run in the progress log and
+`scratchpad/kt1.sh` / `kt_rest.sh`. Confirmed unless marked.
+
+**Kill test 1 — does card identity buy play strength? FAIL.** Panels (frozen panel v2, 360 games a
+member, inferred list; `out/s0/kt1/`):
+
+| head | vs heuristic | between-pairing 95% | vs random | between-pairing 95% |
+|---|---:|---|---:|---|
+| `neural@w114` (114 features, refit on h20k + r8k) | 0.503 | [0.339, 0.667] | 0.883 | [0.864, 0.902] |
+| `neural-cards@wcards` | 0.656 | [0.533, 0.779] | 0.703 | [0.613, 0.792] |
+| `neural-cards-ablated@wcards` | 0.642 | [0.517, 0.767] | 0.675 | [0.568, 0.782] |
+
+Leg 1 (card-aware above the 114 head by more than the between-pairing band): 0.656 sits inside the
+114 head's band (upper 0.667), and against random the card-aware agent is 18 points worse. Leg 2
+(the ablation drops it by more than the band): 0.656 → 0.642 and 0.703 → 0.675, inside the bands.
+Both legs fail. The fit itself is real — held-out Brier 0.116 at the best epoch, 0.102 vs 0.114 for
+the ablation on all rows, values correlating 0.908 with the 114 head on fresh positions at the same
+Brier — but the play it produces is not better and the identity it learned does not carry into
+play. The first panel run had an inference-path bug (previews scored under mismatched decision
+contexts); it was fixed, documented, and the panels re-run once (decisions log). My judgement on
+why: the greedy agent ranks *previews*, and a head whose extra inputs are card tokens is a
+better position evaluator but a noisier ranker of one-ply siblings than a head with 114 summary
+features and twice the rows; nothing in Stage 0 tunes that, by design.
+
+**Kill test 4 — payment content. WIRE (14.18% ≥ 2%).** `dump.py --pay-events out/s0/h20k -n 5000`
+on the corpus recorded after E11: 109,748 payments, 15,567 with strategic content (a usable
+ability 12,151; the last face-down Legend a Call could still use 4,643; a spend-trigger Gear 27).
+E12 was wired accordingly (§1) before any other corpus was recorded.
+
+**Kill test 5 — decision coverage on searched play.** 1,000 games of `ismcts:32` self-play with
+visits and the coverage sidecar (`out/s0/cov`, 120,558 decisions): every kind produces numbers;
+mean root-visit entropy 1.11 nats on MAIN (6.6 options), 1.33 on PICK, 0.41 on TARGET; 809
+distinct (card, kind, sub-mode) triples offered, 775 chosen. Starvation list (offered ≥ 20, never
+chosen): 13 triples — the plain (no-keyword) Legend play for Sasha Yakovleva (1,154 offers), Royce,
+Jackie *Mama's Favorite* and Rogue *Preem Solo*; Gear on a Legend for Netwatch Netdriver (1,052),
+The Relic and Gorilla Arms; and "go first" after winning the order roll (1,000). Full matrix in
+`out/s0/baselines/coverage_cov.json` (and the heuristic corpus's in `coverage_h20k.json`: 872
+triples offered, 21 starved).
+
+**Kill test 6 — dice regret with the shipped head** (`dice_regret.py out/s0/cov`, 16 rolls a
+die): GIG_DIE 8,000 decisions, mean regret 0.0010 win-probability points, median 0, the chosen die
+was the head's best in 55.0%, the *biggest* die was best in 40.9%; steal Picks 9,039 decisions,
+mean regret 0.0006, chosen best in 79.5%. Uncertain what the small numbers mean: the shipped head
+is the yardstick and it barely distinguishes dice; the instrument works and the number is day-0.
+
+**Kill test 3 — known vs inferred list, and the exploit gap (measurements with intervals, no
+pass/fail).** `arena.py exploit ismcts:32 -n 240` (cheat vs honest, 6 deck pairings) under both
+samplers:
+
+| sampler | cheat beats honest | over the deck population 95% | per-pairing |
+|---|---:|---|---|
+| inferred (`CPTCG_KNOWN_LIST=0`, the default) | 44.6% | [39.0, 50.2] | 0.35 0.43 0.45 0.48 0.48 0.50 |
+| known (`=1`) | 52.1% | [46.2, 57.9] | 0.48 0.50 0.63 0.53 0.48 0.53 |
+
+At a budget of 32 the value of perfect information to the search is within noise of zero under
+either sampler; the honest inferred-list agent even edges the cheater (the interval's upper end
+touches 50%). The known-vs-inferred gap on the frozen panel (`arena.py panel ismcts:32`, 360
+games a member):
+
+| sampler | vs heuristic | between-pairing 95% | vs random | between-pairing 95% |
+|---|---:|---|---:|---|
+| inferred | 0.847 | [0.808, 0.886] | 0.983 | [0.961, 1.000] |
+| known | 0.856 | [0.794, 0.917] | 0.978 | [0.957, 0.999] |
+
+The gap is 0.9 points against the heuristic and −0.5 against random, both inside the bands: at
+this budget the inferred list costs the search nothing measurable, so the default of decision 3
+stands at no cost. Confirmed.
+
 
 ## 5. Day-0 baselines
 
