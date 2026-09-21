@@ -22,3 +22,8 @@ One line each: what was decided and why. Rules questions are not here; they go t
   running** — E4's script edit landed while E3's fuzz was starting and could have contaminated
   E3's digest; the fuzz was re-run on the clean tree. Each item's golden cycle now completes
   before the next item's edit begins.
+- **E5 applies the field-inclusive reading to every "friendly Legends" reader, not only the four
+  FAQ-named cards** — Pepe Najarro ("Ready up to 2 spent MERC Legends") now also reaches a spent
+  solo'd MERC Legend; the owner's Goro ruling states the principle (a Legend on the field is a
+  face-up Legend), and one helper (`EffectCtx.all_legends`/`faceup_legends`) applied everywhere is
+  what keeps the six sites from drifting apart again.

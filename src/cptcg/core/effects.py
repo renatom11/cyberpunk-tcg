@@ -53,10 +53,35 @@ class EffectCtx:
         return self.units(self.rival, pred)
 
     def legends(self, player: int | None = None, faceup: bool | None = None) -> list[int]:
+        """Legends in the Legends **area** (the slots). For "friendly Legends" as printed card
+        text means it, which includes a Legend standing on the field, see ``all_legends`` and
+        ``faceup_legends``."""
         out = self.s.legends(self.player if player is None else player)
         if faceup is None:
             return out
         return [i for i in out if bool(self.s.i_faceup[i]) == faceup]
+
+    def field_legends(self, player: int | None = None) -> list[int]:
+        """Legends standing on the field as Units (GO SOLO or the plain play, ruling 047)."""
+        p = self.player if player is None else player
+        defs = self.s.reg.defs
+        return [i for i in self.s.units(p) if defs[self.s.i_card[i]].type is CardType.LEGEND]
+
+    def all_legends(self, player: int | None = None) -> list[int]:
+        """Every friendly Legend a card's text can mean: the Legends area plus the field.
+
+        Ruling 044 (a solo'd Legend is still a Legend) and the owner's ruling on Goro Takemura
+        *Losing His Way* (2026-09-21): a Legend standing on the field counts as a face-up Legend,
+        and once every Legend has gone solo and been removed there are none left to count.
+        Synapse Burnout's FAQ says the same in its own words -- "Does this effect count friendly
+        face-up Legends in the field area? **Yes**", and it counts itself.
+        """
+        return self.legends(player) + self.field_legends(player)
+
+    def faceup_legends(self, player: int | None = None) -> list[int]:
+        """Face-up friendly Legends wherever they stand: the area's face-up slots plus the field
+        (a Legend on the field is always face-up)."""
+        return self.legends(player, faceup=True) + self.field_legends(player)
 
     def hand(self, player: int | None = None) -> list[int]:
         return self.s.zone(self.player if player is None else player, Zone.HAND)

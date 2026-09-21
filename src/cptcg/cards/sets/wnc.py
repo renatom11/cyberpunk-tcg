@@ -337,7 +337,7 @@ def _():
 @script("synapse-burnout")
 def _():
     def play(c):
-        n = len(c.legends(faceup=True))
+        n = len(c.faceup_legends())                    # area and field alike; a solo'd target counts itself
         temp_power_one(c, c.units(), n, FIGHTING | VS_UNIT)
     return CardScript(on_play=play)
 
@@ -720,7 +720,7 @@ def _():
     def attack(c):
         def after(c2, picks):
             if picks:
-                c2.draw(len(c2.legends(faceup=True)))
+                c2.draw(len(c2.faceup_legends()))
         c.discard(1, cont=after)
 
     from cptcg.core.ops import can_call_free
@@ -733,7 +733,7 @@ def _():
 def _():
     def attack(c):
         if c.has_value_pair():
-            c.choose_many([l for l in c.legends() if "MERC" in c.d(l).tags and c.s.i_spent[l]], 0, 2,
+            c.choose_many([l for l in c.all_legends() if "MERC" in c.d(l).tags and c.s.i_spent[l]], 0, 2,
                           lambda c2, ls: [c2.ready(l) for l in ls], prompt="Ready MERC Legends")
     return CardScript(on_attack=attack)
 
@@ -775,8 +775,14 @@ def _():
 
 @script("goro-takemura-losing-his-way")
 def _():
-    return CardScript(on_attack=lambda c: c.temp_power(c.inst, 5)
-                      if c.legends() and all(c.s.i_faceup[l] for l in c.legends()) else None)
+    def attack(c):
+        # Ruling 042, settled by the owner: a Legend standing on the field counts as a face-up
+        # Legend, and with every Legend gone solo and removed there are none left to be face-up,
+        # so "all friendly Legends are face-up" needs at least one Legend and all of them up.
+        legs = c.all_legends()
+        if legs and all(c.s.i_faceup[l] for l in legs):
+            c.temp_power(c.inst, 5)
+    return CardScript(on_attack=attack)
 
 
 @script("screw-lovelorn-fool")
@@ -943,7 +949,7 @@ def _():
 
 @script("zetatech-berserk")
 def _():
-    return CardScript(self_cost=lambda c, p, base: max(1, base - len(c.legends(p, faceup=True))))
+    return CardScript(self_cost=lambda c, p, base: max(1, base - len(c.faceup_legends(p))))
 
 
 @script("viktor-vektor-drop-your-illusions")
@@ -1041,7 +1047,7 @@ def _():
 def _():
     def ev(c, e):
         if e[0] == "end_turn" and e[1] == c.player and c.s.i_spent[c.inst]:
-            c.choose([l for l in c.legends(faceup=True) if c.s.i_spent[l]], lambda c2, l: c2.ready(l),
+            c.choose([l for l in c.faceup_legends() if c.s.i_spent[l]], lambda c2, l: c2.ready(l),
                      prompt="Ready a face-up Legend")
     return CardScript(on_event=ev, events=frozenset({"end_turn"}))
 

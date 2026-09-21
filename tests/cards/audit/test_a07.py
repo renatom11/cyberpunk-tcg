@@ -67,20 +67,29 @@ def test_sketchy_ripper_may_take_the_gear_it_finds_or_leave_it(pool):
     assert s.i_zone[find(s, "mantis-blades")] == Zone.DECK
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-goro-takemura-losing-his-way-1: with an empty Legends area 'all friendly Legends are face-up' is vacuously true, but the script requires at least one Legend")
-def test_goro_gets_the_bonus_with_an_empty_legends_area(pool):
+def test_goro_gains_nothing_with_no_legends_and_counts_a_legend_on_the_field(pool):
     """'ATTACK: If all friendly Legends are face-up, this Unit has +5 power this turn.'
 
-    An empty Legends area satisfies a universal over no members. Ruling 015's default
-    (`go_solo_vacates_slot` = true) is what makes the state reachable: a Legend that GOES SOLO
-    leaves its slot empty, so a player who Go-Solos all three Legends controls none. Nothing in
-    the text asks for a Legend to exist — contrast Panam Palmer's 'for each friendly face-up
-    Legend', which simply counts 0.
-
-    Goro's printed power is 4+, so with no Legends at all he should attack at 4 + 5 = 9;
-    wnc.py:683's `c.legends() and ...` guard makes the condition false and leaves him at 4.
+    AUD-goro-takemura-losing-his-way-1 held the vacuous reading (an empty Legends area satisfies
+    "all"). Ruling 042 was settled by the owner on 2026-09-21 the other way: a solo'd Legend
+    standing on the field counts as a face-up Legend, and once every Legend has gone solo and been
+    removed from the game there are no Legends left to be face-up, so Goro gains nothing. Both
+    halves pinned here: no Legends anywhere -> printed 4; a solo'd Legend on the field and a
+    face-up one in the area -> 9; a face-down one in the area -> 4.
     """
     s = board(pool, Side(field=["goro-takemura-losing-his-way"], legends=[]), Side(gig=[(4, 1)]))
     u = find(s, "goro-takemura-losing-his-way")
     do(s, Attack(u))
+    assert power(s, u) == 4
+
+    s = board(pool, Side(field=["goro-takemura-losing-his-way", ("v-streetkid", {"faceup": True})],
+                         legends=[("padre-man-of-the-cross", {"faceup": True})]), Side(gig=[(4, 1)]))
+    u = find(s, "goro-takemura-losing-his-way")
+    do(s, Attack(u))
     assert power(s, u) == 9
+
+    s = board(pool, Side(field=["goro-takemura-losing-his-way", ("v-streetkid", {"faceup": True})],
+                         legends=["padre-man-of-the-cross"]), Side(gig=[(4, 1)]))
+    u = find(s, "goro-takemura-losing-his-way")
+    do(s, Attack(u))
+    assert power(s, u) == 4

@@ -198,7 +198,6 @@ def test_jackie_pour_one_out_does_not_trigger_on_the_second_blue_card_of_the_tur
 
 
 # ================================================================ face-up Legends on the field (E5)
-@pytest.mark.xfail(strict=True, reason="S0-E5: face-up Legend counts read the Legends area only; a solo'd Legend on the field is not counted")
 def test_synapse_burnout_counts_a_legend_standing_on_the_field_including_itself(pool):
     """Synapse Burnout: *"Does this effect count friendly face-up Legends in the field area?
     Yes."* and *"...a friendly Legend in that field area that is now also a Unit, does the Legend
@@ -212,7 +211,6 @@ def test_synapse_burnout_counts_a_legend_standing_on_the_field_including_itself(
     assert power(s, v, FIGHTING | VS_UNIT) == 6 + 2, "Padre in the area and V on the field are two face-up Legends"
 
 
-@pytest.mark.xfail(strict=True, reason="S0-E5: Zetatech Berserk's discount reads the Legends area only")
 def test_zetatech_berserk_discount_counts_a_legend_on_the_field(pool):
     s = board(pool, Side(field=[("v-streetkid", {"faceup": True}), "psycho-squad"],
                          legends=[("padre-man-of-the-cross", {"faceup": True})],
@@ -221,7 +219,6 @@ def test_zetatech_berserk_discount_counts_a_legend_on_the_field(pool):
     assert play_cost(s, 0, g) == 6 - 2
 
 
-@pytest.mark.xfail(strict=True, reason="S0-E5: MaxTac Squadron cannot ready a spent Legend standing on the field")
 def test_maxtac_squadron_can_ready_a_spent_legend_on_the_field(pool):
     s = board(pool, Side(field=[("maxtac-squadron", {"spent": True}), ("v-streetkid", {"faceup": True, "spent": True})],
                          legends=["padre-man-of-the-cross"], deck=FILLER), Side(deck=FILLER))
@@ -231,15 +228,12 @@ def test_maxtac_squadron_can_ready_a_spent_legend_on_the_field(pool):
     assert s.i_spent[v] == 0, "the only spent face-up Legend was the one on the field, and it stayed spent"
 
 
-@pytest.mark.xfail(strict=True, reason="S0-E5: Panam's draw counts the Legends area only")
 def test_panam_strength_draws_for_a_legend_on_the_field(pool):
     s = board(pool, Side(field=["panam-palmer-strength-through-family", ("v-streetkid", {"faceup": True})],
                          legends=[("padre-man-of-the-cross", {"faceup": True})],
                          hand=["floor-it"], deck=FILLER), Side(gig=[(6, 3)]))
     attack(s, find(s, "panam-palmer-strength-through-family", Zone.FIELD, 0))
-    assert drive(s, lambda st: st.pending is not None and st.pending.kind is ChoiceKind.PICK)
-    do(s, Pick((0,)))                                      # discard the one card
-    drive(s, lambda st: False)
+    drive(s, lambda st: False)                             # the one-card discard resolves itself
     assert len(s.zone(0, Zone.HAND)) == 2, "discarded one, then drew one per face-up Legend: two"
 
 
