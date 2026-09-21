@@ -5,6 +5,8 @@
     python tools/dump.py FILE --list         # one line per game in the file
     python tools/dump.py --sample OUT -n 20  # play N heuristic games and store them, to have
                                              # something real to read and to measure
+    python tools/dump.py FILE --pay-events   # kill test 4: how often a payment had a choice with
+                                             # strategic content (ruling 025 gate, Stage 0)
 
 The rendering lives in ``cptcg.learn.dump`` so that ``cptcg dump`` is the same command; this file
 is the standalone entry point and the sample generator, neither of which belongs in the package.
@@ -52,6 +54,93 @@ def cmd_sample(a) -> None:
     print(format_size_stats(size_stats(a.sample)))
 
 
+def cmd_pay_events(a) -> None:
+    """Kill test 4 (unified design, Part 6): of every payment the corpus made, how many were a
+    *choice* with strategic content?
+
+    A payment has a choice when more sources are ready than the cost needs. It has strategic
+    content when one of the sources in play (spent or spared by the auto-payer) is a Legend that
+    (a) hosts a Gear with a spend trigger, (b) has an activated ability usable this turn, or
+    (c) is the last ready face-down Legend while a Call is still available this turn, or (d) is
+    face-up with a Sell Tag when a face-down alternative existed — the cases where *which* source
+    pays changes what happens next. Ruling 025 auto-pays; the design wires ``explicit_payment``
+    only if this share is at least 2%.
+    """
+    from cptcg.core.actions import Activate, CallLegend, GoSolo, Play
+    from cptcg.core.engine import apply, legal_actions, new_game
+    from cptcg.core.enums import CardType, Zone
+    from cptcg.core.legal import ability_options
+    from cptcg.core.ops import ONCE_CALLED, payable_sources, play_cost
+    from cptcg.core.state import ONCE_CALLED as _OC
+    reg = load_default()
+    n_games = payments = with_choice = strategic = 0
+    cats = {"spend_gear": 0, "ability": 0, "last_facedown": 0, "faceup_vs_facedown": 0}
+    legend_payments = 0
+    for rec in read_games(a.file, rules=None if a.any_rules else DEFAULT_CONFIG.digest()):
+        if a.n and n_games >= a.n:
+            break
+        n_games += 1
+        s = new_game(reg, rec.replay().decklists(), rec.seed, DEFAULT_CONFIG)
+        for idx in rec.actions:
+            legal_actions(s)
+            ch = s.pending
+            act = ch.options[idx]
+            p = ch.player
+            cost = 0
+            excl = -1
+            if isinstance(act, Play):
+                cost = play_cost(s, p, act.inst)
+            elif isinstance(act, GoSolo):
+                cost = play_cost(s, p, act.inst, go_solo=act.keyword)
+            elif isinstance(act, CallLegend):
+                cost = 1
+            elif isinstance(act, Activate):
+                ab = s.card(act.inst).script.abilities[act.ability]
+                from cptcg.core.ops import _ctx
+                cost = ab.cost(_ctx(s, act.inst)) if callable(ab.cost) else ab.cost
+                if ab.self_spend and s.card(act.inst).type is CardType.LEGEND:
+                    excl = act.inst
+            if cost > 0:
+                payments += 1
+                srcs = payable_sources(s, p, excl) if excl >= 0 else payable_sources(s, p)
+                legs = [i for i in srcs if s.i_zone[i] == Zone.LEGENDS]
+                taken = srcs[:cost]
+                spent_legs = [i for i in taken if s.i_zone[i] == Zone.LEGENDS]
+                if len(srcs) > cost and spent_legs:
+                    # The design's count: a Legend with content was SPENT while another source
+                    # was left unspent -- the auto-payer made a choice a player might have made
+                    # differently. A Legend with content merely sitting in the list is not one.
+                    with_choice += 1
+                    legend_payments += 1
+                    flags = set()
+                    facedown_ready = [i for i in legs if not s.i_faceup[i]]
+                    usable = {o.inst for o in ability_options(s, p, quick_only=False)}
+                    spare = [i for i in srcs[cost:]]
+                    for i in spent_legs:
+                        gear = s.gear_on(i)
+                        if any(getattr(s.card(g).script, "events", None) and "spent" in s.card(g).script.events for g in gear):
+                            flags.add("spend_gear")
+                        if i in usable:
+                            flags.add("ability")
+                        if (not s.i_faceup[i] and len(facedown_ready) == 1 and not (s.once[p] & _OC)
+                                and any(s.i_faceup[j] for j in spare)):
+                            flags.add("last_facedown")   # a face-up alternative would have kept the Call source
+                    if any(s.i_faceup[i] for i in spent_legs) and any(not s.i_faceup[j] for j in spare):
+                        flags.add("faceup_vs_facedown")   # cannot happen under PAY_PREF order; kept as a check
+                    if flags:
+                        strategic += 1
+                        for f in flags:
+                            cats[f] += 1
+            apply(s, idx)
+    print(f"games {n_games}  payments {payments}  a Legend spent with another source left unspent {with_choice}")
+    print(f"strategic content: {strategic} = {100.0 * strategic / max(payments, 1):.2f}% of payments "
+          f"({100.0 * strategic / max(with_choice, 1):.1f}% of the choices)")
+    for k, v in cats.items():
+        print(f"  {k:20s} {v}")
+    print("gate: wire explicit_payment only if >= 2% of payments" +
+          ("  -> WIRE" if strategic >= 0.02 * max(payments, 1) else "  -> leave auto-payment"))
+
+
 def cmd_list(a) -> None:
     rules = None if a.any_rules else DEFAULT_CONFIG.digest()
     for i, r in enumerate(read_games(a.file, rules=rules)):
@@ -74,6 +163,7 @@ def main(argv=None) -> None:
     ap.add_argument("--sample", help="write N heuristic games here instead of reading")
     ap.add_argument("-n", type=int, default=20, help="games for --sample")
     ap.add_argument("--seed", type=int, default=1, help="seed for --sample")
+    ap.add_argument("--pay-events", action="store_true", help="kill test 4: payment choices with content")
     a = ap.parse_args(argv)
 
     if a.sample:
@@ -86,6 +176,9 @@ def main(argv=None) -> None:
         return
     if a.list:
         cmd_list(a)
+        return
+    if a.pay_events:
+        cmd_pay_events(a)
         return
     rules = None if a.any_rules else DEFAULT_CONFIG.digest()
     try:
