@@ -439,6 +439,28 @@ class PlanAgent(NeuralAgent):
         legal_actions(s)
         return self._plan_turn_from(s, s.pending)
 
+    def best_line_score(self, s: GameState) -> tuple[float | None, list]:
+        """``(score, line)`` of the plan this agent would play: the line's mean replay score
+        across the agent's worlds (the value head's raw output where the turn lands, ``WIN`` for
+        a won game), which is what the Stage 0 oracle labels a position with. ``None`` when no
+        plan could be proposed."""
+        legal_actions(s)
+        candidates = self._propose(s)
+        if not candidates:
+            return None, []
+        lines = [line for _, line in candidates]
+        if self.worlds <= 1 or len(lines) == 1:
+            return float(candidates[0][0]), lines[0]
+        model = self.model
+        policy = fixed_policy()
+        totals = [0.0] * len(lines)
+        for _ in range(self.worlds):
+            w = self._world(s)
+            for k, line in enumerate(lines):
+                totals[k] += self._replay_score(w, line, model, policy)
+        best = max(range(len(lines)), key=lambda k: totals[k])
+        return totals[best] / self.worlds, lines[best]
+
 
 @register
 class PlanDeep(PlanAgent):
