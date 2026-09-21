@@ -131,8 +131,11 @@ SUITE_PATH = ROOT / "data" / "arena" / "delayed.json"
 #: proved nothing, and says so (``Solution.exhausted``).
 MAX_NODES = 30_000
 
-#: How many of the acting player's own decisions one turn may contain in the search.
-MAX_DEPTH = 14
+#: How many of the acting player's own decisions one turn may contain in the search. Fourteen
+#: was set when a turn held about ten; Stage 0 added a Pass at every attack (E10), the payment
+#: question (E12) and the trigger orderings (E8), and a searched turn with two attacks and two
+#: Legend-paid plays now reaches fourteen, so the cap is raised to keep "exhausted" honest.
+MAX_DEPTH = 22
 
 #: Steps the win confirmation may play out per turn of horizon after the searched turn ends.
 MAX_FINISH = 400

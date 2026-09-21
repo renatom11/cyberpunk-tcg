@@ -29,7 +29,8 @@ Writing a spec
 --------------
 A spec is the same shape ``tests/conftest.board`` builds, as JSON — see ``learn.delayed.build_position``.
 Both sides need a plausible mid-game board: three Legends, a real remaining deck, Eddies, a Gig area
-and a fixer. Positions with a bare board are not wrong, but a value head reading list size, undrawn
+and a fixer. The **last** card of a ``deck`` list is the top of the deck (``ops.draw`` and the peeks
+take ``deck[-1]``), so a card a line must draw or reveal goes at the end of the list. Positions with a bare board are not wrong, but a value head reading list size, undrawn
 fraction and Legend RAM is extrapolating on them, and the suite is supposed to measure play rather
 than extrapolation.
 

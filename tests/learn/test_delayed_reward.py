@@ -127,7 +127,10 @@ def test_hand_built_positions_look_like_real_games(pool, suite):
         if not _authored(e):
             continue
         for side in e["spec"]["sides"]:
-            assert len(side["legends"]) == 3, f"{e['id']}: {len(side['legends'])} Legends"
+            # A Legend that went solo stands on the field and is still one of the deck's three.
+            solo = sum(1 for item in side.get("field", ())
+                       if isinstance(item, list) and pool.get(item[0]).type.name == "LEGEND")
+            assert len(side.get("legends", ())) + solo == 3, f"{e['id']}: {len(side.get('legends', ()))} Legends"
             assert len(side["deck"]) >= 20, f"{e['id']}: {len(side['deck'])} cards left in deck"
 
 
