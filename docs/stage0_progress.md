@@ -119,3 +119,7 @@ Ordering prompts on the golden: 455 → 519 (2.32 a game). Bootstrap sample re-r
 
 Search corpus `out/s1/s10k` (10,000 `ismcts:32` self-play games, inferred list, visits + coverage sidecar) harvesting with 4 workers; the rest of the pre-registered pipeline (`scratchpad/rerun.sh`, `rerun2.sh`) follows: rows at rate 0.5 both perspectives → `fit114` h16/h32 and three card-model configs (l2 1e-5 / 1e-4, policy weight 0.5 / 0) chosen on holdout Brier and the legal monotonicity rate only → 128-playout independent oracle → panels ×3 once → mirrored SPRT head-to-head (secondary) → suite by family and coverage.
 
+
+Corpus at 5,000/10,000 (0.6 games/s, 4 workers) at 15:55 UTC. The oracle relabel will resume from 750/2,000
+(decisions log) inside `rerun2.sh`, before the 128-playout independent label; nothing else runs until the
+corpus, rows, fits and monotonicity instrument finish.

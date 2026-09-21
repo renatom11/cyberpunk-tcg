@@ -135,3 +135,13 @@ Attribution of the illegal `+gig` for the card model: aggregates path alone +0.3
 
 Per the pre-registration: no constraint is bolted on. The remedy for (3) is the corpus the rerun already prescribes — symmetric `ismcts:32` self-play, where fixer parity can only encode the true first/second-player effect — plus the instrument fix in (1). My call, logged here for veto: the rerun proceeds, because the defect as reported was the instrument's, the model is monotone on the legal test, and the learned behaviour is shared by the comparison head and addressed by step 2's corpus by construction.
 
+
+## Oracle relabel: resume from the 750 positions the killed run finished
+
+The relabel with the original labellers (`cheat:ismcts:2000` + `plan-deep:32`, seed 7) was killed at 750/2,000
+because running it beside the 4-worker corpus harvest slowed both to a crawl. The 750 finished positions are a
+contiguous prefix (positions 0–749; `seconds` differ from the committed labels on exactly those, and on 69 of them
+the label itself moved under the four rulings — mean |Δ cheat_value| 0.0004, max 0.14). Rather than recompute
+them, the remaining 1,250 are labelled with `oracle.py label --resume` after the labels of positions 750–1999 are
+stripped (`out/s1/oracle_partial.json`); the labellers, budget and seed are identical, so the result is the same
+file a full run would produce. The committed `data/arena/oracle.json` is restored to HEAD until the run finishes.
