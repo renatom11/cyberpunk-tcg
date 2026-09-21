@@ -53,7 +53,7 @@ millions of times in self-play, so keep it that way.
 
 from __future__ import annotations
 
-from cptcg.core.enums import NO_INST, NZONE, CardType, Color, Keyword, Zone
+from cptcg.core.enums import F_FACEDOWN as _F_FACEDOWN, NO_INST, NZONE, CardType, Color, Keyword, Zone
 from cptcg.core.ops import ATTACKING, _active, has_keyword, play_cost, power, steal_count
 from cptcg.core.state import GameState
 
@@ -292,6 +292,7 @@ def features(s: GameState, me: int) -> tuple[float, ...]:
     i_card = s.i_card
     i_owner = s.i_owner
     i_zone = s.i_zone
+    i_flags = s.i_flags
     z = s.z
     gear_of = _active(s)[5]
 
@@ -335,7 +336,10 @@ def features(s: GameState, me: int) -> tuple[float, ...]:
             list_unit_n += 1
             list_unit_pw += d.power or 0
         zone = i_zone[inst]
-        if zone == _DECK:
+        # A card sold unseen (F_FACEDOWN) is, to its owner, still one of the undrawn: the mask
+        # permutes it with the deck, so counting it there is what keeps every feature a function of
+        # the information set.
+        if zone == _DECK or (zone == _EDDIES and i_flags[inst] & _F_FACEDOWN):
             und_n += 1
             und_cost[bucket] += 1
             und_cost_sum += cost

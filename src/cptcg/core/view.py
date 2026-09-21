@@ -99,7 +99,7 @@ from dataclasses import replace
 from typing import TYPE_CHECKING
 
 from cptcg.core.actions import ChoiceKind
-from cptcg.core.enums import NO_INST, NZONE, Zone
+from cptcg.core.enums import F_FACEDOWN, NO_INST, NZONE, Zone
 
 if TYPE_CHECKING:
     from cptcg.core.state import GameState
@@ -142,7 +142,7 @@ def knows_identity(s: "GameState", me: int | None, inst: int) -> bool:
     if zone == Zone.DECK:
         return me is None or inst in _pinned(s, me)
     if zone in PUBLIC_ZONES:
-        return True
+        return me is None or not (s.i_flags[inst] & F_FACEDOWN)     # a face-down Eddie is nobody's
     raise AssertionError(f"view: zone {zone!r} is neither public nor hidden — classify it")
 
 
@@ -171,14 +171,22 @@ def _hidden_groups(s: "GameState", me: int) -> list[list[int]]:
     pin = _pinned(s, me)                       # what an open peek has already shown me
     rival = 1 - me
     groups = [
-        # My own deck: I know the multiset, not the order.
-        [i for i in s.z[me * NZONE + Zone.DECK] if i not in pin],
-        # The rival's hand and deck are one pool: I cannot tell held from undrawn.
-        [i for i in s.z[rival * NZONE + Zone.HAND] + s.z[rival * NZONE + Zone.DECK] if i not in pin],
+        # My own deck: I know the multiset, not the order. A card I sold from it unseen (F_FACEDOWN)
+        # is still part of that multiset, so it permutes with the deck.
+        [i for i in s.z[me * NZONE + Zone.DECK] if i not in pin] + _facedown_eddies(s, me),
+        # The rival's hand and deck are one pool: I cannot tell held from undrawn -- nor from a
+        # card they sold unseen.
+        [i for i in s.z[rival * NZONE + Zone.HAND] + s.z[rival * NZONE + Zone.DECK] if i not in pin]
+        + _facedown_eddies(s, rival),
     ]
     for p in (0, 1):                           # face-down Legend slots, per owner
         groups.append([i for i in s.legends(p) if not legend_identity_known(s, me, i)])
     return groups
+
+
+def _facedown_eddies(s: "GameState", p: int) -> list[int]:
+    flags = s.i_flags
+    return [i for i in s.z[p * NZONE + Zone.EDDIES] if flags[i] & F_FACEDOWN]
 
 
 def unknown_to(s: "GameState", me: int) -> list[int]:
@@ -225,8 +233,9 @@ def _player_key(s: "GameState", p: int, unk: set) -> tuple:
               for i in s.units(p)),
         tuple((i, int(bool(s.i_faceup[i])), s.i_spent[i], s.i_flags[i], _gear_key(s, i, unk),
                None if i in unk else s.i_card[i]) for i in s.legends(p)),
-        # Ruling 002: the Eddies area is public, but as an unordered multiset.
-        tuple(sorted((s.i_card[i], s.i_spent[i]) for i in s.z[base + Zone.EDDIES])),
+        # Ruling 002: the Eddies area is public, but as an unordered multiset -- except a card sold
+        # unseen (F_FACEDOWN), which counts but is nobody's to name.
+        tuple(sorted((-1 if i in unk else s.i_card[i], s.i_spent[i]) for i in s.z[base + Zone.EDDIES])),
         tuple(s.i_card[i] for i in s.z[base + Zone.TRASH]),
         tuple(s.i_card[i] for i in s.z[base + Zone.REMOVED]),
         tuple((i, s.i_card[i]) for i in s.z[base + Zone.LIMBO]),
@@ -293,10 +302,12 @@ def info_key(s: "GameState", me: int, *, known_opponent_deck: bool = True) -> tu
     """
     unk = set(unknown_to(s, me))
     rival = 1 - me
-    my_pool = tuple(sorted(s.i_card[i] for i in s.z[me * NZONE + Zone.DECK] if i in unk))
+    my_pool = tuple(sorted(s.i_card[i] for i in s.z[me * NZONE + Zone.DECK] + _facedown_eddies(s, me)
+                           if i in unk))
     their_pool = None
     if known_opponent_deck:
-        their = s.z[rival * NZONE + Zone.HAND] + s.z[rival * NZONE + Zone.DECK]
+        their = (s.z[rival * NZONE + Zone.HAND] + s.z[rival * NZONE + Zone.DECK]
+                 + _facedown_eddies(s, rival))
         their_pool = tuple(sorted(s.i_card[i] for i in their if i in unk))
     my_legends = _legend_pool_key(s, me, unk)
     their_legends = _legend_pool_key(s, rival, unk) if known_opponent_deck else None

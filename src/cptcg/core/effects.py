@@ -375,8 +375,13 @@ class EffectCtx:
         self.choose_many(cands, lo, hi, _done, prompt="Search", tag=call_site(cont),
                          revealed=tuple(cards))
 
-    def sell(self, inst: int) -> None:
+    def sell(self, inst: int, *, facedown: bool = False) -> None:
+        """Sell a card for an Eddie. ``facedown``: sold without being looked at (Bootleg), so its
+        identity stays hidden from both seats -- see ``F_FACEDOWN``."""
         ops.move(self.s, inst, Zone.EDDIES)
+        if facedown:
+            from cptcg.core.enums import F_FACEDOWN
+            self.s.i_flags[inst] |= F_FACEDOWN
         if self.s.cfg.effect_sell_uses_action:           # CR 11.9.2.2
             from cptcg.core.state import ONCE_SOLD
             self.s.once[self.player] |= ONCE_SOLD

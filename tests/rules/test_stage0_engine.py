@@ -272,7 +272,6 @@ def test_take_control_at_zero_means_gorilla_arms_never_fires(pool):
 
 
 # ================================================================== Bootleg's sold card (E7)
-@pytest.mark.xfail(strict=True, reason="S0-E7: the sold top card lands face-up in the Eddies area; FAQ says nobody looks at it")
 def test_bootleg_sells_the_top_card_unseen(pool):
     """Bootleg Black Sapphire Show: *"Do I reveal or get to look at the card I am selling? No."*"""
     s = board(pool, Side(hand=["bootleg-black-sapphire-show"], eddies=5, deck=["floor-it", "mantis-blades"]),

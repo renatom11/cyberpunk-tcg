@@ -74,6 +74,11 @@ F_CANT_READY = 1 << 4
 #: F_GO_SOLO because that one means "a Legend standing on the field", which is true of both plays
 #: and is what sends it out of the game when it leaves (CR 4.4.1).
 F_NO_SOLO_KEYWORD = 1 << 5
+#: A card sold from the deck without being looked at (Bootleg Black Sapphire Show: "Do I reveal or get
+#: to look at the card I am selling? No."). It sits in the Eddies area with its identity hidden from
+#: BOTH seats: the owner's mask puts it in their own deck pool, the rival's in the rival's hand+deck
+#: pool (``view._hidden_groups``). ``ops.move`` clears every flag when a card leaves the area.
+F_FACEDOWN = 1 << 6
 
 # Attack target kinds
 TARGET_UNIT = 0

@@ -312,7 +312,7 @@ def _():
     def play(c):
         top = c.top(1)
         if top:
-            c.sell(top[0])
+            c.sell(top[0], facedown=True)          # FAQ: nobody looks at the card being sold
         vs = set(c.gig_values())
         if any(v % 2 == 0 for v in vs) and any(v % 2 == 1 for v in vs):
             c.draw(2)

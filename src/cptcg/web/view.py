@@ -337,10 +337,14 @@ def view_state(s: GameState, perspective: int | None, names: tuple[str, str], lo
             "hand_count": len(hand),
             "field": [_in_play(s, i) for i in s.units(p)],
             "legends": legends,
-            # Sold cards were revealed when sold, so their identities are public (ruling 002).
+            # Sold cards were revealed when sold, so their identities are public (ruling 002) --
+            # except one sold unseen (Bootleg, F_FACEDOWN), which neither seat may name.
             "eddies": {"ready": available(s, p), "cards": len(s.z[base + Zone.EDDIES]),
                        "total": len(s.z[base + Zone.EDDIES]) + len(s.legends(p)),
-                       "list": [dict(card_json(s, i), spent=bool(s.i_spent[i])) for i in s.z[base + Zone.EDDIES]]},
+                       "list": [dict(card_json(s, i), spent=bool(s.i_spent[i]))
+                                if knows_identity(s, perspective, i)
+                                else {"inst": i, "name": None, "spent": bool(s.i_spent[i]), "facedown": True}
+                                for i in s.z[base + Zone.EDDIES]]},
             # What this player could spend to pay a cost, in the order the engine would pick if left
             # alone. The client offers a choice from this; ruling 025 otherwise decides silently.
             "pay_sources": _pay_sources(s, p, perspective) if p == perspective else None,
