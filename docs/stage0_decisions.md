@@ -115,3 +115,23 @@ The first panel run of `neural-cards` came back **below the 114 head and near ra
 
 `cptcg tourney` is a console script of an uninstalled package and `src/cptcg/cli/main.py` has no `__main__` guard, so `python3 -m cptcg.cli.main tourney …` exits silently with nothing written. The runs use `PYTHONPATH=src python3 -c "from cptcg.cli.main import main; main(sys.argv[1:])" tourney …`. The design's `data/arena/panel.json:*` deck syntax does not exist either: the twelve frozen panel lists were exported to `out/s0/panel_decks/*.json` and passed with the eight `data/decks/*.json` lists (20 decks, 190 pairs). The first attempt cost about half an hour of pipeline time before the failure was noticed.
 
+## KT1 rerun, step 1 — the Gig-monotonicity "defect": root cause
+
+Measured on 200–300 sampled MAIN positions of h20k with the card-aware model (`out/s0/wcards.npz`), decomposed by input path (aggregates / dice tokens / card tokens) and by perturbation:
+
+| perturbation | legal? | card model: mean Δ logit, share falling | shipped 114 head | refit 114 head |
+|---|---|---|---|---|
+| add a d6=3 to my Gig area, fixer unchanged (the instrument's `+gig`) | **no** (the d6 is then in two places) | +0.15, **22%** | +0.35, 0% | +0.39, 1% |
+| take a die from my fixer into my Gig area | yes | −1.21, 94% | −0.00, 38% | −0.07, 62% |
+| remove one of my fixer dice (no Gig change) | no | −0.68, 97% | −0.32, 96% | −0.51, 97% |
+| steal the rival's last Gig die | yes | +0.85, 1% | +0.69, 0% | +0.94, 0% |
+| the rival steals my last Gig die | yes | −0.82 (95% fall, correct) | — | — |
+
+Attribution of the illegal `+gig` for the card model: aggregates path alone +0.31 (0.3% falling), dice-token path alone −0.17 (32% falling), card tokens 0. So:
+
+1. **The 22% figure was an instrument bug.** `tools/monotonicity.py`'s `+gig`/`-gig` created states no game reaches (a die in the Gig area *and* in the fixer; a die in neither). The card model reads dice as tokens and answered the impossible multiset noisily; the 114 heads, which read counts, did not notice. Fixed: every perturbation is now rules-legal (Gig changes are steals, the dice of the game are conserved), pinned by `test_perturbations_conserve_the_dice`, and `+die`/`-die` (fixer ↔ Gig) are reported beside the counted rows but not counted, because they are ambiguous under the Overtime clock.
+2. **On the legal, unambiguous perturbation (a steal) the card model is monotone: 98.9%.** There is no Gig-monotonicity defect in the model.
+3. **Every head, the 114 ones included, dislikes having fewer fixer dice than the rival**, and that is learned from the corpus, not a bug: in the r8k rows the outcome label is 0.318 at fixer-diff −1 and 0.691 at +1, and at the mover's own MAIN it is 0.305 vs 0.658. The fixer count is a turn-parity signal (the player to move has taken this turn's die), and in heuristic-vs-random games it is also an *agent-identity* signal, because the frozen heuristic chooses to go second when it wins the roll and random does not — so "one fewer fixer die" mostly meant "I am the random player". The 114 features carry `fixer_left_me/rival` too, which is why the refit 114 head shows it more strongly than the shipped one (fitted on 80k heuristic-only games).
+
+Per the pre-registration: no constraint is bolted on. The remedy for (3) is the corpus the rerun already prescribes — symmetric `ismcts:32` self-play, where fixer parity can only encode the true first/second-player effect — plus the instrument fix in (1). My call, logged here for veto: the rerun proceeds, because the defect as reported was the instrument's, the model is monotone on the legal test, and the learned behaviour is shared by the comparison head and addressed by step 2's corpus by construction.
+
