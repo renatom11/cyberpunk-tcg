@@ -71,12 +71,38 @@ WEIGHTS_SEP = "@"
 BUDGET_SEP = ":"
 
 
+#: Extra agent modules to import before an agent name is resolved, comma-separated module names
+#: (``CPTCG_AGENT_PLUGINS=cards_agents``). The numpy/torch agents live under ``tools/`` and can
+#: never be imported by the package, so they register themselves this way -- in every process,
+#: which is what makes them usable by the harvest and arena workers.
+PLUGINS_ENV = "CPTCG_AGENT_PLUGINS"
+
+_plugins_loaded: set = set()
+
+
+def load_plugins() -> None:
+    import importlib
+    import os
+    import sys
+    spec = os.environ.get(PLUGINS_ENV, "")
+    if not spec:
+        return
+    tools = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "tools")
+    if os.path.isdir(tools) and tools not in sys.path:
+        sys.path.append(tools)
+    for mod in [m.strip() for m in spec.split(",") if m.strip()]:
+        if mod not in _plugins_loaded:
+            importlib.import_module(mod)
+            _plugins_loaded.add(mod)
+
+
 def make_agent(name: str, seed: int = 0) -> Agent:
     import cptcg.agents.random_agent  # noqa: F401
     import cptcg.agents.heuristic  # noqa: F401
     import cptcg.agents.neural  # noqa: F401
     import cptcg.agents.search.ismcts  # noqa: F401
     import cptcg.agents.search.plan  # noqa: F401
+    load_plugins()
     cheat = name.startswith(CHEAT_PREFIX)
     if cheat:
         name = name[len(CHEAT_PREFIX):]
