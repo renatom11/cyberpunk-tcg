@@ -10,6 +10,59 @@ Every entry records the five pieces of evidence from `docs/verification.md`. A r
 all five is not one.
 
 
+## 2026-09-21 — Stage 0 E1: three FAQ answers on Sketchy Ripper, Misty and El Sombrerón (G1)
+
+**The change.** Three scripts brought to the published FAQ, each answered there by name.
+Sketchy Ripper's search takes zero or one Gear (`lo=0`): *"can I choose not to reveal any cards
+and bottom-deck them all even if there's a Gear among them? **Yes**"* — reversing
+AUD-sketchy-ripper-1, which had read the clause as mandatory before the FAQ existed. Misty
+Olszewski offers **Legend** as a fourth card type (*"Can I choose 'Legends' for this effect?
+**Yes**"*): it always misses, since Legends never sit in a deck, but it is the player's to choose.
+El Sombrerón offers the 2 €$ whether or not a max Gig exists (*"Yes, but El Sombrerón won't gain
+any power from it"*) and, with several max Gigs, asks which one (*"can I choose which one El
+Sombrerón's effect uses? **Yes**"*) instead of taking the largest. Reproduced red first in
+`tests/rules/test_stage0_engine.py` (four S0-E1 markers, now removed).
+
+**1. Prediction.** `golden_impact.py predict` from deck membership: Sketchy Ripper sits in
+`sample_arasaka~sample_fixers`, El Sombrerón in `sample_gangers~sample_netrunners`, Misty in no
+golden deck. Four keys may change. Observed: exactly those four.
+
+**2. Localisation.** Every window has the named card at the divergence itself:
+`sample_arasaka~sample_fixers~heuristic` game 2 diverges at decision 120 on *"attacks with Sketchy
+Ripper → targeting the Gig area"* (the new decline option), the `random` key at decision 61 on the
+same line; `sample_gangers~sample_netrunners~heuristic` game 4 at decision 195 on *"attacks with
+El Sombrerón ... declines"* (the pay is now offered without a max Gig), the `random` key at
+decision 114 on an El Sombrerón attack into Westbrook Netrunner.
+
+**3. Revert confirmation.** `wnc.py` stashed against the NEW golden: DIFFERENT on exactly the same
+four keys, at actions 195, 114, 120 and 61.
+
+**4. Aggregate.**
+
+| key | games | winner flips | end-reason | mean turn delta |
+|---|---|---|---|---|
+| sample_arasaka~sample_fixers~heuristic | 5/16 | 0 | 0 | +0.00 |
+| sample_arasaka~sample_fixers~random | 12/40 | 2 | 3 | −0.17 |
+| sample_gangers~sample_netrunners~heuristic | 5/16 | 0 | 0 | +0.00 |
+| sample_gangers~sample_netrunners~random | 1/40 | 0 | 0 | +0.00 |
+
+Small and one-sided, as a new decline option should be: the heuristic games differ in action
+indices only (the menu grew), with no winner or end-reason moving.
+
+**5. Two-sided reachability.** `fuzz -n 300 --seed 1` (heuristic)
+`590b01a340045483d5445fa9` → `c9e5062374f3027ce660cbfb`, 45,488 → 45,441 actions. `fuzz -n 400
+--seed 1 --agent random` did **not** move (`2e54e2c3c5448a6898b8cc0f`, 33,880 actions, measured
+twice before the change and once after): 400 random games over the whole pool did not reach a
+Sketchy Ripper search with a Gear in the top three, a Misty end of turn, or an El Sombrerón attack
+with 2 €$ up. Misty is in no golden deck; her change is reached by the heuristic fuzz and by
+`test_misty_may_name_legend`. Note the random baseline recorded here differs from the one the 046
+entry wrote (`a70eb43f…`, 33,954): the measurement was re-taken on the committed `750c723` tree
+and is stable across runs, so that entry's figure came from a working tree that was not the commit.
+
+The delayed suite was re-derived and **all 73 positions still qualify** (2m25s).
+
+---
+
 ## 2026-09-20 — ruling 046, the controller orders their own triggers (G2, a new decision point)
 
 **The change.** Two of a player's cards triggering on one event now resolve in the order that
