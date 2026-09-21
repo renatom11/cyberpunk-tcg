@@ -18,3 +18,7 @@ One line each: what was decided and why. Rules questions are not here; they go t
 - **Flathead's unblockability travels on `AttackContext`** (read once in `engine._attack`) — the
   FAQ fixes it at declaration; the field is in the attack key of `view.info_key`, so a search sees
   it as the public fact it is.
+- **No editing of engine or script files while a verification job for the previous item is
+  running** — E4's script edit landed while E3's fuzz was starting and could have contaminated
+  E3's digest; the fuzz was re-run on the clean tree. Each item's golden cycle now completes
+  before the next item's edit begins.

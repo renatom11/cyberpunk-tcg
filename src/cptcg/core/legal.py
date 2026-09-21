@@ -211,9 +211,8 @@ def reaction_menu(s: GameState) -> list:
                 # own Call, so it is not subtracted from its own funds.
                 if avail >= 1:
                     opts.append(CallLegend(i))
-    asc = defs[i_card[atk.attacker]].script
-    unblockable = asc is not None and asc.unblockable is not None and asc.unblockable(_ctx(s, atk.attacker))
-    if not unblockable and atk.redirects < s.cfg.max_redirects_per_attack and (
+    # "Can't be blocked" was read when the attack was declared (engine._attack) and travels with it.
+    if not atk.unblockable and atk.redirects < s.cfg.max_redirects_per_attack and (
             atk.target_kind == TARGET_GIG or s.cfg.blocker_redirects_unit_attacks):
         lag_ok = s.cfg.lagged_units_can_block
         i_lag = s.i_lag

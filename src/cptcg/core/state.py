@@ -27,9 +27,9 @@ ONCE_CALLED = 2
 
 class AttackContext:
     __slots__ = ("attacker", "attacker_ctrl", "target_kind", "target",
-                 "gig_steal_allowed", "redirects", "fizzled")
+                 "gig_steal_allowed", "redirects", "fizzled", "unblockable")
 
-    def __init__(self, attacker: int, ctrl: int) -> None:
+    def __init__(self, attacker: int, ctrl: int, unblockable: bool = False) -> None:
         self.attacker = attacker
         self.attacker_ctrl = ctrl
         self.target_kind = -1
@@ -37,6 +37,11 @@ class AttackContext:
         self.gig_steal_allowed = True
         self.redirects = 0
         self.fizzled = False
+        # Read once, when the attack is declared, and carried: MTOD12 Flathead's "can't be blocked"
+        # depends on Street Cred, and the FAQ fixes it at declaration -- *"If I have lower Street
+        # Cred when I attack ... but triggered effects or reactions make my Rival's Street Cred
+        # lower than mine, can my Rival then block? **No**."*
+        self.unblockable = unblockable
 
     def copy(self) -> "AttackContext":
         a = AttackContext.__new__(AttackContext)
@@ -47,6 +52,7 @@ class AttackContext:
         a.gig_steal_allowed = self.gig_steal_allowed
         a.redirects = self.redirects
         a.fizzled = self.fizzled
+        a.unblockable = self.unblockable
         return a
 
 

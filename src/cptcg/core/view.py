@@ -264,7 +264,7 @@ def _atk_key(s: "GameState") -> tuple | None:
     if a is None:
         return None
     return (a.attacker, a.attacker_ctrl, a.target_kind, a.target, a.gig_steal_allowed,
-            a.redirects, a.fizzled)
+            a.redirects, a.fizzled, a.unblockable)
 
 
 def info_key(s: "GameState", me: int, *, known_opponent_deck: bool = True) -> tuple:

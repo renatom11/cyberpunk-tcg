@@ -268,7 +268,9 @@ def activate(s: GameState, p: int, inst: int, k: int) -> None:
 
 
 def _attack(s: GameState, p: int, unit: int) -> None:
-    s.atk = AttackContext(unit, p)
+    asc = s.card(unit).script
+    unblockable = asc is not None and asc.unblockable is not None and bool(asc.unblockable(_ctx(s, unit)))
+    s.atk = AttackContext(unit, p, unblockable)
     s.emit("attack", p, unit)
     # Stack is LIFO: pushed last runs first. Rulebook order is triggers -> target -> react -> resolve.
     s.stack.append(EndAttackStep())
