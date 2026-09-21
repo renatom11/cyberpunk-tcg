@@ -53,8 +53,10 @@ TAG_CLASSES = ("", "steal", "order", "adjust_gig", "equip", "call_free", "effect
 
 
 def tokens_digest() -> str:
+    from cptcg.learn.policy import action_feature_digest
     text = "\n".join(("|".join(CARD_TOKEN), "|".join(DIE_TOKEN), "|".join(CONTEXT), "|".join(OPTION_TOKEN),
-                      "|".join(KIND_VOCAB), "|".join(SUBMODE_VOCAB), "|".join(PICK_VOCAB), "|".join(TAG_CLASSES)))
+                      "|".join(KIND_VOCAB), "|".join(SUBMODE_VOCAB), "|".join(PICK_VOCAB), "|".join(TAG_CLASSES),
+                      action_feature_digest()))       # the option token ends in the action features
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
 
 

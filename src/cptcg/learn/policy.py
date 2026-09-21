@@ -69,10 +69,11 @@ from pathlib import Path
 from cptcg.core.actions import (Action, Activate, Attack, Block, CallLegend, ChooseOrder, EndTurn,
                                 GoSolo, Mulligan, Pass, Pick, Play, Sell, TakeGigDie, Target)
 from cptcg.core.enums import NO_INST, TARGET_GIG, CardType, Keyword, Zone
-from cptcg.core.ops import available, play_cost, power
+from cptcg.core.ops import PayPlan, available, play_cost, power
 from cptcg.core.state import ONCE_SOLD, GameState
 from cptcg.core.config import DEFAULT_CONFIG
 from cptcg.core.view import knows_identity
+from cptcg.learn.coverage import _pick_vals
 
 #: Bumped with the value head's, because they are written by the same trainer and read by the same
 #: agent; a reader that understands one understands the other.
@@ -133,6 +134,38 @@ _SPEC: tuple[tuple[str, str], ...] = (
     ("pos_hand", "cards in my hand / 8"),
     ("pos_overtime", "1 in Overtime"),
     ("pos_sold_already", "1 if the once-per-turn sale is gone"),
+    # --- what a Pick picks (Stage 0): the candidate behind the index, read from the question ------
+    ("pick_card", "Pick: the candidate is a card instance"),
+    ("pick_die", "Pick: the candidate is a Gig die"),
+    ("pick_amount", "Pick: the candidate is a number (an amount, a count)"),
+    ("pick_adjust", "Pick: the candidate adjusts a Gig (an owner/index/amount tuple)"),
+    ("pick_mode", "Pick: the candidate is a card type or a named mode"),
+    ("pick_order", "Pick: the question orders triggers (tag @order) or picks one to resolve"),
+    ("pick_decline", "Pick: the decline branch (nothing picked)"),
+    ("pick_payplan", "Pick: the candidate is a payment plan (which Legends pay)"),
+    ("pick_payplan_n", "Pick: Legends the plan spends / 3"),
+    ("pick_card_unknown", "Pick: the candidate card is one this seat may not identify"),
+    ("pick_card_unit", "Pick: the candidate card is a Unit"),
+    ("pick_card_program", "Pick: the candidate card is a Program"),
+    ("pick_card_gear", "Pick: the candidate card is Gear"),
+    ("pick_card_legend", "Pick: the candidate card is a Legend"),
+    ("pick_card_power", "Pick: printed power of the candidate card / 15"),
+    ("pick_card_ram", "Pick: RAM of the candidate card / 5"),
+    ("pick_card_sellable", "Pick: the candidate card carries a sell tag"),
+    ("pick_card_blocker", "Pick: the candidate card has BLOCKER"),
+    ("pick_card_quick", "Pick: the candidate card has QUICK"),
+    ("pick_card_gosolo", "Pick: the candidate card has GO SOLO"),
+    ("pick_card_mine", "Pick: the candidate card is mine"),
+    ("pick_card_hand", "Pick: the candidate card is in a hand"),
+    ("pick_card_field", "Pick: the candidate card is on a field"),
+    ("pick_card_legends", "Pick: the candidate card is in a Legends area"),
+    ("pick_card_deck", "Pick: the candidate card is in a deck or trash"),
+    ("pick_card_spent", "Pick: the candidate card is spent"),
+    ("pick_card_live_power", "Pick: current power of the candidate card on the field / 15"),
+    ("pick_die_sides", "Pick: sides of the candidate die / 20"),
+    ("pick_die_value", "Pick: value of the candidate die / 20"),
+    ("pick_die_rival", "Pick: the candidate die is the rival's"),
+    ("pick_amount_value", "Pick: the candidate number / 7"),
 )
 
 ACTION_FEATURE_NAMES: tuple[str, ...] = tuple(n for n, _ in _SPEC)
@@ -251,7 +284,101 @@ def action_features(s: GameState, me: int, a: Action) -> tuple[float, ...]:
     f[o + 5] = _u(len(s.zone(me, Zone.HAND)) / 8.0)
     f[o + 6] = 1.0 if s.overtime else 0.0
     f[o + 7] = 1.0 if (s.once[me] & ONCE_SOLD) else 0.0
+
+    # ---- what a Pick picks (Stage 0): the value behind the index, read from the pending question
+    o += 8
+    if isinstance(a, Pick):
+        _pick_block(s, me, a, f, o)
     return tuple(f)
+
+
+def _pick_block(s: GameState, me: int, a: Pick, f: list, o: int) -> None:
+    """The candidate a ``Pick`` names, the way ``web.view._pick_env`` recovers it: the ``vals``
+    list the continuation closed over. A steal's picks index the victim's Gig area instead."""
+    ch = s.pending
+    tag = (ch.tag or "") if ch is not None else ""
+    if not a.picks:
+        f[o + 6] = 1.0                                   # decline
+        return
+    if tag.endswith("@order"):
+        f[o + 5] = 1.0
+        return
+    vals = _pick_vals(ch) if ch is not None else None
+    if vals is None and tag.endswith("@steal"):
+        victim = 1 - ch.player
+        gigs = s.gig[victim]
+        i = a.picks[0]
+        if 0 <= i < len(gigs):
+            f[o + 1] = 1.0
+            f[o + 27] = _u(gigs[i][0] / 20.0)
+            f[o + 28] = _u(gigs[i][1] / 20.0)
+            f[o + 29] = 1.0 if victim != me else 0.0
+        return
+    if vals is None:
+        return
+    i = a.picks[0]
+    if not (0 <= i < len(vals)):
+        return
+    v = vals[i]
+    if isinstance(v, PayPlan):
+        f[o + 7] = 1.0
+        f[o + 8] = _u(len(v) / 3.0)
+        return
+    if isinstance(v, bool):
+        f[o + 4] = 1.0
+        return
+    if isinstance(v, int) and 0 <= v < len(s.i_card) and not hasattr(v, "name"):
+        f[o + 0] = 1.0
+        if not knows_identity(s, me, v):
+            f[o + 9] = 1.0
+        else:
+            d = s.card(v)
+            t = d.type
+            f[o + 10] = 1.0 if t is CardType.UNIT else 0.0
+            f[o + 11] = 1.0 if t is CardType.PROGRAM else 0.0
+            f[o + 12] = 1.0 if t is CardType.GEAR else 0.0
+            f[o + 13] = 1.0 if t is CardType.LEGEND else 0.0
+            pw = d.power
+            f[o + 14] = _u((pw if isinstance(pw, int) else 0) / 15.0)
+            f[o + 15] = _u((d.ram or 0) / 5.0)
+            f[o + 16] = 1.0 if d.sell_tag else 0.0
+            kw = d.keywords
+            f[o + 17] = 1.0 if Keyword.BLOCKER in kw else 0.0
+            f[o + 18] = 1.0 if Keyword.QUICK in kw else 0.0
+            f[o + 19] = 1.0 if Keyword.GO_SOLO in kw else 0.0
+        f[o + 20] = 1.0 if s.i_owner[v] == me else 0.0
+        z = s.i_zone[v] % 8
+        f[o + 21] = 1.0 if z == Zone.HAND else 0.0
+        f[o + 22] = 1.0 if z == Zone.FIELD else 0.0
+        f[o + 23] = 1.0 if z == Zone.LEGENDS else 0.0
+        f[o + 24] = 1.0 if z in (Zone.DECK, Zone.TRASH) else 0.0
+        f[o + 25] = 1.0 if s.i_spent[v] else 0.0
+        if z == Zone.FIELD:
+            f[o + 26] = _u(power(s, v) / 15.0)
+        return
+    if hasattr(v, "name"):                               # a CardType or another enum: a mode
+        f[o + 4] = 1.0
+        return
+    if isinstance(v, int):
+        f[o + 2] = 1.0
+        f[o + 30] = _u(v / 7.0)
+        return
+    if isinstance(v, tuple) and len(v) in (4, 5) and all(isinstance(x, int) for x in v):
+        # (owner, index, [amount,] sides, value): a die, possibly with an adjustment
+        f[o + 3 if len(v) == 5 else o + 1] = 1.0
+        f[o + 27] = _u(v[-2] / 20.0)
+        f[o + 28] = _u(v[-1] / 20.0)
+        f[o + 29] = 1.0 if v[0] != me else 0.0
+        return
+    if isinstance(v, tuple) and len(v) == 2 and isinstance(v[0], int) and 0 <= v[0] <= 1:
+        gigs = s.gig[v[0]]
+        if v[1] < len(gigs):
+            f[o + 1] = 1.0
+            f[o + 27] = _u(gigs[v[1]][0] / 20.0)
+            f[o + 28] = _u(gigs[v[1]][1] / 20.0)
+            f[o + 29] = 1.0 if v[0] != me else 0.0
+        return
+    f[o + 4] = 1.0                                       # anything else: a named mode
 
 
 # ------------------------------------------------------------------- the head

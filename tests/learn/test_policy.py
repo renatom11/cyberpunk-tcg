@@ -262,3 +262,50 @@ def test_visits_are_this_decisions_or_nothing(reg):
                    options=(ChooseOrder(True), ChooseOrder(False)))
     agent.act(s, order)
     assert agent.last_visits == {}
+
+
+# ------------------------------------------------------------ Stage 0: what a Pick picks
+def test_pick_features_describe_the_candidate_not_the_index(pool):
+    """Two Picks over cards of different types look different; a payment plan is its own class."""
+    from conftest import Side, board, find
+    from cptcg.core.actions import ChoiceKind, Pick, Play
+    from cptcg.core.engine import apply
+    from cptcg.core.enums import Zone
+    names = ACTION_FEATURE_NAMES
+    s = board(pool, Side(hand=["secondhand-bombus"], eddies=1,
+                         legends=["goro-takemura-hands-unclean", "dexter-deshawn-off-the-grid"]), Side())
+    legal_actions(s)
+    play = next(i for i, o in enumerate(s.pending.options)
+                if isinstance(o, Play) and o.inst == find(s, "secondhand-bombus", Zone.HAND))
+    apply(s, play)
+    assert s.pending.kind is ChoiceKind.PICK and s.pending.tag == "pay@play"
+    v0 = action_features(s, 0, s.pending.options[0])
+    v1 = action_features(s, 0, s.pending.options[1])
+    assert v0[names.index("pick_payplan")] == 1.0 and v1[names.index("pick_payplan")] == 1.0
+    assert v0[names.index("pick_payplan_n")] > 0.0
+    assert v0 == v1, "two plans of one Legend each are the same shape to the features"
+    # a decline branch and a card candidate are told apart
+    from cptcg.core.actions import Attack, Pass, Target
+    from cptcg.core.enums import TARGET_GIG
+    s2 = board(pool, Side(field=["sketchy-ripper"], deck=["floor-it", "mantis-blades", "psycho-squad", "corpo-security"]),
+               Side(gig=[(6, 3)]))
+    legal_actions(s2)
+    apply(s2, s2.pending.index_of(Attack(find(s2, "sketchy-ripper", Zone.FIELD, 0))))
+    for _ in range(12):
+        legal_actions(s2)
+        ch = s2.pending
+        if ch.kind is ChoiceKind.PICK and ch.player == 0:
+            break
+        pick = 0
+        for i, o in enumerate(ch.options):
+            if (isinstance(o, Target) and o.kind == TARGET_GIG) or isinstance(o, Pass):
+                pick = i
+        apply(s2, pick)
+    assert s2.pending.kind is ChoiceKind.PICK
+    vecs = {o: action_features(s2, 0, o) for o in s2.pending.options}
+    decline = [v for o, v in vecs.items() if not o.picks]
+    cards = [v for o, v in vecs.items() if o.picks]
+    assert decline and cards
+    assert decline[0][names.index("pick_decline")] == 1.0
+    assert all(v[names.index("pick_card")] == 1.0 for v in cards)
+    assert any(v[names.index("pick_card_gear")] == 1.0 for v in cards)

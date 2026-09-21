@@ -44,6 +44,7 @@ from cptcg.core.config import DEFAULT_CONFIG  # noqa: E402
 from cptcg.core.engine import apply, legal_actions, new_game  # noqa: E402
 from cptcg.core.rng import Pcg32  # noqa: E402
 from cptcg.learn import tokens as T  # noqa: E402
+from cptcg.learn.policy import NAFEAT  # noqa: E402
 from cptcg.learn.experience import outcome, read_games  # noqa: E402
 from cptcg.learn.model import feature_digest  # noqa: E402
 
@@ -86,7 +87,7 @@ class _Acc:
                 "card_off": np.array(self.card_off, dtype=np.int64),
                 "dice": np.array(self.dice, dtype=np.int16).reshape(-1, len(T.DIE_TOKEN)),
                 "die_off": np.array(self.die_off, dtype=np.int64),
-                "opts": np.array(self.opts, dtype=np.float32).reshape(-1, 4 + 52),
+                "opts": np.array(self.opts, dtype=np.float32).reshape(-1, 4 + NAFEAT),
                 "opt_off": np.array(self.opt_off, dtype=np.int64),
                 "visits": np.array(self.visits, dtype=np.int32),
                 "ctx": np.array(self.ctx, dtype=np.int32).reshape(-1, len(T.CONTEXT)),
@@ -219,7 +220,7 @@ def gather(rows: dict, idx: np.ndarray) -> dict:
     die = np.zeros((n, K, CM.DIE_FEATS), dtype=np.float32)
     die_m = np.zeros((n, K), dtype=np.float32)
     opt_id = np.full((n, O), -1, dtype=np.int32)
-    opt_f = np.zeros((n, O, 3 + 52), dtype=np.float32)
+    opt_f = np.zeros((n, O, 3 + NAFEAT), dtype=np.float32)
     opt_m = np.zeros((n, O), dtype=np.float32)
     visits = np.full((n, O), -1, dtype=np.int32)
     die_scale = np.array([1, 20, 20, 1, 1, 1, 1, 1, 1], dtype=np.float32)

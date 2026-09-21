@@ -31,6 +31,7 @@ from cptcg.cards.registry import Registry, load_default  # noqa: E402
 from cptcg.core.enums import NZONE, CardType, Color, Keyword  # noqa: E402
 from cptcg.deck.strategies import features as text_features  # noqa: E402
 from cptcg.learn import tokens as T  # noqa: E402
+from cptcg.learn.policy import NAFEAT  # noqa: E402
 
 NCARDS = 151
 EMB = 32
@@ -124,7 +125,7 @@ def batch_tokens(decisions: list[dict], max_cards: int = 0, max_dice: int = 0, m
     bel = np.zeros((n, 124 + 27), dtype=np.float32)
     atk_id = np.full((n,), -1, dtype=np.int32)
     opt_id = np.full((n, max_opts), -1, dtype=np.int32)
-    opt_f = np.zeros((n, max_opts, 3 + 52), dtype=np.float32)
+    opt_f = np.zeros((n, max_opts, 3 + NAFEAT), dtype=np.float32)
     opt_m = np.zeros((n, max_opts), dtype=np.float32)
     for i, d in enumerate(decisions):
         cards = d["cards"][:max_cards]
@@ -248,7 +249,7 @@ class NumpyCardsModel:
 def init_shapes(static_cols: int) -> dict:
     """Parameter shapes shared by both implementations."""
     cin = EMB + static_cols + CARD_STATE
-    oin = EMB + static_cols + 3 + 52
+    oin = EMB + static_cols + 3 + NAFEAT
     sin = 3 * D + 114 + 151 + CTX_FEATS
     return {"emb": (NCARDS + 1, EMB), "card_w1": (cin, D), "card_b1": (D,), "card_w2": (D, D), "card_b2": (D,),
             "die_w1": (DIE_FEATS, D), "die_b1": (D,), "die_w2": (D, D), "die_b2": (D,), "cls": (1, 1, D),
