@@ -285,4 +285,28 @@ the `ismcts:32` row when its run completes.
 
 ## 8. Recommendation on Stage 1
 
-*(written after the kill tests)*
+**Do not start Stage 1 on the card-aware model as built.** Kill test 1 is the gate and it failed
+on both legs: the card-aware greedy agent does not beat the 114 head by more than the
+between-pairing band, and permuting its identity embedding costs it 1.4 points, which is noise.
+The test was run once, on the criterion as written, after one documented instrument fix.
+
+What Stage 0 established that survives the failure (all Confirmed):
+
+* The engine is now the FAQ's game (E1–E12), every golden regeneration has its five evidences,
+  and the corpora, oracle set and suite were recorded after the last rule change.
+* The instruments all produce numbers with intervals, and they agree with each other about the
+  card-aware model: it is a better *position evaluator* than its ablation (Brier 0.102 vs 0.114)
+  and a worse *ranker of one-ply previews* than the 114 head (panel, delayed suite 9 vs 28,
+  oracle Spearman 0.865 vs 0.950), and it fails the plainest monotonicity check one time in
+  five where the 114 heads never do.
+* The inferred list costs the search nothing measurable at budget 32; the metagame is
+  non-transitive under the heuristic (Nash support 3, p < 0.001); a generation costs 10.6 h here.
+
+What I would do before re-running kill test 1 (my judgement, not started, none of it a rule
+change): fit the card-aware model with more rows (the 114 head had roughly twice as many) and
+with the monotonicity perturbations as an auxiliary loss or as data augmentation, since a head
+that rates an added Gig die as bad in 22% of positions cannot rank previews; and evaluate the
+greedy agent on the delayed suite and the monotonicity instrument *before* the panel, because
+both predicted the panel result at a fraction of the cost. If the refit clears monotonicity and
+still fails the panel, the design's premise — that card identity is what the 114 features are
+missing — should be treated as refuted rather than retried.
