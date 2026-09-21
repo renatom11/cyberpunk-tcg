@@ -73,3 +73,25 @@ working day needs 8. The oracle labelling (2,000 × ~10 s of `cheat:ismcts:2000`
 * Kill test 1 pipeline, first stages: `harvest.py examples` on h20k+r8k → `fit_eval.py fit --hidden 16` → `out/s0/w114.json` (held-out Brier 0.1238 at epoch 124, 115 s). Card-aware rows: 218,364 (h20k, rate 0.04) + 50,914 (r8k) = 269,278 rows, 141,057 parameters; epoch 1 = 192 s, holdout Brier 0.135 after one epoch (`out/s0/kt1/fitcards.log`).
 * Suite families merged (all verified by `qualify` on this build, none refused by `merge`): **dice 12, race 12, play-around 13, card-semantics 15** → `data/arena/delayed.json` **68 → 120** positions. A `defend` family (the new `mode: "defend"` kind) is being authored.
 
+## Stage 1 obligations recorded during Stage 0
+
+* **gen0 panel slot** (decision 6): the panel's empty generation-0 slot is filled by the first card-aware promotion in Stage 1; no new panel version is cut for it.
+* The 114-feature identity ablation is defined for the card-aware model only: the 114 head reads no card identities, so its ablation is flat by construction and is reported as such rather than measured.
+
+## Kill test 1 — result: FAIL (run once, criterion verbatim from Part 6)
+
+Panels (`tools/arena.py panel …`, frozen panel v2, 360 games a member, inferred list; JSON in `out/s0/kt1/`):
+
+| head | vs heuristic | between-pairing 95% | vs random | between-pairing 95% |
+|---|---:|---|---:|---|
+| `neural@out/s0/w114.json` (114 features, refit on the same corpora) | 0.503 | [0.339, 0.667] | 0.883 | [0.864, 0.902] |
+| `neural-cards@out/s0/wcards.npz` | 0.656 | [0.533, 0.779] | 0.703 | [0.613, 0.792] |
+| `neural-cards-ablated@out/s0/wcards.npz` (identity rows permuted) | 0.642 | [0.517, 0.767] | 0.675 | [0.568, 0.782] |
+
+* Leg 1, "card-aware > 114-head by more than the between-pairing band": against the heuristic the card-aware agent scores 0.656, inside the 114 head's band (upper 0.667) — **not cleared**; against random it is 18 points *worse* (0.703 vs 0.883).
+* Leg 2, "ablation drops it by more than the band": 0.656 → 0.642 against the heuristic, 0.703 → 0.675 against random — well inside the bands — **not cleared**.
+* On rows the model is clearly better than its ablation (Brier 0.102 vs 0.114 on all rows; holdout 0.116 at the best epoch) and its values correlate 0.908 with the 114 head on fresh positions at the same Brier — the fit is real; the play it produces is not better, and the identity it learned does not carry into play.
+* The first panel run scored previews under mismatched contexts (an inference-path bug, fixed and documented in the decisions log; first-run numbers kept in `out/s0/kt1/first_run/`). The result above is the fixed path, run once.
+
+Per the task's discipline the remaining kill tests and the day-0 baselines are completed and reported, and Stage 1 is **not** started.
+
