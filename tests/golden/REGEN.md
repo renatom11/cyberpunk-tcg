@@ -10,6 +10,28 @@ Every entry records the five pieces of evidence from `docs/verification.md`. A r
 all five is not one.
 
 
+## 2026-09-21 — Stage 0 E4: Dying Night pays out after V died (G1, no golden movement)
+
+**The change.** The ATTACK trigger of Dying Night on a host named "V" books the end-of-turn
+"ready 2 Eddies" on the player through a listener that outlives the Gear, so the FAQ's case —
+*"the Unit attacks but is defeated before the end of the turn, can I still ready 2 Eddies?
+**Yes**"* — pays; a host that survives is paid once (a mark in `s.used` tells the end-of-turn hook
+the listener owns it). Reproduced red first (`test_dying_night_readies_eddies_even_if_v_died`).
+
+**1. Prediction.** Dying Night sits in `sample_corpos~sample_nomads` and `the_heist~embracing_power`
+(four keys). **Observed: none.** The golden never has a V wearing Dying Night attack and die in the
+same turn, and where V survives the listener pays exactly what the hook used to pay, at the same
+point of the end-of-turn dispatch (listeners run after hooks, and no other end-of-turn hook of those
+decks asks a question between them).
+
+**2–4.** Not applicable: `bench.py check` IDENTICAL.
+
+**5. Two-sided reachability.** Neither fuzz digest moved (`c9e5062374f3027ce660cbfb` /
+`2e54e2c3c5448a6898b8cc0f`, unchanged action counts). Reached by its scenario test alone. The
+delayed suite was re-derived and **all 73 positions still qualify**.
+
+---
+
 ## 2026-09-21 — Stage 0 E3: "can't be blocked" fixed at declaration (G2, no golden movement)
 
 **The change.** `AttackContext.unblockable` is set once in `engine._attack` and read by
