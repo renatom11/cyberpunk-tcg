@@ -114,6 +114,13 @@ class CardScript:
     # Event kinds ``on_event`` reacts to (``events=frozenset({"steal", "end_turn"})``); None
     # delivers every event. Only ever an optimisation: the hook must still test ``ev[0]`` itself.
     events: frozenset | None = None
+    # ``wants(ctx, ev) -> bool``: would ``on_event`` act on this event? The engine reads it to
+    # decide which triggers have actually landed together (ruling 046 ordering, Stage 0 E8): a
+    # hook that matches an event's *kind* but would return without doing anything -- a Gear's
+    # "when its host is spent" hearing another card's spend -- is not a pending trigger and must
+    # not be offered for ordering. It is a filter for that purpose and for running the hook; the
+    # hook keeps its own guard, so a ``wants`` that is looser than the guard costs nothing.
+    wants: Callable | None = None
 
 
 SCRIPTS: dict[str, CardScript] = {}
@@ -169,7 +176,7 @@ def _hook_row(d: CardDef) -> tuple | None:
     """Per-CardDef hook tuple for ops._rebuild_active, or None when the card has no in-play hook.
 
     (power_mod, cost_mod, on_event, events, would_steal, would_defeat,
-     script-if-it-has-abilities, suppress_new_units, kw_mod)
+     script-if-it-has-abilities, suppress_new_units, kw_mod, wants)
     """
     sc = d.script
     if sc is None or (sc.power_mod is None and sc.cost_mod is None and sc.on_event is None
@@ -177,7 +184,8 @@ def _hook_row(d: CardDef) -> tuple | None:
                       and sc.kw_mod is None and not sc.extra.get("suppress_new_units")):
         return None
     return (sc.power_mod, sc.cost_mod, sc.on_event, sc.events, sc.would_steal, sc.would_defeat,
-            sc if sc.abilities else None, bool(sc.extra.get("suppress_new_units")), sc.kw_mod)
+            sc if sc.abilities else None, bool(sc.extra.get("suppress_new_units")), sc.kw_mod,
+            sc.wants)
 
 
 class Registry:

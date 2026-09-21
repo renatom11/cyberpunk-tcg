@@ -400,11 +400,10 @@ def test_dying_night_gear_attack_trigger_and_v_ready(pool):
     do(s, Pick((4,)))                                       # V steals it: increase by +5 -> 6
     assert s.gig[0] == [(6, 6)]
     do(s, EndTurn())
-    # Ruling 046: V and her Pistol both trigger at end of turn, so the controller is asked which
-    # resolves first. Either answer readies the Eddies — which is the point of asserting the
-    # outcome rather than the order.
-    do(s, Pick((0,)))                                       # host is named "V": ready 2 Eddies
-    assert available(s, 0) == 2
+    # Ruling 046 used to ask here, because V's end-of-turn hook *matched* the event by kind; since
+    # Stage 0 E8 only triggers that would act are pending (`CardScript.wants`), and V's needs two
+    # 8+ Gigs, so the Pistol's payout is the one trigger and nobody is asked.
+    assert available(s, 0) == 2                             # host is named "V": ready 2 Eddies
 
 def test_kiroshi_optics_look(pool):
     s = board(pool, Side(field=[("psycho-squad", {"gear": ["kiroshi-optics"]})], legends=L3), Side(gig=[(4, 1)]))

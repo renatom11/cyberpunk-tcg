@@ -80,7 +80,7 @@ def _rebuild_active(s: GameState) -> tuple:
             if hk[1] is not None:
                 cm.append((i, hk[1]))
             if hk[2] is not None:
-                ev_p.append((i, hk[2], hk[3]))       # (inst, on_event, event kinds or None)
+                ev_p.append((i, hk[2], hk[3], hk[9]))    # (inst, on_event, event kinds or None, wants)
             if hk[4] is not None:
                 ws_p.append((i, hk[4]))
             if hk[5] is not None:
@@ -134,39 +134,152 @@ def _ctx(s: GameState, inst: int):
 
 
 def dispatch(s: GameState, ev: tuple) -> None:
-    """Deliver an event to every active card with an ``on_event`` hook.
+    """Deliver an event to every active card with an ``on_event`` hook, and to the listeners.
 
     Hooks are called immediately (they never block). Because a hook that needs a decision pushes
     a step, and the stack is LIFO, hooks are called in reverse so the first card's question
-    surfaces first.
+    surfaces first. Two exceptions: when one player owns two or more distinct triggers on this
+    event (ruling 046, ``needs_ordering``) the group moves to ``OrderTriggersStep`` and that
+    player orders it; and inside a ``deferring`` block nothing runs at all -- the matched hooks
+    and listeners are collected for the caller, which is how a cost's spend triggers are held
+    until the play or the activated effect they paid for has resolved (Stage 0 E9).
     """
     s.turn_events.append(ev)                         # "the first time ... each turn" reads this
+    if s.deferred is not None:
+        s.deferred.append(_collect(s, ev))
+        if s.log is not None:
+            s.log.append(("event", ev))
+        return
     act = s._active
     if act is None:
         act = _rebuild_active(s)
     hooks = act[6][s.active]                         # active player's cards first
-    if hooks:
-        kind = ev[0]
-        matched = [(i, h) for i, h, kinds in hooks if kinds is None or kind in kinds]
-        if needs_ordering(s, matched):
-            from cptcg.core.steps import OrderTriggersStep
-            s.stack.append(OrderTriggersStep(ev, tuple(matched)))
-        else:
-            for inst, h in reversed(matched):
-                # The game-over test stays ahead of the hook call: a skipped hook is one that
-                # would have returned without doing anything, so the early return happens at
-                # exactly the same hook as it would without the kind filter.
-                if s.over:
-                    return
-                h(_ctx(s, inst), ev)
-    # Temporary listeners registered by effects ("the next time ... this turn"): (s, ev) callables.
-    # Most dispatches find no mods at all; when there are some, walk a copy (listeners may append).
-    if s.mods:
-        for kind, _subject, fn, _exp in list(s.mods):
-            if kind == "listener" and not s.over:
-                fn(s, ev)
+    kind = ev[0]
+    matched = _matched(s, hooks, ev) if hooks else []
+    listeners = _listeners(s, kind) if s.mods else []
+    if needs_ordering(s, matched + listeners):
+        from cptcg.core.steps import OrderTriggersStep
+        s.stack.append(OrderTriggersStep(kind, tuple(_bound(ev, matched, listeners))))
+    else:
+        for inst, h in reversed(matched):
+            # The game-over test stays ahead of the hook call: a skipped hook is one that
+            # would have returned without doing anything, so the early return happens at
+            # exactly the same hook as it would without the kind filter.
+            if s.over:
+                return
+            h(_ctx(s, inst), ev)
+        # Temporary listeners registered by effects ("the next time ... this turn"): (s, ev)
+        # callables. Most dispatches find no mods at all; a listener may append to s.mods, so
+        # the list above is a snapshot.
+        for _sub, fn in listeners:
+            if s.over:
+                return
+            fn(s, ev)
     if s.log is not None:                            # s.emit("event", ev), inlined
         s.log.append(("event", ev))
+
+
+def _collect(s: GameState, ev: tuple) -> tuple:
+    """What ``dispatch`` would have run for ``ev``: ``(ev, matched hooks, listeners)``, unrun."""
+    act = s._active
+    if act is None:
+        act = _rebuild_active(s)
+    hooks = act[6][s.active]
+    matched = _matched(s, hooks, ev) if hooks else []
+    listeners = _listeners(s, ev[0]) if s.mods else []
+    return (ev, matched, listeners)
+
+
+def _matched(s: GameState, hooks: tuple, ev: tuple) -> list:
+    """The hooks that will act on ``ev``: the kind filter, then the script's ``wants`` where it
+    declares one. Only hooks that would act are pending triggers (ruling 046 ordering)."""
+    kind = ev[0]
+    out = []
+    for i, h, kinds, wants in hooks:
+        if kinds is not None and kind not in kinds:
+            continue
+        if wants is not None and not wants(_ctx(s, i), ev):
+            continue
+        out.append((i, h))
+    return out
+
+
+def _listeners(s: GameState, kind: str) -> list:
+    """The temporary listeners that want this event kind: ``(subject, fn)`` pairs.
+
+    A listener is a ``("listener", inst, fn, expiry)`` mod; ``fn(s, ev)`` may carry a ``kinds``
+    attribute naming the event kinds it acts on (``listen.kinds = frozenset({...})``), and one
+    without it hears everything. The filter matters beyond speed: ruling 046's ordering counts a
+    listener as a trigger on the event, so one that would ignore the event must not be offered
+    for ordering against a hook.
+    """
+    out = []
+    for k, sub, fn, _e in s.mods:
+        if k == "listener":
+            kinds = getattr(fn, "kinds", None)
+            if kinds is None or kind in kinds:
+                out.append((sub, fn))
+    return out
+
+
+def _bound(ev: tuple, matched: list, listeners: list) -> list:
+    """Trigger entries ``(inst, fn(ctx))`` for a collected event, in resolution order: the
+    matched hooks as dispatch ordered them, then the listeners (whose ``inst`` is the card that
+    registered them, so ownership and card identity read the same way as a hook's)."""
+    out = [(i, (lambda c, h=h, ev=ev: h(c, ev))) for i, h in matched]
+    out += [(sub, (lambda c, fn=fn, ev=ev: fn(c.s, ev))) for sub, fn in listeners]
+    return out
+
+
+class _Deferring:
+    __slots__ = ("s", "prev", "pend")
+
+    def __init__(self, s: GameState) -> None:
+        self.s = s
+
+    def __enter__(self) -> list:
+        self.prev = self.s.deferred
+        self.pend = []
+        self.s.deferred = self.pend
+        return self.pend
+
+    def __exit__(self, *_exc) -> None:
+        self.s.deferred = self.prev
+
+
+def deferring(s: GameState) -> _Deferring:
+    """``with deferring(s) as pend:`` -- every ``dispatch`` inside collects into ``pend`` instead
+    of running. The caller then either runs them the way dispatch would have (``run_deferred``) or
+    folds them into an ordering group (``deferred_entries`` + ``OrderTriggersStep``)."""
+    return _Deferring(s)
+
+
+def run_deferred(s: GameState, pend: list) -> None:
+    """Run collected events exactly as an undeferred ``dispatch`` would have."""
+    for ev, matched, listeners in pend:
+        for inst, h in reversed(matched):
+            if s.over:
+                return
+            h(_ctx(s, inst), ev)
+        for _sub, fn in listeners:
+            if s.over:
+                return
+            fn(s, ev)
+
+
+def deferred_entries(pend: list) -> list:
+    out = []
+    for ev, matched, listeners in pend:
+        out += _bound(ev, matched, listeners)
+    return out
+
+
+def resolve_triggers(s: GameState, tag: str, entries: list) -> None:
+    """Queue trigger entries to resolve after the current effect, in listed order, asking the
+    controller which goes first when one player owns two distinct cards among them."""
+    if entries:
+        from cptcg.core.steps import OrderTriggersStep
+        s.stack.append(OrderTriggersStep(tag, tuple(entries)))
 
 
 def needs_ordering(s: GameState, matched: list) -> bool:
@@ -189,7 +302,7 @@ def needs_ordering(s: GameState, matched: list) -> bool:
     if len(matched) < 2:
         return False
     seen = ({}, {})
-    for inst, _h in matched:
+    for inst, *_rest in matched:
         by = seen[s.i_owner[inst]]
         by[s.i_card[inst]] = True
         if len(by) >= 2:
@@ -514,19 +627,37 @@ def defeat(s: GameState, inst: int, *, allow_replace: bool = True) -> bool:
     if d.type is CardType.UNIT or d.type is CardType.LEGEND:
         for g in gear:                                  # Gear DEFEATED triggers refer to the host
             s.add_mod("was_host", g, inst)
-            push_trigger(s, Trigger.DEFEATED, g)
-        push_trigger(s, Trigger.DEFEATED, inst)
-        dispatch(s, ("defeated", inst, owner, bool(gear), was_unit))
+        with deferring(s) as pend:
+            dispatch(s, ("defeated", inst, owner, bool(gear), was_unit))
         # The dead card's own "when ... is defeated" listener hears its death too. It has left
         # play by now, so dispatch no longer finds it; the FAQ says it counts -- Yorinobu Arasaka
         # *Steel Dragon* "counts itself for 'the first time an ARASAKA Unit is defeated each turn'".
         # It is handed the very event object dispatch logged, so `first_this_turn` can place it.
+        own = []
         hk = s.reg.hooks[s.i_card[inst]]
-        if hk is not None and hk[2] is not None and (hk[3] is None or "defeated" in hk[3]) and not s.over:
-            for ev in reversed(s.turn_events):
-                if ev[0] == "defeated" and ev[1] == inst:
-                    hk[2](_ctx(s, inst), ev)
-                    break
+        if hk is not None and hk[2] is not None and (hk[3] is None or "defeated" in hk[3]):
+            ev = pend[0][0]
+            if hk[9] is None or hk[9](_ctx(s, inst), ev):
+                own.append((inst, (lambda c, h=hk[2], ev=ev: h(c, ev))))
+        printed = [(inst, d.script.on_defeated)] if d.script is not None and d.script.on_defeated is not None else []
+        for g in gear:
+            gsc = s.card(g).script
+            if gsc is not None and gsc.on_defeated is not None:
+                printed.append((g, gsc.on_defeated))
+        # Ruling 046 over every queue (Stage 0 E8): the event's hooks and listeners, the dead
+        # card's own listener and the printed DEFEATED triggers of the host and its Gear land
+        # together; one owner with two distinct cards among them chooses the order.
+        entries = deferred_entries(pend) + own + printed
+        if needs_ordering(s, entries):
+            resolve_triggers(s, "defeated", entries)
+        else:
+            for g in gear:
+                push_trigger(s, Trigger.DEFEATED, g)
+            push_trigger(s, Trigger.DEFEATED, inst)
+            run_deferred(s, pend)
+            for i, fn in own:
+                if not s.over:
+                    fn(_ctx(s, i))
     return True
 
 
@@ -611,15 +742,45 @@ def push_trigger(s: GameState, kind: Trigger, inst: int) -> None:
 
 
 # ------------------------------------------------------------------- legend
-def call_legend(s: GameState, player: int, inst: int) -> None:
+def call_legend(s: GameState, player: int, inst: int, pend_pay: list | None = None) -> None:
+    """Flip a Legend face-up. ``pend_pay`` holds the spend triggers collected while its Call was
+    paid for; they resolve after the Call (FAQ: "After. Play the card first"), ordered with the
+    CALL trigger when the controller has a choice (Stage 0 E8/E9)."""
     s.i_faceup[inst] = 1
     s._active = None
     s.i_known[inst] = 0b11
     s.once[player] |= ONCE_CALLED
     s.played_log.append((inst, player))           # a Called Legend entered play by a player's act
     s.emit("call", player, inst)
-    push_trigger(s, Trigger.CALL, inst)
-    dispatch(s, ("called", inst, player))
+    sc = s.card(inst).script
+    printed = (inst, sc.on_call) if sc is not None and sc.on_call is not None else None
+    with deferring(s) as pend:
+        dispatch(s, ("called", inst, player))
+    settle_entry(s, "call", pend, printed, pend_pay or [])
+
+
+def settle_entry(s: GameState, tag: str, pend_after: list, printed, pend_pay: list) -> None:
+    """Resolve what a card entering play set off: the event it dispatched (``pend_after``), its
+    printed trigger, and the spend triggers of whatever paid for it (``pend_pay``).
+
+    Default order, when nobody has a choice: the event's hooks run now (as dispatch would), the
+    printed trigger next, and the spend triggers last -- "If I spend a Legend equipped with
+    Netwatch Netdriver to pay a card's cost, do I resolve Netwatch Netdriver's effect before or
+    after I play the card? **After.**" When one player owns two distinct cards among all of them
+    ("I have a Unit with PLAY and a Unit with 'When a friendly Legend is spent. Draw 1'. Will I
+    be able to choose the order to resolve them? **Yes**"), that player orders the whole group.
+    """
+    after = deferred_entries(pend_after)
+    spent = deferred_entries(pend_pay)
+    entries = after + ([printed] if printed else []) + spent
+    if needs_ordering(s, entries):
+        resolve_triggers(s, tag, entries)
+        return
+    resolve_triggers(s, "spent", spent)               # under the printed trigger: runs after it
+    if printed:
+        from cptcg.core.steps import HookStep
+        s.stack.append(HookStep(printed[1], printed[0]))
+    run_deferred(s, pend_after)
 
 
 def can_call_free(s: GameState, player: int) -> bool:

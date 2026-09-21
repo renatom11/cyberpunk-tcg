@@ -9,8 +9,9 @@ from cptcg.core.config import DEFAULT_CONFIG, RulesConfig
 from cptcg.core.enums import (DICE, F_GO_SOLO, F_NO_READY_NEXT, F_NO_SOLO_KEYWORD, NO_INST,
                               TARGET_UNIT, CardType,
                               EndReason, Keyword, Trigger, Zone)
-from cptcg.core.ops import (_ctx, call_legend, consume_cost_mods, dispatch, draw, end_game,
-                            gain_gig, move, pay, play_cost, push_trigger, shuffle_deck, spend)
+from cptcg.core.ops import (_ctx, call_legend, consume_cost_mods, deferred_entries, deferring, dispatch,
+                            draw, end_game, gain_gig, move, pay, play_cost, push_trigger,
+                            resolve_triggers, settle_entry, shuffle_deck, spend)
 from cptcg.core.state import ONCE_SOLD, AttackContext, GameState
 from cptcg.core.steps import (AttackDeclaredStep, DeclareTargetStep, EndAttackStep, FnStep, HookStep, MainPhaseStep,
                               attack_triggers,
@@ -167,8 +168,9 @@ def _main_action(s: GameState, p: int, a: Action) -> None:
         # its orientation, which is CR 11.11.1.3 -- so a Legend that paid for itself arrives spent
         # and cannot pay again or use a Spend Icon until it readies next Start Phase (8.6.3). Its
         # CALL trigger still fires, because that is tied to the flip (11.11.1.4).
-        pay(s, p, 1)
-        call_legend(s, p, a.inst)
+        with deferring(s) as pend:                # the Call resolves before what paid for it
+            pay(s, p, 1)
+        call_legend(s, p, a.inst, pend)
     elif isinstance(a, GoSolo):
         # Ruling 047: `keyword=False` is the plain play, so it pays the PRINTED cost -- a
         # "GO SOLO costs 1 less" effect names the keyword and must not apply to a play that does
@@ -183,8 +185,9 @@ def _main_action(s: GameState, p: int, a: Action) -> None:
 def play_card(s: GameState, p: int, inst: int, host: int = NO_INST, cost: int = 0) -> None:
     """Play ``inst`` from wherever it is (hand, or trash via an effect), paying ``cost``."""
     d = s.card(inst)
-    if cost:
-        pay(s, p, cost)
+    with deferring(s) as pend_pay:                # spend triggers of the payment: after the play
+        if cost:
+            pay(s, p, cost)
     consume_cost_mods(s, p, inst, False)
     s.emit("play", p, inst)
     s.played.append(inst)                         # per-turn: "did you play a Program this turn"
@@ -192,7 +195,6 @@ def play_card(s: GameState, p: int, inst: int, host: int = NO_INST, cost: int = 
     if d.type is CardType.UNIT:
         move(s, inst, Zone.FIELD)
         s.i_lag[inst] = 1                         # ADRENALINE grants attacking, not freedom from Lag
-        push_trigger(s, Trigger.PLAY, inst)
     elif d.type is CardType.PROGRAM:
         if s.cfg.programs_resolve_outside_areas:
             # CR 4.14.2: outside every area while it resolves, then into the trash.
@@ -200,15 +202,16 @@ def play_card(s: GameState, p: int, inst: int, host: int = NO_INST, cost: int = 
             s.stack.append(FnStep(lambda st, i=inst: move(st, i, Zone.TRASH) if st.i_zone[i] is Zone.LIMBO else None))
         else:
             move(s, inst, Zone.TRASH)
-        push_trigger(s, Trigger.PLAY, inst)
     elif d.type is CardType.GEAR:
         if host == NO_INST:
             raise RuntimeError("Gear needs a host")
         move(s, inst, Zone(s.i_zone[host]), host=host)
-        push_trigger(s, Trigger.PLAY, inst)
     else:
         raise RuntimeError(f"cannot play a {d.type.name}")
-    dispatch(s, ("played", inst, p))
+    printed = (inst, d.script.on_play) if d.script is not None and d.script.on_play is not None else None
+    with deferring(s) as pend:
+        dispatch(s, ("played", inst, p))
+    settle_entry(s, "play", pend, printed, pend_pay)
 
 
 def go_solo(s: GameState, p: int, inst: int, cost: int, keyword: bool = True) -> None:
@@ -222,7 +225,8 @@ def go_solo(s: GameState, p: int, inst: int, cost: int, keyword: bool = True) ->
     # cost and pay any remainder from other Eddies and Legends. `payable_sources` already encodes
     # those three conditions, and puts a face-up Legend last, so it is spent only when the other
     # sources do not cover the cost.
-    pay(s, p, cost)
+    with deferring(s) as pend_pay:                # spend triggers of the payment: after the play
+        pay(s, p, cost)
     consume_cost_mods(s, p, inst, True)
     move(s, inst, Zone.FIELD)
     # ...and it arrives READY. CR 4.5.1 would carry its orientation onto the field, but GO SOLO says
@@ -252,18 +256,29 @@ def go_solo(s: GameState, p: int, inst: int, cost: int, keyword: bool = True) ->
     s.played_log.append((inst, p))                # GO SOLO is the other way a Legend enters play
     s.emit("go_solo", p, inst, keyword)
     s.played.append(inst)
-    push_trigger(s, Trigger.PLAY, inst)           # "play it as a ready Unit": PLAY triggers (ruling 032)
-    dispatch(s, ("played", inst, p))
+    sc = s.card(inst).script                      # "play it as a ready Unit": PLAY triggers (ruling 032)
+    printed = (inst, sc.on_play) if sc is not None and sc.on_play is not None else None
+    with deferring(s) as pend:
+        dispatch(s, ("played", inst, p))
+    settle_entry(s, "play", pend, printed, pend_pay)
 
 
 def activate(s: GameState, p: int, inst: int, k: int) -> None:
     ab = s.card(inst).script.abilities[k]
     excl = inst if (ab.self_spend and s.card(inst).type is CardType.LEGEND) else NO_INST
     cost = ab.cost(_ctx(s, inst)) if callable(ab.cost) else ab.cost
+    # The activated effect resolves first and the spend triggers its cost raised come after --
+    # "If I spend a Unit or Legend equipped with Netwatch Netdriver to activate the Unit/Legend's
+    # ⊡: effect, do I resolve Netwatch Netdriver's effect before or after the activated effect?
+    # After. Resolve the activated ⊡: effect first." (Stage 0 E9). The triggers are collected
+    # while paying, queued under the effect, and ordered among themselves by their controller
+    # when there is a choice.
+    with deferring(s) as pend:
+        pay(s, p, cost, exclude=excl)
+        if ab.self_spend:
+            spend(s, inst)
+    resolve_triggers(s, "spent", deferred_entries(pend))
     s.stack.append(HookStep(ab.effect, inst))
-    pay(s, p, cost, exclude=excl)                 # spend triggers queue above the effect
-    if ab.self_spend:
-        spend(s, inst)
     s.emit("activate", p, inst, k)
 
 
@@ -295,8 +310,9 @@ def _reaction(s: GameState, d: int, a: Action) -> None:
         s.emit("block", d, a.inst)
         dispatch(s, ("blocked", a.inst, atk.attacker))
     elif isinstance(a, CallLegend):
-        pay(s, d, 1)                              # as above: it may pay for its own Call
-        call_legend(s, d, a.inst)
+        with deferring(s) as pend:                # as above: it may pay for its own Call
+            pay(s, d, 1)
+        call_legend(s, d, a.inst, pend)
     elif isinstance(a, Play):
         play_card(s, d, a.inst, cost=play_cost(s, d, a.inst))
     elif isinstance(a, Activate):

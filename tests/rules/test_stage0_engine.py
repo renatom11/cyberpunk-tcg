@@ -59,7 +59,6 @@ def attack(s, unit):
 
 
 # ======================================================================= trigger ordering (E8)
-@pytest.mark.xfail(strict=True, reason="S0-E8: FAQ grants the order of a Gear's spend trigger against the host's ATTACK; the engine fixes it")
 def test_gear_spend_trigger_and_host_attack_trigger_are_ordered(pool):
     """Netwatch Netdriver: *"...and the Unit or Legend has an ATTACK effect, do I get Netwatch
     Netdriver's effect before or after the ATTACK effect? You can choose the order you resolve
@@ -72,7 +71,6 @@ def test_gear_spend_trigger_and_host_attack_trigger_are_ordered(pool):
     assert s.pending.player == 0 and len(s.pending.options) == 2
 
 
-@pytest.mark.xfail(strict=True, reason="S0-E8: host and Gear DEFEATED triggers land together; the engine runs the host's first without asking")
 def test_host_and_gear_defeated_triggers_are_ordered(pool):
     """General FAQ: *"When I have multiple ATTACK effects that activate and go into pending at the
     same time. Can I choose any order to resolve them? Yes"* — and DEFEATED is the same kind of
@@ -85,7 +83,6 @@ def test_host_and_gear_defeated_triggers_are_ordered(pool):
     assert s.pending.player == 0 and len(s.pending.options) == 2
 
 
-@pytest.mark.xfail(strict=True, reason="S0-E8/E9: a PLAY trigger and the spend trigger of the Legend that paid for it land together; the engine resolves the spend trigger first, silently")
 def test_play_trigger_and_payment_spend_trigger_are_ordered(pool):
     """General FAQ: *"I have a Unit with PLAY and a Unit with 'When a friendly Legend is spent.
     Draw 1'. Will I be able to choose the order to resolve them? Yes"*. Paying Chrome Fang's cost
@@ -98,7 +95,6 @@ def test_play_trigger_and_payment_spend_trigger_are_ordered(pool):
     assert s.pending.player == 0 and len(s.pending.options) == 2
 
 
-@pytest.mark.xfail(strict=True, reason="S0-E8: a temporary listener (Appetite for Destruction) never joins the ordering group")
 def test_a_listener_and_a_hook_on_the_same_event_are_ordered(pool):
     """Johnny Silverhand *Never Stop Fighting* ("The first time this Unit wins a fight each turn,
     ready it") and Appetite for Destruction ("the next time a friendly Unit wins a fight by 3 or
@@ -119,7 +115,6 @@ def _draws(s):
     return [e for e in s.log if e[0] == "draw"]
 
 
-@pytest.mark.xfail(strict=True, reason="S0-E9: FAQ resolves an activated effect before the spend trigger of the card that was spent for it; the engine does the reverse")
 def test_an_activated_effect_resolves_before_the_spend_trigger_it_caused(pool):
     """Netwatch Netdriver: *"If I spend a Unit or Legend equipped with Netwatch Netdriver to
     activate the Unit/Legend's ⊡: effect, do I resolve Netwatch Netdriver's effect before or after
@@ -135,7 +130,6 @@ def test_an_activated_effect_resolves_before_the_spend_trigger_it_caused(pool):
     assert [e[2] for e in draws] == [2, 1], f"the ⊡ effect's draw 2 must come before the Gear's draw 1: {draws}"
 
 
-@pytest.mark.xfail(strict=True, reason="S0-E9: FAQ plays the card first, then the spend trigger of the Legend that paid; the engine pays (and triggers) before the play")
 def test_paying_with_a_legend_resolves_its_spend_trigger_after_the_play(pool):
     """Netwatch Netdriver: *"If I spend a Legend equipped with Netwatch Netdriver to pay a card's
     cost, do I resolve Netwatch Netdriver's effect before or after I play the card? After."*"""

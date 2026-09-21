@@ -422,6 +422,9 @@ class EffectCtx:
         self.s.add_mod("kw", inst, kw)
 
     def mod(self, kind: str, subject: int, value=None, *, until_my_next_turn: bool = False) -> None:
+        """Register a temporary effect. For ``kind="listener"`` pass the listening card's instance
+        as ``subject`` and the ``fn(s, ev)`` as ``value``, with ``fn.kinds`` naming the event kinds
+        it acts on -- see ``ops._listeners``."""
         turns = (1 if self.s.active == self.player else 0) if until_my_next_turn else 0
         self.s.add_mod(kind, subject, value, turns=turns)
 

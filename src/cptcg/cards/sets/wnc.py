@@ -8,6 +8,7 @@ from __future__ import annotations
 from cptcg.cards.dsl import *  # noqa: F401,F403
 from cptcg.cards.registry import script
 from cptcg.core.enums import Zone
+from cptcg.core.ops import steal_reduction
 
 
 # =============================================================================
@@ -303,7 +304,8 @@ def _():
                     ask(s, Choice(ChoiceKind.PICK, me, tuple(Pick((i,)) for i in cands),
                                   lambda st, a: push_steals(st, unit, a.picks),
                                   prompt="Also steal a Gig", tag=f"{unit}@also_steal"))
-        c.mod("listener", me, listen)
+        listen.kinds = frozenset({"fight_won"})
+        c.mod("listener", c.inst, listen)         # subject: the listening card (E8 ordering)
     return CardScript(on_play=play)
 
 
@@ -374,7 +376,8 @@ def _():
                 if ev[0] in ("steal", "fight_won", "fight_lost") and ev[1] == u \
                         and not s.has_mod("defeat_at_end", u):
                     s.add_mod("defeat_at_end", u)
-            c2.mod("listener", c2.player, listen)
+            listen.kinds = frozenset({"steal", "fight_won", "fight_lost"})
+            c2.mod("listener", c2.inst, listen)     # subject: the listening card (E8 ordering)
         c.choose([u for p in (0, 1) for u in c.units(p) if c.equipped(u)], give, prompt="Equipped Unit")
     return CardScript(on_play=play)
 
@@ -657,7 +660,7 @@ def _():
     # FAQ: "Does Yorinobu count itself for 'the first time an ARASAKA Unit is defeated each turn'?
     # Yes." `ops.defeat` delivers the "defeated" event to the dead card's own listener as well, so
     # the hook above hears its own death without a DEFEATED label the card does not print.
-    return CardScript(on_play=play, on_event=ev, events=frozenset({"defeated"}))
+    return CardScript(on_play=play, on_event=ev, wants=lambda c, e: e[0] == "defeated" and "ARASAKA" in c.d(e[1]).tags and c.first_this_turn(arasaka_died(c), e), events=frozenset({"defeated"}))
 
 
 @script("sandayu-oda-hanakos-guardian")
@@ -833,6 +836,7 @@ def _():
                     st.mods = [m for m in st.mods if not (m[0] == "listener" and m[2] is listen)]
                     from cptcg.core.ops import ready_eddies
                     ready_eddies(st, me, 2)
+            listen.kinds = frozenset({"end_turn"})
             c.mod("listener", c.inst, listen)
         c.adjust_up_to([c.player, c.rival], -2, -1, prompt="Decrease a Gig")
 
@@ -848,7 +852,7 @@ def _():
                 and c.s.i_zone[h] is Zone.FIELD and c.d(h).name == "V"
                 and (c.inst, ATTACKED) not in c.s.used):
             c.ready_eddies(2)
-    return CardScript(on_attack=attack, on_event=ev, events=frozenset({"end_turn"}))
+    return CardScript(on_attack=attack, on_event=ev, wants=lambda c, e: e[0] == "end_turn" and e[1] == c.player and c.host() >= 0 and c.s.i_zone[c.host()] is Zone.FIELD and c.d(c.host()).name == "V" and (c.inst, ATTACKED) not in c.s.used, events=frozenset({"end_turn"}))
 
 
 @script("kiroshi-optics")
@@ -907,7 +911,7 @@ def _():
         # effect? **Yes**". Legends never sit in a deck, so naming Legend always misses -- it is a
         # legal choice, not a good one, and the engine offers it because the player may make it.
         c.choose([UNIT, GEAR, PROGRAM, LEGEND], chosen, prompt="Choose a card type")
-    return CardScript(extra={"cant_attack": True}, on_event=ev, events=frozenset({"end_turn"}))
+    return CardScript(extra={"cant_attack": True}, on_event=ev, wants=lambda c, e: e[0] == "end_turn" and e[1] == c.player, events=frozenset({"end_turn"}))
 
 
 @script("ruthless-lowlife")
@@ -993,7 +997,7 @@ def _():
         if e[0] == "end_turn" and e[1] == c.player:
             c.choose_many([u for u in c.units() if c.s.i_spent[u]], 0, 3,
                           lambda c2, us: [c2.ready(u) for u in us], prompt="Ready up to 3 Units")
-    return CardScript(power_mod=pm, on_event=ev, events=frozenset({"end_turn"}))
+    return CardScript(power_mod=pm, on_event=ev, wants=lambda c, e: e[0] == "end_turn" and e[1] == c.player, events=frozenset({"end_turn"}))
 
 
 @script("saburo-arasaka-stubborn-patriarch")
@@ -1010,7 +1014,7 @@ def _():
         if e[0] == "gig_changed" and e[1] == c.rival and e[2] == c.player:
             c.choose(list(c.trash()), lambda c2, i: c2.add_to_hand(i), prompt="Add a card from trash", optional=True)
     return CardScript(power_mod=lambda c, unit, sit: 2 if unit == c.inst and sit & FIGHTING and sit & VS_LEGEND else 0,
-                      on_event=ev, events=frozenset({"gig_changed"}))
+                      on_event=ev, wants=lambda c, e: e[0] == "gig_changed" and e[1] == c.rival and e[2] == c.player, events=frozenset({"gig_changed"}))
 
 
 @script("adam-smasher-ender-of-legends")
@@ -1034,7 +1038,7 @@ def _():
     def ev(c, e):
         if e[0] == "fight_won" and e[1] == c.inst and c.first_this_turn(lambda x: x[0] == "fight_won" and x[1] == c.inst, e):
             c.ready(c.inst)
-    return CardScript(extra={"wins_vs_tag": "CORPO"}, on_event=ev, events=frozenset({"fight_won"}))
+    return CardScript(extra={"wins_vs_tag": "CORPO"}, on_event=ev, wants=lambda c, e: e[0] == "fight_won" and e[1] == c.inst and c.first_this_turn(lambda x: x[0] == "fight_won" and x[1] == c.inst, e), events=frozenset({"fight_won"}))
 
 
 # ---- end-of-turn / start-of-turn ---------------------------------------------------
@@ -1043,7 +1047,7 @@ def _():
     def ev(c, e):
         if e[0] == "end_turn" and e[1] == c.player and c.in_play():
             c.return_to_hand(c.inst)
-    return CardScript(on_event=ev, events=frozenset({"end_turn"}))
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "end_turn" and e[1] == c.player and c.in_play(), events=frozenset({"end_turn"}))
 
 
 @script("modded-muramasa")
@@ -1051,7 +1055,7 @@ def _():
     def ev(c, e):
         if e[0] == "end_turn" and e[1] == c.player and c.less_cred():
             c.ready(c.inst)
-    return CardScript(on_event=ev, events=frozenset({"end_turn"}))
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "end_turn" and e[1] == c.player and c.less_cred(), events=frozenset({"end_turn"}))
 
 
 @script("maxtac-squadron")
@@ -1060,7 +1064,7 @@ def _():
         if e[0] == "end_turn" and e[1] == c.player and c.s.i_spent[c.inst]:
             c.choose([l for l in c.faceup_legends() if c.s.i_spent[l]], lambda c2, l: c2.ready(l),
                      prompt="Ready a face-up Legend")
-    return CardScript(on_event=ev, events=frozenset({"end_turn"}))
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "end_turn" and e[1] == c.player and bool(c.s.i_spent[c.inst]), events=frozenset({"end_turn"}))
 
 
 @script("delamain-cab")
@@ -1068,7 +1072,7 @@ def _():
     def ev(c, e):
         if e[0] == "end_turn" and e[1] == c.player and ("stole", c.inst) in c.s.used:
             c.ready_eddies(1)
-    return CardScript(on_event=ev, events=frozenset({"end_turn"}))
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "end_turn" and e[1] == c.player and ("stole", c.inst) in c.s.used, events=frozenset({"end_turn"}))
 
 
 @script("v-roamer-of-the-badlands")
@@ -1080,7 +1084,7 @@ def _():
                      lambda c2, a: c2.adjust_gig(c2.player, idx, a), prompt="Increase the stolen Gig", optional=True)
         elif e[0] == "end_turn" and e[1] == c.player and gigs_8plus(c) >= 2:
             c.draw(1)
-    return CardScript(on_event=ev, events=frozenset({"steal", "end_turn"}))
+    return CardScript(on_event=ev, wants=lambda c, e: (e[0] == "steal" and e[1] == c.inst) or (e[0] == "end_turn" and e[1] == c.player and gigs_8plus(c) >= 2), events=frozenset({"steal", "end_turn"}))
 
 
 @script("wraith-marauders")
@@ -1090,7 +1094,7 @@ def _():
             v = e[4]
             c.choose([u for u in c.units() if u != c.inst and c.s.i_spent[u] and c.power(u) == v],
                      lambda c2, u: c2.ready(u), prompt="Ready a Unit")
-    return CardScript(on_event=ev, events=frozenset({"steal"}))
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "steal" and e[1] == c.inst, events=frozenset({"steal"}))
 
 
 @script("6th-street-recruits")
@@ -1104,7 +1108,7 @@ def _():
         if e[0] == "steal" and e[3] == 6 and c.s.i_owner[e[1]] == c.player \
                 and c.is_unit(e[1]):
             c.adjust_up_to([c.player, c.rival], 1, 6, prompt="Increase a Gig")
-    return CardScript(on_event=ev, events=frozenset({"steal"}))
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "steal" and e[3] == 6 and c.s.i_owner[e[1]] == c.player and c.is_unit(e[1]), events=frozenset({"steal"}))
 
 
 @script("maelstrom-goons")
@@ -1112,7 +1116,7 @@ def _():
     def ev(c, e):
         if e[0] == "steal" and e[1] == c.inst and c.equipped(c.inst):
             discard_rival(c, 1)
-    return CardScript(on_event=ev, events=frozenset({"steal"}))
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "steal" and e[1] == c.inst and c.equipped(c.inst), events=frozenset({"steal"}))
 
 
 @script("maelstrom-zealots")
@@ -1120,7 +1124,7 @@ def _():
     def ev(c, e):
         if e[0] == "fight_lost" and e[1] == c.inst:
             c.defeat(e[2])
-    return CardScript(on_event=ev, events=frozenset({"fight_lost"}))
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "fight_lost" and e[1] == c.inst, events=frozenset({"fight_lost"}))
 
 
 @script("la-llorona-ghost-of-the-past")
@@ -1128,7 +1132,7 @@ def _():
     def ev(c, e):
         if e[0] == "blocked" and e[1] == c.inst:
             c.adjust_up_to([c.player, c.rival], 1, 3, prompt="Increase a Gig")
-    return CardScript(on_event=ev, events=frozenset({"blocked"}))
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "blocked" and e[1] == c.inst, events=frozenset({"blocked"}))
 
 
 @script("augmented-negotiators")
@@ -1136,7 +1140,7 @@ def _():
     def ev(c, e):
         if e[0] == "blocked" and e[1] == c.inst:
             discard_rival(c, 1)
-    return CardScript(on_event=ev, events=frozenset({"blocked"}))
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "blocked" and e[1] == c.inst, events=frozenset({"blocked"}))
 
 
 @script("rita-wheeler-no-stupid-questions")
@@ -1145,7 +1149,7 @@ def _():
         if e[0] == "spent" and e[1] == c.inst and c.first_this_turn(lambda x: x[0] == "spent" and x[1] == c.inst, e):
             c.draw(1)
             c.discard(1)
-    return CardScript(on_event=ev, events=frozenset({"spent"}))
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "spent" and e[1] == c.inst and c.first_this_turn(lambda x: x[0] == "spent" and x[1] == c.inst, e), events=frozenset({"spent"}))
 
 
 @script("alt-cunningham-mother-of-daemons")
@@ -1170,7 +1174,7 @@ def _():
         c.choose(cands, decide, prompt="Discard to prevent the steal?", optional=True,
                  otherwise=lambda c2: do_steal(c2.s, thief_unit, thief, index))
         return True
-    return CardScript(on_event=ev, events=frozenset({"spent"}), would_steal=would_steal)
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "spent" and c.s.i_owner[e[1]] == c.player and c.equipped(e[1]), events=frozenset({"spent"}), would_steal=would_steal)
 
 
 # =============================================================================
@@ -1199,7 +1203,7 @@ def _():
             cands = [i for i, (_k, v) in enumerate(c.gigs(c.rival))
                      if v not in mine and i in allowed]
             c.choose(cands, lambda c2, i: push_steals(c2.s, c2.host(), [i]), prompt="Steal a rival Gig")
-    return CardScript(on_event=ev, events=frozenset({"steal"}))
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "steal" and e[1] == c.host() and steal_reduction(c.s, c.host()) < 1 and c.first_this_turn(lambda x, h=c.host(): x[0] == "steal" and x[1] == h, e), events=frozenset({"steal"}))
 
 
 @script("adrenaline-converter")
@@ -1223,7 +1227,7 @@ def _():
                 if len(set(c2.gig_values())) >= 3:
                     c2.draw(1)
             c.adjust_up_to([c.player, c.rival], -1, 1, after=draw_on_three_values)
-    return CardScript(on_event=ev, events=frozenset({"spent"}))
+    return CardScript(on_event=ev, wants=_host_spent, events=frozenset({"spent"}))
 
 
 @script("tetratronic-rippler")
@@ -1235,12 +1239,12 @@ def _():
                 from cptcg.core.ops import move
                 c.maybe(lambda c2: move(c2.s, top[0], Zone.TRASH), revealed=top,
                         prompt=f"Trash {c.d(top[0]).name}?")
-    return CardScript(on_event=ev, events=frozenset({"spent"}))
+    return CardScript(on_event=ev, wants=_host_spent, events=frozenset({"spent"}))
 
 
 @script("netwatch-netdriver")
 def _():
-    return CardScript(events=frozenset({"spent"}), on_event=lambda c, e: c.draw(1) if _host_spent(c, e) else None)
+    return CardScript(events=frozenset({"spent"}), on_event=lambda c, e: c.draw(1) if _host_spent(c, e) else None, wants=_host_spent)
 
 
 @script("arasaka-emergency-radioport")
@@ -1255,7 +1259,7 @@ def _():
             if "ARASAKA" in d.tags or GO_SOLO in d.keywords:
                 c2.maybe(lambda c3: c3.call_free(l), prompt=f"Call {d.name} for free?")
         c.choose(c.legends(faceup=False), look, prompt="Look at a face-down Legend", optional=True)
-    return CardScript(on_event=ev, events=frozenset({"spent"}))
+    return CardScript(on_event=ev, wants=_host_spent, events=frozenset({"spent"}))
 
 
 @script("sandevistan")
@@ -1263,7 +1267,7 @@ def _():
     def ev(c, e):
         if e[0] == "end_turn" and e[1] == c.player and c.host() >= 0:
             c.ready(c.host())
-    return CardScript(on_event=ev, events=frozenset({"end_turn"}))
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "end_turn" and e[1] == c.player and c.host() >= 0, events=frozenset({"end_turn"}))
 
 
 @script("satori-sword-of-saburo")
@@ -1273,7 +1277,7 @@ def _():
         # the loser is still on the field and a solo'd Legend reads as the rival Unit it is.
         if e[0] == "fight_won" and e[1] == c.host() and c.is_unit(e[2]):
             c.draw(1)
-    return CardScript(on_event=ev, events=frozenset({"fight_won"}))
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "fight_won" and e[1] == c.host() and c.is_unit(e[2]), events=frozenset({"fight_won"}))
 
 
 @script("deadman-transmitter")
@@ -1394,7 +1398,7 @@ def _():
             c.choose(top, lambda c2, i: move(c2.s, i, Zone.TRASH), revealed=top,
                      prompt="Trash 1 of the top 2")
     return CardScript(abilities=(Ability(effect=free_gear, self_spend=True, quick=True, label="Play a cheap Gear"),),
-                      on_event=ev, events=frozenset({"defeated"}))
+                      on_event=ev, wants=lambda c, e: e[0] == "defeated" and e[2] == c.player and bool(e[3]) and bool(e[4]), events=frozenset({"defeated"}))
 
 
 @script("kerry-eurodyne-axe-attitude-audience")
@@ -1426,7 +1430,7 @@ def _():
         # the player was asked: a d6 rolling 1 drew a card, and reroll-to-6 then drew another. One
         # roll, two cards, one of them for a face the player had just been allowed to ignore.
         c.maybe(reroll, after=after, prompt=f"Reroll the d{sides} ({value})?")
-    return CardScript(on_event=ev, events=frozenset({"gig_rolled"}))
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "gig_rolled" and e[1] == c.player, events=frozenset({"gig_rolled"}))
 
 
 @script("evelyn-parker-beautiful-enigma")
@@ -1439,7 +1443,7 @@ def _():
         if e[0] == "steal" and e[5] == 0 and c.s.i_owner[e[1]] == c.player \
                 and c.d(e[1]).tags & {"CORPO", "GANGER"}:
             c.ready_eddies(1)
-    return CardScript(on_event=ev, events=frozenset({"steal"}), abilities=(Ability(
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "steal" and e[5] == 0 and c.s.i_owner[e[1]] == c.player and bool(c.d(e[1]).tags & {"CORPO", "GANGER"}), events=frozenset({"steal"}), abilities=(Ability(
         effect=lambda c: c.choose(c.rival_units(), lambda c2, u: c2.mod("must_attack", u, until_my_next_turn=True),
                                   prompt="Must attack next turn"),
         cost=1, self_spend=True, label="A rival Unit must attack"),))
@@ -1456,7 +1460,7 @@ def _():
         if e[0] == "start_turn" and e[1] == c.player and c.value_pairs():
             c.draw(c.value_pairs())
     return CardScript(abilities=(Ability(effect=swap, self_spend=True, label="Swap Gigs",
-                                         legal=lambda c: bool(c.gigs()) and bool(c.gigs(c.rival))),), on_event=ev, events=frozenset({"start_turn"}))
+                                         legal=lambda c: bool(c.gigs()) and bool(c.gigs(c.rival))),), on_event=ev, wants=lambda c, e: e[0] == "start_turn" and e[1] == c.player and bool(c.value_pairs()), events=frozenset({"start_turn"}))
 
 
 @script("panam-palmer-nomad-cavalry")
@@ -1476,7 +1480,7 @@ def _():
                     c.ready(u)
     return CardScript(abilities=(Ability(effect=move_gear, cost=2, self_spend=True, label="Move a Gear",
                                          legal=lambda c: bool(c.gear()) and any(not c.equipped(u) for u in c.units())),),
-                      on_event=ev, events=frozenset({"end_turn"}))
+                      on_event=ev, wants=lambda c, e: e[0] == "end_turn" and e[1] == c.player and len([u for u in c.units() + c.legends(faceup=True) if c.equipped(u)]) >= 5, events=frozenset({"end_turn"}))
 
 
 @script("johnny-silverhand-rocking-renegade")
@@ -1501,7 +1505,7 @@ def _():
         ts = c.trash_top(1)
         if ts and c.is_type(ts[0], PROGRAM):
             c.maybe(lambda c2: c2.add_to_hand(ts[0]), prompt=f"Add {c.d(ts[0]).name} to hand?")
-    return CardScript(on_event=ev, events=frozenset({"played"}), abilities=(Ability(effect=mill, self_spend=True, label="Trash top; take a Program"),))
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "played" and e[2] == c.player and c.d(e[1]).type is PROGRAM and "BRAINDANCE" in c.d(e[1]).tags, events=frozenset({"played"}), abilities=(Ability(effect=mill, self_spend=True, label="Trash top; take a Program"),))
 
 
 @script("alt-cunningham-soulkiller-architect")
@@ -1565,24 +1569,26 @@ def _():
 
 @script("jackie-welles-pour-one-out-for-me")
 def _():
-    def ev(c, e):
-        # Ruling 044, and the FAQ names this card: "Does playing a Legend from the Legends area
-        # to the field, trigger Jackie Welles's effect? Yes". `go_solo` moves the Legend to the
-        # field before dispatching "played", so by zone it is the Blue Unit that was played.
-        def blue_play(x):
-            return (x[0] == "played" and x[2] == c.player and c.d(x[1]).color.name == "BLUE"
-                    and (c.d(x[1]).type is not PROGRAM))          # a Unit (solo'd Legends included) or a Gear
+    # Ruling 044, and the FAQ names this card: "Does playing a Legend from the Legends area
+    # to the field, trigger Jackie Welles's effect? Yes". `go_solo` moves the Legend to the
+    # field before dispatching "played", so by zone it is the Blue Unit that was played.
+    def blue_play(c):
+        return lambda x: (x[0] == "played" and x[2] == c.player and c.d(x[1]).color.name == "BLUE"
+                          and c.d(x[1]).type is not PROGRAM)      # a Unit (solo'd Legends included) or a Gear
 
+    def wants(c, e):
         # "First time each turn" is by event (FAQ: Jackie flipped after a Blue card this turn does
         # not trigger on the next one). A solo'd Legend is a Blue Unit when it is played to the
         # field, so the type test excludes only Programs.
-        if e[0] == "played" and e[2] == c.player and c.d(e[1]).color.name == "BLUE" \
-                and (c.is_unit(e[1]) or c.is_type(e[1], GEAR)) and c.first_this_turn(blue_play, e):
+        return e[0] == "played" and blue_play(c)(e) and c.first_this_turn(blue_play(c), e)
+
+    def ev(c, e):
+        if e[0] == "played" and wants(c, e):
             def after(c2, o, i):
                 if c2.gigs(o)[i][1] == 1:
                     c2.draw(1)
             c.adjust_up_to([c.player], -2, -1, cont=after, prompt="Decrease a friendly Gig")
-    return CardScript(on_event=ev, events=frozenset({"played"}))
+    return CardScript(on_event=ev, wants=wants, events=frozenset({"played"}))
 
 
 @script("rogue-amendiares-preem-solo")
@@ -1593,7 +1599,7 @@ def _():
                 c.draw(1)
             else:
                 discard_rival(c, 1)
-    return CardScript(on_event=ev, events=frozenset({"steal"}))
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "steal" and c.s.i_owner[e[1]] == c.player and c.d(e[1]).type is LEGEND, events=frozenset({"steal"}))
 
 
 @script("goro-takemura-vengeful-bodyguard")
@@ -1610,7 +1616,7 @@ def _():
             c.maybe(lambda c2: c2.discard(1, cont=lambda c3, ps: c3.draw(1) if ps else None),
                     prompt="Discard 1 to draw 1?")
     return CardScript(abilities=(Ability(effect=give, cost=1, self_spend=True, quick=True, label="Give BLOCKER"),),
-                      on_event=ev, events=frozenset({"blocked"}))
+                      on_event=ev, wants=lambda c, e: e[0] == "blocked" and c.s.i_owner[e[1]] == c.player and bool(c.hand()), events=frozenset({"blocked"}))
 
 
 @script("yorinobu-arasaka-embracing-destruction")
@@ -1621,7 +1627,7 @@ def _():
             c.draw(1)
             if c.cred() < 20:
                 c.discard(1)
-    return CardScript(on_event=ev, events=frozenset({"attack"}))
+    return CardScript(on_event=ev, wants=lambda c, e: e[0] == "attack" and e[2] == c.player and "ARASAKA" in c.d(e[1]).tags and c.first_this_turn(lambda x: x[0] == "attack" and x[2] == c.player and "ARASAKA" in c.d(x[1]).tags, e), events=frozenset({"attack"}))
 
 
 @script("sasha-yakovleva-wont-let-you-down")
@@ -1664,22 +1670,26 @@ def _():
 
 @script("rogue-amendiares-queen-of-the-afterlife")
 def _():
-    def ev(c, e):
-        # "...with value less than ITS power" -- the thief's power in the steal that is happening,
-        # which is an attack, so it is read with ATTACKING exactly as the engine reads it on the way
-        # here (`steal_count(power(s, a, ATTACKING))` and `stealable`, both in core/steps.py; the
-        # set's one other value-against-thief comparison, Chrome Fang's, is enforced there). Read
-        # without the flag, a Unit attacking under Saul Bright's "+2 power while attacking" is
-        # measured at its printed power and the clause silently disagrees with the steal it watched.
-        def qualifying(x):
-            return (x[0] == "steal" and x[1] != c.inst and c.s.i_owner[x[1]] == c.player
-                    and x[4] < c.power(x[1], sit=ATTACKING))
+    # "...with value less than ITS power" -- the thief's power in the steal that is happening,
+    # which is an attack, so it is read with ATTACKING exactly as the engine reads it on the way
+    # here (`steal_count(power(s, a, ATTACKING))` and `stealable`, both in core/steps.py; the
+    # set's one other value-against-thief comparison, Chrome Fang's, is enforced there). Read
+    # without the flag, a Unit attacking under Saul Bright's "+2 power while attacking" is
+    # measured at its printed power and the clause silently disagrees with the steal it watched.
+    def qualifying(c):
+        return lambda x: (x[0] == "steal" and x[1] != c.inst and c.s.i_owner[x[1]] == c.player
+                          and x[4] < c.power(x[1], sit=ATTACKING))
 
-        if e[0] == "steal" and qualifying(e) and c.first_this_turn(qualifying, e):
+    def wants(c, e):
+        q = qualifying(c)
+        return e[0] == "steal" and q(e) and c.first_this_turn(q, e)
+
+    def ev(c, e):
+        if e[0] == "steal" and wants(c, e):
             c.ready_eddies(2)
 
     def drain(c):
         p = c.power()
         temp_power_one(c, c.rival_units(), -p)
-    return CardScript(on_event=ev, events=frozenset({"steal"}), abilities=(Ability(effect=drain, cost=2, self_spend=True, quick=True,
+    return CardScript(on_event=ev, wants=wants, events=frozenset({"steal"}), abilities=(Ability(effect=drain, cost=2, self_spend=True, quick=True,
                                                       label="Rival Unit loses power"),))

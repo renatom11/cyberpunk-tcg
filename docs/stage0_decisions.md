@@ -40,3 +40,14 @@ One line each: what was decided and why. Rules questions are not here; they go t
 - **The bootstrap sample is re-recorded whenever the full suite says it no longer replays**, in the
   regeneration commit of the item that caught it (here E7, for streams E5/E6 moved); the ledger
   entry names it.
+- **E8 and E9 land as one commit** — E9's deferred spend triggers *are* an E8 group, and the
+  `deferring` collection mode is what both need; the ledger entry covers both.
+- **`CardScript.wants(ctx, ev)` added and declared on all 37 event hooks** — a trigger that would
+  not act is not pending, so it must not be offered for ordering; 046's "3.2% of events" was mostly
+  inactive hooks, and the true ordering rate is 1.8% of decisions. A lint would be the right guard
+  for new scripts (not added in Stage 0; `registry.load_default` check in the report instead).
+- **Listeners carry the registering card's instance and an event-kind attribute** (`fn.kinds`) —
+  the lint that proves one-shot listeners remove themselves reads the `m[2] is listen` idiom, so
+  the filter lives on the function rather than in a tuple value.
+- **A Call's spend triggers resolve after the Call and join its CALL group** — by analogy with
+  the FAQ's "play the card first"; no FAQ answer names the Call case (listed in the questions file).

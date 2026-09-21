@@ -110,7 +110,7 @@ def _brute_slots(s):
 
 def _pairs(hooks):
     """Event-hook entries are (inst, on_event, events) now; the reference had (inst, on_event)."""
-    return tuple((i, h) for i, h, _kinds in hooks)
+    return tuple((i, h) for i, h, _kinds, _w in hooks)
 
 
 def _check_state(s):
@@ -120,7 +120,7 @@ def _check_state(s):
     assert a[:4] == b[:4] and a[5] == b[5]
     assert _pairs(a[4]) == b[4]
     assert (_pairs(a[6][0]), _pairs(a[6][1])) == b[6]
-    for i, _h, kinds in a[4]:
+    for i, _h, kinds, _w in a[4]:
         assert kinds == s.card(i).script.events
     assert a[7:] == _brute_slots(s)
     for p in (0, 1):
@@ -198,4 +198,4 @@ def test_registry_hook_table_matches_scripts(pool):
             continue
         assert row == (sc.power_mod, sc.cost_mod, sc.on_event, sc.events, sc.would_steal,
                        sc.would_defeat, sc if sc.abilities else None,
-                       bool(sc.extra.get("suppress_new_units")), sc.kw_mod), d.id
+                       bool(sc.extra.get("suppress_new_units")), sc.kw_mod, sc.wants), d.id

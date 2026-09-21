@@ -91,6 +91,8 @@ class GameState:
         "_active",
         # EffectCtx cache: one per instance per state (ctxs bind the state, so never shared)
         "_ctxs",
+        # trigger collection in progress (ops.deferring): None, or the list dispatch appends to
+        "deferred",
     )
 
     def __init__(self, cfg: RulesConfig, reg: "Registry", seed: int) -> None:
@@ -134,6 +136,7 @@ class GameState:
         self.actions: list[int] | None = None
         self._active = None
         self._ctxs: dict = {}
+        self.deferred: list | None = None
 
     def invalidate(self) -> None:
         self._active = None
@@ -184,6 +187,7 @@ class GameState:
         s.actions = None
         s._active = self._active                       # immutable tuple-of-tuples, shareable
         s._ctxs = {}
+        s.deferred = None                              # collection never spans a clone
         return s
 
     # -------------------------------------------------------------- instances

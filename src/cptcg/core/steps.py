@@ -16,8 +16,9 @@ from cptcg.core.enums import (F_CANT_READY, F_NO_READY_NEXT, NO_INST, NZONE, TAR
                               EndReason, Trigger, Zone)
 from cptcg.core.legal import attack_targets, gig_die_options, main_menu, reaction_menu
 from cptcg.core.ops import (ATTACKING, FIGHTING, VS_LEGEND, VS_UNIT, _ctx, _rebuild_active,
-                            active_cards, ask, defeat, dispatch, draw, end_game, gain_gig, power,
-                            push_trigger, spend, steal_count, steal_gig, steal_reduction)
+                            active_cards, ask, defeat, deferred_entries, deferring, dispatch, draw,
+                            end_game, gain_gig, needs_ordering, power, push_trigger, resolve_triggers,
+                            run_deferred, spend, steal_count, steal_gig, steal_reduction)
 from cptcg.core.state import GameState
 
 
@@ -220,12 +221,36 @@ class DeclareTargetStep(Step):
 
 
 def attack_triggers(s: GameState, unit: int) -> None:
-    """Spend the attacker; ATTACK and 'when spent' effects become pending together (CR 11.21.2)."""
-    for g in s.gear_on(unit):
+    """Spend the attacker; ATTACK and 'when spent' effects become pending together (CR 11.21.2).
+
+    Ruling 046 over every queue (Stage 0 E8): the spend triggers, the "attacks" hooks and
+    listeners, and the printed ATTACK triggers of the Unit and its Gear all land on this one
+    act. When the attacker's controller owns two distinct cards among them they choose the
+    order -- Netwatch Netdriver: "...and the Unit or Legend has an ATTACK effect, do I get
+    Netwatch Netdriver's effect before or after the ATTACK effect? You can choose the order."
+    Otherwise the order is the one the engine always had: spend triggers, then the attack
+    hooks, then the Unit's ATTACK, then its Gear's.
+    """
+    gear = s.gear_on(unit)
+    with deferring(s) as pend:
+        spend(s, unit)
+        dispatch(s, ("attack", unit, s.atk.attacker_ctrl))
+    printed = []
+    sc = s.card(unit).script
+    if sc is not None and sc.on_attack is not None:
+        printed.append((unit, sc.on_attack))
+    for g in gear:
+        gsc = s.card(g).script
+        if gsc is not None and gsc.on_attack is not None:
+            printed.append((g, gsc.on_attack))
+    entries = deferred_entries(pend) + printed
+    if needs_ordering(s, entries):
+        resolve_triggers(s, "attack", entries)
+        return
+    for g in gear:
         push_trigger(s, Trigger.ATTACK, g)
     push_trigger(s, Trigger.ATTACK, unit)
-    spend(s, unit)
-    dispatch(s, ("attack", unit, s.atk.attacker_ctrl))
+    run_deferred(s, pend)
 
 
 class AttackDeclaredStep(Step):
@@ -489,66 +514,73 @@ class HookStep(Step):
 class OrderTriggersStep(Step):
     """Ruling 046: the controller orders their own triggers that landed on the same event.
 
-    ``ops.dispatch`` calls hooks inline and in a fixed order, which is right for the 96.8% of
-    events where nobody has a choice to make and is what keeps dispatch cheap. When one player
-    owns two or more triggers on distinct cards (``ops.needs_ordering``), the walk moves here
-    instead: ask that player which resolves next, resolve exactly that one, and re-push with the
-    rest. That is the shape ``ReactionWindowStep`` uses — re-push a menu until there is nothing
-    left to ask — and it uses the existing ``Pick`` action, because a new Action class would move
+    ``ops.dispatch`` calls hooks inline and in a fixed order, which is right for the events where
+    nobody has a choice to make and is what keeps dispatch cheap. When one player owns two or
+    more triggers on distinct cards (``ops.needs_ordering``), the group moves here instead: ask
+    that player which resolves next, resolve exactly that one, and re-push with the rest. That is
+    the shape ``ReactionWindowStep`` uses — re-push a menu until there is nothing left to ask —
+    and it uses the existing ``Pick`` action, because a new Action class would move
     ``learn.policy.action_feature_digest()`` and every fitted policy head would be refused on load.
+
+    Since Stage 0 E8 the group is over every queue, not only one dispatch: an entry is any
+    ``(inst, fn(ctx))`` -- an ``on_event`` hook bound to its event, a listener, or a printed
+    PLAY/CALL/ATTACK/DEFEATED trigger -- and the sites that raise several at once
+    (``attack_triggers``, ``ops.defeat``, ``ops.settle_entry``) build the group.
 
     Two things this deliberately does not do, both because the FAQ does not grant them. Across
     players there is no choice: the turn player's triggers resolve first, which is the order the
-    hook list already has, so a group is always one player's. And it is only for triggers that
-    land *together* — the FAQ is explicit the other way round for a trigger meeting an activated
-    ⊡ effect ("After. Resolve the activated effect first") or a cost being paid ("After. Play the
-    card first").
+    entries already have, so a group is always one player's. And a trigger never orders against
+    the *action* that caused it -- an activated ⊡ effect resolves before the spend triggers its
+    cost raised ("After. Resolve the activated effect first"), and a card is played before the
+    spend triggers of what paid for it ("After. Play the card first"): ``engine.activate`` and
+    ``ops.settle_entry`` queue those under the effect.
 
-    The cost of moving a group here is that its hooks run as a step rather than inside the
-    caller's remaining code. That is the one behaviour change beyond the ordering itself, it is
-    confined to the 3.2%, and it is arguably the more correct sequencing: the rules put a trigger
-    in a pending queue that resolves after the current effect finishes.
+    A group that moves here runs as a step rather than inside the caller's remaining code. That
+    is the one behaviour change beyond the ordering itself, and it is the more correct
+    sequencing: the rules put a trigger in a pending queue that resolves after the current
+    effect finishes.
     """
-    __slots__ = ("ev", "left")
+    __slots__ = ("tag", "left")
 
-    def __init__(self, ev: tuple, left: tuple) -> None:
-        self.ev = ev
-        self.left = left                              # ((inst, hook), ...) in default order
+    def __init__(self, tag: str, left: tuple) -> None:
+        self.tag = tag
+        self.left = left                              # ((inst, fn), ...) in default order
 
     def key(self) -> tuple:
-        return ("OrderTriggersStep", self.ev[0], tuple(i for i, _ in self.left))
+        return ("OrderTriggersStep", self.tag, tuple(i for i, _ in self.left))
 
     def run(self, s: GameState) -> None:
         if s.over or not self.left:
             return
-        # One player's group at a time, in the order dispatch already put them in.
+        # One player's group at a time, in the order the entries already have.
         p = s.i_owner[self.left[0][0]]
         group = tuple(x for x in self.left if s.i_owner[x[0]] == p)
         rest = tuple(x for x in self.left if s.i_owner[x[0]] != p)
         if len({s.i_card[i] for i, _ in group}) < 2:
             # Nothing to choose: copies of one card, or a lone trigger. Resolve the group the way
-            # dispatch would have, then carry on with the other player's.
+            # dispatch would have (reversed, so the first entry's question surfaces first), then
+            # carry on with the other player's.
             if rest:
-                s.stack.append(OrderTriggersStep(self.ev, rest))
-            for inst, h in reversed(group):
+                s.stack.append(OrderTriggersStep(self.tag, rest))
+            for inst, fn in reversed(group):
                 if s.over:
                     return
-                h(_ctx(s, inst), self.ev)
+                fn(_ctx(s, inst))
             return
         # `vals` is read by web.view._pick_env to draw the buttons as the cards they name, which is
         # the same convention effects.choose uses. Keep the name.
         vals = tuple(i for i, _ in group)
-        hks = tuple(h for _, h in group)
+        fns = tuple(fn for _, fn in group)
 
-        def cont(st: GameState, act: Pick, rest=rest, ev=self.ev) -> None:
+        def cont(st: GameState, act: Pick, rest=rest, tag=self.tag) -> None:
             k = act.picks[0]
-            remaining = tuple((vals[j], hks[j]) for j in range(len(vals)) if j != k)
+            remaining = tuple((vals[j], fns[j]) for j in range(len(vals)) if j != k)
             if remaining or rest:
-                st.stack.append(OrderTriggersStep(ev, remaining + rest))
-            hks[k](_ctx(st, vals[k]), ev)
+                st.stack.append(OrderTriggersStep(tag, remaining + rest))
+            fns[k](_ctx(st, vals[k]))
 
         ask(s, Choice(ChoiceKind.PICK, p, tuple(Pick((k,)) for k in range(len(vals))), cont,
-                      prompt="Resolve which trigger first?", tag=f"{self.ev[0]}@order"))
+                      prompt="Resolve which trigger first?", tag=f"{self.tag}@order"))
 
 
 class FnStep(Step):
