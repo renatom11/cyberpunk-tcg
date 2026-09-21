@@ -46,3 +46,19 @@ def test_spearman_handles_ties_and_perfect_order():
     assert abs(O._spearman([1, 2, 3, 4], [10, 20, 30, 40]) - 1.0) < 1e-12
     assert abs(O._spearman([1, 2, 3, 4], [40, 30, 20, 10]) + 1.0) < 1e-12
     assert abs(O._spearman([1, 1, 2, 2], [1, 1, 2, 2]) - 1.0) < 1e-12
+
+
+@pytest.mark.skipif(not SAMPLE.exists(), reason="no bootstrap sample")
+def test_playout_labels_are_independent_of_any_head(tmp_path):
+    out = tmp_path / "oracle.json"
+    O.main(["sample", str(SAMPLE), "--n", "3", "--seed", "5", "--out", str(out)])
+    O.main(["playouts", str(out), "--n", "4", "--workers", "1"])
+    data = json.loads(out.read_text())
+    assert data["playout_labels"]["playouts"] == 4
+    for p in data["positions"]:
+        po = p["playout"]
+        assert 0.0 <= po["playout_value"] <= 1.0 and po["playouts"] == 4
+        assert abs((po["half_a"] + po["half_b"]) / 2 - po["playout_value"]) < 1e-9
+    O.main(["agree", str(out), "--independent", "--out", str(tmp_path / "ag.json")])
+    ag = json.loads((tmp_path / "ag.json").read_text())
+    assert ag["label"].startswith("heuristic playouts") and ag["positions"] == 3

@@ -130,6 +130,77 @@ def _label_one(job: tuple) -> tuple[str, dict]:
                  "seconds": [round(t1 - t0, 2), round(t2 - t1, 2)]}
 
 
+def _playout_one(job: tuple) -> tuple[str, dict]:
+    """The independent label: the mean outcome for the mover over ``n`` playouts of the true
+    state by the frozen heuristic on both seats, each with its own seed (tie-break noise and
+    the Gig die differ per seed). No learned head anywhere. Also the split-half agreement:
+    the mean of the odd seeds against the mean of the even seeds, so the noise of the label
+    is measured rather than assumed."""
+    pid, spec, mover, n, seed = job
+    reg = load_default()
+    from cptcg.learn.experience import outcome  # noqa: F401
+    wins = []
+    for k in range(n):
+        s = build_position(reg, spec, DEFAULT_CONFIG)
+        legal_actions(s)
+        sd = seed * 1000 + k
+        s.rng = Pcg32(sd, seq=3)
+        ags = [make_agent("heuristic", sd * 2 + i) for i in (0, 1)]
+        for p, ag in enumerate(ags):
+            ag.new_game(sd, p)
+        guard = 0
+        while not s.over and guard < 4000:
+            guard += 1
+            legal_actions(s)
+            ch = s.pending
+            if ch is None:
+                break
+            apply(s, ags[ch.player].act(s, ch))
+        wins.append(1.0 if s.winner == mover else (0.0 if s.winner is not None else 0.5))
+    odd = [w for i, w in enumerate(wins) if i % 2]
+    even = [w for i, w in enumerate(wins) if not i % 2]
+    return pid, {"playout_value": sum(wins) / len(wins), "playouts": n,
+                 "half_a": sum(even) / len(even), "half_b": sum(odd) / len(odd)}
+
+
+def cmd_playouts(a) -> None:
+    path = Path(a.oracle)
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if data["rules"] != DEFAULT_CONFIG.digest():
+        raise SystemExit(f"oracle set is for ruleset {data['rules']}, this build is {DEFAULT_CONFIG.digest()}")
+    todo = [p for p in data["positions"] if not (a.resume and p.get("playout"))]
+    jobs = [(p["id"], p["spec"], p["mover"], a.n, a.seed + i) for i, p in enumerate(todo)]
+    by_id = {p["id"]: p for p in data["positions"]}
+    print(f"playout-labelling {len(todo)} positions, {a.n} heuristic playouts each", file=sys.stderr)
+    t0 = time.time()
+    done = 0
+
+    def flush():
+        data["playout_labels"] = {"agent": "heuristic vs heuristic from the true state", "playouts": a.n,
+                                  "seed": a.seed, "updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+        path.write_text(json.dumps(data, separators=(",", ":")) + "\n", encoding="utf-8")
+
+    from multiprocessing import Pool
+    with Pool(a.workers) as pool:
+        for pid, lab in pool.imap_unordered(_playout_one, jobs, chunksize=2):
+            by_id[pid]["playout"] = lab
+            done += 1
+            if done % 50 == 0 or done == len(jobs):
+                flush()
+                print(f"  {done}/{len(jobs)}, {(time.time() - t0) / done:.1f} s each", file=sys.stderr)
+    flush()
+    # the label's own noise: split-half agreement and the binomial standard error
+    halves = [(p["playout"]["half_a"], p["playout"]["half_b"]) for p in data["positions"] if p.get("playout")]
+    xs = [h[0] for h in halves]; ys = [h[1] for h in halves]
+    rho = _spearman(xs, ys)
+    import statistics
+    pv = [p["playout"]["playout_value"] for p in data["positions"] if p.get("playout")]
+    se = statistics.fmean(math.sqrt(max(v * (1 - v), 1e-9) / a.n) for v in pv)
+    print(json.dumps({"positions": len(pv), "playouts": a.n, "split_half_spearman": rho,
+                      "mean_binomial_se": se, "mean_value": statistics.fmean(pv),
+                      "seconds": round(time.time() - t0)}, indent=1))
+
+
 def cmd_label(a) -> None:
     path = Path(a.oracle)
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -220,22 +291,27 @@ def cmd_agree(a) -> None:
     reg = load_default()
     data = json.loads(Path(a.oracle).read_text(encoding="utf-8"))
     val = _valuer(a)
-    xs, cheat, plan = [], [], []
+    xs, cheat, plan, play = [], [], [], []
     for p in data["positions"]:
         lab = p.get("labels")
-        if not lab or lab.get("cheat_value") is None:
+        po = p.get("playout")
+        if a.independent:
+            if not po:
+                continue
+        elif not lab or lab.get("cheat_value") is None:
             continue
         s = build_position(reg, p["spec"], DEFAULT_CONFIG)
         legal_actions(s)
         xs.append(val(s, p["mover"]))
-        cheat.append(float(lab["cheat_value"]))
-        plan.append(lab.get("plan_score"))
+        cheat.append(float(po["playout_value"]) if a.independent else float(lab["cheat_value"]))
+        plan.append((lab or {}).get("plan_score"))
     if not xs:
         raise SystemExit("no labelled positions")
     brier = sum((x - c) ** 2 for x, c in zip(xs, cheat)) / len(xs)
     rho = _spearman(xs, cheat)
     lo, hi = _bootstrap(_spearman, xs, cheat)
     out = {"oracle": a.oracle, "head": a.cards or a.agent or a.weights or "shipped", "ablate": bool(a.ablate),
+           "label": "heuristic playouts (independent)" if a.independent else "cheat:ismcts root value",
            "positions": len(xs), "spearman_vs_cheat": rho, "spearman_ci95": [lo, hi],
            "brier_vs_cheat": brier, "brier_const": sum((0.5 - c) ** 2 for c in cheat) / len(cheat)}
     pl = [(x, p) for x, p in zip(xs, plan) if p is not None]
@@ -266,8 +342,16 @@ def main(argv=None) -> None:
     p.add_argument("--seed", type=int, default=7)
     p.add_argument("--resume", action="store_true")
     p.set_defaults(fn=cmd_label)
+    p = sub.add_parser("playouts", help="the independent label: heuristic playouts from the true state")
+    p.add_argument("oracle")
+    p.add_argument("--n", type=int, default=128)
+    p.add_argument("--workers", type=int, default=4)
+    p.add_argument("--seed", type=int, default=11)
+    p.add_argument("--resume", action="store_true")
+    p.set_defaults(fn=cmd_playouts)
     p = sub.add_parser("agree")
     p.add_argument("oracle")
+    p.add_argument("--independent", action="store_true", help="score against the playout label")
     p.add_argument("--weights", default=None)
     p.add_argument("--cards", default=None)
     p.add_argument("--ablate", action="store_true")
