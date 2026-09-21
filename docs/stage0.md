@@ -190,7 +190,48 @@ null at p < 0.05 and a Nash support of at least three). The `ismcts:32` row deci
 
 ## 5. Day-0 baselines
 
-*(filled in as the runs complete)*
+Every Part 5 instrument, with the shipped weights (`src/cptcg/agents/weights.json`, gen-1) and
+`ismcts:32` where an agent is needed; JSON under `out/s0/baselines/`. The refit 114 head (`w114`)
+and the card-aware model (`cards`, and its identity ablation) are shown beside the shipped head
+where the instrument takes a head.
+
+**Oracle set** (`data/arena/oracle.json`): 2,000 MAIN decisions sampled uniformly over 4.13M
+decisions of the h20k (1,530), r8k (415) and cov (55) corpora, stored as board specs with the
+rules and cards digests; labelled by `cheat:ismcts:2000`'s root value (mean 0.551, quartiles
+0.30 / 0.57 / 0.84) and `plan-deep:32`'s best-line replay score, 6.1 s + 6.4 s a position on the
+loaded machine (6,236 s on four workers in all). **Caveat, Confirmed by construction:** both
+labellers evaluate leaves with the *shipped* 114 head, so the shipped head's agreement with the
+oracle is partly self-agreement; the set is a reference for ranking heads against each other and
+for Stage 1's oracle-relabelling, not an independent truth.
+
+| instrument | shipped head | w114 (refit) | cards | cards ablated |
+|---|---:|---:|---:|---:|
+| oracle agreement, Spearman vs `cheat:ismcts:2000` (95% bootstrap) | 0.950 [0.942, 0.956] | 0.925 [0.915, 0.932] | 0.865 [0.851, 0.877] | 0.845 [0.830, 0.859] |
+| oracle agreement, Brier vs cheat value (constant 0.5: 0.1005) | 0.0105 | 0.0184 | 0.0462 | 0.0497 |
+| oracle agreement, Spearman vs plan-deep score | 0.825 | 0.807 | 0.797 | 0.776 |
+| monotonicity, overall violation rate (500 positions, tol 0.005) | 0.0017 | 0.0006 | 0.0663 | 0.0680 |
+| monotonicity, `+gig` violations | 0.000 | 0.000 | **0.220** | **0.228** |
+
+The card-aware model fails the `+gig` perturbation one time in five: adding a die to its own Gig
+area lowers its value in 22% of positions, where both 114 heads never err. My judgement: that,
+more than the identity embedding, is the reason its greedy play trails (kill test 1) — a head
+that cannot be trusted on the plainest improvement mis-ranks one-ply previews.
+
+**Belief log-likelihood** (`belief_ll.py out/s0/r8k --games 200`): 72,541 hidden cards and 1,734
+face-down Legend slots scored; belief −4.255 nats a card vs uniform-pool −4.783: gain **0.528**
+[0.505, 0.553]; zero-probability truths: **0** (the colour bounds never rule out the truth).
+
+**Coverage** (kill test 5 above): h20k 872 triples offered / 21 starved; cov 809 / 13.
+
+**Dice regret** (kill test 6 above): GIG_DIE mean 0.0010, chosen best 55.0%, biggest best 40.9%;
+steal mean 0.0006, chosen best 79.5%.
+
+**Identity ablation on the 114 head**: not applicable — the 114 features carry no card identity,
+so the ablation is flat by construction; reported as such rather than measured.
+
+**Delayed suite per family and horizon, plan regret, deck round-robin residuals and rank
+agreement, play-around / card-semantics / race / dice / defend suites**: filled in below as the
+runs complete.
 
 ## 6. Deviations from the plan
 
