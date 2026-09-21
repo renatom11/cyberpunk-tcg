@@ -10,6 +10,29 @@ Every entry records the five pieces of evidence from `docs/verification.md`. A r
 all five is not one.
 
 
+## 2026-09-21 — Stage 0 E2: Take Control reaches effect steals (G1, no golden movement)
+
+**The change.** `ops.steal_reduction` — the sum of "steals 1 fewer" modifiers on a Unit — is now
+read by Appetite for Destruction's and Gorilla Arms's bonus steals as well as by the attack path,
+per the FAQ (*"Does this apply to Units stealing Gigs through effects outside of attacking?
+**Yes**"*). Reproduced red first (`test_take_control_applies_to_an_effect_steal`).
+
+**1. Prediction.** Appetite for Destruction sits in `sample_gangers~sample_netrunners`; Take Control
+and Gorilla Arms are in no golden deck. Two keys may change. **Observed: none.** For a key to move,
+Take Control and an effect steal by the same Unit have to land in one game, and the golden decks
+never hold both.
+
+**2–4.** Not applicable: `bench.py check` IDENTICAL, so there is no divergence to localise, no
+revert to confirm and no aggregate.
+
+**5. Two-sided reachability.** Neither fuzz digest moved (`c9e5062374f3027ce660cbfb` /
+`2e54e2c3c5448a6898b8cc0f`, unchanged action counts): 700 random-deck games did not produce a
+Take-Controlled Unit making an effect steal either. The change is reached by its scenario test
+alone, which is stated here rather than hidden. The delayed suite was re-derived on the E2 tree and
+**all 73 positions still qualify**.
+
+---
+
 ## 2026-09-21 — Stage 0 E1: three FAQ answers on Sketchy Ripper, Misty and El Sombrerón (G1)
 
 **The change.** Three scripts brought to the published FAQ, each answered there by name.
