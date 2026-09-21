@@ -219,6 +219,23 @@ def could_win(s: GameState, me: int) -> bool:
     return bool(s.over) or len(s.gig[me]) >= s.cfg.gigs_to_win
 
 
+def held(s: GameState, me: int) -> bool:
+    """The defender's goal (a ``mode: "defend"`` position, Stage 0): the rival's turn ended
+    without the rival winning or reaching the winning Gig count. A Gig win is checked at the
+    start of the winner's next turn, so a rival who ends on the count has won unless it is
+    stolen back; "prevented the winning Gig this turn" is the claim the family makes."""
+    rival = 1 - me
+    if s.over:
+        return s.winner == me
+    return len(s.gig[rival]) < s.cfg.gigs_to_win
+
+
+def entry_goal(entry: dict):
+    """The leaf predicate a position is judged by: ``None`` (a win for the mover, the default)
+    or :func:`held` for a defender position."""
+    return held if entry.get("mode") == "defend" else None
+
+
 def confirmed_win(s: GameState, me: int, *, policy=None, max_steps: int | None = None,
                   max_turns: int = DEFAULT_MAX_TURNS) -> bool:
     """Did ``me`` actually win, once the searched turn is played out to its consequence?
@@ -288,7 +305,7 @@ def _own_options(s: GameState) -> list[int]:
 
 
 def turn_search(s: GameState, me: int, *, max_nodes: int = MAX_NODES, max_depth: int = MAX_DEPTH,
-                max_turns: int = DEFAULT_MAX_TURNS, policy=None) -> Solution:
+                max_turns: int = DEFAULT_MAX_TURNS, policy=None, goal=None) -> Solution:
     """Exhaustively search ``me``'s own decisions for this turn for a line that wins the game.
 
     Stops at the first win. ``Solution.exhausted`` is True only when the whole tree was walked
@@ -318,6 +335,20 @@ def turn_search(s: GameState, me: int, *, max_nodes: int = MAX_NODES, max_depth:
             ch = _materialise(c)
             apply(c, policy(c, ch))
 
+    def leaf_ok(c: GameState) -> bool:
+        if goal is not None:
+            return bool(goal(c, me))
+        return confirmed_win(c, me, policy=policy, max_turns=max_turns)
+
+    if s.pending is not None and s.pending.player != me:
+        # A defender position starts at the rival's decision: play the rival to the first
+        # decision that is ``me``'s (a reaction window, a Pick of ``me``'s own effect).
+        c = s.clone()
+        step_out(c)
+        if over(c) or c.pending.player != me:
+            return Solution(leaf_ok(c), [], 0, exhausted=True)
+        s = c
+
     def dfs(node: GameState, line: list[int], depth: int) -> list[int] | None:
         if depth >= max_depth:
             state["truncated"] = True          # a turn longer than the depth cap: not exhaustive
@@ -333,7 +364,7 @@ def turn_search(s: GameState, me: int, *, max_nodes: int = MAX_NODES, max_depth:
             # A leaf is the end of the turn — or, if step_out somehow ran out of its guard, a
             # decision that is not mine to make, which is played out rather than searched into.
             if over(c) or c.pending.player != me:
-                if confirmed_win(c, me, policy=policy, max_turns=max_turns):
+                if leaf_ok(c):
                     return here
                 continue
             found = dfs(c, here, depth + 1)
@@ -374,15 +405,17 @@ def replay_to_end_of_turn(s: GameState, me: int, line, *, policy=None) -> GameSt
 
 
 def replay_line(s: GameState, me: int, line, *, policy=None,
-                max_turns: int = DEFAULT_MAX_TURNS) -> bool:
+                max_turns: int = DEFAULT_MAX_TURNS, goal=None) -> bool:
     """Play a stored line back from ``s`` and report whether it really wins inside the horizon."""
     policy = policy or fixed_policy()
     end = replay_to_end_of_turn(s, me, line, policy=policy)
+    if goal is not None:
+        return bool(goal(end, me))
     return confirmed_win(end, me, policy=policy, max_turns=max_turns)
 
 
 def play_turn(s: GameState, me: int, agent_name: str, *, seed: int = 1, policy=None,
-              max_turns: int = DEFAULT_MAX_TURNS) -> tuple[bool, list[int]]:
+              max_turns: int = DEFAULT_MAX_TURNS, goal=None) -> tuple[bool, list[int]]:
     """Let ``agent_name`` play ``me``'s turn from ``s``; return (did it win, the line it chose).
 
     The agent chooses this turn and nothing else: past the end of it both seats are the frozen
@@ -405,11 +438,13 @@ def play_turn(s: GameState, me: int, agent_name: str, *, seed: int = 1, policy=N
         else:
             i = policy(c, ch)
         apply(c, i)
+    if goal is not None:
+        return bool(goal(c, me)), line
     return confirmed_win(c, me, policy=policy, max_turns=max_turns), line
 
 
 def floor_rate(s: GameState, me: int, *, seeds=SCORE_SEEDS, agent: str = FLOOR_AGENT,
-               max_turns: int = DEFAULT_MAX_TURNS, policy=None) -> tuple[int, int]:
+               max_turns: int = DEFAULT_MAX_TURNS, policy=None, goal=None) -> tuple[int, int]:
     """How often ``agent`` — uniform random by default — wins the position by itself.
 
     Returned as (wins, trials) so the caller can print the fraction rather than a rounded rate.
@@ -418,7 +453,7 @@ def floor_rate(s: GameState, me: int, *, seeds=SCORE_SEEDS, agent: str = FLOOR_A
     """
     wins = 0
     for sd in seeds:
-        if play_turn(s, me, agent, seed=sd, policy=policy, max_turns=max_turns)[0]:
+        if play_turn(s, me, agent, seed=sd, policy=policy, max_turns=max_turns, goal=goal)[0]:
             wins += 1
     return wins, len(tuple(seeds))
 
@@ -595,18 +630,21 @@ def qualify(reg: Registry, entry: dict, *, max_nodes: int = MAX_NODES,
     """
     s = build_entry(reg, entry, cfg)
     me = entry.get("player", s.pending.player)
-    horizon = entry_horizon(entry)
+    goal = entry_goal(entry)
+    horizon = 1 if goal is not None else entry_horizon(entry)
+    if goal is not None and me == s.active:
+        raise ValueError(f"{entry.get('id')}: a defend position's player must not be the active player")
     gigs_before = len(s.gig[me])
     t0 = time.perf_counter()
-    sol = turn_search(s, me, max_nodes=max_nodes, max_turns=horizon)
+    sol = turn_search(s, me, max_nodes=max_nodes, max_turns=horizon, goal=goal)
     misses = []
     heuristic_wins = 0
     for seed in trial_seeds:
-        won, line = play_turn(s, me, POLICY_AGENT, seed=seed, max_turns=horizon)
+        won, line = play_turn(s, me, POLICY_AGENT, seed=seed, max_turns=horizon, goal=goal)
         heuristic_wins += int(won)
         if seed in TRIAL_SEEDS or won:
             misses.append({"seed": seed, "won": won, "line": line})
-    floor_wins, floor_trials = floor_rate(s, me, seeds=score_seeds, max_turns=horizon)
+    floor_wins, floor_trials = floor_rate(s, me, seeds=score_seeds, max_turns=horizon, goal=goal)
     floor = floor_wins / floor_trials if floor_trials else 0.0
     # A horizon-2 position whose line leaves the winning Gig count sitting on the board is a
     # within-turn puzzle wearing a "delayed" label: a one-ply agent scoring the board at the end of
@@ -617,6 +655,7 @@ def qualify(reg: Registry, entry: dict, *, max_nodes: int = MAX_NODES,
         bool(sol.won) and not could_win(replay_to_end_of_turn(s, me, sol.line), me))
     return {"ok": bool(sol.won) and heuristic_wins == 0 and floor <= MAX_FLOOR and really_late,
             "player": me, "max_turns": horizon, "reward_is_late": really_late,
+            "mode": "defend" if goal is not None else "win",
             "gigs_before": gigs_before,
             "line": sol.line, "nodes": sol.nodes, "exhausted": sol.exhausted,
             "solver_found_win": sol.won,
@@ -792,18 +831,19 @@ def verify_suite(reg: Registry, suite: dict, *, max_nodes: int = MAX_NODES,
     for e in suite["positions"]:
         s = build_entry(reg, e, cfg)
         me = e.get("player", s.pending.player)
-        horizon = entry_horizon(e)
+        goal = entry_goal(e)
+        horizon = 1 if goal is not None else entry_horizon(e)
         stored = e.get("verified", {})
-        line_ok = bool(stored.get("line")) and replay_line(s, me, stored["line"],
-                                                           max_turns=horizon)
+        line_ok = (bool(stored.get("line")) or goal is not None) and replay_line(
+            s, me, stored.get("line", []), max_turns=horizon, goal=goal)
         # For a horizon of two or more: the turn must end with the win still off the board.
         late_ok = horizon <= 1 or not could_win(
             replay_to_end_of_turn(s, me, stored["line"]), me)
-        wins = [play_turn(s, me, POLICY_AGENT, seed=sd, max_turns=horizon)[0]
+        wins = [play_turn(s, me, POLICY_AGENT, seed=sd, max_turns=horizon, goal=goal)[0]
                 for sd in stored.get("heuristic_seeds", QUALIFY_SEEDS)]
         floor_wins, floor_trials = floor_rate(
             s, me, seeds=stored.get("floor_seeds", SCORE_SEEDS),
-            agent=stored.get("floor_agent", FLOOR_AGENT), max_turns=horizon)
+            agent=stored.get("floor_agent", FLOOR_AGENT), max_turns=horizon, goal=goal)
         floor_ok = (floor_wins == stored.get("floor_wins", floor_wins)
                     and floor_wins <= MAX_FLOOR * floor_trials)
         out.append({"id": e["id"], "max_turns": horizon, "stored_line_wins": line_ok,
@@ -828,11 +868,12 @@ def score_agent(reg: Registry, suite: dict, agent: str, *, trial_seeds=SCORE_SEE
     for e in suite["positions"]:
         s = build_entry(reg, e, cfg)
         me = e.get("player", s.pending.player)
-        horizon = entry_horizon(e)
+        goal = entry_goal(e)
+        horizon = 1 if goal is not None else entry_horizon(e)
         stored = e.get("verified", {})
         trials = []
         for sd in trial_seeds:
-            won, line = play_turn(s, me, agent, seed=sd, max_turns=horizon)
+            won, line = play_turn(s, me, agent, seed=sd, max_turns=horizon, goal=goal)
             trials.append({"seed": sd, "won": won, "line": line})
         wins = sum(1 for t in trials if t["won"])
         rows.append({"id": e["id"], "source": e.get("source", ""), "why": e.get("why", ""),
@@ -858,6 +899,19 @@ def score_agent(reg: Registry, suite: dict, agent: str, *, trial_seeds=SCORE_SEE
             "rows": rows}
 
 
+#: Position families, by id prefix, longest first. A family is what a Stage 0 instrument reads
+#: (race, dice, card semantics, play-around); ids outside the table belong to their first word.
+FAMILIES = ("card-semantics", "play-around", "removal-first", "legend-call", "recursion-trade",
+            "defensive-setup", "defend", "race", "dice", "mined")
+
+
+def family_of(pid: str) -> str:
+    for f in FAMILIES:
+        if pid == f or pid.startswith(f + "-"):
+            return f
+    return pid.split("-", 1)[0]
+
+
 def render_score(out: dict) -> str:
     by_h = {}
     for r in out["rows"]:
@@ -866,13 +920,20 @@ def render_score(out: dict) -> str:
              2: "two turns (the payoff lands after the rival's answer)"}
     horizons = ", ".join(f"{len(v)} at a horizon of {names.get(k, str(k) + ' turns')}"
                          for k, v in sorted(by_h.items()))
+    fam: dict = {}
+    for r in out["rows"]:
+        d = fam.setdefault(family_of(r["id"]), [0, 0])
+        d[0] += 1 if r["solved"] else 0
+        d[1] += 1
+    families = ", ".join(f"{k} {v[0]}/{v[1]}" for k, v in sorted(fam.items()))
     lines = [f"### Delayed-reward suite: {out['agent']} — {out['when']}", "",
              f"**Solved {out['solved']} of {out['positions']}** "
              f"({out['trial_wins']} of {out['trials']} trials won), against a floor of "
              f"{out['floor_trial_wins']} of {out['floor_trials']} trials for uniform "
              f"{out['floor_agent']} play. Every position has a verified winning line that the "
              f"frozen heuristic does not find on any of these seeds; a position counts as solved "
-             f"only when the agent wins it on every one of them. The suite holds {horizons}.", "",
+             f"only when the agent wins it on every one of them. The suite holds {horizons}. "
+             f"By family (solved/positions): {families}.", "",
              "| position | source | horizon | trials won | floor | solved |",
              "|---|---|---:|---:|---:|---|"]
     for r in out["rows"]:

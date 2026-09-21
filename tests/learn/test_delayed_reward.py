@@ -301,3 +301,35 @@ def test_the_rival_policy_is_a_pure_function_of_the_position(pool, suite):
     legal_actions(s)
     policy = delayed.fixed_policy()
     assert policy(s, s.pending) == policy(s, s.pending)
+
+
+# ------------------------------------------------------------ Stage 0: defender positions
+def test_a_defend_position_is_judged_by_the_rival_not_reaching_the_count(pool):
+    """``mode: "defend"``: the player is the defender, the rival is active and one Gig from the
+    count, and the goal is that the rival's turn ends short of it. Here the rival has one
+    attacker and the defender one ready BLOCKER-less Unit, so every line the defender has
+    (block with it or pass) decides whether the Gig is stolen. The machinery is what is pinned:
+    the solver, the trials and the floor all use ``held`` rather than a win for the mover, and
+    the verdict is a dict with the same keys as a mover position."""
+    spec = {"turn": 8, "active": 1, "first_player": 0, "turns_taken": [4, 3], "sides": [
+        {"field": [["corpo-security", {}]], "eddies": 0,
+         "legends": ["goro-takemura-hands-unclean", "v-corporate-exile", "hanako-arasaka-daughter-of-the-emperor"],
+         "deck": ["floor-it", "mantis-blades", "psycho-squad", "corpo-security", "riot-shield", "field-operator"],
+         "gig": [[4, 2], [6, 3]], "fixer": [8, 10, 12, 20]},
+        {"field": [["psycho-squad", {}]], "eddies": 0,
+         "legends": ["royce-psycho-on-the-edge", "goro-takemura-hands-unclean", "v-corporate-exile"],
+         "deck": ["floor-it", "mantis-blades", "psycho-squad", "corpo-security", "riot-shield", "field-operator"],
+         "gig": [[4, 1], [6, 2], [8, 3], [10, 4], [12, 5], [20, 6]], "fixer": [4]}]}
+    entry = {"id": "defend-test", "kind": "board", "mode": "defend", "player": 0, "spec": spec}
+    v = delayed.qualify(pool, entry, max_nodes=2000)
+    assert v["mode"] == "defend" and v["max_turns"] == 1 and v["player"] == 0
+    for k in ("solver_found_win", "heuristic_wins", "floor_wins", "floor_trials", "ok"):
+        assert k in v
+    # the goal itself: held is about the rival's count, not the defender's
+    s = delayed.build_position(pool, spec)
+    assert delayed.held(s, 0) is True
+    s.gig[1].append((4, 4))
+    assert delayed.held(s, 0) is False
+    bad = dict(entry, player=1)
+    with pytest.raises(ValueError):
+        delayed.qualify(pool, bad, max_nodes=200)
