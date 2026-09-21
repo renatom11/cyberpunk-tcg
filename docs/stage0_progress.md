@@ -95,3 +95,12 @@ Panels (`tools/arena.py panel …`, frozen panel v2, 360 games a member, inferre
 
 Per the task's discipline the remaining kill tests and the day-0 baselines are completed and reported, and Stage 1 is **not** started.
 
+## Kill test 2 — complete
+
+heuristic (n=40): residual RMS 0.0892 vs null 0.0688 (p95 0.0751), p<0.001, Nash support 3 → non-transitive.
+ismcts:32 (n=20): residual RMS 0.1092 vs null 0.0953 (p95 0.1039), p<0.001, Nash support 1 (panel-5-b 0.999) → **not non-transitive** by the criterion. Rank agreement heuristic↔ismcts:32: Spearman 0.59 [0.17, 0.85]. The round robin had to be invoked through `cptcg.cli.main.main` (no `__main__` guard; decisions log); it ran with 2 workers, 3,800 games, about 3 h.
+
+## Owner rulings Q1–Q4 (received mid-run) — landing under the golden protocol next
+
+Prepared and tested in a worktree while KT2 finished: Q2 core (`needs_ordering` over separate instances, copies included; `OrderTriggersStep` offers each instance), Q2 Deadman Transmitter choice, Q3 Overwatch spends its host (`engine.ability_spender`), Q1 (engine already builds the group; test + docstring), Q4 (test only). Rulings rows 054–057 written.
+

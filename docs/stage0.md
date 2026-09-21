@@ -182,10 +182,20 @@ lists plus the eight `data/decks` lists (20 decks, 190 pairs), `--no-sprt`, meta
 | agent | games | residual RMS | null mean / 95th pct | p | Nash support (weights) |
 |---|---:|---:|---|---:|---|
 | heuristic, n = 40 a pair | 7,600 | 0.0892 | 0.0688 / 0.0751 | < 0.001 | 3: panel-3-b 0.54, panel-5-b 0.38, panel-0-b 0.08 |
-| ismcts:32, n = 20 a pair | *(running)* | | | | |
+| ismcts:32, n = 20 a pair | 3,800 | 0.1092 | 0.0953 / 0.1039 | < 0.001 | **1**: panel-5-b 0.999 |
 
 Under the heuristic the field is **non-transitive** by Part 6's criterion (residual RMS above the
-null at p < 0.05 and a Nash support of at least three). The `ismcts:32` row decides the test.
+null at p < 0.05 and a Nash support of at least three). **Under `ismcts:32` it is not**: the
+residuals sit above the transitive null (p < 0.001, 1,000 draws), but the equilibrium puts 99.9%
+of its weight on one deck (panel-5-b), so the support condition fails and the verdict is
+*transitive with a dominant deck* — the search flattens the heuristic's rock-paper-scissors into
+a hierarchy. **Kill test 2 verdict: not non-transitive at `ismcts:32`.** Confirmed, run once.
+
+**Two-player rank agreement** (Spearman of Bradley–Terry ratings, 20 decks, heuristic vs
+`ismcts:32`, bootstrap over decks): **0.59 [0.17, 0.85]**. The top five under the heuristic are
+Sample Gangers, panel-5-b, panel-0-b, panel-5-a, panel-2-a; under the search panel-0-b, panel-5-b,
+Embracing Power, panel-5-a, The Heist. Deck rankings measured with the heuristic transfer only
+partly to the search. `out/s0/baselines/rank_agreement.json`.
 
 
 ## 5. Day-0 baselines
