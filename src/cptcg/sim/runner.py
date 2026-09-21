@@ -73,7 +73,11 @@ class MatchSummary:
 
 
 def play_game(reg: Registry, decks: tuple[Decklist, Decklist], agent_names: tuple[str, str],
-              seed: int, cfg: RulesConfig = DEFAULT_CONFIG, record: bool = False, max_actions: int = 50_000):
+              seed: int, cfg: RulesConfig = DEFAULT_CONFIG, record: bool = False, max_actions: int = 50_000,
+              observe=None):
+    """Play one game to the end. ``observe(s, choice, index, agent)``, if given, is called after
+    every decision and before it is applied — the harvest's hook for the search's visits and
+    the coverage record (Stage 0)."""
     agents = [make_agent(n, seed * 2 + i) for i, n in enumerate(agent_names)]
     s = new_game(reg, decks, seed, cfg, record=record)
     for p, a in enumerate(agents):
@@ -82,7 +86,11 @@ def play_game(reg: Registry, decks: tuple[Decklist, Decklist], agent_names: tupl
     while not s.over:
         legal_actions(s)
         ch = s.pending
-        apply(s, agents[ch.player].act(s, ch))
+        ag = agents[ch.player]
+        idx = ag.act(s, ch)
+        if observe is not None:
+            observe(s, ch, idx, ag)
+        apply(s, idx)
         n += 1
         if n > max_actions:
             # Name the game, not just the seed. A seed alone is not enough to replay this: the same

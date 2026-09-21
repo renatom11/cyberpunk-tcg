@@ -203,16 +203,28 @@ class Coverage:
                 "searched": self.kind_searched[k],
                 "mean_visit_entropy": (self.kind_entropy_sum.get(k, 0.0) / self.kind_entropy_n[k])
                 if self.kind_entropy_n[k] else None}
-        return {"format": FORMAT, "decisions": self.decisions, "kinds": kinds,
+        raw = {str(k): [self.kind_decisions[k], self.kind_options[k], self.kind_searched[k],
+                        self.kind_entropy_sum.get(k, 0.0), self.kind_entropy_n[k]]
+               for k in sorted(self.kind_decisions)}
+        return {"format": FORMAT, "decisions": self.decisions, "kinds": kinds, "kinds_raw": raw,
                 "offered": dict(sorted((self._k(k), v) for k, v in self.offered.items())),
                 "chosen": dict(sorted((self._k(k), v) for k, v in self.chosen.items()))}
 
     @classmethod
     def from_json(cls, d: dict) -> "Coverage":
+        """The inverse of ``to_json``, exact: a chunk's coverage merges into a run's."""
         c = cls()
         c.decisions = d.get("decisions", 0)
         c.offered = Counter({cls._unk(k): v for k, v in d.get("offered", {}).items()})
         c.chosen = Counter({cls._unk(k): v for k, v in d.get("chosen", {}).items()})
+        for k, (nd, no, ns, es, en) in d.get("kinds_raw", {}).items():
+            k = int(k)
+            c.kind_decisions[k] = nd
+            c.kind_options[k] = no
+            c.kind_searched[k] = ns
+            if en:
+                c.kind_entropy_sum[k] = es
+                c.kind_entropy_n[k] = en
         return c
 
 

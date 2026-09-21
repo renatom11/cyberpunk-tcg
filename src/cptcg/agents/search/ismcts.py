@@ -173,6 +173,12 @@ class IsmctsAgent(NeuralAgent):
     #: left the prior decision's dict in place, and ``tools/fit_policy.py --target search`` would
     #: have written those rows as though they were this decision's opinion.
     last_visits: dict = {}
+    #: The root's mean value for the mover after the last search (a win probability). For a
+    #: decision the search did not run — turn order, the mulligan, a single option, or a root
+    #: where nothing was expanded — it is the value head's own estimate, which is what a search
+    #: of zero iterations would report; so a game between two search agents carries a value at
+    #: every decision (``learn.experience.GameRecord.values``).
+    last_value: float | None = None
 
     #: Softmax temperature for the *policy-head* prior, when the weights file carries one. Separate
     #: from ``prior_temp`` because the two priors are on different scales: one is a value logit in
@@ -182,12 +188,17 @@ class IsmctsAgent(NeuralAgent):
     # ------------------------------------------------------------------ entry point
     def act(self, s: GameState, choice: Choice) -> int:
         self.last_visits = {}          # this decision's visits, or nothing. Never the last one's.
+        self.last_value = None
         kind = choice.kind
         # Turn order and the mulligan are one-off, pre-board decisions with no sequence to search,
         # and the frozen policies for them are inherited deliberately.
         if kind is ChoiceKind.ORDER or kind is ChoiceKind.MULLIGAN or len(choice.options) == 1:
-            return super().act(s, choice)
-        return self._search(s, choice)
+            i = super().act(s, choice)
+        else:
+            i = self._search(s, choice)
+        if self.last_value is None:
+            self.last_value = self.model.value(s, self.me)      # already a probability
+        return i
 
     # ------------------------------------------------------------------ the search
     def _search(self, s: GameState, choice: Choice) -> int:
@@ -556,6 +567,7 @@ class IsmctsAgent(NeuralAgent):
         # prior, because it is what the whole search concluded — and recording it costs a dict per
         # decision. Nothing *in play* reads it; ``tools/fit_policy.py --target search`` does.
         self.last_visits = {opts[i]: n for i, n in counts}
+        self.last_value = root.value / root.visits if root.visits else None
         if self.temperature > 0.0:
             return self._sample(counts)
         best_i, best_n, best_q = counts[0][0], -1, -1e18

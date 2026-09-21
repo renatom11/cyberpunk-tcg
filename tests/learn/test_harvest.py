@@ -315,3 +315,29 @@ def test_both_perspectives_writes_the_rivals_row_too(harvested, tmp_path):
         assert theirs[3] == 0.0
     assert len({r[3] for r in a}) == 1                          # constant, which is the problem
     assert len({r[3] for r in b}) == 2                          # and is now not
+
+
+# ------------------------------------------------------------ Stage 0: visits, values, coverage
+def test_play_chunk_records_visits_values_and_coverage_for_a_searching_agent(monkeypatch):
+    """The sidecar's contract: a decision the search made carries its root visits and value, a
+    decision nobody searched carries an empty visit list, and the coverage block counts every
+    decision of the chunk exactly once."""
+    from cptcg.agents.search.ismcts import IsmctsAgent
+    from cptcg.learn.coverage import Coverage
+    from cptcg.learn.experience import GameRecord
+    monkeypatch.setattr(IsmctsAgent, "iterations", 6)
+    out = harvest.play_chunk((0, 2, 5, "ismcts", "heuristic", None))
+    recs = [GameRecord.from_json(r) for r in out["records"]]
+    cov = Coverage.from_json(out["coverage"])
+    assert cov.decisions == sum(r.n_decisions for r in recs)
+    assert sum(cov.chosen.values()) == cov.decisions
+    for r in recs:
+        assert r.visits is not None and len(r.visits) == r.n_decisions
+        assert any(r.visits), "the search made decisions but none carried visits"
+        assert r.values is None, "the heuristic seat has no root value, so the game has none"
+    out2 = harvest.play_chunk((0, 1, 5, "heuristic", "heuristic", None))
+    rec = GameRecord.from_json(out2["records"][0])
+    assert rec.visits is None and rec.values is None
+    out3 = harvest.play_chunk((0, 1, 5, "ismcts", "ismcts", None))
+    rec = GameRecord.from_json(out3["records"][0])
+    assert rec.values is not None and len(rec.values) == rec.n_decisions

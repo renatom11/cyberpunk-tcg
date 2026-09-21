@@ -53,6 +53,7 @@ def test_json_round_trip_and_merge(pool):
     d = json.loads(json.dumps(a.to_json()))
     back = Coverage.from_json(d)
     assert back.offered == a.offered and back.chosen == a.chosen and back.decisions == a.decisions
+    assert back.to_json() == a.to_json(), "the round trip must be exact so chunks merge losslessly"
     a.merge(b)
     assert a.decisions == hand["decisions"]
     assert sum(a.offered.values()) == hand["offered"]

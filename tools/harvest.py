@@ -69,6 +69,7 @@ from cptcg.core.config import DEFAULT_CONFIG  # noqa: E402
 from cptcg.core.rng import Pcg32  # noqa: E402
 from cptcg.deck.decklist import Decklist  # noqa: E402
 from cptcg.learn import decks as D  # noqa: E402
+from cptcg.learn.coverage import Coverage, decision_record  # noqa: E402
 from cptcg.learn.experience import (GameRecord, format_size_stats, outcome, read_games,  # noqa: E402
                                     replay_features, size_stats, write_games)
 from cptcg.learn.features import FEATURE_NAMES, NFEAT, features  # noqa: E402
@@ -187,19 +188,43 @@ def _tally(counter: dict, key, n: int = 1) -> None:
 
 
 # ------------------------------------------------------------------ workers
-def play_chunk(job: tuple) -> list[dict]:
-    """Play games ``lo..hi`` and return their records as JSON. Runs in a worker process."""
+def play_chunk(job: tuple) -> dict:
+    """Play games ``lo..hi``; return ``{"records": [record JSON...], "coverage": Coverage JSON}``.
+    Runs in a worker process.
+
+    Per decision the observer (``runner.play_game(observe=...)``) reads the mover's
+    ``last_visits`` (the search's root visit counts, keyed by option) and ``last_value`` (its root
+    win probability) when the agent exposes them, and builds the coverage record
+    (``learn.coverage.decision_record``: what was offered and what was chosen, by card id and
+    action kind). ``visits`` is stored on the record with an empty list for a decision nobody
+    searched; ``values`` only when every decision of the game had one.
+    """
     lo, hi, seed, agent_a, agent_b, mix = job
     reg = runner._REG or load_default()
     names = (agent_a, agent_b)
     out = []
+    cov = Coverage()
     for i in range(lo, hi):
         a, b = D.sample_pair(reg, pair_rng(seed, i), mix=mix)
         gs = game_seed(seed, i)
-        s = runner.play_game(reg, (a, b), names, gs, DEFAULT_CONFIG, record=True)
-        rec = GameRecord.from_replay(Replay.from_game(s, (a, b), names), meta={"i": i})
+        visits: list[list[int]] = []
+        values: list = []
+
+        def observe(s, ch, idx, ag):
+            lv = getattr(ag, "last_visits", None)
+            row = [int(lv.get(o, 0)) for o in ch.options] if lv else []
+            visits.append(row)
+            values.append(getattr(ag, "last_value", None))
+            cov.add(decision_record(s, ch, idx, row))
+
+        s = runner.play_game(reg, (a, b), names, gs, DEFAULT_CONFIG, record=True, observe=observe)
+        rep = Replay.from_game(s, (a, b), names)
+        any_visits = any(visits)
+        all_values = values and all(v is not None for v in values)
+        rec = GameRecord.from_replay(rep, visits=visits if any_visits else None,
+                                     values=values if all_values else None, meta={"i": i})
         out.append(rec.to_json())
-    return out
+    return {"records": out, "coverage": cov.to_json()}
 
 
 def _keep_rng(harvest_seed: int, record_seed: int) -> Pcg32:
@@ -385,9 +410,12 @@ def cmd_play(a) -> int:
     games_here = decisions_here = 0
     print(f"harvesting {todo} games -> {out} ({agents[0]} vs {agents[1]}, {workers} worker(s), "
           f"chunk {chunk})", file=sys.stderr)
-    for raws in ordered_map(play_chunk, jobs, workers):
-        records = [GameRecord.from_json(r, rules=rules) for r in raws]
+    coverage = Coverage.from_json(man["coverage"]) if man.get("coverage") else Coverage()
+    for chunk_out in ordered_map(play_chunk, jobs, workers):
+        records = [GameRecord.from_json(r, rules=rules) for r in chunk_out["records"]]
         write_games(out, records, append=True)
+        coverage.merge(Coverage.from_json(chunk_out["coverage"]))
+        man["coverage"] = coverage.to_json()
         for r in records:
             decisions_here += r.n_decisions
             _tally(man["end_reasons"], r.end_reason)
