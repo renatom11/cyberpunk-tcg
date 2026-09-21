@@ -275,8 +275,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.07,
-    "when": "2026-09-21 05:33 UTC"
+    "seconds": 0.09,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -557,369 +557,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.36,
-    "when": "2026-09-21 05:33 UTC"
-   }
-  },
-  {
-   "id": "mined-166300-77",
-   "kind": "board",
-   "player": 1,
-   "max_turns": 2,
-   "source": "mined from heuristic self-play (frozen from its replay)",
-   "why": "a line here wins within 2 of my turns and the frozen heuristic does not play it. The turn it ends still has the winning Gig count off the board, so nothing an agent scoring one ply later can see is what makes it right; the rival answers, and the payoff arrives on the following turn under greedy play",
-   "verified": {
-    "ok": true,
-    "player": 1,
-    "max_turns": 2,
-    "reward_is_late": true,
-    "gigs_before": 6,
-    "line": [
-     1,
-     1,
-     1,
-     2,
-     0,
-     2,
-     0,
-     0
-    ],
-    "nodes": 31,
-    "exhausted": true,
-    "solver_found_win": true,
-    "heuristic_seeds": [
-     1,
-     2,
-     3,
-     4,
-     101,
-     102,
-     103,
-     104,
-     105,
-     106,
-     107,
-     108,
-     109,
-     110,
-     111,
-     112,
-     113,
-     114,
-     115,
-     116
-    ],
-    "heuristic_wins": 0,
-    "heuristic_lines": [
-     {
-      "seed": 1,
-      "won": false,
-      "line": [
-       17,
-       3,
-       2,
-       17,
-       3,
-       2,
-       5,
-       3,
-       1,
-       0
-      ]
-     },
-     {
-      "seed": 2,
-      "won": false,
-      "line": [
-       17,
-       3,
-       2,
-       17,
-       3,
-       2,
-       5,
-       3,
-       2,
-       0
-      ]
-     },
-     {
-      "seed": 3,
-      "won": false,
-      "line": [
-       17,
-       3,
-       2,
-       17,
-       3,
-       2,
-       5,
-       3,
-       1,
-       0
-      ]
-     },
-     {
-      "seed": 4,
-      "won": false,
-      "line": [
-       17,
-       3,
-       2,
-       17,
-       3,
-       2,
-       5,
-       3,
-       1,
-       0
-      ]
-     }
-    ],
-    "floor_agent": "random",
-    "floor_seeds": [
-     101,
-     102,
-     103,
-     104,
-     105,
-     106,
-     107,
-     108,
-     109,
-     110,
-     111,
-     112,
-     113,
-     114,
-     115,
-     116
-    ],
-    "floor_wins": 3,
-    "floor_trials": 16,
-    "floor_rate": 0.188,
-    "max_floor": 0.25,
-    "policy": "heuristic(seed 20260910) for the rival and the reply",
-    "rules": "149b39c8f55e9d41",
-    "cards": "5d7e69a39a9b0e56",
-    "seconds": 2.96,
-    "when": "2026-09-21 05:33 UTC"
-   },
-   "spec": {
-    "seed": 166300,
-    "turn": 10,
-    "active": 1,
-    "first_player": 0,
-    "turns_taken": [
-     5,
-     4
-    ],
-    "overtime": false,
-    "sides": [
-     {
-      "deck": [
-       "wraith-marauders",
-       "panam-palmer-strength-through-family",
-       "wild-in-the-streets",
-       "field-operator",
-       "saul-bright-stormrider",
-       "panam-palmer-strength-through-family",
-       "goro-takemura-losing-his-way",
-       "sandayu-oda-hanakos-guardian",
-       "dont-fear-the-reaper",
-       "wild-in-the-streets",
-       "zetatech-berserk",
-       "panam-palmer-strength-through-family",
-       "corporate-surveillance",
-       "take-control",
-       "maxtac-heavy",
-       "goro-takemura-losing-his-way",
-       "wraith-marauders",
-       "memory-relapse",
-       "wraith-marauders",
-       "memory-relapse",
-       "we-gotta-live-together"
-      ],
-      "hand": [
-       "dont-fear-the-reaper",
-       "corpo-security",
-       "maxtac-heavy",
-       "maxtac-heavy"
-      ],
-      "field": [
-       [
-        "field-operator",
-        {
-         "spent": true
-        }
-       ],
-       [
-        "field-operator",
-        {
-         "spent": true
-        }
-       ],
-       [
-        "sandayu-oda-hanakos-guardian",
-        {
-         "spent": true
-        }
-       ]
-      ],
-      "legends": [
-       [
-        "hanako-arasaka-daughter-of-the-emperor",
-        {
-         "spent": true,
-         "faceup": true
-        }
-       ],
-       [
-        "saburo-arasaka-stubborn-patriarch",
-        {
-         "spent": true,
-         "faceup": true
-        }
-       ],
-       [
-        "goro-takemura-vengeful-bodyguard",
-        {
-         "spent": true,
-         "faceup": true
-        }
-       ]
-      ],
-      "trash": [
-       "memory-relapse",
-       "fool-on-the-hill",
-       "sandayu-oda-hanakos-guardian",
-       "goro-takemura-losing-his-way",
-       "we-gotta-live-together",
-       "corpo-security",
-       "corpo-security"
-      ],
-      "eddies": 5,
-      "spent_eddies": 4,
-      "gig": [
-       [
-        6,
-        1
-       ],
-       [
-        4,
-        1
-       ],
-       [
-        8,
-        3
-       ],
-       [
-        8,
-        2
-       ]
-      ],
-      "fixer": [
-       20
-      ]
-     },
-     {
-      "deck": [
-       "meredith-stout-stone-cold-corpo",
-       "swordwise-huscle",
-       "satori-sword-of-saburo",
-       "6th-street-recruits",
-       "arasaka-emergency-radioport",
-       "6th-street-recruits",
-       "swordwise-huscle",
-       "chrome-fang",
-       "shattered-memories",
-       "6th-street-recruits",
-       "yorinobu-arasaka-steel-dragon",
-       "japantown-jonin",
-       "meredith-stout-stone-cold-corpo",
-       "yorinobu-arasaka-steel-dragon",
-       "yorinobu-arasaka-steel-dragon",
-       "minotaur",
-       "meredith-stout-stone-cold-corpo",
-       "appetite-for-destruction",
-       "gunpoint-diplomacy",
-       "industrial-assembly",
-       "el-sombreron-la-venganza-lenta",
-       "minotaur",
-       "chrome-fang"
-      ],
-      "hand": [
-       "gunpoint-diplomacy",
-       "valentino-guerrera",
-       "kerry-eurodyne-the-last-rockerboy",
-       "arasaka-emergency-radioport"
-      ],
-      "field": [
-       "valentino-guerrera",
-       "kerry-eurodyne-the-last-rockerboy"
-      ],
-      "legends": [
-       [
-        "v-streetkid",
-        {
-         "faceup": true
-        }
-       ],
-       [
-        "dexter-deshawn-off-the-grid",
-        {
-         "faceup": true
-        }
-       ],
-       [
-        "royce-psycho-on-the-edge",
-        {
-         "faceup": true
-        }
-       ]
-      ],
-      "trash": [
-       "gunpoint-diplomacy",
-       "satori-sword-of-saburo",
-       "carnage-at-the-colosseum",
-       "all-is-lost",
-       "shattered-memories",
-       "all-is-lost",
-       "chrome-fang"
-      ],
-      "eddies": 4,
-      "spent_eddies": 0,
-      "gig": [
-       [
-        12,
-        4
-       ],
-       [
-        10,
-        5
-       ],
-       [
-        12,
-        11
-       ],
-       [
-        6,
-        4
-       ],
-       [
-        10,
-        1
-       ],
-       [
-        4,
-        4
-       ]
-      ],
-      "fixer": [
-       20
-      ]
-     }
-    ]
+    "seconds": 0.38,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -945,12 +584,10 @@
      1,
      3,
      0,
-     1,
-     0,
      0,
      0
     ],
-    "nodes": 84,
+    "nodes": 73,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -1079,8 +716,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 5.74,
-    "when": "2026-09-21 05:33 UTC"
+    "seconds": 4.78,
+    "when": "2026-09-21 06:23 UTC"
    },
    "spec": {
     "seed": 166302,
@@ -1320,344 +957,6 @@
        ]
       ],
       "fixer": [
-       20
-      ]
-     }
-    ]
-   }
-  },
-  {
-   "id": "mined-166305-59",
-   "kind": "board",
-   "player": 0,
-   "max_turns": 2,
-   "source": "mined from heuristic self-play (frozen from its replay)",
-   "why": "a line here wins within 2 of my turns and the frozen heuristic does not play it. The turn it ends still has the winning Gig count off the board, so nothing an agent scoring one ply later can see is what makes it right; the rival answers, and the payoff arrives on the following turn under greedy play",
-   "verified": {
-    "ok": true,
-    "player": 0,
-    "max_turns": 2,
-    "reward_is_late": true,
-    "gigs_before": 5,
-    "line": [
-     1,
-     1,
-     1,
-     0,
-     1,
-     0,
-     1,
-     0,
-     0
-    ],
-    "nodes": 14,
-    "exhausted": true,
-    "solver_found_win": true,
-    "heuristic_seeds": [
-     1,
-     2,
-     3,
-     4,
-     101,
-     102,
-     103,
-     104,
-     105,
-     106,
-     107,
-     108,
-     109,
-     110,
-     111,
-     112,
-     113,
-     114,
-     115,
-     116
-    ],
-    "heuristic_wins": 0,
-    "heuristic_lines": [
-     {
-      "seed": 1,
-      "won": false,
-      "line": [
-       7,
-       1,
-       3,
-       4,
-       0
-      ]
-     },
-     {
-      "seed": 2,
-      "won": false,
-      "line": [
-       7,
-       1,
-       3,
-       4,
-       0
-      ]
-     },
-     {
-      "seed": 3,
-      "won": false,
-      "line": [
-       7,
-       1,
-       3,
-       4,
-       0
-      ]
-     },
-     {
-      "seed": 4,
-      "won": false,
-      "line": [
-       7,
-       1,
-       3,
-       4,
-       0
-      ]
-     }
-    ],
-    "floor_agent": "random",
-    "floor_seeds": [
-     101,
-     102,
-     103,
-     104,
-     105,
-     106,
-     107,
-     108,
-     109,
-     110,
-     111,
-     112,
-     113,
-     114,
-     115,
-     116
-    ],
-    "floor_wins": 0,
-    "floor_trials": 16,
-    "floor_rate": 0.0,
-    "max_floor": 0.25,
-    "policy": "heuristic(seed 20260910) for the rival and the reply",
-    "rules": "149b39c8f55e9d41",
-    "cards": "5d7e69a39a9b0e56",
-    "seconds": 1.23,
-    "when": "2026-09-21 05:33 UTC"
-   },
-   "spec": {
-    "seed": 166305,
-    "turn": 9,
-    "active": 0,
-    "first_player": 0,
-    "turns_taken": [
-     4,
-     4
-    ],
-    "overtime": false,
-    "sides": [
-     {
-      "deck": [
-       "v-roamer-of-the-badlands",
-       "we-gotta-live-together",
-       "saul-bright-stormrider",
-       "zetatech-berserk",
-       "swordwise-huscle",
-       "valentino-guerrera",
-       "field-operator",
-       "field-operator",
-       "el-sombreron-la-venganza-lenta",
-       "japantown-jonin",
-       "take-control",
-       "la-llorona-ghost-of-the-past",
-       "valentino-street-racer",
-       "memory-relapse",
-       "swordwise-huscle",
-       "la-llorona-ghost-of-the-past",
-       "synapse-burnout",
-       "screw-lovelorn-fool",
-       "gunpoint-diplomacy",
-       "over-the-edge",
-       "mantis-blades",
-       "japantown-jonin",
-       "shattered-memories",
-       "tygers-whisper",
-       "pacifica-netrunner",
-       "mantis-blades",
-       "nadia-fighting-through-grief",
-       "corpo-security",
-       "la-llorona-ghost-of-the-past",
-       "zetatech-berserk",
-       "field-operator"
-      ],
-      "hand": [
-       "valentino-street-racer",
-       "valentino-street-racer",
-       "v-roamer-of-the-badlands",
-       "minotaur"
-      ],
-      "field": [
-       "nadia-fighting-through-grief"
-      ],
-      "legends": [
-       [
-        "johnny-silverhand-rocking-renegade",
-        {
-         "faceup": true
-        }
-       ],
-       [
-        "panam-palmer-nomad-cavalry",
-        {
-         "faceup": true
-        }
-       ],
-       [
-        "dexter-deshawn-off-the-grid",
-        {
-         "faceup": true
-        }
-       ]
-      ],
-      "trash": [
-       "swordwise-huscle",
-       "v-roamer-of-the-badlands"
-      ],
-      "eddies": 4,
-      "spent_eddies": 0,
-      "gig": [
-       [
-        12,
-        4
-       ],
-       [
-        10,
-        1
-       ],
-       [
-        8,
-        2
-       ],
-       [
-        6,
-        1
-       ],
-       [
-        4,
-        1
-       ]
-      ],
-      "fixer": [
-       20
-      ]
-     },
-     {
-      "deck": [
-       "corpo-security",
-       "sandayu-oda-hanakos-guardian",
-       "we-gotta-live-together",
-       "we-gotta-live-together",
-       "zetatech-berserk",
-       "riot-shield",
-       "overwatch-panams-gift",
-       "goro-takemura-losing-his-way",
-       "zetatech-berserk",
-       "sandevistan",
-       "we-gotta-live-together",
-       "saul-bright-stormrider",
-       "corporate-surveillance",
-       "goro-takemura-losing-his-way",
-       "corporate-surveillance",
-       "goro-takemura-losing-his-way",
-       "fool-on-the-hill",
-       "riot-shield",
-       "field-operator",
-       "fool-on-the-hill",
-       "sandayu-oda-hanakos-guardian",
-       "panam-palmer-strength-through-family",
-       "fool-on-the-hill",
-       "panam-palmer-strength-through-family",
-       "corpo-security",
-       "zetatech-berserk",
-       "sandevistan",
-       "sandevistan",
-       "saul-bright-stormrider"
-      ],
-      "hand": [
-       "field-operator"
-      ],
-      "field": [
-       [
-        "corpo-security",
-        {
-         "gear": [
-          "overwatch-panams-gift"
-         ]
-        }
-       ],
-       [
-        "field-operator",
-        {
-         "spent": true
-        }
-       ],
-       "panam-palmer-strength-through-family"
-      ],
-      "legends": [
-       [
-        "goro-takemura-vengeful-bodyguard",
-        {
-         "spent": true,
-         "faceup": true
-        }
-       ],
-       [
-        "panam-palmer-nomad-cavalry",
-        {
-         "spent": true,
-         "faceup": true
-        }
-       ],
-       [
-        "hanako-arasaka-daughter-of-the-emperor",
-        {
-         "spent": true,
-         "faceup": true
-        }
-       ]
-      ],
-      "trash": [
-       "saul-bright-stormrider",
-       "sandayu-oda-hanakos-guardian"
-      ],
-      "eddies": 4,
-      "spent_eddies": 4,
-      "gig": [
-       [
-        10,
-        1
-       ],
-       [
-        8,
-        3
-       ],
-       [
-        6,
-        1
-       ],
-       [
-        12,
-        12
-       ]
-      ],
-      "fixer": [
-       4,
        20
       ]
      }
@@ -1938,8 +1237,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.08,
-    "when": "2026-09-21 05:33 UTC"
+    "seconds": 0.07,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -2220,8 +1519,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.25,
-    "when": "2026-09-21 05:33 UTC"
+    "seconds": 0.28,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -2393,12 +1692,13 @@
      2,
      0,
      0,
+     0,
      1,
      1,
      0,
      0
     ],
-    "nodes": 23,
+    "nodes": 24,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -2432,6 +1732,7 @@
        6,
        1,
        2,
+       0,
        1,
        0,
        1,
@@ -2446,6 +1747,7 @@
        1,
        2,
        1,
+       1,
        0,
        1,
        0
@@ -2459,6 +1761,7 @@
        1,
        2,
        1,
+       1,
        0,
        1,
        0
@@ -2471,6 +1774,7 @@
        6,
        1,
        2,
+       1,
        1,
        0,
        1,
@@ -2504,8 +1808,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.06,
-    "when": "2026-09-21 05:33 UTC"
+    "seconds": 0.09,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -2675,11 +1979,12 @@
      2,
      1,
      1,
+     0,
      1,
      0,
      0
     ],
-    "nodes": 91,
+    "nodes": 92,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -2714,7 +2019,8 @@
        2,
        5,
        6,
-       1,
+       2,
+       0,
        0
       ]
      },
@@ -2781,8 +2087,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.07,
-    "when": "2026-09-21 05:33 UTC"
+    "seconds": 0.09,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -2936,13 +2242,14 @@
     "line": [
      2,
      1,
+     0,
      1,
      1,
      0,
      1,
      0
     ],
-    "nodes": 21845,
+    "nodes": 22845,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -2981,7 +2288,6 @@
        1,
        1,
        1,
-       6,
        0
       ]
      },
@@ -2994,10 +2300,11 @@
        4,
        4,
        3,
+       0,
        1,
        1,
        1,
-       4,
+       6,
        0
       ]
      },
@@ -3010,10 +2317,11 @@
        3,
        4,
        3,
+       0,
        1,
        1,
        1,
-       6,
+       4,
        0
       ]
      },
@@ -3029,7 +2337,6 @@
        1,
        1,
        1,
-       11,
        0
       ]
      }
@@ -3053,15 +2360,15 @@
      115,
      116
     ],
-    "floor_wins": 2,
+    "floor_wins": 0,
     "floor_trials": 16,
-    "floor_rate": 0.125,
+    "floor_rate": 0.0,
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 1.21,
-    "when": "2026-09-21 05:33 UTC"
+    "seconds": 1.38,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -3213,11 +2520,12 @@
      1,
      0,
      1,
+     0,
      1,
      0,
      0
     ],
-    "nodes": 9,
+    "nodes": 10,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -3255,7 +2563,8 @@
        1,
        1,
        1,
-       5,
+       1,
+       1,
        0
       ]
      },
@@ -3268,9 +2577,8 @@
        4,
        1,
        1,
+       2,
        1,
-       1,
-       3,
        0
       ]
      },
@@ -3283,9 +2591,10 @@
        4,
        1,
        1,
+       0,
        1,
        1,
-       1,
+       3,
        0
       ]
      },
@@ -3298,8 +2607,7 @@
        4,
        1,
        1,
-       1,
-       1,
+       2,
        1,
        0
       ]
@@ -3331,8 +2639,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.35,
-    "when": "2026-09-21 05:33 UTC"
+    "seconds": 0.46,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -3492,11 +2800,12 @@
      1,
      0,
      1,
+     0,
      1,
      0,
      0
     ],
-    "nodes": 9,
+    "nodes": 10,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -3598,8 +2907,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.06,
-    "when": "2026-09-21 05:33 UTC"
+    "seconds": 0.07,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -3765,12 +3074,13 @@
      2,
      1,
      1,
+     0,
      1,
      0,
      0,
      0
     ],
-    "nodes": 92,
+    "nodes": 93,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -3869,8 +3179,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.06,
-    "when": "2026-09-21 05:33 UTC"
+    "seconds": 0.07,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -4044,7 +3354,7 @@
      0,
      0
     ],
-    "nodes": 1199,
+    "nodes": 1275,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -4146,8 +3456,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.12,
-    "when": "2026-09-21 05:33 UTC"
+    "seconds": 0.14,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -4424,8 +3734,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 1.4,
-    "when": "2026-09-21 05:33 UTC"
+    "seconds": 1.69,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -4690,7 +4000,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
     "seconds": 0.06,
-    "when": "2026-09-21 05:33 UTC"
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -4983,8 +4293,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.34,
-    "when": "2026-09-21 05:33 UTC"
+    "seconds": 0.36,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -5275,8 +4585,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.09,
-    "when": "2026-09-21 05:33 UTC"
+    "seconds": 0.1,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -5564,7 +4874,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
     "seconds": 0.06,
-    "when": "2026-09-21 05:33 UTC"
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -5862,8 +5172,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 5.18,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 9.05,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -6138,8 +5448,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.17,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.24,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -6425,7 +5735,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
     "seconds": 0.11,
-    "when": "2026-09-21 05:34 UTC"
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -6709,8 +6019,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.32,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.47,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -6985,8 +6295,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.16,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.29,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -7269,8 +6579,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.3,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.4,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -7432,11 +6742,12 @@
      5,
      2,
      2,
+     0,
      1,
      0,
      0
     ],
-    "nodes": 112,
+    "nodes": 211,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -7470,6 +6781,7 @@
        4,
        5,
        2,
+       2,
        0
       ]
      },
@@ -7480,6 +6792,7 @@
        4,
        5,
        2,
+       1,
        0
       ]
      },
@@ -7490,6 +6803,7 @@
        4,
        5,
        2,
+       0,
        0
       ]
      },
@@ -7499,6 +6813,7 @@
       "line": [
        4,
        5,
+       2,
        2,
        0
       ]
@@ -7530,8 +6845,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.03,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.06,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -7822,7 +7137,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
     "seconds": 0.14,
-    "when": "2026-09-21 05:34 UTC"
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -8102,8 +7417,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.47,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.55,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -8384,7 +7699,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
     "seconds": 0.06,
-    "when": "2026-09-21 05:34 UTC"
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -8679,8 +7994,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.09,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.1,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -8967,8 +8282,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.04,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.05,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -9246,8 +8561,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 2.66,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 3.21,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -9529,8 +8844,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.09,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.1,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -9819,8 +9134,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.12,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.13,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -10107,8 +9422,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.07,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.08,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -10406,8 +9721,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.12,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.13,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -10683,8 +9998,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 1.0,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 1.33,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -10958,7 +10273,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
     "seconds": 0.02,
-    "when": "2026-09-21 05:34 UTC"
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -11249,8 +10564,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.19,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.2,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -11539,8 +10854,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.22,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.23,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -11815,8 +11130,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.05,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.07,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -12100,8 +11415,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.04,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.05,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -12380,8 +11695,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.04,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.05,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -12665,8 +11980,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.07,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.08,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -12949,7 +12264,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
     "seconds": 0.04,
-    "when": "2026-09-21 05:34 UTC"
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -13225,8 +12540,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.05,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.06,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -13506,8 +12821,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.06,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.08,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -13790,8 +13105,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.58,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.66,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -14068,8 +13383,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.85,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.95,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -14358,15 +13673,15 @@
      115,
      116
     ],
-    "floor_wins": 1,
+    "floor_wins": 4,
     "floor_trials": 16,
-    "floor_rate": 0.062,
+    "floor_rate": 0.25,
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 1.13,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 1.14,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -14559,13 +13874,14 @@
      2,
      2,
      0,
+     0,
      1,
      3,
      1,
      0,
      0
     ],
-    "nodes": 593,
+    "nodes": 594,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -14645,6 +13961,7 @@
        0,
        6,
        0,
+       0,
        1,
        1,
        0
@@ -14677,8 +13994,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 6.2,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 6.49,
+    "when": "2026-09-21 06:23 UTC"
    }
   },
   {
@@ -14881,6 +14198,8 @@
        7,
        1,
        6,
+       3,
+       2,
        1,
        0
       ]
@@ -14946,8 +14265,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 9.63,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 10.45,
+    "when": "2026-09-21 06:24 UTC"
    }
   },
   {
@@ -15122,12 +14441,14 @@
     "gigs_before": 4,
     "line": [
      2,
+     0,
      1,
+     0,
      1,
      0,
      0
     ],
-    "nodes": 200,
+    "nodes": 202,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -15162,7 +14483,9 @@
        4,
        2,
        0,
-       3,
+       0,
+       1,
+       0,
        0
       ]
      },
@@ -15173,8 +14496,10 @@
        6,
        4,
        2,
+       2,
        0,
-       3,
+       1,
+       1,
        0
       ]
      },
@@ -15185,8 +14510,10 @@
        6,
        4,
        2,
+       1,
        0,
        1,
+       0,
        0
       ]
      },
@@ -15198,310 +14525,7 @@
        4,
        2,
        0,
-       1,
-       0
-      ]
-     }
-    ],
-    "floor_agent": "random",
-    "floor_seeds": [
-     101,
-     102,
-     103,
-     104,
-     105,
-     106,
-     107,
-     108,
-     109,
-     110,
-     111,
-     112,
-     113,
-     114,
-     115,
-     116
-    ],
-    "floor_wins": 4,
-    "floor_trials": 16,
-    "floor_rate": 0.25,
-    "max_floor": 0.25,
-    "policy": "heuristic(seed 20260910) for the rival and the reply",
-    "rules": "149b39c8f55e9d41",
-    "cards": "5d7e69a39a9b0e56",
-    "seconds": 1.34,
-    "when": "2026-09-21 05:34 UTC"
-   }
-  },
-  {
-   "id": "recursion-trade-aftermath-on-the-inert-guard",
-   "kind": "board",
-   "player": 0,
-   "max_turns": 2,
-   "source": "proposed",
-   "why": "My whole field is Corpo Security, a Unit whose own text says it cannot attack, wearing The Relic - five power that will never touch anything. Five Gigs, the d20 still in the fixer, and the Rival's two bodies are both power 0, so nobody is stealing anything from anybody. Greedy has no attack to make and ends the turn; next turn the d20 makes six and the position is frozen there. The winning line spends three Eddies on Live with the Aftermath and uses it to defeat its own guard: the board goes from one Unit to none, minus a Gear, minus three Eddies, minus a card, and the Gig count does not move. The Relic's DEFEATED then plays Jackie Welles out of the trash for free, and she sits there with Lag. The turn ends on five. Next turn the d20 comes in for six and Jackie, counting two even friendly Gigs, attacks at 12 and steals two for eight - the reward arriving a full turn after the only move that could have earned it.",
-   "spec": {
-    "turn": 19,
-    "active": 0,
-    "seed": 97,
-    "turns_taken": [
-     9,
-     9
-    ],
-    "sides": [
-     {
-      "field": [
-       [
-        "corpo-security",
-        {
-         "gear": [
-          "the-relic-experimental-biochip"
-         ]
-        }
-       ]
-      ],
-      "hand": [
-       "live-with-the-aftermath",
-       "bootleg-black-sapphire-show",
-       "hanako-arasaka-in-a-gilded-cage"
-      ],
-      "legends": [
-       [
-        "viktor-vektor-sit-down-and-relax",
-        {
-         "faceup": true,
-         "spent": true
-        }
-       ],
-       [
-        "muamar-reyes-el-capitan",
-        {
-         "faceup": true,
-         "spent": true
-        }
-       ],
-       [
-        "padre-man-of-the-cross",
-        {
-         "faceup": true,
-         "spent": true
-        }
-       ]
-      ],
-      "trash": [
-       "jackie-welles-ride-or-die-choom",
-       "sketchy-ripper",
-       "tygers-whisper",
-       "kiroshi-optics"
-      ],
-      "deck": [
-       "the-heist",
-       "trauma-team-operatives",
-       "caliber-totentanzs-top-dog",
-       "maelstrom-goons",
-       "afterparty-at-lizzies",
-       "mandibular-upgrade",
-       "zetatech-faceplate",
-       "gilded-maton",
-       "rockn-rockerboy",
-       "heywood-ripperdoc",
-       "the-heist",
-       "viktor-vektor-drop-your-illusions",
-       "field-operator",
-       "safety-override",
-       "live-with-the-aftermath",
-       "t-bug-amateur-philosopher",
-       "sketchy-ripper",
-       "dexter-deshawn-one-last-chance",
-       "maxtac-suppression-team",
-       "adrenaline-converter",
-       "kiroshi-optics",
-       "offduty-malfini",
-       "secondhand-bombus",
-       "corpo-security",
-       "emergency-atlus",
-       "afterparty-at-lizzies"
-      ],
-      "eddies": 4,
-      "gig": [
-       [
-        4,
-        4
-       ],
-       [
-        6,
-        6
-       ],
-       [
-        8,
-        3
-       ],
-       [
-        10,
-        5
-       ],
-       [
-        12,
-        7
-       ]
-      ],
-      "fixer": [
-       20
-      ]
-     },
-     {
-      "field": [
-       [
-        "tygers-whisper",
-        {
-         "spent": true
-        }
-       ],
-       [
-        "corpo-security",
-        {
-         "spent": true
-        }
-       ]
-      ],
-      "hand": [
-       "peace-offering",
-       "corporate-surveillance",
-       "fool-on-the-hill"
-      ],
-      "legends": [
-       "hanako-arasaka-daughter-of-the-emperor",
-       "goro-takemura-vengeful-bodyguard",
-       "saburo-arasaka-stubborn-patriarch"
-      ],
-      "deck": [
-       "field-operator",
-       "emergency-atlus",
-       "maxtac-squadron",
-       "goro-takemura-losing-his-way",
-       "maxtac-av",
-       "maxtac-heavy",
-       "panam-palmer-strength-through-family",
-       "pepe-najarro-working-doubles",
-       "saul-bright-stormrider",
-       "wraith-marauders",
-       "corpo-security",
-       "tygers-whisper",
-       "riot-shield",
-       "sandevistan",
-       "zetatech-berserk",
-       "we-gotta-live-together",
-       "synapse-burnout",
-       "peace-offering",
-       "fool-on-the-hill",
-       "corporate-surveillance",
-       "field-operator",
-       "emergency-atlus",
-       "peace-offering",
-       "synapse-burnout",
-       "fool-on-the-hill",
-       "corporate-surveillance"
-      ],
-      "eddies": 2,
-      "gig": [
-       [
-        4,
-        2
-       ],
-       [
-        6,
-        5
-       ],
-       [
-        8,
-        6
-       ],
-       [
-        10,
-        4
-       ]
-      ],
-      "fixer": [
-       12,
-       20
-      ]
-     }
-    ]
-   },
-   "verified": {
-    "ok": true,
-    "player": 0,
-    "max_turns": 2,
-    "reward_is_late": true,
-    "gigs_before": 5,
-    "line": [
-     2,
-     1,
-     0,
-     0
-    ],
-    "nodes": 15,
-    "exhausted": true,
-    "solver_found_win": true,
-    "heuristic_seeds": [
-     1,
-     2,
-     3,
-     4,
-     101,
-     102,
-     103,
-     104,
-     105,
-     106,
-     107,
-     108,
-     109,
-     110,
-     111,
-     112,
-     113,
-     114,
-     115,
-     116
-    ],
-    "heuristic_wins": 0,
-    "heuristic_lines": [
-     {
-      "seed": 1,
-      "won": false,
-      "line": [
-       4,
-       1,
-       2,
-       0
-      ]
-     },
-     {
-      "seed": 2,
-      "won": false,
-      "line": [
-       4,
-       1,
-       2,
-       0
-      ]
-     },
-     {
-      "seed": 3,
-      "won": false,
-      "line": [
-       4,
-       1,
-       2,
-       0
-      ]
-     },
-     {
-      "seed": 4,
-      "won": false,
-      "line": [
-       4,
+       0,
        1,
        1,
        0
@@ -15527,15 +14551,15 @@
      115,
      116
     ],
-    "floor_wins": 1,
+    "floor_wins": 3,
     "floor_trials": 16,
-    "floor_rate": 0.062,
+    "floor_rate": 0.188,
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 1.07,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 1.45,
+    "when": "2026-09-21 06:24 UTC"
    }
   },
   {
@@ -15862,7 +14886,7 @@
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
     "seconds": 0.11,
-    "when": "2026-09-21 05:34 UTC"
+    "when": "2026-09-21 06:24 UTC"
    }
   },
   {
@@ -16170,8 +15194,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.53,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.8,
+    "when": "2026-09-21 06:24 UTC"
    }
   },
   {
@@ -16482,8 +15506,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 2.15,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 2.52,
+    "when": "2026-09-21 06:24 UTC"
    }
   },
   {
@@ -16795,8 +15819,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.13,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.14,
+    "when": "2026-09-21 06:24 UTC"
    }
   },
   {
@@ -17113,8 +16137,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.09,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.1,
+    "when": "2026-09-21 06:24 UTC"
    }
   },
   {
@@ -17431,8 +16455,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.18,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.19,
+    "when": "2026-09-21 06:24 UTC"
    }
   },
   {
@@ -17740,8 +16764,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.36,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.45,
+    "when": "2026-09-21 06:24 UTC"
    }
   },
   {
@@ -18055,8 +17079,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.13,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.14,
+    "when": "2026-09-21 06:24 UTC"
    }
   },
   {
@@ -18214,7 +17238,7 @@
      1,
      0
     ],
-    "nodes": 373,
+    "nodes": 1079,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -18247,7 +17271,8 @@
       "line": [
        9,
        4,
-       4,
+       1,
+       5,
        1,
        1,
        0
@@ -18259,9 +17284,9 @@
       "line": [
        9,
        4,
+       1,
        6,
-       1,
-       1,
+       2,
        0
       ]
      },
@@ -18271,8 +17296,10 @@
       "line": [
        9,
        4,
-       5,
        2,
+       6,
+       1,
+       1,
        0
       ]
      },
@@ -18282,8 +17309,10 @@
       "line": [
        9,
        4,
-       4,
-       2,
+       1,
+       5,
+       1,
+       1,
        0
       ]
      }
@@ -18314,8 +17343,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 3.83,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 13.15,
+    "when": "2026-09-21 06:24 UTC"
    }
   },
   {
@@ -18482,11 +17511,13 @@
     "line": [
      2,
      1,
+     0,
      1,
+     0,
      1,
      0
     ],
-    "nodes": 825,
+    "nodes": 1505,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -18521,6 +17552,8 @@
        3,
        3,
        2,
+       3,
+       0,
        1,
        0
       ]
@@ -18532,7 +17565,9 @@
        8,
        3,
        3,
-       2,
+       0,
+       4,
+       1,
        1,
        0
       ]
@@ -18544,10 +17579,10 @@
        8,
        3,
        3,
+       2,
        4,
        1,
        1,
-       2,
        0
       ]
      },
@@ -18558,7 +17593,9 @@
        8,
        3,
        3,
+       1,
        2,
+       1,
        1,
        0
       ]
@@ -18590,8 +17627,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.14,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.23,
+    "when": "2026-09-21 06:24 UTC"
    }
   },
   {
@@ -18757,12 +17794,13 @@
      1,
      1,
      1,
+     0,
      1,
      1,
      0,
      0
     ],
-    "nodes": 12,
+    "nodes": 13,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -18795,12 +17833,12 @@
       "line": [
        13,
        5,
+       0,
        11,
        1,
-       7,
-       2,
        1,
-       9,
+       7,
+       1,
        0
       ]
      },
@@ -18810,11 +17848,14 @@
       "line": [
        13,
        5,
-       10,
+       2,
+       11,
+       0,
+       1,
        7,
        2,
        1,
-       9,
+       1,
        0
       ]
      },
@@ -18824,9 +17865,13 @@
       "line": [
        13,
        5,
+       0,
        10,
-       7,
        1,
+       7,
+       3,
+       1,
+       9,
        0
       ]
      },
@@ -18836,9 +17881,14 @@
       "line": [
        13,
        5,
-       10,
-       7,
        1,
+       11,
+       1,
+       1,
+       7,
+       2,
+       1,
+       7,
        0
       ]
      }
@@ -18869,8 +17919,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.13,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.17,
+    "when": "2026-09-21 06:24 UTC"
    }
   },
   {
@@ -19040,13 +18090,14 @@
     "line": [
      1,
      2,
+     0,
      1,
      0,
      1,
      1,
      0
     ],
-    "nodes": 17,
+    "nodes": 18,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -19079,6 +18130,7 @@
       "line": [
        11,
        2,
+       0,
        0
       ]
      },
@@ -19088,6 +18140,7 @@
       "line": [
        11,
        2,
+       1,
        0
       ]
      },
@@ -19097,6 +18150,7 @@
       "line": [
        11,
        2,
+       1,
        0
       ]
      },
@@ -19106,6 +18160,7 @@
       "line": [
        11,
        2,
+       0,
        0
       ]
      }
@@ -19136,302 +18191,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.08,
-    "when": "2026-09-21 05:34 UTC"
-   }
-  },
-  {
-   "id": "removal-first-guerrera-picks-the-fight",
-   "kind": "board",
-   "player": 0,
-   "max_turns": 1,
-   "source": "proposed",
-   "why": "No removal in hand at all: the thing that clears the way is a fight. Five Gigs against the Rival's two, with Animals Wrecker ready at 10 power and Valentino Guerrera ready at 4. Ten steals two, and two is everything they hold, so the Wrecker alone is lethal - if it gets through. Greedy opens with the Wrecker at the Gig area because that is the biggest immediate number, and Augmented Negotiators redirects: the Wrecker kills a 2-power Unit and steals nothing. Guerrera then takes the Gig area for a single Gig, and the turn ends on six. The winning line sends Guerrera FIRST, into the ready blocker: 'If you have more Street Cred than a Rival, this Unit can attack ready Units with BLOCKER.' That attack steals nothing and can never steal anything - it trades a 4-power Unit's only attack for a 2-power body and leaves the Gig columns exactly where they were. Then the Wrecker swings into an undefended Gig area and takes both.",
-   "spec": {
-    "turn": 8,
-    "active": 0,
-    "seed": 83,
-    "turns_taken": [
-     4,
-     3
-    ],
-    "sides": [
-     {
-      "field": [
-       [
-        "animals-wrecker",
-        {}
-       ],
-       [
-        "valentino-guerrera",
-        {}
-       ]
-      ],
-      "hand": [
-       "screw-lovelorn-fool",
-       "all-is-lost",
-       "ruthless-lowlife",
-       "industrial-assembly",
-       "arasaka-emergency-radioport",
-       "swordwise-huscle",
-       "satori-sword-of-saburo"
-      ],
-      "legends": [
-       "rebecca-having-a-moment",
-       "yorinobu-arasaka-embracing-destruction",
-       "johnny-silverhand-rocking-renegade"
-      ],
-      "deck": [
-       "chrome-fang",
-       "industrial-assembly",
-       "kerry-eurodyne-the-last-rockerboy",
-       "la-llorona-ghost-of-the-past",
-       "meredith-stout-stone-cold-corpo",
-       "ruthless-lowlife",
-       "satori-sword-of-saburo",
-       "all-is-lost",
-       "arasaka-emergency-radioport",
-       "detonate",
-       "johnny-silverhand-never-stop-fighting",
-       "minotaur",
-       "over-the-edge",
-       "royce-dont-call-me-simon",
-       "screw-lovelorn-fool",
-       "swordwise-huscle",
-       "v-roamer-of-the-badlands",
-       "bonnie-and-clyde",
-       "carnage-at-the-colosseum",
-       "deadman-transmitter",
-       "octant"
-      ],
-      "eddies": 4,
-      "gig": [
-       [
-        4,
-        4
-       ],
-       [
-        6,
-        8
-       ],
-       [
-        8,
-        7
-       ],
-       [
-        10,
-        9
-       ],
-       [
-        4,
-        6
-       ]
-      ],
-      "fixer": [
-       12,
-       20
-      ]
-     },
-     {
-      "field": [
-       [
-        "augmented-negotiators",
-        {}
-       ]
-      ],
-      "hand": [
-       "maelstrom-goons",
-       "heywood-ripperdoc"
-      ],
-      "legends": [
-       "kerry-eurodyne-axe-attitude-audience",
-       "dum-dum-maelstrom-triggerman",
-       "viktor-vektor-sit-down-and-relax"
-      ],
-      "deck": [
-       "afterparty-at-lizzies",
-       "heywood-ripperdoc",
-       "kiroshi-optics",
-       "maxtac-suppression-team",
-       "rockn-rockerboy",
-       "caliber-totentanzs-top-dog",
-       "cyberpsychosis",
-       "dexter-deshawn-one-last-chance",
-       "gilded-maton",
-       "hanako-arasaka-in-a-gilded-cage",
-       "jackie-welles-ride-or-die-choom",
-       "maelstrom-goons",
-       "mandibular-upgrade",
-       "offduty-malfini",
-       "secondhand-bombus",
-       "sketchy-ripper",
-       "t-bug-amateur-philosopher",
-       "the-heist",
-       "trauma-team-operatives",
-       "viktor-vektor-drop-your-illusions",
-       "viktor-vektor-you-might-feel-a-little-pinch",
-       "zetatech-faceplate",
-       "live-with-the-aftermath",
-       "safety-override",
-       "gorilla-arms"
-      ],
-      "eddies": 2,
-      "gig": [
-       [
-        6,
-        2
-       ],
-       [
-        8,
-        3
-       ]
-      ],
-      "fixer": [
-       10,
-       12,
-       20
-      ]
-     }
-    ]
-   },
-   "verified": {
-    "ok": true,
-    "player": 0,
-    "max_turns": 1,
-    "reward_is_late": true,
-    "gigs_before": 5,
-    "line": [
-     1,
-     1,
-     1,
-     1,
-     0,
-     2,
-     0,
-     1,
-     0
-    ],
-    "nodes": 44,
-    "exhausted": true,
-    "solver_found_win": true,
-    "heuristic_seeds": [
-     1,
-     2,
-     3,
-     4,
-     101,
-     102,
-     103,
-     104,
-     105,
-     106,
-     107,
-     108,
-     109,
-     110,
-     111,
-     112,
-     113,
-     114,
-     115,
-     116
-    ],
-    "heuristic_wins": 0,
-    "heuristic_lines": [
-     {
-      "seed": 1,
-      "won": false,
-      "line": [
-       17,
-       6,
-       14,
-       1,
-       4,
-       5,
-       1,
-       3,
-       0
-      ]
-     },
-     {
-      "seed": 2,
-      "won": false,
-      "line": [
-       17,
-       0,
-       16,
-       1,
-       6,
-       10,
-       16,
-       6,
-       5,
-       1,
-       0
-      ]
-     },
-     {
-      "seed": 3,
-      "won": false,
-      "line": [
-       17,
-       0,
-       16,
-       1,
-       6,
-       10,
-       16,
-       6,
-       5,
-       3,
-       0
-      ]
-     },
-     {
-      "seed": 4,
-      "won": false,
-      "line": [
-       17,
-       2,
-       16,
-       1,
-       5,
-       14,
-       6,
-       5,
-       1,
-       0
-      ]
-     }
-    ],
-    "floor_agent": "random",
-    "floor_seeds": [
-     101,
-     102,
-     103,
-     104,
-     105,
-     106,
-     107,
-     108,
-     109,
-     110,
-     111,
-     112,
-     113,
-     114,
-     115,
-     116
-    ],
-    "floor_wins": 2,
-    "floor_trials": 16,
-    "floor_rate": 0.125,
-    "max_floor": 0.25,
-    "policy": "heuristic(seed 20260910) for the rival and the reply",
-    "rules": "149b39c8f55e9d41",
-    "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.17,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.11,
+    "when": "2026-09-21 06:24 UTC"
    }
   },
   {
@@ -19602,7 +18363,9 @@
      1,
      1,
      1,
+     0,
      1,
+     0,
      1,
      0,
      0,
@@ -19611,7 +18374,7 @@
      0,
      0
     ],
-    "nodes": 22,
+    "nodes": 24,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -19644,10 +18407,14 @@
       "line": [
        12,
        4,
+       1,
        8,
+       0,
        1,
        6,
+       2,
        1,
+       6,
        0
       ]
      },
@@ -19657,12 +18424,12 @@
       "line": [
        12,
        4,
-       6,
+       2,
+       8,
+       0,
        1,
        6,
-       2,
        1,
-       2,
        0
       ]
      },
@@ -19672,12 +18439,12 @@
       "line": [
        12,
        4,
+       2,
        8,
+       1,
        1,
        6,
-       2,
        1,
-       8,
        0
       ]
      },
@@ -19687,10 +18454,14 @@
       "line": [
        12,
        4,
-       6,
        1,
        6,
+       0,
        1,
+       6,
+       2,
+       1,
+       4,
        0
       ]
      }
@@ -19714,15 +18485,15 @@
      115,
      116
     ],
-    "floor_wins": 2,
+    "floor_wins": 1,
     "floor_trials": 16,
-    "floor_rate": 0.125,
+    "floor_rate": 0.062,
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.16,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.21,
+    "when": "2026-09-21 06:24 UTC"
    }
   },
   {
@@ -19891,13 +18662,14 @@
      1,
      0,
      1,
+     0,
      1,
      0,
      1,
      0,
      0
     ],
-    "nodes": 14,
+    "nodes": 15,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -19932,6 +18704,7 @@
        1,
        0,
        3,
+       2,
        4,
        2,
        0
@@ -19945,6 +18718,7 @@
        1,
        0,
        3,
+       0,
        4,
        2,
        0
@@ -19958,10 +18732,11 @@
        1,
        0,
        3,
+       2,
        4,
        1,
        1,
-       1,
+       3,
        0
       ]
      },
@@ -19973,10 +18748,9 @@
        1,
        0,
        3,
+       2,
        4,
-       1,
-       1,
-       3,
+       2,
        0
       ]
      }
@@ -20000,15 +18774,15 @@
      115,
      116
     ],
-    "floor_wins": 2,
+    "floor_wins": 1,
     "floor_trials": 16,
-    "floor_rate": 0.125,
+    "floor_rate": 0.062,
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.13,
-    "when": "2026-09-21 05:34 UTC"
+    "seconds": 0.18,
+    "when": "2026-09-21 06:24 UTC"
    }
   },
   {
@@ -20169,12 +18943,13 @@
     "gigs_before": 4,
     "line": [
      2,
+     0,
      1,
      1,
      0,
      0
     ],
-    "nodes": 8269,
+    "nodes": 12992,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -20207,7 +18982,8 @@
       "line": [
        10,
        2,
-       2,
+       0,
+       3,
        0
       ]
      },
@@ -20217,7 +18993,8 @@
       "line": [
        10,
        2,
-       1,
+       2,
+       3,
        0
       ]
      },
@@ -20227,7 +19004,8 @@
       "line": [
        10,
        2,
-       3,
+       1,
+       2,
        0
       ]
      },
@@ -20237,7 +19015,8 @@
       "line": [
        10,
        2,
-       2,
+       1,
+       3,
        0
       ]
      }
@@ -20268,8 +19047,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 63.79,
-    "when": "2026-09-21 05:35 UTC"
+    "seconds": 138.91,
+    "when": "2026-09-21 06:26 UTC"
    }
   },
   {
@@ -20437,13 +19216,15 @@
      1,
      1,
      1,
+     0,
      1,
+     0,
      0,
      1,
      1,
      0
     ],
-    "nodes": 14,
+    "nodes": 16,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -20477,8 +19258,11 @@
        12,
        9,
        4,
-       7,
-       2,
+       1,
+       6,
+       1,
+       1,
+       6,
        0
       ]
      },
@@ -20489,6 +19273,7 @@
        12,
        9,
        4,
+       2,
        7,
        2,
        0
@@ -20501,10 +19286,9 @@
        12,
        9,
        4,
+       0,
        5,
-       1,
-       1,
-       6,
+       2,
        0
       ]
      },
@@ -20515,8 +19299,11 @@
        12,
        9,
        4,
-       6,
        2,
+       6,
+       1,
+       1,
+       10,
        0
       ]
      }
@@ -20547,8 +19334,8 @@
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.14,
-    "when": "2026-09-21 05:35 UTC"
+    "seconds": 0.18,
+    "when": "2026-09-21 06:26 UTC"
    }
   },
   {
@@ -20712,13 +19499,14 @@
     "line": [
      2,
      1,
+     0,
      1,
      1,
      1,
      0,
      0
     ],
-    "nodes": 1132,
+    "nodes": 1239,
     "exhausted": true,
     "solver_found_win": true,
     "heuristic_seeds": [
@@ -20813,15 +19601,15 @@
      115,
      116
     ],
-    "floor_wins": 1,
+    "floor_wins": 0,
     "floor_trials": 16,
-    "floor_rate": 0.062,
+    "floor_rate": 0.0,
     "max_floor": 0.25,
     "policy": "heuristic(seed 20260910) for the rival and the reply",
     "rules": "149b39c8f55e9d41",
     "cards": "5d7e69a39a9b0e56",
-    "seconds": 0.18,
-    "when": "2026-09-21 05:35 UTC"
+    "seconds": 0.21,
+    "when": "2026-09-21 06:26 UTC"
    }
   }
  ],

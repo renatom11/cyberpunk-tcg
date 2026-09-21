@@ -10,6 +10,71 @@ Every entry records the five pieces of evidence from `docs/verification.md`. A r
 all five is not one.
 
 
+## 2026-09-21 — Stage 0 E12: which Legends pay is the payer's choice (G2, engine-wide)
+
+**The change.** Ruling 025 auto-paid. Kill test 4 (`dump.py --pay-events out/s0/h20k -n 5000`,
+the first 5,000 games of the 20k heuristic corpus recorded after E11): 109,748 payments, and in
+15,567 of them — **14.18%**, against a 2% gate — a Legend with something left to do (a usable
+ability 12,151; the last face-down Legend a reaction Call could still use 4,643; a Gear whose
+trigger fires when its host is spent 27) was spent while another source stayed ready. So
+`engine.apply` now runs every paid MAIN and REACTION action through `_with_payment`: when the
+ready Eddies do not cover the cost and more than one set of Legends could, a `PICK` tagged
+`pay@play` / `pay@calllegend` / `pay@gosolo` / `pay@activate` over `ops.payment_plans` is asked
+first, its continuation sets `GameState.pay_plan` for the one `apply` and runs the action. Plans
+are listed with the old automatic order first; one plan asks nothing; a front end that recorded
+the player's answer in `ops.PAY_PREF` is not asked again. Eddies are always spent first (keeping
+one back to spend a Legend with a spend trigger was wanted in 0.02% of payments) and the two
+script-internal payments stay automatic — both written down in ruling 025. `explicit_payment`
+keeps its recorded value: flipping it moves the ruleset digest and refuses the shipped weights
+the day-0 baselines need (the 047 precedent in `engine.go_solo`). Reproduced red first
+(`test_e12_which_legend_pays_is_asked_and_honoured` and seven siblings).
+
+**1. Prediction.** Every key. Observed: all 8.
+
+**2. Localisation.** All eight first divergences are the new decision itself, at the first play
+paid partly by Legends: `the_heist~embracing_power~heuristic` game 0 at decision 15 ("plays Dexter
+DeShawn — One Last Chance by spending 3 Legends"), `sample_gangers~sample_netrunners~random` game 0
+at 22 ("plays Mox Inciters by spending 3 Legends"), `sample_corpos~sample_nomads~random` at 12
+("plays Corpo Security by spending 2 Legends"), and so on. Across the 224 games the question is
+asked 1,481 times (6.6 a game, 5.4% of decisions): `pay@play` 1,135, `pay@calllegend` 235,
+`pay@gosolo` 83, `pay@activate` 28; widths 2 in 401 and 3 in 1,080. The frozen heuristic's previews
+choose plan 0 / 1 / 2 in 542 / 537 / 402 of them — it does not simply take the old automatic
+plan, which is the strategic content the measurement predicted. Decisions 26,789 → 27,689.
+
+**3. Revert confirmation.** `_with_payment` short-circuited (`if True or …`) against the NEW
+golden: DIFFERENT on all 8 keys at exactly the same actions (15, 18, 9, 22, 10, 10, 10, 12).
+
+**4. Aggregate.**
+
+| key | games | winner flips | end-reason | mean turn delta |
+|---|---|---|---|---|
+| sample_arasaka~sample_fixers~heuristic | 16/16 | 2 | 4 | +0.12 |
+| sample_arasaka~sample_fixers~random | 40/40 | 4 | 10 | +0.35 |
+| sample_corpos~sample_nomads~heuristic | 16/16 | 2 | 4 | −0.12 |
+| sample_corpos~sample_nomads~random | 40/40 | 12 | 6 | −0.57 |
+| sample_gangers~sample_netrunners~heuristic | 16/16 | 2 | 2 | −0.31 |
+| sample_gangers~sample_netrunners~random | 40/40 | 15 | 11 | −0.10 |
+| the_heist~embracing_power~heuristic | 16/16 | 3 | 6 | −0.50 |
+| the_heist~embracing_power~random | 40/40 | 18 | 8 | +0.03 |
+
+Every stream moves, and unlike E10 outcomes move with it: a payment plan changes which Legend
+stays ready, which the heuristic's one-ply preview values, so games branch from the first such
+choice. Winner flips of 2–3 in 16 heuristic games and 4–18 in 40 random ones with turn deltas
+within ±0.6 are the shape of a real early decision, not of a bug — no key moves in only one
+direction and no end reason disappears.
+
+**5. Two-sided reachability.** Both digests moved: `fuzz -n 300 --seed 1` (heuristic)
+`014fdb7214d1b2cd95fb49bc` → `f70273bd9f688e3910263171`, 48,449 → 50,050 actions; `fuzz -n 400
+--seed 1 --agent random` `b45f5d44a3ee37f69f860373` → `154c1a8439c52dd6c2585855`, 34,539 → 38,003.
+The delayed suite was re-derived and **four positions no longer qualify and were removed
+(72 → 68)**, each a finding rather than a loss: `mined-166305-59` and
+`recursion-trade-aftermath-on-the-inert-guard` are now won by the frozen heuristic on every trial
+seed (the missing move was which Legend to spend), and `mined-166300-77`,
+`removal-first-guerrera-picks-the-fight` and the recursion position have a random floor above 4/16
+(random now sometimes picks the winning payment). The bootstrap sample was re-recorded.
+
+---
+
 ## 2026-09-21 — Stage 0 E10: the reaction window always opens (G2, engine-wide)
 
 **The change.** `steps.ReactionWindowStep` no longer returns silently when the defender's only
