@@ -10,6 +10,54 @@ Every entry records the five pieces of evidence from `docs/verification.md`. A r
 all five is not one.
 
 
+## 2026-09-21 — owner ruling Q2 (055): two copies of one card that trigger together are ordered (G2, engine-wide)
+
+**The change.** `ops.needs_ordering` asks for two or more *separate instances* of one owner among
+the entries an event matched, copies of one card included, where ruling 046 had required two
+distinct cards; `steps.OrderTriggersStep` offers each instance rather than collapsing copies.
+Owner ruling (Stage 0, Q2): a copy is a separate card at the table. Reproduced red first
+(`test_q2_two_copies_of_one_card_triggering_together_are_ordered`, the inverted
+`test_046_two_copies_of_one_card_are_a_choice_since_the_owner_ruled_so`).
+
+**1. Prediction.** Every key. Observed: all 8 (a key that did not move would have been the
+surprise; the change reaches every game where two copies of a listener hear one event).
+
+**2. Localisation.** The first divergences are the new ordering question itself, deep in the
+games (decisions 24–136): `sample_gangers~sample_netrunners~random` game 10 at 24,
+`the_heist~embracing_power~random` game 2 at 45 (turn 6, after Kiroshi Optics on Secondhand
+Bombus and its attack — the attack's triggers now include two copies to order). Across the 224
+games the `@order` prompts go 455 → **519** (2.32 a game, 1.9% of decisions; widths 2: 462, 3: 54,
+4: 3; by tag play 314, attack 171, gig_changed 14, spent 10, call 4, end_turn 4). Decisions
+27,689 → 27,829.
+
+**3. Revert confirmation.** `ops.py` and `steps.py` stashed against the NEW golden: DIFFERENT on
+all 8 keys at exactly the same actions (84, 45, 59, 24, 120, 117, 136, 61).
+
+**4. Aggregate.**
+
+| key | games | winner flips | end-reason | mean turn delta |
+|---|---|---|---|---|
+| sample_arasaka~sample_fixers~heuristic | 4/16 | 0 | 0 | +0.00 |
+| sample_arasaka~sample_fixers~random | 5/40 | 0 | 1 | −0.40 |
+| sample_corpos~sample_nomads~heuristic | 1/16 | 0 | 0 | +0.00 |
+| sample_corpos~sample_nomads~random | 1/40 | 1 | 1 | +3.00 |
+| sample_gangers~sample_netrunners~heuristic | 2/16 | 0 | 0 | +0.00 |
+| sample_gangers~sample_netrunners~random | 2/40 | 0 | 1 | +1.00 |
+| the_heist~embracing_power~heuristic | 1/16 | 0 | 0 | +0.00 |
+| the_heist~embracing_power~random | 7/40 | 2 | 1 | +0.43 |
+
+23 of 224 games move, mostly the random-agent games (a random answer to a question that used to
+be decided); three winner flips, all in random keys. The shape of a rare new decision with equal
+branches for the heuristic.
+
+**5. Two-sided reachability.** Both digests moved: `fuzz -n 300 --seed 1` (heuristic)
+`f70273bd9f688e3910263171` → `861ce22bd25946ea1f292868`, 50,050 → 50,176 actions; `fuzz -n 400
+--seed 1 --agent random` `154c1a8439c52dd6c2585855` → `876c5cf08af59529417ff3e8`, 38,003 → 38,081.
+The suite, the bootstrap sample and the oracle set are re-derived once after the last of the four
+rulings lands (Q2's Deadman choice and Q3 follow this entry).
+
+---
+
 ## 2026-09-21 — Stage 0 E12: which Legends pay is the payer's choice (G2, engine-wide)
 
 **The change.** Ruling 025 auto-paid. Kill test 4 (`dump.py --pay-events out/s0/h20k -n 5000`,
