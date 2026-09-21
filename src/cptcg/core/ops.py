@@ -291,20 +291,19 @@ def needs_ordering(s: GameState, matched: list) -> bool:
     Across players there is no choice to make: the turn player's resolve first, which is the order
     the hook list is already in.
 
-    **Distinct cards only**, and that restriction is measured rather than assumed. Over 287,247
-    dispatched events in 240 golden-deck games, 4.8% matched two of one player's hooks — but a
-    third of those were two or three copies of the SAME card (Rita Wheeler beside Rita Wheeler,
-    Meredith Stout beside Meredith Stout). Ordering two identical effects is a choice whose
-    branches cannot be told apart: it would put a meaningless prompt in front of the player
-    thousands of times and hand the search a branching factor for nothing. Requiring two distinct
-    cards takes it to 3.2%, and every one of those is a real decision.
+    **Separate instances, copies included** (owner ruling Q2, Stage 0). Ruling 046 first required
+    two *distinct cards*, measuring that a third of the events matching two of one player's hooks
+    were copies of one card (Rita Wheeler beside Rita Wheeler) and judging their order a choice
+    without distinguishable branches. The owner ruled that two copies triggering together may be
+    ordered too — a copy is a separate card at the table — so the restriction is lifted; the
+    ``wants`` filters keep the prompt rate to the hooks that can actually fire.
     """
     if len(matched) < 2:
         return False
     seen = ({}, {})
     for inst, *_rest in matched:
         by = seen[s.i_owner[inst]]
-        by[s.i_card[inst]] = True
+        by[inst] = True                    # Q2 (owner ruling): separate instances, copies included
         if len(by) >= 2:
             return True
     return False
@@ -781,8 +780,9 @@ def push_trigger(s: GameState, kind: Trigger, inst: int) -> None:
 # ------------------------------------------------------------------- legend
 def call_legend(s: GameState, player: int, inst: int, pend_pay: list | None = None) -> None:
     """Flip a Legend face-up. ``pend_pay`` holds the spend triggers collected while its Call was
-    paid for; they resolve after the Call (FAQ: "After. Play the card first"), ordered with the
-    CALL trigger when the controller has a choice (Stage 0 E8/E9)."""
+    paid for. They form one ordering group with the CALL effect and the "called" hooks (owner
+    ruling Q1, Stage 0: what one action makes happen at the same time, its controller orders);
+    only when nothing is left to choose do they resolve after the Call."""
     s.i_faceup[inst] = 1
     s._active = None
     s.i_known[inst] = 0b11

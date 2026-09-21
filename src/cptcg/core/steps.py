@@ -531,7 +531,7 @@ class OrderTriggersStep(Step):
 
     ``ops.dispatch`` calls hooks inline and in a fixed order, which is right for the events where
     nobody has a choice to make and is what keeps dispatch cheap. When one player owns two or
-    more triggers on distinct cards (``ops.needs_ordering``), the group moves here instead: ask
+    more triggers on separate cards, copies included (``ops.needs_ordering``), the group moves here instead: ask
     that player which resolves next, resolve exactly that one, and re-push with the rest. That is
     the shape ``ReactionWindowStep`` uses — re-push a menu until there is nothing left to ask —
     and it uses the existing ``Pick`` action, because a new Action class would move
@@ -571,10 +571,11 @@ class OrderTriggersStep(Step):
         p = s.i_owner[self.left[0][0]]
         group = tuple(x for x in self.left if s.i_owner[x[0]] == p)
         rest = tuple(x for x in self.left if s.i_owner[x[0]] != p)
-        if len({s.i_card[i] for i, _ in group}) < 2:
-            # Nothing to choose: copies of one card, or a lone trigger. Resolve the group the way
-            # dispatch would have (reversed, so the first entry's question surfaces first), then
-            # carry on with the other player's.
+        if len({i for i, _ in group}) < 2:
+            # Nothing to choose: a lone trigger (or one instance raising two entries). Copies of
+            # one card are separate cards and are ordered like any other pair (owner ruling Q2,
+            # Stage 0). Resolve the group the way dispatch would have (reversed, so the first
+            # entry's question surfaces first), then carry on with the other player's.
             if rest:
                 s.stack.append(OrderTriggersStep(self.tag, rest))
             for inst, fn in reversed(group):

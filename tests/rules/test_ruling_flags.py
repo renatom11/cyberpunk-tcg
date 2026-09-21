@@ -133,14 +133,11 @@ def test_046_the_controller_orders_their_own_simultaneous_triggers(pool):
     assert names == {"Zetatech Faceplate", "NetWatch Netdriver"}
 
 
-def test_046_two_copies_of_one_card_are_not_a_choice(pool):
-    """The restriction, and it is measured rather than assumed — see ``ops.needs_ordering``.
-
-    A third of the events with two of one player's triggers were two copies of the SAME card.
-    Ordering two identical effects has no distinguishable branches, so asking would be a prompt
-    that cannot matter, thousands of times a game set, and a branching factor the search pays for
-    and learns nothing from.
-    """
+def test_046_two_copies_of_one_card_are_a_choice_since_the_owner_ruled_so(pool):
+    """Ruling 046 first required two *distinct cards* (a third of the events with two of one
+    player's triggers were copies of one card, and their order looked like a choice without
+    branches). Owner ruling Q2 (Stage 0): copies are separate cards and may be ordered too. What
+    is still not a choice: one instance raising two entries, or a lone trigger."""
     from cptcg.core.ops import needs_ordering
 
     s = board(pool, Side(field=["psycho-squad", "corpo-security"]), Side())
@@ -150,7 +147,7 @@ def test_046_two_copies_of_one_card_are_not_a_choice(pool):
     assert not needs_ordering(s, [(a, None), (a, None)])           # the same instance twice
     other = board(pool, Side(field=["psycho-squad", "psycho-squad"]), Side())
     c, d = other.units(0)
-    assert not needs_ordering(other, [(c, None), (d, None)]), "two copies of one card is not a choice"
+    assert needs_ordering(other, [(c, None), (d, None)]), "two copies of one card are two cards (Q2)"
 
 
 # --------------------------------------------------------------- 004 empty_fixer_skips
