@@ -86,7 +86,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-from cptcg.agents.base import AGENTS, BUDGET_SEP, CHEAT_PREFIX, WEIGHTS_SEP, make_agent
+from cptcg.agents.base import AGENTS, BUDGET_SEP, CHEAT_PREFIX, WEIGHTS_SEP, list_mode, make_agent
 from cptcg.cards.registry import Registry, cards_digest
 from cptcg.core.config import DEFAULT_CONFIG, RulesConfig
 from cptcg.core.rng import Pcg32
@@ -478,7 +478,7 @@ def run_panel(reg: Registry, agent: str, panel: dict | None = None, *, workers: 
     pairings = panel_pairings(reg, panel)
     out = {"agent": agent, "panel_version": panel["version"], "panel_digest": panel["digest"],
            "decks_digest": decks_digest(panel), "frozen_on": panel["frozen_on"], "protocol": proto,
-           "rules": cfg.digest(), "cards": cards_digest(), "when": _now(), "members": []}
+           "rules": cfg.digest(), "cards": cards_digest(), "list_mode": list_mode(), "when": _now(), "members": []}
     for m in panel["members"]:
         if not agent_exists(m["agent"]):
             out["members"].append({"id": m["id"], "agent": m["agent"], "label": m["label"],
@@ -519,7 +519,7 @@ def run_exploit(reg: Registry, agent: str, *, deck_pairs: int = 6, games_per_pai
     head = head_to_head(reg, cheat, agent, pairings, games_per_pairing=games_per_pairing,
                         seed=seed, workers=workers, sprt=None, cfg=cfg, deck_seed=deck_seed,
                         progress=(lambda r, row: progress("cheating vs honest", r)) if progress else None)
-    out = {"agent": agent, "cheating_agent": cheat, "rules": cfg.digest(), "cards": cards_digest(), "when": _now(),
+    out = {"agent": agent, "cheating_agent": cheat, "rules": cfg.digest(), "cards": cards_digest(), "list_mode": list_mode(), "when": _now(),
            "deck_seed": deck_seed, "seed": seed, "direct": head.to_json(), "reference": None,
            "caveat": ("This is a ceiling for this agent at this budget — the value of perfect "
                       "information to its own search — not an upper bound on play quality.")}
@@ -575,7 +575,7 @@ def run_generalisation(reg: Registry, agent: str, *, baseline: str = "heuristic"
     """
     require_agent(agent)
     require_agent(baseline)
-    out = {"agent": agent, "baseline": baseline, "rules": cfg.digest(), "cards": cards_digest(), "when": _now(),
+    out = {"agent": agent, "baseline": baseline, "rules": cfg.digest(), "cards": cards_digest(), "list_mode": list_mode(), "when": _now(),
            "populations": []}
     sets = {
         "training": sampled_pairings(reg, deck_pairs, deck_seed=training_seed, label="train"),

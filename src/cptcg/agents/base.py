@@ -7,6 +7,8 @@ hand (a redacting view and a paranoid check come with the search agent).
 
 from __future__ import annotations
 
+import os
+
 from cptcg.core.actions import Choice
 from cptcg.core.rng import Pcg32
 from cptcg.core.state import GameState
@@ -76,6 +78,15 @@ BUDGET_SEP = ":"
 #: never be imported by the package, so they register themselves this way -- in every process,
 #: which is what makes them usable by the harvest and arena workers.
 PLUGINS_ENV = "CPTCG_AGENT_PLUGINS"
+
+#: The environment switch the search agents read for the rival's list (Stage 0, decision 3).
+KNOWN_LIST_ENV = "CPTCG_KNOWN_LIST"
+
+
+def list_mode() -> str:
+    """``"known"`` or ``"inferred"``: how the search agents sample the rival's hidden cards in this
+    process, recorded into every arena and tournament JSON so a number carries its sampler."""
+    return "known" if os.environ.get(KNOWN_LIST_ENV, "0") == "1" else "inferred"
 
 _plugins_loaded: set = set()
 

@@ -45,7 +45,7 @@ Pure stdlib, like everything under ``src/cptcg``: this package is shipped into t
 
 from __future__ import annotations
 
-from cptcg.core.enums import NZONE, Color, Zone
+from cptcg.core.enums import CardType, Color, NZONE, Zone
 from cptcg.core.state import NO_INST, GameState
 from cptcg.core.view import PUBLIC_ZONES, knows_identity, legend_identity_known
 
@@ -238,3 +238,79 @@ def threat_pool(reg, graph: dict, bounds: list[int]) -> dict:
             if t in produces:
                 out[t] += 1
     return out
+
+
+# ------------------------------------------------------------------ inferred-list sampling
+class RivalPrior:
+    """What ``me`` may assume about the rival's hidden cards from public evidence alone, computed
+    once per decision and sampled once per world (Stage 0, decision 3: the *inferred* list).
+
+    A sampled world gives every rival instance ``me`` cannot identify an identity drawn as a
+    random RAM-legal list of the rival's possible colour class: face-down Legend slots from the
+    Legends whose colour still fits under the caps (unique names, none already face-up), and the
+    hidden hand + deck (and a card sold unseen) from ``possible_pool``, at most three copies of a
+    card counting the copies already seen. No population prior and no behavioural evidence: this
+    is the design's day-0 sampler, the one ``--wrong-list`` in the arena measures against the
+    known-list default the search had until now.
+    """
+
+    def __init__(self, s: GameState, me: int) -> None:
+        from cptcg.core.view import _facedown_eddies, knows_identity
+        reg = s.reg
+        self.me = me
+        rival = 1 - me
+        self.bounds = colour_bounds(s, me)
+        caps = max_ram(self.bounds)
+        pool_ids = possible_pool(reg, self.bounds)
+        seen: dict[int, int] = {}
+        known_names: set[str] = set()
+        for inst in range(len(s.i_card)):
+            if s.i_owner[inst] == rival and knows_identity(s, me, inst):
+                d = reg.defs[s.i_card[inst]]
+                seen[d.idx] = seen.get(d.idx, 0) + 1
+                if d.type is CardType.LEGEND:
+                    known_names.add(d.name)
+        self.allow: dict[int, int] = {}
+        for d in reg.defs:
+            if d.type is not CardType.LEGEND and d.id in pool_ids:
+                n = 3 - seen.get(d.idx, 0)
+                if n > 0:
+                    self.allow[d.idx] = n
+        self.legend_cands = [d.idx for d in reg.defs if d.type is CardType.LEGEND
+                             and caps[d.color] >= d.ram and d.name not in known_names]
+        self.slots = [i for i in s.legends(rival) if not knows_identity(s, me, i)]
+        base = rival * NZONE
+        self.hidden = [i for i in s.z[base + Zone.HAND] + s.z[base + Zone.DECK] + _facedown_eddies(s, rival)
+                       if not knows_identity(s, me, i)]
+        self.legend_names = {d.idx: d.name for d in reg.defs if d.type is CardType.LEGEND}
+
+    def sample(self, rng) -> dict[int, int]:
+        """``{instance: card index}`` for every hidden rival instance; ``rng`` is a ``Pcg32``."""
+        out: dict[int, int] = {}
+        cands = list(self.legend_cands)
+        used: set[str] = set()
+        for slot in self.slots:
+            pick = None
+            for _ in range(8):
+                if not cands:
+                    break
+                c = cands[rng.below(len(cands))]
+                if self.legend_names[c] not in used:
+                    pick = c
+                    break
+            if pick is None:
+                break                                      # keep the true identity for the rest
+            used.add(self.legend_names[pick])
+            cands.remove(pick)
+            out[slot] = pick
+        allow = dict(self.allow)
+        keys = [k for k, v in allow.items() if v > 0]
+        for inst in self.hidden:
+            if not keys:
+                break
+            k = keys[rng.below(len(keys))]
+            out[inst] = k
+            allow[k] -= 1
+            if allow[k] <= 0:
+                keys.remove(k)
+        return out

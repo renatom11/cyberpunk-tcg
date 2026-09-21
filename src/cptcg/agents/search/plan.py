@@ -70,6 +70,8 @@ Pure stdlib, like everything under ``src/cptcg``: this package is shipped into t
 
 from __future__ import annotations
 
+import os
+
 from cptcg.agents.base import register
 from cptcg.agents.neural import NeuralAgent, position_key
 from cptcg.core.actions import Choice, ChoiceKind
@@ -77,6 +79,7 @@ from cptcg.core.engine import apply, legal_actions
 from cptcg.core.rng import Pcg32
 from cptcg.core.state import GameState
 from cptcg.core.view import determinize
+from cptcg.learn.opponent import RivalPrior
 from cptcg.learn.delayed import NodeBudget, _materialise, _own_options, fixed_policy
 from cptcg.learn.features import features
 
@@ -130,6 +133,9 @@ class PlanAgent(NeuralAgent):
     #: Samples hidden information rather than reading it, so ``cheat:plan`` is meaningful and
     #: ``tools/arena.py exploit`` can price hidden information for this agent too.
     uses_determinization = True
+
+    #: Known or inferred rival list (Stage 0, decision 3); same switch as ``IsmctsAgent``.
+    known_opponent_deck = os.environ.get("CPTCG_KNOWN_LIST", "0") == "1"
 
     #: The single budget dial, so ``plan:32`` means what ``ismcts:32`` means. It scales the
     #: exhaustive node cap (via ``NODES_PER_ITERATION``) and *is* the number of sampled plans the
@@ -227,7 +233,14 @@ class PlanAgent(NeuralAgent):
     # ------------------------------------------------------------------ the search
     def _world(self, s: GameState):
         """One sampled world, with its own Gig die. The true state only when cheating."""
-        w = s.clone() if self.cheating else determinize(s, self.me, self.rng)
+        if self.cheating:
+            w = s.clone()
+        elif self.known_opponent_deck:
+            w = determinize(s, self.me, self.rng)
+        else:
+            # The inferred list (Stage 0, decision 3): identities drawn from public evidence.
+            prior = RivalPrior(s, self.me)
+            w = determinize(s, self.me, self.rng, known_opponent_deck=False, identities=prior.sample(self.rng))
         # Never replay the true future: the Gig die is the one chance node left and it is rolled
         # inside apply(), so each world rolls its own.
         w.rng = Pcg32(self.rng.next_u32(), seq=3)

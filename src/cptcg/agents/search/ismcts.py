@@ -52,6 +52,7 @@ Pure stdlib, like everything under ``src/cptcg``: this package is shipped into t
 from __future__ import annotations
 
 import math
+import os
 
 from cptcg.agents.base import register
 from cptcg.agents.heuristic import _default_index
@@ -61,6 +62,7 @@ from cptcg.core.engine import apply, legal_actions
 from cptcg.core.rng import Pcg32
 from cptcg.core.state import GameState
 from cptcg.core.view import determinize
+from cptcg.learn.opponent import RivalPrior
 from cptcg.learn.policy import policy_in
 from cptcg.learn.features import features
 
@@ -114,6 +116,13 @@ class IsmctsAgent(NeuralAgent):
 
 
     iterations = 200
+
+    #: Whether the sampler may read the rival's true list (Stage 0, decision 3). ``False`` (the
+    #: default) is the *inferred* list: every sampled world draws the rival's hidden identities
+    #: from ``learn.opponent.RivalPrior`` — public evidence only — instead of permuting the true
+    #: pool. ``CPTCG_KNOWN_LIST=1`` restores the known-list sampler for the ``--wrong-list``
+    #: comparison (kill test 3). Cheating agents never sample.
+    known_opponent_deck = os.environ.get("CPTCG_KNOWN_LIST", "0") == "1"
 
     #: Wall-clock ceiling per decision, seconds. 0 disables it. The browser build sets this, because
     #: a phone under Pyodide cannot be budgeted in iterations.
@@ -196,6 +205,7 @@ class IsmctsAgent(NeuralAgent):
             deadline = time.perf_counter() + self.max_seconds
 
         rng = self.rng
+        prior = None if (self.cheating or self.known_opponent_deck) else RivalPrior(s, self.me)
         for n in range(self.iterations):
             if deadline is not None and (n & 7) == 0:
                 import time
@@ -205,8 +215,10 @@ class IsmctsAgent(NeuralAgent):
             # a clone; the cheating branch has to make one so the live game is never touched.
             if self.cheating:
                 w = s.clone()
-            else:
+            elif prior is None:
                 w = determinize(s, self.me, rng)
+            else:
+                w = determinize(s, self.me, rng, known_opponent_deck=False, identities=prior.sample(rng))
             # Never replay the true future: the Gig die is the one chance node left in the game and
             # it is rolled inside apply(), so each iteration has to roll its own.
             w.rng = Pcg32(rng.next_u32(), seq=3)

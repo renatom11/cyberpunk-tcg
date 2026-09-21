@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from cptcg.agents.base import list_mode
 from cptcg.cards.registry import cards_digest
 from cptcg.core.config import DEFAULT_CONFIG, RulesConfig
 from cptcg.deck.decklist import Decklist
@@ -199,6 +200,7 @@ class Tournament:
             # literal and nothing warns. tests/sim/test_tournament_played.py pins that both survive.
             "agent": self.agent, "seed": self.seed, "rules": DEFAULT_CONFIG.digest(),
             "cards_digest": cards_digest(),
+            "list_mode": list_mode(),
             "info": dict(self.info),
             "how_played": how_played(self),
             "decks": [{"name": d.name, "legends": list(d.legends), "main": d.counts(),

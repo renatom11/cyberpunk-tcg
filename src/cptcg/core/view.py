@@ -333,7 +333,8 @@ def info_key(s: "GameState", me: int, *, known_opponent_deck: bool = True) -> tu
 #: Menus ``determinize`` can re-derive from a sampled world. MULLIGAN/ORDER/GIG_DIE read nothing
 #: hidden; PICK options are built by a card script that cannot be re-run from outside ``effects``.
 _REDERIVABLE = frozenset({ChoiceKind.MAIN, ChoiceKind.REACTION, ChoiceKind.TARGET})
-def determinize(s: "GameState", me: int, rng, *, known_opponent_deck: bool = True) -> "GameState":
+def determinize(s: "GameState", me: int, rng, *, known_opponent_deck: bool = True,
+                identities: dict | None = None) -> "GameState":
     """A world consistent with everything ``me`` knows, sampled uniformly.
 
     Clones ``s``, breaks the shared identity array, and permutes card indices within each hidden
@@ -370,7 +371,10 @@ def determinize(s: "GameState", me: int, rng, *, known_opponent_deck: bool = Tru
     identity to each instance that exists, and without a decklist there is no honest distribution
     over identities available inside ``core``. Permuting the pool is *consistent with* the coarser
     key, so the sampler stays sound — it is simply not yet exploiting the extra freedom. That is the
-    hook for the difficulty knob.
+    hook for the difficulty knob, and ``identities`` is what fills it: ``{instance: card index}``
+    for rival instances ``me`` cannot identify, drawn by ``learn.opponent.RivalPrior`` from public
+    evidence alone (Stage 0, the inferred list). They are written after the permutation, so a
+    hidden instance the caller did not name still gets a permuted identity from the true pool.
     """
     ch = s.pending
     rebuild = ch is not None and ch.player != me and ch.kind in _REDERIVABLE
@@ -387,6 +391,9 @@ def determinize(s: "GameState", me: int, rng, *, known_opponent_deck: bool = Tru
         ids = [i_card[i] for i in g]
         rng.shuffle(ids)
         for inst, cid in zip(g, ids):
+            i_card[inst] = cid
+    if identities:
+        for inst, cid in identities.items():
             i_card[inst] = cid
     if rebuild:
         if ch.kind is ChoiceKind.MAIN:
