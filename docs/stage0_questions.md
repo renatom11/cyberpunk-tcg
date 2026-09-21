@@ -12,3 +12,8 @@ Way* with an empty Legends area.)
 - **Two copies of one card in an ordering group.** Two Deadman Transmitters on one host (FAQ: "choose
   one of them") and, more generally, identical triggers of one card are collapsed to one choice, as
   ruling 046 already does. Nothing blocked.
+
+## Q3 — does a Gear's ⊡ ability spend the Gear or its host?
+
+Raised by the play-around proposals (Overwatch: Panam's Gift). The engine spends the **Gear instance** (`legal.ability_options` / `engine.activate` test and spend `inst`, the Gear), so a Gear's ⊡ can be used while its host is spent, and using it leaves the host ready to BLOCK afterwards. The glossary says any card can be spent, which makes this defensible, but the printed ⊡ on a Gear could also be read as spending the host it is attached to. Not changed (no rule changes after E12); one verified position (`play-around-overwatch-on-the-lowlife`) depends on the current reading and would need re-qualifying if the ruling went the other way.
+

@@ -87,3 +87,18 @@ One line each: what was decided and why. Rules questions are not here; they go t
 * Chosen over a separate `defend_search` because the existing exhaustive search, trials and floor are one `goal` parameter away from it; the "prevents the winning Gig this turn" criterion of the design is exactly `held`. What a defend position cannot express: a defence that only pays off two turns later.
 * Positions for the family are authored the same way as the others (propose → `check`); none exist yet at the time of this note.
 
+## Kill test 4 after E12 — what the classifier now measures
+
+`dump.py --pay-events` on the re-recorded corpus (5,000 games): 109,558 payments, 15,397 (14.05%) spent a Legend with content while another source stayed ready. Under E12 those are no longer the auto-payer's doing: whenever such a payment had more than one plan the heuristic was *asked* and its preview chose. The classifier cannot tell an asked payment from an unasked one, so the number is now "how often the chosen plan spent a Legend with content", not an approximation share. The residual approximations E12 leaves (Eddies always first; two script-internal payments) were sized on the pre-E12 corpus (0.02% for the spend-trigger case) and are recorded in ruling 025.
+
+## Observations from the family proposals (recorded, not acted on — the heuristic is frozen)
+
+* The frozen defender's reaction preview stops at the attacker's die Pick (`HeuristicAgent._resolve` returns when the active player is not itself), so it Blocks only when the naive attack would take **all** its stealable dice or its Unit would lose a fight; a Gig attack that leaves a die behind is never blocked. Several verified positions in the play-around and card-semantics families lean on this. It is the same mechanism that produced E10's residual (the re-window after a Block stays closed), and it is a property of the yardstick, not of the engine.
+* The heuristic answers an optional prompt with option 0 (the first candidate, not the decline), which is why Alt Cunningham *Mother of Daemons* cannot anchor a play-around position against it.
+* The heuristic's evaluator counts Eddies and Legends as cards regardless of orientation, so spending is free to it; proposals gate lines on legality (exact Eddies) rather than on the greedy not wanting to spend.
+
+## Merging the families: two repo standards the proposals had to meet
+
+* `tests/learn/test_delayed_reward.py::test_hand_built_positions_look_like_real_games` requires three Legends a side and at least twenty cards in each deck. The proposals were briefed with "6+ cards", so the 52 merged positions were padded to twenty at the **bottom** of the deck (the front of the spec list) by repeating their own cards, which leaves the top — the only part a line can draw or reveal — exactly as authored; every padded position was then re-qualified and its `verified` block replaced. A Legend that went solo stands on the field and is still one of the deck's three, so the test now counts it.
+* `MAX_DEPTH` (own decisions a searched turn may hold) raised 14 → 22: with E10's Pass at every attack, E12's payment question and E8's orderings, a turn with two attacks and two Legend-paid plays reaches fourteen and the solver reported "not exhausted" on a position it had in fact solved (`play-around-overwatch-eats-the-fang`).
+

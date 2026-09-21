@@ -65,3 +65,11 @@ linearly — 8 cores ≈ 5.3 h, 16 ≈ 2.7 h; a generation a night needs 4 cores
 working day needs 8. The oracle labelling (2,000 × ~10 s of `cheat:ismcts:2000`) is a one-off
 ~1.5 h on 4 cores and is not on the per-generation path.
 
+## Steps 3–4 — corpora, sidecar, families
+
+* Corpora re-recorded under E12 with the coverage sidecar: `out/s0/h20k` (20,000 heuristic self-play games, 3,251,747 decisions, coverage block in the manifest) and `out/s0/r8k` (8,000 heuristic vs random).
+* Kill test 1 pipeline launched (`scratchpad/kt1.sh`): 114-feature head refit on the new corpora → card-aware rows and fit → three panels (`neural@w114`, `neural-cards`, `neural-cards-ablated`).
+* Suite families: **dice** — 12 proposals, 12 verified by `qualify` (agent report; files under `out/positions/dice/`). Race, card-semantics and play-around agents still running. A `mode: "defend"` position kind exists for the defender family; positions not yet authored.
+* Kill test 1 pipeline, first stages: `harvest.py examples` on h20k+r8k → `fit_eval.py fit --hidden 16` → `out/s0/w114.json` (held-out Brier 0.1238 at epoch 124, 115 s). Card-aware rows: 218,364 (h20k, rate 0.04) + 50,914 (r8k) = 269,278 rows, 141,057 parameters; epoch 1 = 192 s, holdout Brier 0.135 after one epoch (`out/s0/kt1/fitcards.log`).
+* Suite families merged (all verified by `qualify` on this build, none refused by `merge`): **dice 12, race 12, play-around 13, card-semantics 15** → `data/arena/delayed.json` **68 → 120** positions. A `defend` family (the new `mode: "defend"` kind) is being authored.
+
