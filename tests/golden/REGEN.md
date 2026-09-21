@@ -33,7 +33,10 @@ Random legal decks reach Overwatch; the golden decks do not.
 **Close-out for the four rulings** (Q1 and Q4 changed no code: the engine already built the Call's
 group and already allowed the Call of a spent face-down Legend; both are pinned by tests and rows
 054 and 057). After this entry the delayed suite was re-derived, the bootstrap sample re-recorded
-and the oracle set re-labelled; their results are in the commits that follow.
+and the oracle set re-labelled. Requalification: 132 of 133 positions still qualify;
+`play-around-overwatch-on-the-lowlife` is removed (the frozen heuristic now wins it on every seed:
+its line used Overwatch on a spent host, which Q3 forbids — the dependency was flagged when the
+question was parked). The bootstrap sample was re-recorded.
 
 ---
 

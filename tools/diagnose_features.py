@@ -93,8 +93,8 @@ def run(agent_name: str, weights: str | None) -> list[dict]:
     for pos in suite["positions"]:
         v = pos.get("verified") or {}
         line = v.get("line") or []
-        if not line:
-            continue
+        if not line or pos.get("mode") == "defend":
+            continue                      # a defend position's line starts at a reaction, not the main menu
         me = pos.get("player", 0)
         agent.me = me
         opts = option_states(reg, pos, me, agent._resolve)

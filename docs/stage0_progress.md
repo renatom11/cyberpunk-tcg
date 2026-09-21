@@ -104,3 +104,18 @@ ismcts:32 (n=20): residual RMS 0.1092 vs null 0.0953 (p95 0.1039), p<0.001, Nash
 
 Prepared and tested in a worktree while KT2 finished: Q2 core (`needs_ordering` over separate instances, copies included; `OrderTriggersStep` offers each instance), Q2 Deadman Transmitter choice, Q3 Overwatch spends its host (`engine.ability_spender`), Q1 (engine already builds the group; test + docstring), Q4 (test only). Rulings rows 054–057 written.
 
+## Owner rulings Q1–Q4 — landed
+
+| ruling | commit(s) | golden | fuzz | suite |
+|---|---|---|---|---|
+| Q2 core (055): copies are ordered | 9142d8c + e858584 | all 8 keys, 23/224 games, 3 winner flips (random keys) | both moved | — |
+| Q2 Deadman (055): two on one host ask | c-commit "cards: two Deadman Transmitters…" | IDENTICAL (G0) | unchanged (unreachable by random decks; scenario test) | — |
+| Q3 (056): Overwatch spends its host | cf2e048 | IDENTICAL (G0 by deck) | both moved | `play-around-overwatch-on-the-lowlife` no longer qualifies (heuristic 20/20) → removed, 133 → 132 |
+| Q1 (054), Q4 (057) | tests + docstring only (engine already correct) | — | — | — |
+
+Ordering prompts on the golden: 455 → 519 (2.32 a game). Bootstrap sample re-recorded; oracle set being re-labelled with the original labellers (background); full suite green. **No further rule changes in this task.**
+
+## KT1 rerun — started
+
+Search corpus `out/s1/s10k` (10,000 `ismcts:32` self-play games, inferred list, visits + coverage sidecar) harvesting with 4 workers; the rest of the pre-registered pipeline (`scratchpad/rerun.sh`, `rerun2.sh`) follows: rows at rate 0.5 both perspectives → `fit114` h16/h32 and three card-model configs (l2 1e-5 / 1e-4, policy weight 0.5 / 0) chosen on holdout Brier and the legal monotonicity rate only → 128-playout independent oracle → panels ×3 once → mirrored SPRT head-to-head (secondary) → suite by family and coverage.
+
