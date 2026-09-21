@@ -10,6 +10,33 @@ Every entry records the five pieces of evidence from `docs/verification.md`. A r
 all five is not one.
 
 
+## 2026-09-21 — owner ruling Q3 (056): a Gear's spend icon spends the equipped Unit or Legend (G2 by file, G0 by deck)
+
+**The change.** `engine.ability_spender`: for a Gear's ⊡ ability the card spent is the host, so
+`legal.ability_options` requires the host ready (and, for a Unit, not lagged), `engine.activate`
+spends the host, and a host Legend is excluded from paying the ability's €$ (as a Legend spending
+itself already was). The only such Gear is Overwatch *Panam's Gift*; its text names no card, so
+nothing contradicts the ruling (the Gear list is in `docs/stage0_questions.md`). Reproduced red
+first (`test_q3_overwatch_spends_its_host_and_needs_the_host_ready`; `test_overwatch_quick_ability`
+now asserts the host is spent and the Gear is not).
+
+**1. Prediction.** G0 by deck membership (no golden deck holds Overwatch) though the edit is in
+`core/`: `check` MUST stay IDENTICAL. Observed: IDENTICAL.
+
+**2–4.** Not applicable: nothing moved.
+
+**5. Two-sided reachability.** Both digests moved: `fuzz -n 300 --seed 1` (heuristic)
+`861ce22bd25946ea1f292868` → `aae62fe49cecb4076fa237ba`, 50,176 → 50,194 actions; `fuzz -n 400
+--seed 1 --agent random` `876c5cf08af59529417ff3e8` → `86f87e6ddecdb19209f25090`, 38,081 → 38,005.
+Random legal decks reach Overwatch; the golden decks do not.
+
+**Close-out for the four rulings** (Q1 and Q4 changed no code: the engine already built the Call's
+group and already allowed the Call of a spent face-down Legend; both are pinned by tests and rows
+054 and 057). After this entry the delayed suite was re-derived, the bootstrap sample re-recorded
+and the oracle set re-labelled; their results are in the commits that follow.
+
+---
+
 ## 2026-09-21 — owner ruling Q2 (055), Deadman Transmitter: two on one host ask which is destroyed (G0)
 
 **The change.** `deadman-transmitter`'s replacement effect, when two or more copies sit on the

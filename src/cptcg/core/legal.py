@@ -96,12 +96,16 @@ def ability_options(s: GameState, player: int, quick_only: bool) -> list[Activat
         for k, ab in enumerate(sc.abilities):
             if quick_only and not ab.quick:
                 continue
+            # Q3 (owner ruling): a Gear's spend icon spends the Unit or Legend it is attached to.
+            spender = s.i_host[inst] if d.type is CardType.GEAR else inst
             if ab.self_spend:
-                if i_spent[inst]:
+                if spender == NO_INST or i_spent[spender]:
                     continue
-                if d.type is CardType.UNIT and i_lag[inst]:
+                sd = defs[i_card[spender]]
+                if sd.type is CardType.UNIT and i_lag[spender]:
                     continue                     # Lag: no self-spend effects
-            excl = inst if (ab.self_spend and d.type is CardType.LEGEND) else NO_INST
+            excl = spender if (ab.self_spend and spender != NO_INST
+                               and defs[i_card[spender]].type is CardType.LEGEND) else NO_INST
             cost = ab.cost(_ctx(s, inst)) if callable(ab.cost) else ab.cost
             if srcs is None:
                 srcs = payable_sources(s, player)

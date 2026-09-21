@@ -308,4 +308,6 @@ def test_overwatch_quick_ability(pool):
     assert Activate(g, 0) in s.pending.options
     do(s, Activate(g, 0))
     do(s, Pick((0,)))                                       # discard Towerfall (auto); defeat the attacker (cost 6)
-    assert s.i_zone[find(s, "animals-wrecker")] == Zone.TRASH and s.i_spent[g]
+    # Q3 (owner ruling): the Gear's spend icon spends the equipped Unit, not the Gear.
+    assert s.i_zone[find(s, "animals-wrecker")] == Zone.TRASH
+    assert s.i_spent[find(s, "corpo-security")] and not s.i_spent[g]

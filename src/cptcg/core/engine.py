@@ -164,7 +164,8 @@ def _payment_of(s: GameState, p: int, a: Action) -> tuple[int, int]:
         return play_cost(s, p, a.inst, go_solo=a.keyword), NO_INST
     if isinstance(a, Activate):
         ab = s.card(a.inst).script.abilities[a.ability]
-        excl = a.inst if (ab.self_spend and s.card(a.inst).type is CardType.LEGEND) else NO_INST
+        spender = ability_spender(s, a.inst)
+        excl = spender if (ab.self_spend and s.card(spender).type is CardType.LEGEND) else NO_INST
         cost = ab.cost(_ctx(s, a.inst)) if callable(ab.cost) else ab.cost
         return cost, excl
     return 0, NO_INST
@@ -317,9 +318,18 @@ def go_solo(s: GameState, p: int, inst: int, cost: int, keyword: bool = True) ->
     settle_entry(s, "play", pend, printed, pend_pay)
 
 
+def ability_spender(s: GameState, inst: int) -> int:
+    """The card an ability's spend icon spends: the card itself, or, for Gear, the Unit or
+    Legend it is attached to (Stage 0, owner ruling Q3 — the only such Gear is Overwatch)."""
+    if s.card(inst).type is CardType.GEAR and s.i_host[inst] != NO_INST:
+        return s.i_host[inst]
+    return inst
+
+
 def activate(s: GameState, p: int, inst: int, k: int) -> None:
     ab = s.card(inst).script.abilities[k]
-    excl = inst if (ab.self_spend and s.card(inst).type is CardType.LEGEND) else NO_INST
+    spender = ability_spender(s, inst)           # Q3: a Gear's spend icon spends its host
+    excl = spender if (ab.self_spend and s.card(spender).type is CardType.LEGEND) else NO_INST
     cost = ab.cost(_ctx(s, inst)) if callable(ab.cost) else ab.cost
     # The activated effect resolves first and the spend triggers its cost raised come after --
     # "If I spend a Unit or Legend equipped with Netwatch Netdriver to activate the Unit/Legend's
@@ -330,7 +340,7 @@ def activate(s: GameState, p: int, inst: int, k: int) -> None:
     with deferring(s) as pend:
         pay(s, p, cost, exclude=excl)
         if ab.self_spend:
-            spend(s, inst)
+            spend(s, spender)
     resolve_triggers(s, "spent", deferred_entries(pend))
     s.stack.append(HookStep(ab.effect, inst))
     s.emit("activate", p, inst, k)
