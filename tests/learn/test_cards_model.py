@@ -141,3 +141,32 @@ def test_rows_count_every_multi_option_decision_at_rate_one():
     m = _random_numpy_model(reg)
     v1 = m.raw(b)
     assert np.all(np.isfinite(v1))
+
+
+def test_the_card_agent_reads_a_position_as_if_at_its_own_main(tmp_path, monkeypatch):
+    """The value head is E[outcome | board, decision context]; the agent fixes the context so two
+    boards are compared under one conditional (the first panel run showed why)."""
+    monkeypatch.setenv("CPTCG_AGENT_PLUGINS", "cards_agents")
+    import cards_agents as CA
+    from cptcg.core.actions import Choice, ChoiceKind
+    reg = load_default()
+    m = _random_numpy_model(reg)
+    s = new_game(reg, sample_pair(reg, Pcg32(41)), 41)
+    ags = [make_agent("heuristic", 3), make_agent("heuristic", 4)]
+    for p, a in enumerate(ags):
+        a.new_game(41, p)
+    # play to a decision of seat 1, so seat 0 is the non-mover
+    for _ in range(60):
+        legal_actions(s)
+        if s.pending.player == 1 and s.pending.kind is not ChoiceKind.MAIN:
+            break
+        apply(s, ags[s.pending.player].act(s, s.pending))
+    assert s.pending.player == 1
+    neutral = T.context(s, 0, Choice(ChoiceKind.MAIN, 0, (), lazy=True))
+    own = T.context(s, 0, s.pending)
+    assert neutral != own
+    v_default = CA._value_batch(m, [s], 0)[0]
+    v_neutral = CA._value_batch(m, [s], 0, context=neutral)[0]
+    v_own = CA._value_batch(m, [s], 0, context=own)[0]
+    assert abs(v_default - v_neutral) < 1e-6
+    assert v_default != v_own

@@ -54,15 +54,27 @@ def load_cards_model(path: str, ablate: bool) -> CM.NumpyCardsModel:
     return m
 
 
-def _value_batch(model: CM.NumpyCardsModel, states: list, me: int) -> np.ndarray:
+def _value_batch(model: CM.NumpyCardsModel, states: list, me: int, context=None) -> np.ndarray:
     """Value for ``me`` in each state, one forward. States with no pending choice are given a
-    neutral MAIN context (the value head is a position evaluator)."""
+    neutral MAIN context (the value head is a position evaluator).
+
+    ``context`` fixes one context vector for every state. The greedy preview needs it: the head
+    is a conditional expectation E[outcome | board, decision context], and the previews of one
+    decision land in different contexts (a Play leaves my MAIN pending, an EndTurn leaves the
+    rival's GIG_DIE pending), so comparing them under their own contexts compares two different
+    conditionals rather than two boards — the first fit rated every EndTurn preview about a
+    logit above every Play (measured: 3 of 6 games won against random). Scoring every preview
+    under the context of the decision being made compares boards only, which is what the
+    114-feature head, having no context input, does by construction.
+    """
     decs = []
+    neutral = Choice(ChoiceKind.MAIN, me, (), lazy=True)
     for c in states:
-        ch = c.pending
-        if ch is None:
-            ch = Choice(ChoiceKind.MAIN, c.active, (), lazy=True)
-        d = {"cards": T.card_tokens(c, me), "dice": T.die_tokens(c, me), "context": T.context(c, me, ch),
+        # Without an override the position is read "as if at my MAIN": one fixed decision context
+        # per seat, so two boards are always compared under the same conditional. The attack in
+        # flight (if any) still enters through the state itself.
+        d = {"cards": T.card_tokens(c, me), "dice": T.die_tokens(c, me),
+             "context": context if context is not None else T.context(c, me, neutral),
              "aggregates": tuple(_features(c, me)), "options": ()}
         deck, legs = T.belief(c, me)
         d["belief_deck"], d["belief_legends"] = deck, legs
@@ -117,7 +129,8 @@ class NeuralCardsAgent(NeuralAgent):
             else:
                 need.append(k)
         if need:
-            vals = _value_batch(self.cards_model, [previews[k] for k in need], self.me)
+            root_ctx = T.context(s, self.me, choice)
+            vals = _value_batch(self.cards_model, [previews[k] for k in need], self.me, context=root_ctx)
             for k, v in zip(need, vals):
                 scores[k] = float(v)
         best_i, best_v = 0, -1e18
