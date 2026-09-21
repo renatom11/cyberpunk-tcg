@@ -743,7 +743,7 @@ def render_panel(out: dict) -> str:
         lines.append(f"| {m['label']} (`{m['agent']}`) | {r['games']} | {pct(r['rate'])} | "
                      f"{100 * r['wilson_low']:.1f}–{100 * r['wilson_high']:.1f}% | {spread} | "
                      f"{r['pair_wins']}/{r['discordant']} |")
-    lines += ["", "Here the Wilson interval is the right one and the *only* one that changes "
+    lines += ["", ONCE, "Here the Wilson interval is the right one and the *only* one that changes "
                   "between generations: the decks are fixed by the panel, so nothing but more "
                   "games is being sampled. The per-pairing spread is printed beside it as a "
                   "reminder of what the panel is not — a panel score is a score on these twelve "
@@ -830,11 +830,27 @@ def write_json(path: str | Path, data: dict) -> Path:
     return p
 
 
+#: A renderer puts its fixed explanatory prose after this line; ``append_section`` writes that
+#: tail only the first time it would appear in the file. The audit found the panel's paragraph
+#: ten times and the delayed suite's three paragraphs eleven times in ``docs/learning.md``, one
+#: copy per run, which is what this stops.
+ONCE = "<!-- once -->"
+
+
 def append_section(path: str | Path, text: str) -> Path:
-    """Append one report section to ``docs/learning.md`` (or wherever), creating it if needed."""
+    """Append one report section to ``docs/learning.md`` (or wherever), creating it if needed.
+
+    Everything after the ``ONCE`` marker in ``text`` is explanatory prose that does not change
+    between runs; it is appended the first time and skipped when the file already carries it.
+    """
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
     old = p.read_text(encoding="utf-8") if p.exists() else ""
+    head, _, once = text.partition(ONCE)
+    body = head.rstrip("\n")
+    once = once.strip("\n")
+    if once and once not in old:
+        body = body + "\n\n" + once
     sep = "" if not old else ("\n" if old.endswith("\n") else "\n\n")
-    p.write_text(old + sep + "\n" + text.rstrip("\n") + "\n", encoding="utf-8")
+    p.write_text(old + sep + "\n" + body + "\n", encoding="utf-8")
     return p

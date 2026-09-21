@@ -456,3 +456,15 @@ def test_a_budgeted_agent_with_real_weights_is_accepted_by_the_gate():
     if WEIGHTS_PATH.exists():
         assert agent_exists(f"ismcts:32@{WEIGHTS_PATH}")
     assert not agent_exists("ismcts:32@definitely/not/here.json")
+
+
+
+def test_append_section_writes_its_fixed_prose_once(tmp_path):
+    """The explanatory paragraphs after the ONCE marker land the first time and never again."""
+    from cptcg.learn.arena import ONCE, append_section
+    p = tmp_path / "learning.md"
+    append_section(p, "### run 1\n\n| a | b |\n" + ONCE + "\nHere is why.\n")
+    append_section(p, "### run 2\n\n| c | d |\n" + ONCE + "\nHere is why.\n")
+    text = p.read_text(encoding="utf-8")
+    assert text.count("### run") == 2 and text.count("Here is why.") == 1
+    assert ONCE not in text

@@ -881,7 +881,8 @@ def render_score(out: dict) -> str:
         lines.append(f"| `{r['id']}` | {r['source']} | {r['max_turns']} | "
                      f"{r['wins']}/{r['trials']} | {floor} | "
                      f"{'yes' if r['solved'] else 'no'} |")
-    lines += ["",
+    from cptcg.learn.arena import ONCE
+    lines += ["", ONCE,
               "**Horizon** is how far past the searched turn the win may land, counted in the "
               "searched player's own turns. At 1 the line wins inside the turn; at 2 the searched "
               "turn cannot win by itself and has to leave a board the frozen policy converts on "
