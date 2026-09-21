@@ -73,7 +73,8 @@ def time_agent(reg, name: str, games: int, seed: int, opponent: str = "heuristic
         per_game.append(time.perf_counter() - t0)
     return {"agent": name, "games": games, "game_s": _q(per_game),
             "decisions_per_game": decisions / games,
-            "decision_ms": {k: {kk: vv * 1000 for kk, vv in _q(v).items()} for k, v in per_dec.items()}}
+            "decision_ms": {k: {kk: (vv if kk == "n" else vv * 1000) for kk, vv in _q(v).items()}
+                            for k, v in per_dec.items()}}
 
 
 def micro(reg, n: int = 10_000) -> dict:

@@ -74,3 +74,16 @@ One line each: what was decided and why. Rules questions are not here; they go t
 * **The prompt names no card**: the view-redaction test caught the first version naming the payer's face-down Legends in a prompt both seats receive. Labels go through the identity gate instead.
 * **Token layout moved** (`tokens_digest` `ae121dc0ed23616c` → `1c4b67e7c9000efc`): a `pay` tag class and a `payplan` pick class. No card-aware weights existed yet, so nothing is refused.
 
+## Step 2 — how the timing table was measured
+
+* Each agent group ran as its own single-threaded process (`heuristic,neural,ismcts:32` / `ismcts:200` / `plan:32` / `plan-deep:32`), four at once on the four cores, so every measurement had a core to itself; the micro-costs and the 1-vs-4-worker harvest throughput ran afterwards on the otherwise idle machine. Per-decision times are therefore per-core quiet, not machine-quiet; memory-bandwidth sharing is the residual.
+* The table is taken under the **inferred-list** sampler (the Stage 1 default), so `ismcts` rows include a `RivalPrior` draw per world. The design's 1.1 ms/iteration was measured under the known-list sampler.
+* `plan` and `plan-deep` search once per turn (at the GIG_DIE decision) and replay the plan, so their per-kind MAIN medians read 0.00; the per-game column is the comparable number.
+* `tools/timing.py` scaled the decision counts by 1000 along with the milliseconds; fixed in the tool and in the four JSON files (quantiles were unaffected).
+
+## Step 4 — the defender family is built as a `mode: "defend"` position
+
+* `qualify` gains a second goal: for `mode: "defend"` the position's `player` is the defender, the rival is active and the claim is `delayed.held` — the rival's turn ends without the rival winning or reaching the winning Gig count. The solver searches the defender's decisions during the rival's turn (reaction windows, Calls, QUICK plays, the defender's own Picks) with the rival on the frozen policy; the heuristic must fail to hold on every seed and random must hold on at most 25% of the scoring seeds, the same shape as a mover position. Horizon is 1 by construction.
+* Chosen over a separate `defend_search` because the existing exhaustive search, trials and floor are one `goal` parameter away from it; the "prevents the winning Gig this turn" criterion of the design is exactly `held`. What a defend position cannot express: a defence that only pays off two turns later.
+* Positions for the family are authored the same way as the others (propose → `check`); none exist yet at the time of this note.
+
