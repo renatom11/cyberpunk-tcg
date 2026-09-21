@@ -15,7 +15,7 @@ analysis = ["numpy>=1.26", "scipy>=1.11"]
 # tools/fit_eval.py fit|sweep only. NEVER a dependency of src/cptcg: that package is zipped into
 # a phone browser by tools/build_site.py, where there is no pip. tests/unit/test_stdlib_only.py
 # is what keeps the line from moving.
-training = ["numpy>=1.26"]
+training = ["numpy>=1.26", "torch==2.14.0"]   # torch only for tools/fit_cards.py; the numpy twin serves inference
 images = ["pillow>=10"]    # only for tools/crop_cards.py, never imported by the engine
 
 [project.scripts]
