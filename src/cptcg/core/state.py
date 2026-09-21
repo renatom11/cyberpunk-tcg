@@ -74,8 +74,9 @@ class GameState:
         "temp_power",
         # temporary effects with expiry: (kind, subject, value, expires_turn)
         "mods",
-        # per-turn bookkeeping: keys used for "the first time ... each turn"; cards played this turn
-        "used", "played",
+        # per-turn bookkeeping: keys used for "the first time ... each turn"; cards played this turn;
+        # every event dispatched this turn, in order (see ``EffectCtx.first_this_turn``)
+        "used", "played", "turn_events",
         # every instance drawn this game (card analytics: "win rate when drawn")
         "drawn",
         # every instance *played* this game, in order, and who played it: (instance, player).
@@ -126,6 +127,7 @@ class GameState:
         self.mods: list[tuple] = []
         self.used: set = set()
         self.played: list[int] = []
+        self.turn_events: list[tuple] = []
         self.drawn: list[int] = []
         self.played_log: list[tuple[int, int]] = []
         self.log: list | None = None
@@ -175,6 +177,7 @@ class GameState:
         s.mods = self.mods[:]
         s.used = self.used.copy()
         s.played = self.played[:]
+        s.turn_events = self.turn_events[:]
         s.drawn = self.drawn[:]
         s.played_log = self.played_log[:]
         s.log = None

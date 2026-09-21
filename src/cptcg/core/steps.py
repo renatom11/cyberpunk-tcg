@@ -181,6 +181,7 @@ class EndTurnCleanupStep(Step):
         s.mods = [m for m in s.mods if m[3] > s.turn]
         s.used.clear()
         s.played.clear()
+        s.turn_events.clear()
         s.once[0] = s.once[1] = 0
         s.turns_taken[p] += 1
         if not s.overtime:                            # CR 8.17: checked as the turn ends

@@ -641,13 +641,22 @@ def _():
         c.choose(cands, lambda c2, i: c2.play_free(i, then=lambda c3, u: c3.mod("attack_units_now", u)),
                  prompt="Play a Unit for free?", optional=True)
 
+    def arasaka_died(c):
+        return lambda x: x[0] == "defeated" and "ARASAKA" in c.d(x[1]).tags
+
     def ev(c, e):
         # "The first time an ARASAKA Unit is defeated each turn, draw 1." No side qualifier, and
         # this set says so when it means one: River Ward reads "a *friendly* equipped Unit", and
         # Yorinobu's own first paragraph says "rival Units". The gate read e[2] -- the owner of the
         # defeated card -- against the controller, so only friendly ARASAKA deaths ever drew.
-        if e[0] == "defeated" and "ARASAKA" in c.d(e[1]).tags and c.once("arasaka_defeated"):
+        # "First time each turn" is by event, not by this card's memory (FAQ: a Yorinobu played
+        # after an ARASAKA death this turn does not draw for the next one).
+        if e[0] == "defeated" and "ARASAKA" in c.d(e[1]).tags and c.first_this_turn(arasaka_died(c), e):
             c.draw(1)
+
+    # FAQ: "Does Yorinobu count itself for 'the first time an ARASAKA Unit is defeated each turn'?
+    # Yes." `ops.defeat` delivers the "defeated" event to the dead card's own listener as well, so
+    # the hook above hears its own death without a DEFEATED label the card does not print.
     return CardScript(on_play=play, on_event=ev, events=frozenset({"defeated"}))
 
 
@@ -954,16 +963,18 @@ def _():
 
 @script("viktor-vektor-drop-your-illusions")
 def _():
+    def cyberware_played(c):
+        return lambda x: (x[0] == "played" and x[2] == c.player and c.d(x[1]).type is GEAR
+                          and "CYBERWARE" in c.d(x[1]).tags)
+
     def cost_mod(c, p, inst, go_solo):
+        # "The first CYBERWARE Gear you play each turn": by event, like every other "first time
+        # each turn" in the set (Stage 0 E6) -- one played before Viktor arrived still counts.
         d = c.d(inst)
-        if p == c.player and d.type is GEAR and "CYBERWARE" in d.tags and (c.inst, "cyberware") not in c.s.used:
+        if p == c.player and d.type is GEAR and "CYBERWARE" in d.tags and c.first_this_turn(cyberware_played(c)):
             return -3
         return 0
-
-    def ev(c, e):
-        if e[0] == "played" and e[2] == c.player and c.d(e[1]).type is GEAR and "CYBERWARE" in c.d(e[1]).tags:
-            c.s.used.add((c.inst, "cyberware"))
-    return CardScript(cost_mod=cost_mod, on_event=ev, events=frozenset({"played"}))
+    return CardScript(cost_mod=cost_mod)
 
 
 @script("riot-shield")
@@ -1021,7 +1032,7 @@ def _():
 @script("johnny-silverhand-never-stop-fighting")
 def _():
     def ev(c, e):
-        if e[0] == "fight_won" and e[1] == c.inst and c.once("won"):
+        if e[0] == "fight_won" and e[1] == c.inst and c.first_this_turn(lambda x: x[0] == "fight_won" and x[1] == c.inst, e):
             c.ready(c.inst)
     return CardScript(extra={"wins_vs_tag": "CORPO"}, on_event=ev, events=frozenset({"fight_won"}))
 
@@ -1131,7 +1142,7 @@ def _():
 @script("rita-wheeler-no-stupid-questions")
 def _():
     def ev(c, e):
-        if e[0] == "spent" and e[1] == c.inst and c.once("spent"):
+        if e[0] == "spent" and e[1] == c.inst and c.first_this_turn(lambda x: x[0] == "spent" and x[1] == c.inst, e):
             c.draw(1)
             c.discard(1)
     return CardScript(on_event=ev, events=frozenset({"spent"}))
@@ -1172,7 +1183,7 @@ def _host_spent(c, e):
 @script("gorilla-arms")
 def _():
     def ev(c, e):
-        if e[0] == "steal" and e[1] == c.host() and c.once("steal"):
+        if e[0] == "steal" and e[1] == c.host() and c.first_this_turn(lambda x, h=c.host(): x[0] == "steal" and x[1] == h, e):
             from cptcg.core.ops import steal_reduction
             from cptcg.core.steps import push_steals, stealable
             if steal_reduction(c.s, c.host()) >= 1:        # Take Control reaches effect steals (FAQ)
@@ -1558,8 +1569,15 @@ def _():
         # Ruling 044, and the FAQ names this card: "Does playing a Legend from the Legends area
         # to the field, trigger Jackie Welles's effect? Yes". `go_solo` moves the Legend to the
         # field before dispatching "played", so by zone it is the Blue Unit that was played.
+        def blue_play(x):
+            return (x[0] == "played" and x[2] == c.player and c.d(x[1]).color.name == "BLUE"
+                    and (c.d(x[1]).type is not PROGRAM))          # a Unit (solo'd Legends included) or a Gear
+
+        # "First time each turn" is by event (FAQ: Jackie flipped after a Blue card this turn does
+        # not trigger on the next one). A solo'd Legend is a Blue Unit when it is played to the
+        # field, so the type test excludes only Programs.
         if e[0] == "played" and e[2] == c.player and c.d(e[1]).color.name == "BLUE" \
-                and (c.is_unit(e[1]) or c.is_type(e[1], GEAR)) and c.once("blue"):
+                and (c.is_unit(e[1]) or c.is_type(e[1], GEAR)) and c.first_this_turn(blue_play, e):
             def after(c2, o, i):
                 if c2.gigs(o)[i][1] == 1:
                     c2.draw(1)
@@ -1598,7 +1616,8 @@ def _():
 @script("yorinobu-arasaka-embracing-destruction")
 def _():
     def ev(c, e):
-        if e[0] == "attack" and e[2] == c.player and "ARASAKA" in c.d(e[1]).tags and c.once("arasaka_attack"):
+        if e[0] == "attack" and e[2] == c.player and "ARASAKA" in c.d(e[1]).tags and c.first_this_turn(
+                lambda x: x[0] == "attack" and x[2] == c.player and "ARASAKA" in c.d(x[1]).tags, e):
             c.draw(1)
             if c.cred() < 20:
                 c.discard(1)
@@ -1652,8 +1671,11 @@ def _():
         # set's one other value-against-thief comparison, Chrome Fang's, is enforced there). Read
         # without the flag, a Unit attacking under Saul Bright's "+2 power while attacking" is
         # measured at its printed power and the clause silently disagrees with the steal it watched.
-        if e[0] == "steal" and e[1] != c.inst and c.s.i_owner[e[1]] == c.player \
-                and e[4] < c.power(e[1], sit=ATTACKING) and c.once("ready_eddies"):
+        def qualifying(x):
+            return (x[0] == "steal" and x[1] != c.inst and c.s.i_owner[x[1]] == c.player
+                    and x[4] < c.power(x[1], sit=ATTACKING))
+
+        if e[0] == "steal" and qualifying(e) and c.first_this_turn(qualifying, e):
             c.ready_eddies(2)
 
     def drain(c):

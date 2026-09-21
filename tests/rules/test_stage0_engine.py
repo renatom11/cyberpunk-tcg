@@ -150,7 +150,6 @@ def test_paying_with_a_legend_resolves_its_spend_trigger_after_the_play(pool):
 
 
 # ============================================================ "the first time ... each turn" (E6)
-@pytest.mark.xfail(strict=True, reason="S0-E6: 'first time each turn' is keyed per instance; a card entering mid-turn gets a fresh counter")
 def test_yorinobu_steel_dragon_does_not_draw_for_the_second_arasaka_death_of_the_turn(pool):
     """Yorinobu Arasaka *Steel Dragon*: *"If a friendly Arasaka Unit was defeated previously
     during my turn and then play Yorinobu Arasaka. If another friendly Arasaka Unit is then
@@ -166,7 +165,6 @@ def test_yorinobu_steel_dragon_does_not_draw_for_the_second_arasaka_death_of_the
     assert len(s.zone(0, Zone.DECK)) == deck_before, "drew for a second ARASAKA death in the same turn"
 
 
-@pytest.mark.xfail(strict=True, reason="S0-E6: 'first time each turn' is keyed per instance; a Legend Called mid-turn gets a fresh counter")
 def test_yorinobu_embracing_destruction_does_not_draw_for_the_second_arasaka_attack(pool):
     """Yorinobu Arasaka *Embracing Destruction*: *"If I've already attacked with an ARASAKA Unit
     this turn before Yorinobu Arasaka is face-up, then flip Yorinobu, can I trigger Yorinobu's
@@ -183,7 +181,6 @@ def test_yorinobu_embracing_destruction_does_not_draw_for_the_second_arasaka_att
     assert len(s.zone(0, Zone.DECK)) == deck_before, "drew for a second ARASAKA attack in the same turn"
 
 
-@pytest.mark.xfail(strict=True, reason="S0-E6: 'first time each turn' is keyed per instance; Jackie flipped mid-turn triggers on the second Blue card")
 def test_jackie_pour_one_out_does_not_trigger_on_the_second_blue_card_of_the_turn(pool):
     """Jackie Welles *Pour One Out For Me*: *"If I've already played a Blue Unit or Gear this turn
     before Jackie Welles is face-up, then flip Jackie, can I trigger Jackie's effect that turn by
@@ -195,6 +192,15 @@ def test_jackie_pour_one_out_does_not_trigger_on_the_second_blue_card_of_the_tur
     do(s, CallLegend(find(s, "jackie-welles-pour-one-out-for-me", Zone.LEGENDS, 0)))
     play(s, "jacked-in-voodoo-boy")
     assert s.pending.kind is ChoiceKind.MAIN, "Jackie asked to decrease a Gig for the turn's second Blue card"
+
+
+def test_yorinobu_steel_dragon_counts_its_own_death(pool):
+    """Yorinobu Arasaka *Steel Dragon*: *"Does Yorinobu count itself for 'the first time an ARASAKA
+    Unit is defeated each turn'? Yes."*"""
+    s = board(pool, Side(field=["yorinobu-arasaka-steel-dragon"], deck=FILLER), Side())
+    deck_before = len(s.zone(0, Zone.DECK))
+    defeat_now(s, find(s, "yorinobu-arasaka-steel-dragon", Zone.FIELD, 0))
+    assert len(s.zone(0, Zone.DECK)) == deck_before - 1, "Yorinobu did not draw for its own death"
 
 
 # ================================================================ face-up Legends on the field (E5)

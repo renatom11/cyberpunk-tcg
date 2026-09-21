@@ -27,3 +27,9 @@ One line each: what was decided and why. Rules questions are not here; they go t
   solo'd MERC Legend; the owner's Goro ruling states the principle (a Legend on the field is a
   face-up Legend), and one helper (`EffectCtx.all_legends`/`faceup_legends`) applied everywhere is
   what keeps the six sites from drifting apart again.
+- **E6 converts every "first time … each turn" script, not only the three FAQ-named ones** —
+  Johnny Silverhand, Rita Wheeler, Gorilla Arms, Rogue Amendiares and Viktor Vektor read the same
+  phrase; the FAQ fixes its meaning (events, not the card's memory), and one helper applied to all
+  eight is what stops the phrase meaning two things. Viktor's conversion turned the audit's open
+  finding AUD-viktor-vektor-drop-your-illusions-1 green, which is the reading the audit had
+  already reached from the text alone.

@@ -140,6 +140,7 @@ def dispatch(s: GameState, ev: tuple) -> None:
     a step, and the stack is LIFO, hooks are called in reverse so the first card's question
     surfaces first.
     """
+    s.turn_events.append(ev)                         # "the first time ... each turn" reads this
     act = s._active
     if act is None:
         act = _rebuild_active(s)
@@ -516,6 +517,16 @@ def defeat(s: GameState, inst: int, *, allow_replace: bool = True) -> bool:
             push_trigger(s, Trigger.DEFEATED, g)
         push_trigger(s, Trigger.DEFEATED, inst)
         dispatch(s, ("defeated", inst, owner, bool(gear), was_unit))
+        # The dead card's own "when ... is defeated" listener hears its death too. It has left
+        # play by now, so dispatch no longer finds it; the FAQ says it counts -- Yorinobu Arasaka
+        # *Steel Dragon* "counts itself for 'the first time an ARASAKA Unit is defeated each turn'".
+        # It is handed the very event object dispatch logged, so `first_this_turn` can place it.
+        hk = s.reg.hooks[s.i_card[inst]]
+        if hk is not None and hk[2] is not None and (hk[3] is None or "defeated" in hk[3]) and not s.over:
+            for ev in reversed(s.turn_events):
+                if ev[0] == "defeated" and ev[1] == inst:
+                    hk[2](_ctx(s, inst), ev)
+                    break
     return True
 
 

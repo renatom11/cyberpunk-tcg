@@ -314,6 +314,7 @@ def info_key(s: "GameState", me: int, *, known_opponent_deck: bool = True) -> tu
         tuple((k, sub, _hashable(v), e) for k, sub, v, e in s.mods),
         tuple(sorted(repr(k) for k in s.used)),
         tuple(s.played),
+        tuple(_hashable(e) for e in s.turn_events),
     )
 
 

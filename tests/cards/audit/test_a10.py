@@ -18,14 +18,17 @@ from cptcg.core.ops import ATTACKING, available, play_cost, power  # noqa: E402
 E = 9
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-viktor-vektor-drop-your-illusions-1: the -3 goes to the first CYBERWARE Gear played while Viktor is in play, not to your first CYBERWARE Gear of the turn")
 def test_viktor_discounts_only_the_first_cyberware_gear_of_the_turn(pool):
     """'Play your first CYBERWARE Gear each turn for -3 €$, to a minimum of 1 €$.'
 
     Mantis Blades (CYBERWARE Gear) is played first, before Viktor hits the field. Gorilla Arms is
     then the *second* CYBERWARE Gear played this turn, so it costs its printed 4 €$. The script
-    only counts CYBERWARE Gear played while Viktor is already in play, so it hands the discount to
-    the second one.
+    used to count only CYBERWARE Gear played while Viktor was already in play, and handed the
+    discount to the second one.
+
+    Fixed: AUD-viktor-vektor-drop-your-illusions-1, by Stage 0 E6: "the first ... each turn" is read from the
+    turn's event log (`EffectCtx.first_this_turn`), the same way the three FAQ answers on Yorinobu
+    and Jackie Welles read it; the deleted marker is the red-to-green record.
     """
     s = board(pool, Side(hand=["mantis-blades", "viktor-vektor-drop-your-illusions", "gorilla-arms"],
                          field=["psycho-squad"], eddies=20), Side())

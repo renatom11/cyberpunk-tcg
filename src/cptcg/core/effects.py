@@ -178,8 +178,31 @@ class EffectCtx:
         return [i for i in self.s.played if self.s.i_owner[i] == self.player and (pred is None or pred(i))]
 
     def once(self, key: str) -> bool:
-        """True the first time this card uses ``key`` this turn."""
+        """True the first time this card uses ``key`` this turn. This is a per-**instance** budget
+        ("once per turn, this card"); printed "the first time X happens each turn" is not that,
+        see ``first_this_turn``."""
         return self.s.use_once((self.inst, key))
+
+    def first_this_turn(self, pred: Callable[[tuple], bool], ev: tuple | None = None) -> bool:
+        """Is the event ``ev`` (the one being handled) the first this turn that satisfies ``pred``?
+
+        "The first time an ARASAKA Unit is defeated each turn" counts *events*, not this card's
+        sightings of them. Three FAQ answers say so: a Yorinobu Arasaka played after an ARASAKA
+        Unit died this turn does not draw for the next death; a Yorinobu *Embracing Destruction*
+        flipped after an ARASAKA attack does not draw for the next attack; a Jackie Welles *Pour
+        One Out For Me* flipped after a Blue card does not trigger on the next one. A card that
+        arrives mid-turn therefore has to see the turn's history, which ``s.turn_events`` keeps
+        (every dispatched event, cleared with the turn). Earlier events are those before ``ev``
+        itself in that list, compared by identity; with ``ev=None`` the whole log is checked, which
+        is what a hook that runs *after* its event (an on_defeated step) wants when it passes the
+        event it found.
+        """
+        for x in self.s.turn_events:
+            if ev is not None and x is ev:
+                return True
+            if pred(x):
+                return False
+        return True
 
     # -------------------------------------------------------------- choices
     def ask(self, choice: Choice) -> None:
