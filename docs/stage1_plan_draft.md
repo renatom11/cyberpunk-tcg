@@ -19,7 +19,7 @@ coverage_s10k.md`); the rarest card appears in 11% of games and the median card 
 
 806,514 rows from 10,000 games carry about 10,000 independent outcomes: every row of a game shares
 its label, and the two seats' labels are complements. That is why config a's holdout Brier was best
-after two epochs and rose from the third while train Brier kept falling: 141k parameters against
+after one epoch (0.1283) and rose from the second while train Brier kept falling: 141k parameters against
 10k bits. The design (Part 2C) never asked for outcome-only fitting; Stage 0 did it because the
 first corpora had no search in them. Stage 1 fits on three per-decision signals that the harvest
 already records:
@@ -254,7 +254,7 @@ better greedy play than a 114-aggregate head fitted on the same rows, and its id
 is not load-bearing in play. It would **not** establish that card identity is useless; it would
 establish that outcome-only fitting at this corpus size cannot make a token model's play better
 than aggregates, which 0.1 and 0.2 predict independently of the panel. The panel result and the
-Brier result (config a's best holdout 0.1364 against the 114 head's 0.1377 on the same rows) would
+Brier result (config a's best holdout 0.1283 against the 114 head's 0.1377 on the same rows; corrected 2026-09-23, the draft first quoted 0.1364, a misread of the log) would
 then agree: at 10k outcomes the representation has nothing to learn from.
 
 ### 2.2 The next diagnostic (not a re-tune)

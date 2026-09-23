@@ -225,6 +225,10 @@ def test_a_resumed_fit_matches_an_uninterrupted_one(tmp_path):
     for k in a.files:
         if k != "meta":
             assert np.allclose(a[k], b[k], atol=1e-6), k
+    # the evaluation too: the held-out Brier of every epoch, and the exported summary, are the same
+    ma, mb = json.loads(str(a["meta"])), json.loads(str(b["meta"]))
+    assert [h["holdout_brier"] for h in ma["history"]] == pytest.approx([h["holdout_brier"] for h in mb["history"]], abs=1e-9)
+    assert ma["holdout"] == pytest.approx(mb["holdout"], abs=1e-9)
 
 
 def test_fit114_writes_a_loadable_head_from_the_card_rows(tmp_path):

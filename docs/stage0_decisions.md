@@ -173,3 +173,103 @@ through, dropout included. The second half was relaunched as `scratchpad/rerun3.
 commands, settings and order as `rerun2.sh`, with a marker per finished step so a restart skips
 what is done. Config d restarts from epoch 0 with the same seed, so its result is unchanged. No
 setting, selection rule or criterion changed.
+
+## KT1 rerun: three questions from the owner before config e (answered 2026-09-23 03:30 UTC)
+
+### 1. The holdout-Brier "discrepancy" for configs a and b was my misreading, not a computation change
+
+Nothing about how holdout Brier is computed or reported changed. The fit logs show epoch 1 was the
+best epoch for every card config from the moment it was written:
+
+| config | epoch 1 | epoch 2 | epoch 3 | epoch 4 | epoch 5 | epoch 6 | log written |
+|---|---:|---:|---:|---:|---:|---:|---|
+| a | **0.12831** | 0.13644 | 0.15237 | 0.15009 | 0.17538 | 0.16943 | 2026-09-21 18:53 |
+| b | **0.12889** | 0.13220 | 0.13126 | 0.13434 | 0.14694 | 0.13901 | 2026-09-21 22:22 |
+| c | **0.13140** | 0.13785 | 0.14754 | 0.15887 | 0.16084 | 0.16769 | 2026-09-21 23:02 |
+
+The 18:22 and 21:50 status reports on 09-21 were built from `tail -2`/`tail -3` of the running
+logs, which showed epochs 2–3 (config a) and 3–5 (config b) but not epoch 1, and I reported the best
+of the lines I happened to see. So "a best 0.1364 at epoch 2" and "b best 0.1313 at epoch 3" were
+wrong; the correct figures are 0.1283 and 0.1289, both at epoch 1. The same misreading went into
+this log's configs-d-and-e entry above ("best at epoch 2 (0.1364)") and into
+`docs/stage1_plan_draft.md` (corrected there in this commit). The overfitting observation that
+motivated d and e stands and is stronger than stated: holdout Brier rises from epoch 2, not 3.
+
+Which number the pipeline uses: `choose.py` takes the minimum over the log's `holdout brier` lines,
+which is the epoch-1 value, and the exported weights are the best epoch's state (each `.npz`
+records `holdout.network` = 0.128308 / 0.128891 / 0.131400, identical to the epoch-1 lines). The
+checkpointing change (7c93654, 2026-09-23) came after all three fits and does not touch
+`_eval_value`; the resume test now also asserts that the held-out Brier of every epoch and the
+exported summary are identical between a resumed and an uninterrupted fit.
+
+One real finding while checking this: the 4-thread fit is **not bit-reproducible**. Config d's
+epoch 1 was 0.14303 in the killed run and 0.14265 in the relaunch, same seed and settings. The
+resume test passes at one thread; at four threads torch's parallel reductions are not
+order-stable. My statement "config d restarted with the same seed, so its result is unchanged" was
+therefore wrong; the result can differ at the fourth decimal. The selection rule is unaffected
+(it reads whatever the completed fits report), and this is recorded rather than fixed.
+
+### 2. The restarts: one was the session worker, one was the machine, and neither was memory
+
+* **04:47 UTC 09-22** — not a machine restart. `uptime` at that moment read "1 day, 1:54" (booted
+  09-21 02:53) and the fit (pid 30442) was still running; the Claude worker process restarted and
+  took only its own background watcher with it.
+* **Machine reset between 04:37 and 16:39 UTC 09-22.** Config d's last log line is epoch 5 at
+  04:37; the current boot began 16:39:03 (`uptime -s`). The previous boot's kernel log did not
+  survive (Firecracker microVM, no persistent journal, `/var/log/journal` empty), so the cause
+  cannot be read directly. From 16:39 until the relaunch at 03:05 09-23 the CPUs were idle
+  (149,404 of 153,068 CPU-seconds idle since boot).
+* **Memory is ruled out as far as the evidence reaches.** The same fit on the same rows, running
+  now: RSS 4.1 GB, peak (`VmHWM`) 4.2 GB, of 16 GB; no swap is configured; `/proc/pressure/memory`
+  reads zero (some and full) since boot. The only large process in the pipeline is this fit, and
+  configs a–c used the same code on the same rows. An OOM kill would also not reboot a VM; a host
+  reclaim or re-provision does, and the environment documents that containers are reclaimed after
+  a period of inactivity — the session was idle from ~04:50 on 09-22. My judgement: that is the
+  cause. No memory cap is applied, because the evidence does not point at memory.
+* **The 3.6× slowdown was not memory either.** Epoch times: a 620 s; b 800 s then ~2,270 s;
+  c ~375 s; d (killed run) 1,042 s then ~4,900 s; d (now) 773 s. At 21:46 on 09-21, mid-slowdown,
+  the fit was the only busy process and showed 388% CPU with a load average of 3.9, i.e. the guest
+  was giving it all four vCPUs; epochs still took 3–6× longer. That pattern — full guest CPU,
+  much less throughput, no swap, no memory pressure — is host-side contention (CPU steal), which
+  was not being recorded. Steal now, on the fresh VM, is 1.5% over a 20 s sample. From here a
+  sampler appends `/proc/stat` and the load average to `out/s1/cpu_steal.log` every five minutes,
+  so a slowdown will leave evidence.
+
+### 3. Best epoch, epochs trained, and how far the embeddings moved
+
+| config | best epoch | epochs trained | stop |
+|---|---:|---:|---|
+| a | 1 | 6 | patience 5 |
+| b | 1 | 6 | patience 5 |
+| c | 1 | 6 | patience 5 |
+| d (killed run) | 3 | 5 | machine reset |
+| d (relaunch), e | running / queued | | |
+
+Every completed config peaks after one pass over the 805,974 training rows (about 3,150 Adam steps
+at batch 256) and overfits from the second: the rows are ~1M decisions but ~10k independent game
+outcomes, and a second pass memorises outcomes.
+
+Embedding drift after that one epoch (`out/s1/baselines/embedding_drift.json`): the L2 distance
+of each card's 32-wide identity row from its initial value, for the 30 cards with the fewest token
+occurrences in the rows (all Legends — a face-down Legend is not a token — 73k–160k occurrences,
+median 112k) against the 30 most frequent (median 659k). The mean initial row norm is 0.553.
+
+| config | rare 30 | common 30 | all 150 | rare, relative to init norm | common, relative | corr(log count, drift) |
+|---|---:|---:|---:|---:|---:|---:|
+| a | 0.457 | 0.387 | 0.425 | 0.83 | 0.71 | −0.30 |
+| b | 0.522 | 0.475 | 0.491 | 0.94 | 0.85 | −0.26 |
+| c | 0.330 | 0.271 | 0.306 | 0.60 | 0.50 | −0.29 |
+
+What it implies: every row moved a distance comparable to its own initial size, and the **rarer
+rows moved more**, not less. Under Adam each parameter takes steps of similar size whatever the
+gradient's magnitude, so fewer, noisier updates give rare cards a larger random walk, not a better
+representation. Drift therefore cannot be read as learning; what can is the held-out identity
+ablation on rows (config a 0.1283 against 0.1353 with the rows permuted), which says identity
+carries about 0.007 Brier on unseen games. Whether any of that is concentrated in the rare cards
+is not something one epoch can show, and it is the question the Stage 1 draft's embedding check
+(nearest-neighbour structure agreeing with the static table, stability across two splits) is for.
+Note that "rare" by token count here means Legends; by game exposure the rarest cards are main-deck
+cards (Animals Wrecker, Octant, MaxTac Heavy), each still with 72k+ token occurrences in these rows.
+
+Selection rule and KT1 criterion unchanged. The pipeline continues: config d is fitting at ~13
+minutes an epoch, then e.
