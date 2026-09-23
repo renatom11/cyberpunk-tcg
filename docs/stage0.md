@@ -364,3 +364,129 @@ split.
 Per the discipline: no tuning, no second run. The pre-declared measurements that follow the panels
 (secondary panels, head-to-head, suite by family, independent oracle, agreement) complete and are
 reported; Stage 1 is not started.
+
+## KT1 rerun — full report (pipeline finished 2026-09-23 22:18 UTC)
+
+Everything below is Confirmed from the JSON named beside it unless marked. The four owner rulings
+(§1b), the KT2 verdict (§4) and the monotonicity root cause (decisions log) are unchanged since
+they were written; this section adds what the rerun measured.
+
+### Corpus and fits
+
+* **Corpus** `out/s1/s10k`: 10,000 `ismcts:32` self-play games, inferred list, visits and the
+  coverage sidecar; 1,204,666 decisions (978,865 searched); 71% ended on seven Gigs, 29% in
+  Overtime; seat 0 won 50.3%.
+* **Rows** `out/s1/rows.npz`: 1,008,514 rows (rate 0.5, both perspectives), split by game into
+  805,974 train and 202,540 holdout; the same rows and split for every head.
+* **Fits** (holdout Brier, constant baseline 0.25; legal monotonicity violations on 500 s10k
+  positions):
+
+| head | settings | best holdout Brier | best / trained epochs | monotonicity | attention |
+|---|---|---:|---|---:|---|
+| 114 head h16 | tanh 16 | **0.13770** (chosen) | 43 / 53 | 0.84% | — |
+| 114 head h32 | tanh 32 | 0.13775 | 24 / 34 | 0.48% | — |
+| cards a | lr 1e-3, l2 1e-5, policy 0.5, emb 32 | 0.12831 | 1 / 6 | 0.42% | alive |
+| cards b | l2 1e-4 | 0.12889 | 1 / 6 | 0.24% | collapsed |
+| cards c | lr 5e-4, no policy head | 0.13140 | 1 / 6 | 0.30% | alive |
+| cards d | lr 5e-4, l2 1e-3, dropout 0.2, emb 16, policy 0.5 | 0.12782 | 13 / 18 | 0.30% | collapsed |
+| cards e | as d, policy 1.0 | **0.12783** (chosen) | 11 / 16 | 0.18% | collapsed |
+
+  The registered rule (Brier at four decimals, tie-break monotonicity) chose e over d (both
+  0.1278; 0.18% against 0.30%) and h16 over h32 (0.1377 against 0.1378 after rounding, a
+  0.00005 difference, although h32 had fewer violations). "Collapsed" means the attention
+  query/key weights have a median magnitude of 1e-23 to 1e-32 under Adam with coupled L2
+  (decisions log): configs b, d and e have no working attention layer.
+
+### The independent oracle and its noise
+
+`tools/oracle.py playouts`: for each of the 2,000 oracle positions, 128 heuristic-versus-heuristic
+playouts from the true state; no learned head anywhere in the label. **Noise: split-half Spearman
+0.991, mean binomial standard error 0.0095 per position** — the label is stable. It is the value
+of a position *under heuristic play*, not a policy-free truth, so it rewards heads that learned
+heuristic games. The original labels (`cheat:ismcts:2000` + `plan-deep:32`) were recomputed for
+all 2,000 positions under the final rules (`data/arena/oracle.json`, committed 6efe45f).
+
+| head | Spearman vs independent label | Brier vs independent (const 0.208) | Spearman vs cheat label | Brier vs cheat (const 0.101) |
+|---|---|---:|---|---:|
+| shipped gen-1 head | 0.743 [0.719, 0.764] | 0.102 | 0.950 [0.942, 0.956] | 0.010 |
+| 114 head h16 (refit) | 0.655 [0.627, 0.682] | 0.132 | 0.853 [0.837, 0.868] | 0.037 |
+| cards e | 0.676 [0.649, 0.703] | 0.121 | 0.855 [0.839, 0.869] | 0.030 |
+| cards e, identity ablated | 0.678 [0.650, 0.704] | 0.121 | 0.857 [0.841, 0.872] | 0.030 |
+
+The cheat label still uses the shipped head at its leaves, so the shipped head's 0.950 there is
+self-agreement. Against the independent label the card model edges the refit 114 head (0.676
+against 0.655, intervals overlapping) and its ablation is identical — identity carries nothing
+measurable here either. The shipped head, fitted on heuristic games, agrees best with a label made
+of heuristic games, as expected.
+
+### KT1 (registered) and the secondary
+
+Registered, verdict **FAIL** on both legs (section above): card e 0.383 [0.256, 0.510] against
+the heuristic versus the 114 head's 0.578 [0.443, 0.713]; ablation 0.383.
+
+Secondary, pre-declared before any panel result, not pass/fail (`out/s1/kt1_secondary/`):
+
+| head | vs heuristic | between-pairing 95% | vs random | between-pairing 95% |
+|---|---:|---|---:|---|
+| `neural-cards@wcards_a` (config a, live attention) | 0.675 | [0.626, 0.724] | 0.944 | [0.914, 0.975] |
+| `neural-cards-ablated@wcards_a` | 0.653 | [0.591, 0.715] | 0.947 | [0.919, 0.975] |
+
+Read against the KT1 criterion (for information only): config a sits above the 114 head's point
+(0.578) but inside its band (upper 0.713), and its ablation costs 2.2 points against the
+heuristic and nothing against random, inside the band. It would also fail both legs.
+
+What the secondary does show: **config a and config e have the same holdout Brier (0.1283 and
+0.1278) and play 29 points apart** against the heuristic (0.675 against 0.383). Outcome Brier
+did not see the difference between a card model with a working attention layer and one without.
+
+**Head-to-head** (secondary, pre-declared; `arena.py a-vs-b`, mirrored, deck-swapped, paired
+SPRT, δ 0.05, min 120): card e against the 114 head won **24.4% [18.1, 30.8]** over 180 games on
+three pairings (21.7–26.7% each); the SPRT stopped at "low". Consistent with the panels.
+
+### Delayed suite by family (132 positions, solved on all 16 seeds)
+
+| agent | solved | h1 | h2 | families with any solved |
+|---|---:|---:|---:|---|
+| `neural@w114` (h16) | 8 | 4/109 | 4/23 | card-semantics 1, defensive-setup 1, dice 1, legend-call 1, mined 1, recursion 1, removal-first 1, steal-threshold 1 |
+| `neural-cards@wcards` (e) | 2 | 0/109 | 2/23 | mined 1, recursion-trade 1 |
+| `neural-cards-ablated@wcards` | 2 | 0/109 | 2/23 | mined 1, recursion-trade 1 |
+
+Day-0 for comparison: `ismcts:32` 31, shipped `neural` 28, the first-run heads 16 and 9. Every
+greedy head fitted on the search corpus solves fewer positions than the shipped greedy head fitted
+on heuristic games; the card model solves the fewest and its ablation is identical.
+
+### Coverage and monotonicity
+
+Coverage is that of the corpus both heads were fitted on (`out/s1/baselines/coverage_s10k.md`);
+the panels do not record a sidecar, so the heads' own play has no coverage number. 871 (card,
+kind, sub-mode) triples offered, 845 chosen, 6 starved: `Order: first` (10,000 offers — the search
+delegates ORDER to the heuristic's rule), the plain play of Rogue Amendiares — Preem Solo (4,993)
+and Adam Smasher — Ender of Legends (219), the declines on Panam — Strength Through Family (385)
+and Shattered Memories (112), and Adam Smasher — Metal Over Meat's Unit target (26). Final legal
+monotonicity violations: shipped 0.6%, 114 h16 0.84%, cards e 0.18%, ablated 0.12%.
+
+### Recommendation on Stage 1 (my judgement)
+
+**Do not start Stage 1 on a card-aware head, and do not re-run KT1.** KT1 has now failed twice,
+on different corpora (heuristic games, then search self-play), and in both runs the identity
+ablation is flat in play. By Part 5's own stop rule — "identity ablation flat after the first
+card-aware fit → stop, nothing downstream can work" — card identity is not the lever at this
+corpus size and with this signal.
+
+What the rerun adds, and what it points at:
+
+1. **Outcome Brier is not a usable selector.** Two card heads within 0.0005 Brier play 29 points
+   apart; the chosen one is the one whose attention had collapsed. Any Stage 1 selection needs a
+   play-predictive check that is not the panel (the delayed suite and the independent-oracle
+   Spearman are the candidates; both ranked e below the 114 head, as the panel did).
+2. **The signal is the next diagnostic, not the representation.** Every card config peaked after
+   one epoch: ~1M rows carry ~10k independent outcomes. The Stage 1 draft's FAIL version
+   (`docs/stage1_plan_draft.md` §2) applies as written: fit both heads on per-decision targets
+   (visit distributions, search root values, the turn-boundary bootstrap) from the existing s10k
+   corpus, and run the held-out-card test, before any new representation.
+3. **The loop runs on the 114 head meanwhile**, with the policy head from visits as the PUCT prior,
+   forced exploration, the exposure floor, the deck population and the missing instruments
+   (leakage, G6) — the parts of §0 of the draft that do not depend on KT1.
+
+Decisions for you: whether to accept that recommendation (the FAIL version of the draft); and
+whether the per-decision-target diagnostic should be pre-registered now with its own criterion.
