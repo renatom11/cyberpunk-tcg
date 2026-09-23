@@ -303,6 +303,10 @@ def _eval_value(model, rows, idx, torch, batch=512, ablate_seed=None) -> dict:
 def cmd_fit(a) -> None:
     import torch
     torch.set_num_threads(a.threads)
+    # Weight decay drives weights with small gradients (attention query/key) into subnormal floats,
+    # and subnormal arithmetic runs one to two orders of magnitude slower on x86: config d's epochs
+    # went from 13 to 60+ minutes with 17% of its weights subnormal. Flush them to zero.
+    torch.set_flush_denormal(True)
     torch.manual_seed(a.seed)
     rows, metas = load_rows(a.rows)
     reg = load_default()
@@ -424,6 +428,7 @@ def cmd_fit114(a) -> None:
     SAME rows and the SAME by-game split as ``fit`` uses for the card-aware model, so the two
     heads in kill test 1 differ only in what they read. Exported in ``weights.json`` format."""
     import torch
+    torch.set_flush_denormal(True)
     from cptcg.learn.features import FEATURE_NAMES
     from cptcg.learn.model import feature_digest, FORMAT as VFORMAT
     torch.manual_seed(a.seed)

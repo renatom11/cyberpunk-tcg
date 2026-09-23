@@ -348,6 +348,10 @@ def torch_model(static: np.ndarray, emb: int = EMB, dropout: float = 0.0):
 
         def export_npz(self, path, meta: dict) -> None:
             arrays = {k: v.detach().cpu().numpy().astype(np.float32) for k, v in self.p.items()}
+            # subnormals as exact zeros: numpy has no flush-to-zero switch, and the inference
+            # path in the search and the panels would otherwise pay the subnormal slowdown
+            tiny = np.finfo(np.float32).tiny
+            arrays = {k: np.where(np.abs(v) < tiny, np.float32(0), v).astype(np.float32) for k, v in arrays.items()}
             np.savez_compressed(path, meta=json.dumps(dict(meta, format=FORMAT, D=D, EMB=emb, HEADS=HEADS,
                                                            dropout=dropout)), **arrays)
 

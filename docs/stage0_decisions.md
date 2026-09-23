@@ -273,3 +273,40 @@ cards (Animals Wrecker, Octant, MaxTac Heavy), each still with 72k+ token occurr
 
 Selection rule and KT1 criterion unchanged. The pipeline continues: config d is fitting at ~13
 minutes an epoch, then e.
+
+## Correction (2026-09-23 09:15 UTC): the slowdown was subnormal floats, not the host
+
+The answer to question 2 above said the 3.6× slowdown was host-side CPU contention. **That was
+wrong.** The CPU sampler (`out/s1/cpu_steal.log`) recorded config d's slow epochs 2–3 at 96% user
+CPU and 0.4% steal, with a load average of 3.9: the guest had the CPUs and they were slow on
+this work. A read of d's epoch-3 checkpoint found the cause:
+
+* **17% of config d's weights were subnormal floats**, including 80% of the attention query/key
+  weights and 70% of the feed-forward weights, plus 10% of Adam's moment estimates. Subnormal
+  arithmetic on x86 is one to two orders of magnitude slower than normal arithmetic.
+* **The slowdown depends on the config, which is why it looked like the machine.** Configs with
+  l2 1e-5 (a, c) ran at a steady 620 s and 375 s an epoch and export 0.25% and 0.08% subnormals.
+  Config b (l2 1e-4) slowed from epoch 2 and exports 3.4%. Config d (l2 1e-3) slowed from epoch 2
+  to about 3,700 s an epoch and holds 17%.
+* **Mechanism.** `torch.optim.Adam(weight_decay=…)` adds the L2 term to the gradient before Adam
+  normalises it. A weight whose real gradient is small is therefore pushed toward zero by about
+  lr per step, whatever its size. The attention query/key weights have small gradients and decay
+  to nothing.
+* **Fix.** `torch.set_flush_denormal(True)` in `fit` and `fit114`, and subnormals written as exact
+  zeros at export so the numpy inference path is not slowed either. A test asserts that an
+  exported fit contains no subnormals. This changes values only below 1.2e-38 and changes no
+  setting. Config d resumed from its epoch-3 checkpoint with the fix on.
+
+**A finding for the KT1 report, not acted on.** Under coupled L2 at 1e-4 and above, the attention
+layer collapses. In config b's exported (epoch-1) weights the median |attn_q| is 7e-23, against
+0.027 in config a, so b's attention is uniform and b is in effect a no-attention model. Config d
+shows the same, and config e (l2 1e-3) will too. Switching to decoupled weight decay (AdamW) would
+be tuning, so the settings stay as registered. The report will say which model the selection
+picked and whether its attention is alive.
+
+**The restarts, updated.** The machine rebooted again at 09:06:20 UTC on 09-23, the minute the
+scheduled check-in fired. The CPU sampler's last line before the reboot is 05:39. From that
+timing, my judgement is that the environment reclaims an idle session's machine and provisions a
+new one when the session is woken. The 05:35 notice was a worker restart only: the boot time was
+unchanged and the pipeline survived it. With checkpoints and step markers, each reboot now costs
+at most the epoch in progress.
