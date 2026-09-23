@@ -333,3 +333,34 @@ greedy agent on the delayed suite and the monotonicity instrument *before* the p
 both predicted the panel result at a fraction of the cost. If the refit clears monotonicity and
 still fails the panel, the design's premise — that card identity is what the 114 features are
 missing — should be treated as refuted rather than retried.
+
+## KT1 rerun — result: FAIL (run once, criterion verbatim from Part 6)
+
+Registered panels, run 2026-09-23 20:34–20:47 UTC (frozen panel v2, 360 games a member, 6
+pairings, inferred list; JSON in `out/s1/kt1/`). Heads chosen before any panel by the registered
+rule: the 114 head h16 (`out/s1/w114.json`) and card-model config e (`out/s1/wcards.npz`), both
+fitted on the same 1,008,514 rows from 10,000 `ismcts:32` self-play games with the same by-game
+split.
+
+| head | vs heuristic | between-pairing 95% | vs random | between-pairing 95% |
+|---|---:|---|---:|---|
+| `neural@w114` (h16, holdout Brier 0.1377) | 0.578 | [0.443, 0.713] | 0.906 | [0.844, 0.967] |
+| `neural-cards@wcards` (config e, holdout Brier 0.1278) | 0.383 | [0.256, 0.510] | 0.747 | [0.673, 0.822] |
+| `neural-cards-ablated@wcards` (identity rows permuted) | 0.383 | [0.234, 0.533] | 0.750 | [0.652, 0.848] |
+
+* Leg 1, "card-aware > 114-head by more than the between-pairing band": the card-aware agent
+  scores **below** the 114 head, 0.383 against 0.578 versus the heuristic and 0.747 against 0.906
+  versus random. **Not cleared.**
+* Leg 2, "ablation drops it by more than the band": 0.383 → 0.383 versus the heuristic and
+  0.747 → 0.750 versus random. Permuting the identity embedding changes nothing in play. **Not
+  cleared.**
+* On rows the card model is the better evaluator (holdout Brier 0.1278 against 0.1377), exactly as
+  in the first run; in play it is worse, and its card identity is not used.
+* Config e's attention and most feed-forward weights are ~1e-32 (decisions log), so this tests card
+  tokens plus pooling plus the 114 aggregates. The pre-declared secondary panels for config a (live
+  attention) are running and will be reported beside this, labelled secondary; they do not enter
+  the verdict.
+
+Per the discipline: no tuning, no second run. The pre-declared measurements that follow the panels
+(secondary panels, head-to-head, suite by family, independent oracle, agreement) complete and are
+reported; Stage 1 is not started.
