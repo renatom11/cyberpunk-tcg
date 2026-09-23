@@ -123,3 +123,15 @@ Search corpus `out/s1/s10k` (10,000 `ismcts:32` self-play games, inferred list, 
 Corpus at 5,000/10,000 (0.6 games/s, 4 workers) at 15:55 UTC. The oracle relabel will resume from 750/2,000
 (decisions log) inside `rerun2.sh`, before the 128-playout independent label; nothing else runs until the
 corpus, rows, fits and monotonicity instrument finish.
+
+## KT1 rerun — finished 2026-09-23 22:18 UTC (log resumed after the owner's freeze)
+
+* Corpus s10k and rows (09-21); fits a/b/c (09-21), d/e (09-23, after two machine reboots,
+  checkpoint/resume 7c93654 and the subnormal fix 2f9b99a); head choice e + h16 by the
+  registered rule; oracle relabelled and the 128-playout independent label added (6efe45f).
+* Owner reorder and config-a secondary logged before any panel (79f22d1).
+* **KT1: FAIL on both legs** (cc56c93): card e 0.383 vs heuristic against the 114 head's 0.578;
+  ablation 0.383. Secondary config a: 0.675, ablated 0.653. Head-to-head e vs 114: 24.4%.
+  Suite: 114 head 8/132, card e 2, ablated 2.
+* Full report and recommendation: `docs/stage0.md`, "KT1 rerun — full report" (b7e88d3).
+  Stage 1 not started.
