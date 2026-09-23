@@ -319,7 +319,26 @@ def cmd_fit(a) -> None:
     history = []
     rng = np.random.default_rng(a.seed)
     t0 = time.time()
-    for epoch in range(a.epochs):
+    # Checkpoint after every epoch so a restarted machine resumes instead of refitting from zero.
+    # Everything that decides the rest of the run is saved: weights, optimiser moments, the batch
+    # order's RNG, torch's RNG (dropout), and the early-stopping bookkeeping, so a resumed fit
+    # produces the same weights as an uninterrupted one.
+    ckpt = Path(str(a.out) + ".ckpt.pt")
+    start = 0
+    if a.resume and ckpt.exists():
+        c = torch.load(ckpt, weights_only=False)
+        model.load_state_dict(c["model"])
+        opt.load_state_dict(c["opt"])
+        best, best_state, since, history = c["best"], c["best_state"], c["since"], c["history"]
+        rng.bit_generator.state = c["rng"]
+        torch.set_rng_state(c["torch_rng"])
+        start = c["epoch"]
+        t0 -= c["elapsed"]
+        print(f"resumed from {ckpt} after epoch {start}")
+    stopped = start > 0 and since >= a.patience
+    for epoch in range(start, a.epochs):
+        if stopped or (a.stop_after and epoch >= a.stop_after):
+            break
         model.train()
         order = train_idx.copy()
         rng.shuffle(order)
@@ -366,9 +385,19 @@ def cmd_fit(a) -> None:
             since = 0
         else:
             since += 1
-            if since >= a.patience:
-                print(f"early stop: no held-out improvement for {a.patience} epochs")
-                break
+        tmp = ckpt.with_suffix(".tmp")
+        ckpt.parent.mkdir(parents=True, exist_ok=True)
+        torch.save({"model": model.state_dict(), "opt": opt.state_dict(), "best": best,
+                    "best_state": best_state, "since": since, "history": history, "epoch": epoch + 1,
+                    "rng": rng.bit_generator.state, "torch_rng": torch.get_rng_state(),
+                    "elapsed": time.time() - t0}, tmp)
+        tmp.replace(ckpt)
+        if since >= a.patience:
+            print(f"early stop: no held-out improvement for {a.patience} epochs")
+            break
+    if a.stop_after and len(history) < a.epochs and since < a.patience:
+        print(f"stopped after epoch {len(history)} (--stop-after); resume with --resume")
+        return
     if best_state is not None:
         model.load_state_dict(best_state)
     ev = _eval_value(model, rows, hold_idx, torch)
@@ -385,6 +414,7 @@ def cmd_fit(a) -> None:
     out = Path(a.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     model.export_npz(str(out), meta)
+    ckpt.unlink(missing_ok=True)
     print(json.dumps(meta["holdout"], indent=1))
     print(f"wrote {out}")
 
@@ -498,6 +528,8 @@ def main(argv=None) -> None:
     f.add_argument("--policy-weight", type=float, default=0.5)
     f.add_argument("--patience", type=int, default=5)
     f.add_argument("--embed", type=int, default=CM.EMB, help="identity embedding width")
+    f.add_argument("--resume", action="store_true", help="continue from OUT.ckpt.pt if it exists")
+    f.add_argument("--stop-after", type=int, default=0, help=argparse.SUPPRESS)   # tests: simulate a kill
     f.add_argument("--dropout", type=float, default=0.0,
                    help="training-time dropout on the token MLP outputs and the pooled vector")
     f.add_argument("--seed", type=int, default=0)

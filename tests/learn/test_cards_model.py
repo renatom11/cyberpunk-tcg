@@ -200,6 +200,33 @@ def test_the_card_agent_reads_a_position_as_if_at_its_own_main(tmp_path, monkeyp
 
 
 @pytest.mark.skipif(not SAMPLE.exists(), reason="no bootstrap sample")
+@pytest.mark.skipif(not SAMPLE.exists(), reason="no bootstrap sample")
+def test_a_resumed_fit_matches_an_uninterrupted_one(tmp_path):
+    """The machine restarts mid-fit: ``--resume`` must continue to the same weights, dropout and all."""
+    pytest.importorskip("torch")
+    recs = []
+    for rec in read_games(SAMPLE):
+        recs.append(rec)
+        if len(recs) == 6:
+            break
+    out = FC.rows_chunk(([(i, r) for i, r in enumerate(recs)], 0.5, 7, True))
+    out.pop("n_decisions")
+    meta = {"rules": __import__("cptcg.core.config", fromlist=["DEFAULT_CONFIG"]).DEFAULT_CONFIG.digest(),
+            "tokens_digest": T.tokens_digest(), "seconds": 0, "sources": []}
+    np.savez_compressed(tmp_path / "rows.npz", meta=json.dumps(meta), **out)
+    common = ["fit", str(tmp_path / "rows.npz"), "--epochs", "3", "--patience", "9", "--threads", "1",
+              "--dropout", "0.2", "--embed", "16", "--batch", "64"]
+    FC.main(common + ["--out", str(tmp_path / "straight.npz")])
+    FC.main(common + ["--out", str(tmp_path / "split.npz"), "--stop-after", "2"])
+    assert not (tmp_path / "split.npz").exists() and (tmp_path / "split.npz.ckpt.pt").exists()
+    FC.main(common + ["--out", str(tmp_path / "split.npz"), "--resume"])
+    assert not (tmp_path / "split.npz.ckpt.pt").exists()
+    a, b = np.load(tmp_path / "straight.npz"), np.load(tmp_path / "split.npz")
+    for k in a.files:
+        if k != "meta":
+            assert np.allclose(a[k], b[k], atol=1e-6), k
+
+
 def test_fit114_writes_a_loadable_head_from_the_card_rows(tmp_path):
     pytest.importorskip("torch")
     from cptcg.learn.model import ValueModel

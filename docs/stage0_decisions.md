@@ -160,3 +160,16 @@ width from the weights; dropout is training-mode only), `tools/fit_cards.py fit`
 `--dropout`, and `cmd_eval` builds the torch twin at the weights' width. Pinned by
 `test_the_twin_agrees_at_another_embedding_width_and_dropout_is_off_at_inference`. Configs b and c will
 import the edited module when they start; the defaults are untouched, so their fits are unaffected.
+
+## KT1 rerun: the card fits checkpoint and the second half resumes (after two machine restarts)
+
+The machine restarted twice while `rerun2.sh` was fitting config d (2026-09-22). The first restart
+killed only the session's watcher; the second killed the pipeline itself, at config d's epoch 5,
+with no weights written, and nothing ran for about 22 hours. `tools/fit_cards.py fit` now writes
+`OUT.ckpt.pt` after every epoch (weights, optimiser state, both RNG states, early-stopping
+bookkeeping) and `--resume` continues from it; `test_a_resumed_fit_matches_an_uninterrupted_one`
+pins that a fit killed after two epochs and resumed ends on the same weights as one run straight
+through, dropout included. The second half was relaunched as `scratchpad/rerun3.sh`: the same
+commands, settings and order as `rerun2.sh`, with a marker per finished step so a restart skips
+what is done. Config d restarts from epoch 0 with the same seed, so its result is unchanged. No
+setting, selection rule or criterion changed.
