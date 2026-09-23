@@ -310,3 +310,26 @@ timing, my judgement is that the environment reclaims an idle session's machine 
 new one when the session is woken. The 05:35 notice was a worker restart only: the boot time was
 unchanged and the pipeline survived it. With checkpoints and step markers, each reboot now costs
 at most the epoch in progress.
+
+## KT1 rerun: order changed and a secondary panel added (owner, 2026-09-23T20:33Z, before any panel result)
+
+No panel, head-to-head or suite result of the rerun exists at the time of writing
+(`out/s1/kt1/` is empty). Head choice (card config e, 114 head h16) and the KT1 criterion are
+unchanged.
+
+1. **Reorder.** The 128-playout independent-oracle step is stopped at about 900 of 2,000
+   positions; `oracle.py playouts --resume` continues from the positions already written (it
+   saves every 25, so at most 24 positions are redone). The rest runs in this order: the three
+   registered KT1 panels (`neural@out/s1/w114.json` = h16, `neural-cards@out/s1/wcards.npz` =
+   config e, `neural-cards-ablated@out/s1/wcards.npz`); then the secondary panels below; then the
+   mirrored head-to-head; then the delayed suite by family; then the playouts, agreement scoring
+   and final monotonicity. The KT1 criterion reads only the three registered panels, so the order
+   cannot change the verdict. KT1 is reported as soon as those panels finish.
+2. **Pre-declared secondary, not pass/fail: config a.** Panels for `neural-cards@out/s1/wcards_a.npz`
+   and `neural-cards-ablated@out/s1/wcards_a.npz`, written to `out/s1/kt1_secondary/`. Reason:
+   config e's attention query/key weights and most of its feed-forward weights are about 1e-32, so
+   the registered KT1 tests card tokens plus pooling plus the 114 aggregates. Config a is the only
+   card model with live attention and feed-forward layers (median |attn_q| 0.027), and its holdout
+   Brier (0.12831) is within 0.0005 of e's (0.12783). Its panels are reported next to KT1 and
+   labelled secondary; they do not enter the verdict. Config a's weights were exported before the
+   subnormal flush at export and hold 0.25% subnormals, which affects only inference speed.
