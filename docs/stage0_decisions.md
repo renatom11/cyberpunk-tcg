@@ -491,3 +491,15 @@ Registered now, for the launch after the signal diagnostic finishes:
 5. **Population.** After each generation the population is re-rated under the promoted head and
    `population.py report` writes the G6 numbers. `propose` runs one hill-climb round a
    generation under the heuristic, since the heuristic is the cheap, fixed yardstick.
+
+### Stage 1 started 2026-09-25 14:43 UTC; the plan-candidate stage stays off (measured)
+
+`tools/plan_cost.py --agent ismcts-plan:32@out/s2/w114_boundary.json --turns 200`: 203 planned
+turns in 35 games. The walk took 28.3 s of the searching seat's 128.0 s, a share of **22.1%**,
+above the registered 15%. So the stage stays off and the generator is `ismcts-explore:32`
+(`out/stage1/plan_cost.json`). One walk costs 0.14 s. A cheaper walk (budget 4, or only on turns
+with ≥ 8 options) is the obvious next measurement. It is not run now, because tuning the
+threshold's subject after seeing the number is what the rule exists to prevent.
+
+Experiment 2 finished at 14:40 (`docs/stage0.md`). Stage 1 launched on the boundary target from
+`out/s2/w114_boundary.json` (the registered rule), 30,000 games a generation, `out/stage1/loop/`.
