@@ -1,0 +1,1576 @@
+{
+ "format": 1,
+ "created": "2026-09-25T07:30:43Z",
+ "rules": "149b39c8f55e9d41",
+ "cards": "a8d592aef8f17b13",
+ "members": [
+  {
+   "id": "panel-0-a",
+   "name": "panel-0-a",
+   "legends": [
+    "jackie-welles-pour-one-out-for-me",
+    "judy-alvarez-braindance-maestro",
+    "evelyn-parker-beautiful-enigma"
+   ],
+   "main": {
+    "rita-wheeler-no-stupid-questions": 3,
+    "judy-alvarez-nothing-to-doubt": 3,
+    "mox-inciters": 3,
+    "floor-it": 3,
+    "dying-night-vs-pistol": 3,
+    "mtod12-flathead": 3,
+    "modded-kusanagi": 3,
+    "unlikely-bond": 3,
+    "placide-voodoo-sentinel": 3,
+    "three-mouths-one-desire": 3,
+    "tetratronic-rippler": 3,
+    "rogue-amendiares-queen-of-the-afterlife": 2,
+    "netwatch-netdriver": 3,
+    "reboot-optics": 2
+   },
+   "class": "mono",
+   "origin": "seed:kt2",
+   "source": "out/s0/panel_decks/panel-0-a.json",
+   "evaluation_only": false,
+   "ratings": {
+    "heuristic": {
+     "bt": 0.3711358262036755,
+     "ci95": [
+      0.3162778552451813,
+      0.4245582828769826
+     ],
+     "games": 760,
+     "win_rate": 0.26973684210526316,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -1.6139955265593142
+    },
+    "ismcts:32": {
+     "bt": 0.492972200187509,
+     "ci95": [
+      0.4048897590763853,
+      0.5916236172427276
+     ],
+     "games": 380,
+     "win_rate": 0.33157894736842103,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.9762368902006587
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 0.28437641285136445,
+     "ci95": [
+      0.22245477861154142,
+      0.3517188795775517
+     ],
+     "games": 380,
+     "win_rate": 0.22631578947368422,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -1.4901528652138827
+    }
+   },
+   "player_dependent": [
+    "heuristic vs ismcts:32: z -1.61 / -0.98",
+    "ismcts:32 vs neural@out/s1/w114.json: z -0.98 / -1.49"
+   ]
+  },
+  {
+   "id": "panel-0-b",
+   "name": "panel-0-b",
+   "legends": [
+    "adam-smasher-ender-of-legends",
+    "johnny-silverhand-rocking-renegade",
+    "v-streetkid"
+   ],
+   "main": {
+    "johnny-silverhand-never-stop-fighting": 3,
+    "kerry-eurodyne-the-last-rockerboy": 3,
+    "ruthless-lowlife": 3,
+    "meredith-stout-stone-cold-corpo": 3,
+    "satori-sword-of-saburo": 3,
+    "yorinobu-arasaka-steel-dragon": 3,
+    "minotaur": 2,
+    "mantis-blades": 3,
+    "industrial-assembly": 3,
+    "over-the-edge": 3,
+    "bonnie-and-clyde": 3,
+    "appetite-for-destruction": 3,
+    "carnage-at-the-colosseum": 2,
+    "arasaka-emergency-radioport": 3
+   },
+   "class": "mono",
+   "origin": "seed:kt2",
+   "source": "out/s0/panel_decks/panel-0-b.json",
+   "evaluation_only": false,
+   "ratings": {
+    "heuristic": {
+     "bt": 2.061409801813378,
+     "ci95": [
+      1.7888506654509022,
+      2.409717442004307
+     ],
+     "games": 760,
+     "win_rate": 0.6723684210526316,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 1.17792930005167
+    },
+    "ismcts:32": {
+     "bt": 3.450166356880186,
+     "ci95": [
+      2.8264554008070695,
+      4.345644940221945
+     ],
+     "games": 380,
+     "win_rate": 0.7789473684210526,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 1.7093021559304993
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 3.710297454013434,
+     "ci95": [
+      2.992610376851085,
+      4.735281360297593
+     ],
+     "games": 380,
+     "win_rate": 0.7842105263157895,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 1.5537375207812938
+    }
+   },
+   "player_dependent": [
+    "heuristic vs ismcts:32: z +1.18 / +1.71",
+    "heuristic vs neural@out/s1/w114.json: z +1.18 / +1.55"
+   ]
+  },
+  {
+   "id": "panel-1-a",
+   "name": "panel-1-a",
+   "legends": [
+    "sasha-yakovleva-wont-let-you-down",
+    "evelyn-parker-beautiful-enigma",
+    "adam-smasher-ender-of-legends"
+   ],
+   "main": {
+    "arasaka-emergency-radioport": 3,
+    "rita-wheeler-no-stupid-questions": 3,
+    "meredith-stout-stone-cold-corpo": 3,
+    "floor-it": 3,
+    "v-roamer-of-the-badlands": 3,
+    "chrome-fang": 3,
+    "ruthless-lowlife": 3,
+    "la-llorona-ghost-of-the-past": 2,
+    "nocturne-op55n1": 3,
+    "over-the-edge": 3,
+    "towerfall": 3,
+    "les-elemens": 1,
+    "dying-night-vs-pistol": 3,
+    "satori-sword-of-saburo": 3,
+    "mtod12-flathead": 1
+   },
+   "class": "two-plus-one",
+   "origin": "seed:kt2",
+   "source": "out/s0/panel_decks/panel-1-a.json",
+   "evaluation_only": false,
+   "ratings": {
+    "heuristic": {
+     "bt": 0.9804531573970788,
+     "ci95": [
+      0.8408038732812979,
+      1.1192338825025436
+     ],
+     "games": 760,
+     "win_rate": 0.49473684210526314,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.03214421263327916
+    },
+    "ismcts:32": {
+     "bt": 1.4582942853132026,
+     "ci95": [
+      1.2281883155264806,
+      1.7367547511239447
+     ],
+     "games": 380,
+     "win_rate": 0.5921052631578947,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 0.5207141348028063
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 0.7477872820838858,
+     "ci95": [
+      0.6246870738406917,
+      0.9083842737953609
+     ],
+     "games": 380,
+     "win_rate": 0.4342105263157895,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.3444199773965702
+    }
+   },
+   "player_dependent": [
+    "heuristic vs ismcts:32: z -0.03 / +0.52",
+    "ismcts:32 vs neural@out/s1/w114.json: z +0.52 / -0.34"
+   ]
+  },
+  {
+   "id": "panel-1-b",
+   "name": "panel-1-b",
+   "legends": [
+    "evelyn-parker-beautiful-enigma",
+    "jackie-welles-mamas-favorite",
+    "judy-alvarez-braindance-maestro"
+   ],
+   "main": {
+    "les-elemens": 2,
+    "lizzy-wizzy-delicate-weapon": 1,
+    "chrome-reverie": 3,
+    "rita-wheeler-no-stupid-questions": 3,
+    "three-mouths-one-desire": 3,
+    "valentino-street-racer": 2,
+    "we-gotta-live-together": 3,
+    "memory-relapse": 3,
+    "rogue-amendiares-queen-of-the-afterlife": 3,
+    "floor-it": 1,
+    "towerfall": 1,
+    "sandayu-oda-hanakos-guardian": 2,
+    "zetatech-berserk": 1,
+    "mox-inciters": 3,
+    "corporate-surveillance": 2,
+    "nocturne-op55n1": 3,
+    "tygers-whisper": 1,
+    "trust-no-one": 1,
+    "dying-night-vs-pistol": 1,
+    "modded-kusanagi": 1
+   },
+   "class": "two-plus-one",
+   "origin": "seed:kt2",
+   "source": "out/s0/panel_decks/panel-1-b.json",
+   "evaluation_only": false,
+   "ratings": {
+    "heuristic": {
+     "bt": 0.705962862936366,
+     "ci95": [
+      0.6177105223165643,
+      0.8084051056218939
+     ],
+     "games": 760,
+     "win_rate": 0.4144736842105263,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.56697804964754
+    },
+    "ismcts:32": {
+     "bt": 0.4703291790292296,
+     "ci95": [
+      0.38144597733188995,
+      0.5631549894319959
+     ],
+     "games": 380,
+     "win_rate": 0.32105263157894737,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -1.041135024870391
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 0.34390676295607386,
+     "ci95": [
+      0.2776790838778341,
+      0.42197581416218605
+     ],
+     "games": 380,
+     "win_rate": 0.2631578947368421,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -1.2649076423993815
+    }
+   },
+   "player_dependent": [
+    "heuristic vs ismcts:32: z -0.57 / -1.04",
+    "heuristic vs neural@out/s1/w114.json: z -0.57 / -1.26"
+   ]
+  },
+  {
+   "id": "panel-2-a",
+   "name": "panel-2-a",
+   "legends": [
+    "royce-psycho-on-the-edge",
+    "johnny-silverhand-rocking-renegade",
+    "wakako-okada-peace-and-harmony"
+   ],
+   "main": {
+    "japantown-jonin": 3,
+    "ruthless-lowlife": 3,
+    "appetite-for-destruction": 3,
+    "la-llorona-ghost-of-the-past": 3,
+    "mox-inciters": 3,
+    "valentino-guerrera": 3,
+    "gunpoint-diplomacy": 3,
+    "rita-wheeler-no-stupid-questions": 3,
+    "unlikely-bond": 3,
+    "chrome-fang": 3,
+    "el-sombreron-la-venganza-lenta": 3,
+    "all-is-lost": 1,
+    "mantis-blades": 3,
+    "tetratronic-rippler": 3
+   },
+   "class": "two-plus-one",
+   "origin": "seed:kt2",
+   "source": "out/s0/panel_decks/panel-2-a.json",
+   "evaluation_only": false,
+   "ratings": {
+    "heuristic": {
+     "bt": 1.889276440274044,
+     "ci95": [
+      1.6692025753159183,
+      2.1468194548042154
+     ],
+     "games": 760,
+     "win_rate": 0.6526315789473685,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 1.035943731608974
+    },
+    "ismcts:32": {
+     "bt": 0.676559360520032,
+     "ci95": [
+      0.5551170039035384,
+      0.8179099280721011
+     ],
+     "games": 380,
+     "win_rate": 0.4052631578947368,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.5393025053054661
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 1.1185362499946183,
+     "ci95": [
+      0.9415412433497983,
+      1.3561527003587033
+     ],
+     "games": 380,
+     "win_rate": 0.5289473684210526,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 0.13275073813177066
+    }
+   },
+   "player_dependent": [
+    "heuristic vs ismcts:32: z +1.04 / -0.54",
+    "heuristic vs neural@out/s1/w114.json: z +1.04 / +0.13",
+    "ismcts:32 vs neural@out/s1/w114.json: z -0.54 / +0.13"
+   ]
+  },
+  {
+   "id": "panel-2-b",
+   "name": "panel-2-b",
+   "legends": [
+    "v-corporate-exile",
+    "sasha-yakovleva-wont-let-you-down",
+    "alt-cunningham-soulkiller-architect"
+   ],
+   "main": {
+    "les-elemens": 3,
+    "netwatch-netdriver": 2,
+    "three-mouths-one-desire": 1,
+    "floor-it": 2,
+    "pyramid-song": 1,
+    "nocturne-op55n1": 1,
+    "trust-no-one": 2,
+    "hacked-corpo": 1,
+    "chrome-reverie": 3,
+    "placide-voodoo-sentinel": 2,
+    "westbrook-netrunner": 2,
+    "maman-brigitte-spirit-of-death": 2,
+    "modded-muramasa": 2,
+    "rita-wheeler-no-stupid-questions": 3,
+    "misty-olszewski-mender-of-broken-spirits": 2,
+    "delamain-rideshare-ai": 3,
+    "tetratronic-rippler": 1,
+    "mox-inciters": 2,
+    "rogue-amendiares-queen-of-the-afterlife": 1,
+    "jacked-in-voodoo-boy": 1,
+    "reboot-optics": 3,
+    "towerfall": 2,
+    "mtod12-flathead": 1,
+    "modded-kusanagi": 2
+   },
+   "class": "mono",
+   "origin": "seed:kt2",
+   "source": "out/s0/panel_decks/panel-2-b.json",
+   "evaluation_only": false,
+   "ratings": {
+    "heuristic": {
+     "bt": 0.5683022827068404,
+     "ci95": [
+      0.4915092949565362,
+      0.6553171786713091
+     ],
+     "games": 760,
+     "win_rate": 0.3631578947368421,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.9201811956154422
+    },
+    "ismcts:32": {
+     "bt": 0.676559360520032,
+     "ci95": [
+      0.5618787383337877,
+      0.8217648180701741
+     ],
+     "games": 380,
+     "win_rate": 0.4052631578947368,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.5393025053054661
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 0.44833120210827915,
+     "ci95": [
+      0.36004969846040147,
+      0.5499900650719555
+     ],
+     "games": 380,
+     "win_rate": 0.31842105263157894,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.9506769623039136
+    }
+   },
+   "player_dependent": [
+    "heuristic vs ismcts:32: z -0.92 / -0.54",
+    "ismcts:32 vs neural@out/s1/w114.json: z -0.54 / -0.95"
+   ]
+  },
+  {
+   "id": "panel-3-a",
+   "name": "panel-3-a",
+   "legends": [
+    "viktor-vektor-sit-down-and-relax",
+    "muamar-reyes-el-capitan",
+    "yorinobu-arasaka-embracing-destruction"
+   ],
+   "main": {
+    "viktor-vektor-you-might-feel-a-little-pinch": 2,
+    "johnny-silverhand-never-stop-fighting": 1,
+    "v-roamer-of-the-badlands": 2,
+    "offduty-malfini": 3,
+    "augmented-negotiators": 3,
+    "viktor-vektor-drop-your-illusions": 3,
+    "swordwise-huscle": 2,
+    "kerry-eurodyne-the-last-rockerboy": 1,
+    "valentino-guerrera": 1,
+    "over-the-edge": 1,
+    "arasaka-emergency-radioport": 2,
+    "secondhand-bombus": 2,
+    "shattered-memories": 1,
+    "t-bug-amateur-philosopher": 1,
+    "industrial-assembly": 2,
+    "bootleg-black-sapphire-show": 2,
+    "cyberpsychosis": 1,
+    "zetatech-faceplate": 1,
+    "afterparty-at-lizzies": 2,
+    "kiroshi-optics": 1,
+    "6th-street-recruits": 1,
+    "gorilla-arms": 1,
+    "meredith-stout-stone-cold-corpo": 2,
+    "maxtac-suppression-team": 2,
+    "trauma-team-operatives": 1,
+    "hanako-arasaka-in-a-gilded-cage": 1,
+    "caliber-totentanzs-top-dog": 1,
+    "ruthless-lowlife": 2,
+    "jackie-welles-ride-or-die-choom": 1,
+    "satori-sword-of-saburo": 1,
+    "la-llorona-ghost-of-the-past": 1,
+    "dexter-deshawn-one-last-chance": 1,
+    "chrome-fang": 1
+   },
+   "class": "two-plus-one",
+   "origin": "seed:kt2",
+   "source": "out/s0/panel_decks/panel-3-a.json",
+   "evaluation_only": false,
+   "ratings": {
+    "heuristic": {
+     "bt": 1.7843579078470841,
+     "ci95": [
+      1.5557050456966581,
+      2.0474584297423264
+     ],
+     "games": 760,
+     "win_rate": 0.6394736842105263,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 0.9429077273309222
+    },
+    "ismcts:32": {
+     "bt": 1.111776938155698,
+     "ci95": [
+      0.9157009114918965,
+      1.352042861158743
+     ],
+     "games": 380,
+     "win_rate": 0.5263157894736842,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 0.1462481074502057
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 0.6024664296627954,
+     "ci95": [
+      0.4964154240802333,
+      0.7362303149617563
+     ],
+     "games": 380,
+     "win_rate": 0.38421052631578945,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.6004941043842918
+    }
+   },
+   "player_dependent": [
+    "heuristic vs ismcts:32: z +0.94 / +0.15",
+    "heuristic vs neural@out/s1/w114.json: z +0.94 / -0.60",
+    "ismcts:32 vs neural@out/s1/w114.json: z +0.15 / -0.60"
+   ]
+  },
+  {
+   "id": "panel-3-b",
+   "name": "panel-3-b",
+   "legends": [
+    "yorinobu-arasaka-embracing-destruction",
+    "dexter-deshawn-off-the-grid",
+    "royce-psycho-on-the-edge"
+   ],
+   "main": {
+    "la-llorona-ghost-of-the-past": 3,
+    "valentino-guerrera": 3,
+    "screw-lovelorn-fool": 2,
+    "el-sombreron-la-venganza-lenta": 1,
+    "detonate": 2,
+    "industrial-assembly": 2,
+    "mantis-blades": 3,
+    "v-roamer-of-the-badlands": 1,
+    "kerry-eurodyne-the-last-rockerboy": 1,
+    "gunpoint-diplomacy": 1,
+    "octant": 3,
+    "swordwise-huscle": 1,
+    "ruthless-lowlife": 1,
+    "carnage-at-the-colosseum": 1,
+    "all-is-lost": 3,
+    "yorinobu-arasaka-steel-dragon": 3,
+    "satori-sword-of-saburo": 2,
+    "6th-street-recruits": 1,
+    "minotaur": 2,
+    "arasaka-emergency-radioport": 1,
+    "royce-dont-call-me-simon": 1,
+    "animals-wrecker": 1,
+    "johnny-silverhand-never-stop-fighting": 1
+   },
+   "class": "mono",
+   "origin": "seed:kt2",
+   "source": "out/s0/panel_decks/panel-3-b.json",
+   "evaluation_only": false,
+   "ratings": {
+    "heuristic": {
+     "bt": 1.6864330791076712,
+     "ci95": [
+      1.4680322522395233,
+      1.977004282279767
+     ],
+     "games": 760,
+     "win_rate": 0.6263157894736842,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 0.8509990989856081
+    },
+    "ismcts:32": {
+     "bt": 1.3654913862635634,
+     "ci95": [
+      1.1483105959457895,
+      1.660645181337575
+     ],
+     "games": 380,
+     "win_rate": 0.5763157894736842,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 0.42996003250484705
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 2.4322074663652438,
+     "ci95": [
+      2.027442289839576,
+      2.95444206965772
+     ],
+     "games": 380,
+     "win_rate": 0.7026315789473684,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 1.053274409663128
+    }
+   },
+   "player_dependent": [
+    "heuristic vs ismcts:32: z +0.85 / +0.43",
+    "ismcts:32 vs neural@out/s1/w114.json: z +0.43 / +1.05"
+   ]
+  },
+  {
+   "id": "panel-4-a",
+   "name": "panel-4-a",
+   "legends": [
+    "saburo-arasaka-stubborn-patriarch",
+    "goro-takemura-hands-unclean",
+    "kerry-eurodyne-axe-attitude-audience"
+   ],
+   "main": {
+    "viktor-vektor-drop-your-illusions": 2,
+    "hanako-arasaka-in-a-gilded-cage": 2,
+    "trauma-team-operatives": 1,
+    "zetatech-berserk": 3,
+    "rockn-rockerboy": 1,
+    "memory-relapse": 1,
+    "we-gotta-live-together": 1,
+    "emergency-atlus": 2,
+    "dexter-deshawn-one-last-chance": 1,
+    "caliber-totentanzs-top-dog": 1,
+    "gilded-maton": 2,
+    "heywood-ripperdoc": 2,
+    "afterparty-at-lizzies": 1,
+    "nadia-fighting-through-grief": 1,
+    "sketchy-ripper": 1,
+    "secondhand-bombus": 2,
+    "synapse-burnout": 1,
+    "sandayu-oda-hanakos-guardian": 1,
+    "pepe-najarro-working-doubles": 1,
+    "corporate-surveillance": 1,
+    "fool-on-the-hill": 1,
+    "riding-nomad": 1,
+    "maelstrom-zealots": 2,
+    "pacifica-netrunner": 1,
+    "corpo-security": 1,
+    "maxtac-suppression-team": 1,
+    "maxtac-heavy": 1,
+    "tygers-whisper": 1,
+    "jackie-welles-ride-or-die-choom": 1,
+    "maxtac-av": 1,
+    "riot-shield": 1
+   },
+   "class": "two-plus-one",
+   "origin": "seed:kt2",
+   "source": "out/s0/panel_decks/panel-4-a.json",
+   "evaluation_only": false,
+   "ratings": {
+    "heuristic": {
+     "bt": 0.3954675702626341,
+     "ci95": [
+      0.3377739232914898,
+      0.4539143021809053
+     ],
+     "games": 760,
+     "win_rate": 0.28289473684210525,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -1.5105944525879234
+    },
+    "ismcts:32": {
+     "bt": 0.906706893695287,
+     "ci95": [
+      0.7495243924813357,
+      1.0955922636125426
+     ],
+     "games": 380,
+     "win_rate": 0.4763157894736842,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.13517381458437336
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 2.3121255082543084,
+     "ci95": [
+      1.8829522002268084,
+      2.8752536644112165
+     ],
+     "games": 380,
+     "win_rate": 0.6921052631578948,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 0.9932727579490395
+    }
+   },
+   "player_dependent": [
+    "heuristic vs ismcts:32: z -1.51 / -0.14",
+    "heuristic vs neural@out/s1/w114.json: z -1.51 / +0.99",
+    "ismcts:32 vs neural@out/s1/w114.json: z -0.14 / +0.99"
+   ]
+  },
+  {
+   "id": "panel-4-b",
+   "name": "panel-4-b",
+   "legends": [
+    "evelyn-parker-beautiful-enigma",
+    "jackie-welles-pour-one-out-for-me",
+    "alt-cunningham-soulkiller-architect"
+   ],
+   "main": {
+    "hacked-corpo": 3,
+    "mox-inciters": 3,
+    "netwatch-netdriver": 1,
+    "psycho-squad": 3,
+    "jacked-in-voodoo-boy": 2,
+    "chrome-reverie": 2,
+    "lizzy-wizzy-delicate-weapon": 3,
+    "three-mouths-one-desire": 3,
+    "westbrook-netrunner": 2,
+    "maman-brigitte-spirit-of-death": 3,
+    "delamain-cab": 1,
+    "modded-kusanagi": 3,
+    "towerfall": 2,
+    "modded-muramasa": 1,
+    "delamain-rideshare-ai": 1,
+    "trust-no-one": 1,
+    "unlikely-bond": 1,
+    "judy-alvarez-nothing-to-doubt": 1,
+    "rita-wheeler-no-stupid-questions": 3,
+    "misty-olszewski-mender-of-broken-spirits": 2,
+    "floor-it": 1,
+    "tetratronic-rippler": 1,
+    "rogue-amendiares-queen-of-the-afterlife": 2,
+    "reboot-optics": 1,
+    "les-elemens": 1,
+    "placide-voodoo-sentinel": 2,
+    "dying-night-vs-pistol": 1
+   },
+   "class": "mono",
+   "origin": "seed:kt2",
+   "source": "out/s0/panel_decks/panel-4-b.json",
+   "evaluation_only": false,
+   "ratings": {
+    "heuristic": {
+     "bt": 0.4804923003257864,
+     "ci95": [
+      0.41598125434743066,
+      0.5477353534925429
+     ],
+     "games": 760,
+     "win_rate": 0.325,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -1.1934864454331047
+    },
+    "ismcts:32": {
+     "bt": 0.2816986373715511,
+     "ci95": [
+      0.22070373712669852,
+      0.343417900141819
+     ],
+     "games": 380,
+     "win_rate": 0.21578947368421053,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -1.7486316684885563
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 0.3530237389045099,
+     "ci95": [
+      0.2817134387167103,
+      0.4325111310139854
+     ],
+     "games": 380,
+     "win_rate": 0.26842105263157895,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -1.2339010562646533
+    }
+   },
+   "player_dependent": [
+    "heuristic vs ismcts:32: z -1.19 / -1.75",
+    "ismcts:32 vs neural@out/s1/w114.json: z -1.75 / -1.23"
+   ]
+  },
+  {
+   "id": "panel-5-a",
+   "name": "panel-5-a",
+   "legends": [
+    "adam-smasher-ender-of-legends",
+    "royce-psycho-on-the-edge",
+    "v-streetkid"
+   ],
+   "main": {
+    "gunpoint-diplomacy": 3,
+    "mantis-blades": 1,
+    "johnny-silverhand-never-stop-fighting": 2,
+    "animals-wrecker": 3,
+    "satori-sword-of-saburo": 3,
+    "ruthless-lowlife": 2,
+    "v-roamer-of-the-badlands": 2,
+    "bonnie-and-clyde": 2,
+    "el-sombreron-la-venganza-lenta": 3,
+    "valentino-guerrera": 3,
+    "industrial-assembly": 3,
+    "swordwise-huscle": 1,
+    "screw-lovelorn-fool": 3,
+    "chrome-fang": 1,
+    "la-llorona-ghost-of-the-past": 1,
+    "over-the-edge": 2,
+    "deadman-transmitter": 1,
+    "meredith-stout-stone-cold-corpo": 1,
+    "all-is-lost": 2,
+    "6th-street-recruits": 1,
+    "arasaka-emergency-radioport": 1,
+    "yorinobu-arasaka-steel-dragon": 1
+   },
+   "class": "mono",
+   "origin": "seed:kt2",
+   "source": "out/s0/panel_decks/panel-5-a.json",
+   "evaluation_only": false,
+   "ratings": {
+    "heuristic": {
+     "bt": 1.955887121178916,
+     "ci95": [
+      1.705814011745448,
+      2.257561673944751
+     ],
+     "games": 760,
+     "win_rate": 0.6605263157894737,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 1.092365819365563
+    },
+    "ismcts:32": {
+     "bt": 2.612034391047598,
+     "ci95": [
+      2.1286802418949944,
+      3.261796997892876
+     ],
+     "games": 380,
+     "win_rate": 0.7236842105263158,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 1.325194982183133
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 4.386927415148733,
+     "ci95": [
+      3.5642530285329546,
+      5.551174753826198
+     ],
+     "games": 380,
+     "win_rate": 0.8131578947368421,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 1.7522541083998395
+    }
+   },
+   "player_dependent": [
+    "heuristic vs neural@out/s1/w114.json: z +1.09 / +1.75",
+    "ismcts:32 vs neural@out/s1/w114.json: z +1.33 / +1.75"
+   ]
+  },
+  {
+   "id": "panel-5-b",
+   "name": "panel-5-b",
+   "legends": [
+    "kerry-eurodyne-axe-attitude-audience",
+    "viktor-vektor-sit-down-and-relax",
+    "muamar-reyes-el-capitan"
+   ],
+   "main": {
+    "adrenaline-converter": 3,
+    "dexter-deshawn-one-last-chance": 3,
+    "cyberpsychosis": 3,
+    "heywood-ripperdoc": 3,
+    "safety-override": 3,
+    "adam-smasher-metal-over-meat": 3,
+    "rockn-rockerboy": 3,
+    "offduty-malfini": 3,
+    "viktor-vektor-you-might-feel-a-little-pinch": 3,
+    "viktor-vektor-drop-your-illusions": 3,
+    "zetatech-faceplate": 3,
+    "jackie-welles-ride-or-die-choom": 3,
+    "maxtac-suppression-team": 1,
+    "kiroshi-optics": 2,
+    "bootleg-black-sapphire-show": 1
+   },
+   "class": "mono",
+   "origin": "seed:kt2",
+   "source": "out/s0/panel_decks/panel-5-b.json",
+   "evaluation_only": false,
+   "ratings": {
+    "heuristic": {
+     "bt": 2.1742575674564852,
+     "ci95": [
+      1.8729541107216319,
+      2.5634220699487447
+     ],
+     "games": 760,
+     "win_rate": 0.6842105263157895,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 1.26471547605495
+    },
+    "ismcts:32": {
+     "bt": 2.85690373198115,
+     "ci95": [
+      2.309608917229142,
+      3.601699790369195
+     ],
+     "games": 380,
+     "win_rate": 0.7421052631578947,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 1.4488756706737875
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 2.9613396221068395,
+     "ci95": [
+      2.415459251157956,
+      3.702066322863402
+     ],
+     "games": 380,
+     "win_rate": 0.7421052631578947,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 1.2865432115458921
+    }
+   },
+   "player_dependent": []
+  },
+  {
+   "id": "embracing_power",
+   "name": "Embracing Power",
+   "legends": [
+    "goro-takemura-hands-unclean",
+    "yorinobu-arasaka-embracing-destruction",
+    "saburo-arasaka-stubborn-patriarch"
+   ],
+   "main": {
+    "chrome-fang": 2,
+    "minotaur": 2,
+    "ruthless-lowlife": 3,
+    "swordwise-huscle": 2,
+    "emergency-atlus": 2,
+    "field-operator": 2,
+    "goro-takemura-losing-his-way": 2,
+    "maxtac-av": 2,
+    "arasaka-emergency-radioport": 2,
+    "mantis-blades": 3,
+    "satori-sword-of-saburo": 3,
+    "industrial-assembly": 2,
+    "over-the-edge": 2,
+    "shattered-memories": 2,
+    "corpo-security": 3,
+    "sandevistan": 3,
+    "corporate-surveillance": 3
+   },
+   "class": "two-plus-one",
+   "origin": "seed:kt2",
+   "source": "data/decks/embracing_power.json",
+   "evaluation_only": true,
+   "ratings": {
+    "heuristic": {
+     "bt": 1.8676992663467178,
+     "ci95": [
+      1.6260924524511358,
+      2.169812240003697
+     ],
+     "games": 760,
+     "win_rate": 0.65,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 1.0172395978828834
+    },
+    "ismcts:32": {
+     "bt": 2.7483294377820466,
+     "ci95": [
+      2.2925648808377406,
+      3.3321452747636098
+     ],
+     "games": 380,
+     "win_rate": 0.7342105263157894,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 1.395398591766507
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 2.76954897283913,
+     "ci95": [
+      2.2689728608011404,
+      3.3712205702742613
+     ],
+     "games": 380,
+     "win_rate": 0.7289473684210527,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 1.207195297101929
+    }
+   },
+   "player_dependent": [
+    "heuristic vs ismcts:32: z +1.02 / +1.40"
+   ]
+  },
+  {
+   "id": "sample_corpos",
+   "name": "Sample Corpos",
+   "legends": [
+    "hanako-arasaka-daughter-of-the-emperor",
+    "sasha-yakovleva-wont-let-you-down",
+    "v-corporate-exile"
+   ],
+   "main": {
+    "corpo-security": 3,
+    "corporate-surveillance": 3,
+    "emergency-atlus": 3,
+    "field-operator": 3,
+    "valentino-street-racer": 3,
+    "delamain-cab": 3,
+    "hacked-corpo": 3,
+    "les-elemens": 3,
+    "maxtac-av": 3,
+    "modded-muramasa": 3,
+    "floor-it": 3,
+    "peace-offering": 1,
+    "tetratronic-rippler": 3,
+    "dying-night-vs-pistol": 3
+   },
+   "class": "two-plus-one",
+   "origin": "seed:kt2",
+   "source": "data/decks/sample_corpos.json",
+   "evaluation_only": false,
+   "ratings": {
+    "heuristic": {
+     "bt": 0.5879178259256513,
+     "ci95": [
+      0.5091586889068211,
+      0.6752057530938228
+     ],
+     "games": 760,
+     "win_rate": 0.37105263157894736,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.8649253612694552
+    },
+    "ismcts:32": {
+     "bt": 1.6477534921013792,
+     "ci95": [
+      1.3643486705653631,
+      1.9967235395324108
+     ],
+     "games": 380,
+     "win_rate": 0.6210526315789474,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 0.6893023015429888
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 1.573252386384734,
+     "ci95": [
+      1.2978194176854931,
+      1.8925625079416037
+     ],
+     "games": 380,
+     "win_rate": 0.6078947368421053,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 0.5370010005409716
+    }
+   },
+   "player_dependent": [
+    "heuristic vs ismcts:32: z -0.86 / +0.69",
+    "heuristic vs neural@out/s1/w114.json: z -0.86 / +0.54"
+   ]
+  },
+  {
+   "id": "sample_fixers",
+   "name": "Sample Fixers",
+   "legends": [
+    "muamar-reyes-el-capitan",
+    "kerry-eurodyne-axe-attitude-audience",
+    "evelyn-parker-beautiful-enigma"
+   ],
+   "main": {
+    "dexter-deshawn-one-last-chance": 3,
+    "lizzy-wizzy-delicate-weapon": 3,
+    "rockn-rockerboy": 3,
+    "rogue-amendiares-queen-of-the-afterlife": 3,
+    "afterparty-at-lizzies": 3,
+    "floor-it": 3,
+    "kiroshi-optics": 3,
+    "mandibular-upgrade": 3,
+    "trust-no-one": 3,
+    "jacked-in-voodoo-boy": 3,
+    "reboot-optics": 1,
+    "secondhand-bombus": 3,
+    "sketchy-ripper": 3,
+    "augmented-negotiators": 3
+   },
+   "class": "two-plus-one",
+   "origin": "seed:kt2",
+   "source": "data/decks/sample_fixers.json",
+   "evaluation_only": false,
+   "ratings": {
+    "heuristic": {
+     "bt": 0.5650839485830643,
+     "ci95": [
+      0.4873685627237602,
+      0.6482615725881423
+     ],
+     "games": 760,
+     "win_rate": 0.3618421052631579,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.9294288377104367
+    },
+    "ismcts:32": {
+     "bt": 0.44311576455277885,
+     "ci95": [
+      0.3543162660869947,
+      0.5351168725355089
+     ],
+     "games": 380,
+     "win_rate": 0.3078947368421053,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -1.1233989103556223
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 0.36700675925286785,
+     "ci95": [
+      0.29124260727243123,
+      0.44946403376316874
+     ],
+     "games": 380,
+     "win_rate": 0.27631578947368424,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -1.1878677102845903
+    }
+   },
+   "player_dependent": []
+  },
+  {
+   "id": "sample_gangers",
+   "name": "Sample Gangers",
+   "legends": [
+    "royce-psycho-on-the-edge",
+    "johnny-silverhand-rocking-renegade",
+    "wakako-okada-peace-and-harmony"
+   ],
+   "main": {
+    "japantown-jonin": 3,
+    "ruthless-lowlife": 3,
+    "appetite-for-destruction": 3,
+    "la-llorona-ghost-of-the-past": 3,
+    "mox-inciters": 3,
+    "valentino-guerrera": 3,
+    "gunpoint-diplomacy": 3,
+    "rita-wheeler-no-stupid-questions": 3,
+    "unlikely-bond": 3,
+    "chrome-fang": 3,
+    "el-sombreron-la-venganza-lenta": 3,
+    "all-is-lost": 1,
+    "mantis-blades": 3,
+    "tetratronic-rippler": 3
+   },
+   "class": "two-plus-one",
+   "origin": "seed:kt2",
+   "source": "data/decks/sample_gangers.json",
+   "evaluation_only": false,
+   "ratings": {
+    "heuristic": {
+     "bt": 2.2403902148957107,
+     "ci95": [
+      1.9706270680393174,
+      2.5534095571391093
+     ],
+     "games": 760,
+     "win_rate": 0.6907894736842105,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 1.3135052703604535
+    },
+    "ismcts:32": {
+     "bt": 0.6055069667833346,
+     "ci95": [
+      0.495498622498932,
+      0.7281370098170382
+     ],
+     "games": 380,
+     "win_rate": 0.37894736842105264,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.6924442052417416
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 0.92502439321812,
+     "ci95": [
+      0.7715236045145447,
+      1.0996393587057647
+     ],
+     "games": 380,
+     "win_rate": 0.4842105263157895,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.09235732296396008
+    }
+   },
+   "player_dependent": [
+    "heuristic vs ismcts:32: z +1.31 / -0.69",
+    "heuristic vs neural@out/s1/w114.json: z +1.31 / -0.09",
+    "ismcts:32 vs neural@out/s1/w114.json: z -0.69 / -0.09"
+   ]
+  },
+  {
+   "id": "sample_netrunners",
+   "name": "Sample Netrunners",
+   "legends": [
+    "alt-cunningham-soulkiller-architect",
+    "judy-alvarez-braindance-maestro",
+    "jackie-welles-pour-one-out-for-me"
+   ],
+   "main": {
+    "trust-no-one": 3,
+    "jacked-in-voodoo-boy": 3,
+    "three-mouths-one-desire": 3,
+    "chrome-reverie": 3,
+    "mox-inciters": 3,
+    "netwatch-netdriver": 3,
+    "pyramid-song": 1,
+    "rita-wheeler-no-stupid-questions": 3,
+    "westbrook-netrunner": 3,
+    "maman-brigitte-spirit-of-death": 3,
+    "judy-alvarez-nothing-to-doubt": 3,
+    "placide-voodoo-sentinel": 3,
+    "tetratronic-rippler": 3,
+    "evelyn-parker-scheming-siren": 3
+   },
+   "class": "mono",
+   "origin": "seed:kt2",
+   "source": "data/decks/sample_netrunners.json",
+   "evaluation_only": false,
+   "ratings": {
+    "heuristic": {
+     "bt": 0.6906711380614825,
+     "ci95": [
+      0.6070742783290234,
+      0.7886072901875204
+     ],
+     "games": 760,
+     "win_rate": 0.40921052631578947,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.6026369436211646
+    },
+    "ismcts:32": {
+     "bt": 0.3274837950661831,
+     "ci95": [
+      0.2647236677746861,
+      0.3939494444868401
+     ],
+     "games": 380,
+     "win_rate": 0.24473684210526317,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -1.5407687038720195
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 0.51164139190194,
+     "ci95": [
+      0.4244643351247347,
+      0.6121856893839063
+     ],
+     "games": 380,
+     "win_rate": 0.3473684210526316,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.7941412436049534
+    }
+   },
+   "player_dependent": [
+    "heuristic vs ismcts:32: z -0.60 / -1.54",
+    "ismcts:32 vs neural@out/s1/w114.json: z -1.54 / -0.79"
+   ]
+  },
+  {
+   "id": "sample_nomads",
+   "name": "Sample Nomads",
+   "legends": [
+    "panam-palmer-nomad-cavalry",
+    "padre-man-of-the-cross",
+    "jackie-welles-mamas-favorite"
+   ],
+   "main": {
+    "valentino-street-racer": 3,
+    "pepe-najarro-working-doubles": 3,
+    "riding-nomad": 3,
+    "we-gotta-live-together": 3,
+    "wraith-marauders": 3,
+    "panam-palmer-strength-through-family": 3,
+    "saul-bright-stormrider": 3,
+    "peace-offering": 3,
+    "synapse-burnout": 3,
+    "corpo-security": 3,
+    "corporate-surveillance": 1,
+    "riot-shield": 3,
+    "tygers-whisper": 3,
+    "sandevistan": 3
+   },
+   "class": "mono",
+   "origin": "seed:kt2",
+   "source": "data/decks/sample_nomads.json",
+   "evaluation_only": false,
+   "ratings": {
+    "heuristic": {
+     "bt": 0.5747822543632393,
+     "ci95": [
+      0.4952604371979714,
+      0.660002127075487
+     ],
+     "games": 760,
+     "win_rate": 0.36578947368421055,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.9017193099603096
+    },
+    "ismcts:32": {
+     "bt": 1.053654690131637,
+     "ci95": [
+      0.8762313598332915,
+      1.2960138264276886
+     ],
+     "games": 380,
+     "win_rate": 0.5131578947368421,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 0.07213717557814148
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 1.0001924670742857,
+     "ci95": [
+      0.8308317873884551,
+      1.2139070345946477
+     ],
+     "games": 380,
+     "win_rate": 0.5026315789473684,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 0.00022806177442996102
+    }
+   },
+   "player_dependent": [
+    "heuristic vs ismcts:32: z -0.90 / +0.07",
+    "heuristic vs neural@out/s1/w114.json: z -0.90 / +0.00"
+   ]
+  },
+  {
+   "id": "sample_ripperdocs",
+   "name": "Sample Ripperdocs",
+   "legends": [
+    "viktor-vektor-sit-down-and-relax",
+    "dum-dum-maelstrom-triggerman",
+    "river-ward-detective-on-the-hunt"
+   ],
+   "main": {
+    "kiroshi-optics": 3,
+    "mandibular-upgrade": 3,
+    "sketchy-ripper": 3,
+    "viktor-vektor-you-might-feel-a-little-pinch": 3,
+    "maxtac-suppression-team": 3,
+    "viktor-vektor-drop-your-illusions": 3,
+    "heywood-ripperdoc": 3,
+    "afterparty-at-lizzies": 3,
+    "safety-override": 3,
+    "secondhand-bombus": 3,
+    "the-heist": 3,
+    "augmented-negotiators": 3,
+    "cyberpsychosis": 1,
+    "dexter-deshawn-one-last-chance": 3
+   },
+   "class": "mono",
+   "origin": "seed:kt2",
+   "source": "data/decks/sample_ripperdocs.json",
+   "evaluation_only": false,
+   "ratings": {
+    "heuristic": {
+     "bt": 1.1027021614918084,
+     "ci95": [
+      0.9599122187357034,
+      1.2536153393135496
+     ],
+     "games": 760,
+     "win_rate": 0.5236842105263158,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 0.15919307964073132
+    },
+    "ismcts:32": {
+     "bt": 0.9263877392534414,
+     "ci95": [
+      0.7697176354080479,
+      1.11233603275252
+     ],
+     "games": 380,
+     "win_rate": 0.48157894736842105,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.1055353585916366
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 0.6754532509465075,
+     "ci95": [
+      0.5479341102175316,
+      0.8429116282673419
+     ],
+     "games": 380,
+     "win_rate": 0.4105263157894737,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.4649808981081371
+    }
+   },
+   "player_dependent": [
+    "heuristic vs neural@out/s1/w114.json: z +0.16 / -0.46"
+   ]
+  },
+  {
+   "id": "the_heist",
+   "name": "The Heist",
+   "legends": [
+    "v-corporate-exile",
+    "viktor-vektor-sit-down-and-relax",
+    "jackie-welles-pour-one-out-for-me"
+   ],
+   "main": {
+    "dexter-deshawn-one-last-chance": 2,
+    "heywood-ripperdoc": 2,
+    "offduty-malfini": 2,
+    "secondhand-bombus": 2,
+    "t-bug-amateur-philosopher": 2,
+    "kiroshi-optics": 3,
+    "mandibular-upgrade": 3,
+    "zetatech-faceplate": 3,
+    "afterparty-at-lizzies": 2,
+    "delamain-cab": 3,
+    "evelyn-parker-scheming-siren": 3,
+    "mtod12-flathead": 2,
+    "psycho-squad": 2,
+    "dying-night-vs-pistol": 2,
+    "tetratronic-rippler": 2,
+    "floor-it": 3,
+    "reboot-optics": 2
+   },
+   "class": "two-plus-one",
+   "origin": "seed:kt2",
+   "source": "data/decks/the_heist.json",
+   "evaluation_only": true,
+   "ratings": {
+    "heuristic": {
+     "bt": 1.1885649020422633,
+     "ci95": [
+      1.038396212864795,
+      1.3591876701299874
+     ],
+     "games": 760,
+     "win_rate": 0.5421052631578948,
+     "tourney": "out/s0/kt2/heuristic/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 0.2812912337562138
+    },
+    "ismcts:32": {
+     "bt": 1.666355054483985,
+     "ci95": [
+      1.3783419037626452,
+      2.0295919021429465
+     ],
+     "games": 380,
+     "win_rate": 0.6236842105263158,
+     "tourney": "out/s0/kt2/ismcts/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": 0.7047964343830148
+    },
+    "neural@out/s1/w114.json": {
+     "bt": 0.9250243932181201,
+     "ci95": [
+      0.7618499315075905,
+      1.1365164732152906
+     ],
+     "games": 380,
+     "win_rate": 0.4842105263157895,
+     "tourney": "out/s2/pop_w114/tournament.json",
+     "rules": "149b39c8f55e9d41",
+     "list_mode": "inferred",
+     "z": -0.09235732296395993
+    }
+   },
+   "player_dependent": [
+    "heuristic vs ismcts:32: z +0.28 / +0.70",
+    "heuristic vs neural@out/s1/w114.json: z +0.28 / -0.09",
+    "ismcts:32 vs neural@out/s1/w114.json: z +0.70 / -0.09"
+   ]
+  }
+ ],
+ "updated": "2026-09-25T14:05:00Z"
+}

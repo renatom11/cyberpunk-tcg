@@ -103,6 +103,51 @@ def bootstrap_bt(cells: list[tuple[int, int, int, int]], n: int, resamples: int,
     return point, lo, hi
 
 
+def _scale(members: list, player: str):
+    """Mean and sd of log strength under ``player``: the common scale ratings are compared on."""
+    logs = np.log([m["ratings"][player]["bt"] for m in members if player in m["ratings"]])
+    sd = float(logs.std()) or 1.0
+    return float(logs.mean()), sd
+
+
+def flag_player_dependent(members: list) -> None:
+    """Flag a deck whose standing differs between two players by more than both ratings' noise.
+
+    Two corrections to the naive "one player's interval excludes the other's point":
+
+    * **A common scale.** Each player's strengths are normalised to a geometric mean of 1 and a
+      stronger player spreads the field wider, so raw strengths cannot be compared. Log strengths
+      are standardised per player (mean 0, sd 1 over the decks it rated) and intervals are mapped
+      the same way.
+    * **Both sides' noise.** The difference of the two standardised log strengths is compared with
+      1.96 times the root sum of the two standard errors (each read off its 95% interval), so a
+      deck is not flagged because one rating is precise and the other is not.
+
+    The flag names the pair; ``z`` per player is stored beside the rating.
+    """
+    players = sorted({p for m in members for p in m["ratings"]})
+    sc = {p: _scale(members, p) for p in players}
+
+    def z(p, v):
+        mu, sd = sc[p]
+        return (math.log(v) - mu) / sd
+
+    for m in members:
+        flags = []
+        r = m["ratings"]
+        for p in players:
+            if p in r:
+                r[p]["z"] = z(p, r[p]["bt"])
+        for i, p in enumerate(players):
+            for q in players[i + 1:]:
+                if p not in r or q not in r:
+                    continue
+                se = [(z(x, r[x]["ci95"][1]) - z(x, r[x]["ci95"][0])) / 3.92 for x in (p, q)]
+                if abs(r[p]["z"] - r[q]["z"]) > 1.96 * math.sqrt(se[0] ** 2 + se[1] ** 2):
+                    flags.append(f"{p} vs {q}: z {r[p]['z']:+.2f} / {r[q]['z']:+.2f}")
+        m["player_dependent"] = flags
+
+
 def cmd_rate(a) -> int:
     pop = json.loads(Path(a.population).read_text())
     t = json.loads(Path(a.tourney).read_text())
@@ -123,17 +168,7 @@ def cmd_rate(a) -> int:
             "bt": float(point[ti]), "ci95": [float(lo[ti]), float(hi[ti])], "games": games[ti],
             "win_rate": wins[ti] / games[ti] if games[ti] else None, "tourney": str(a.tourney),
             "rules": t.get("rules"), "list_mode": t.get("list_mode")}
-    players = sorted({p for m in pop["members"] for p in m["ratings"]})
-    for m in pop["members"]:
-        flags = []
-        for p in players:
-            for q in players:
-                if p == q or p not in m["ratings"] or q not in m["ratings"]:
-                    continue
-                lo_p, hi_p = m["ratings"][p]["ci95"]
-                if not lo_p <= m["ratings"][q]["bt"] <= hi_p:
-                    flags.append(f"{q} outside {p}")
-        m["player_dependent"] = flags
+    flag_player_dependent(pop["members"])
     pop["updated"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     Path(a.population).write_text(json.dumps(pop, indent=1) + "\n")
     safe = a.player.replace("/", "_").replace("@", "_").replace(":", "_")

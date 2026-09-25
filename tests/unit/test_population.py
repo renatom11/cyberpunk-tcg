@@ -86,3 +86,16 @@ def test_propose_climbs_and_archives(tmp_path):
     assert len(d["members"]) in (3, 4)
     for m in d["members"][3:]:
         assert m["origin"] == f"hill-climb:{decks[0].stem}" and m["ratings"] == {}
+
+
+def test_a_wider_spread_alone_is_not_player_dependence():
+    members = []
+    for k, s in enumerate((0.5, 1.0, 2.0)):
+        members.append({"ratings": {
+            "weak": {"bt": s, "ci95": [s * 0.9, s * 1.1]},
+            "strong": {"bt": s ** 3, "ci95": [s ** 3 * 0.9, s ** 3 * 1.1]}}})
+    P.flag_player_dependent(members)
+    assert all(m["player_dependent"] == [] for m in members)
+    members[0]["ratings"]["strong"]["bt"] = 8.0          # now the order changes
+    P.flag_player_dependent(members)
+    assert members[0]["player_dependent"]

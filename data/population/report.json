@@ -1,0 +1,165 @@
+{
+ "players": [
+  "heuristic",
+  "ismcts:32",
+  "neural@out/s1/w114.json"
+ ],
+ "members": 20,
+ "per_player": {
+  "heuristic": {
+   "residual_rms": 0.0892200637823587,
+   "null_mean": 0.0688383752280989,
+   "null_p": 0.0,
+   "nash_support": [
+    "panel-0-b",
+    "panel-3-b",
+    "panel-5-b"
+   ],
+   "nash_weights": {
+    "panel-0-b": 0.07607392607392607,
+    "panel-3-b": 0.5393106893106893,
+    "panel-5-b": 0.3837162837162837
+   }
+  },
+  "ismcts:32": {
+   "residual_rms": 0.10918858234693608,
+   "null_mean": 0.09528811499557929,
+   "null_p": 0.0,
+   "nash_support": [
+    "panel-5-b"
+   ],
+   "nash_weights": {
+    "panel-5-b": 0.9987012987012988
+   }
+  },
+  "neural@out/s1/w114.json": {
+   "residual_rms": 0.094164719920325,
+   "null_mean": 0.09259611977033608,
+   "null_p": 0.387,
+   "nash_support": [
+    "panel-0-b",
+    "panel-4-a",
+    "panel-5-a"
+   ],
+   "nash_weights": {
+    "panel-0-b": 0.6644355644355644,
+    "panel-4-a": 0.1648851148851149,
+    "panel-5-a": 0.16983016983016982
+   }
+  }
+ },
+ "agreement": [
+  {
+   "a": "heuristic",
+   "b": "ismcts:32",
+   "decks": 20,
+   "spearman": 0.5904475784235165,
+   "ci95": [
+    0.19315534080104765,
+    0.869955257990794
+   ]
+  },
+  {
+   "a": "heuristic",
+   "b": "neural@out/s1/w114.json",
+   "decks": 20,
+   "spearman": 0.6240601503759398,
+   "ci95": [
+    0.20683848530796983,
+    0.8868776711470355
+   ]
+  },
+  {
+   "a": "ismcts:32",
+   "b": "neural@out/s1/w114.json",
+   "decks": 20,
+   "spearman": 0.8258744472726385,
+   "ci95": [
+    0.5841425561320434,
+    0.9206107473743428
+   ]
+  }
+ ],
+ "transfer": {
+  "heuristic": {
+   "top5": [
+    "panel-5-b",
+    "panel-0-b",
+    "panel-5-a",
+    "panel-2-a",
+    "panel-3-a"
+   ],
+   "vs_reference": {
+    "heuristic": {
+     "win_rate": 0.680625,
+     "games": 1600
+    },
+    "ismcts:32": {
+     "win_rate": 0.645,
+     "games": 800
+    },
+    "neural@out/s1/w114.json": {
+     "win_rate": 0.65625,
+     "games": 800
+    }
+   }
+  },
+  "ismcts:32": {
+   "top5": [
+    "panel-0-b",
+    "panel-5-b",
+    "panel-5-a",
+    "panel-1-a",
+    "panel-3-b"
+   ],
+   "vs_reference": {
+    "heuristic": {
+     "win_rate": 0.63125,
+     "games": 1600
+    },
+    "ismcts:32": {
+     "win_rate": 0.7025,
+     "games": 800
+    },
+    "neural@out/s1/w114.json": {
+     "win_rate": 0.72625,
+     "games": 800
+    }
+   }
+  },
+  "neural@out/s1/w114.json": {
+   "top5": [
+    "panel-5-a",
+    "panel-0-b",
+    "panel-5-b",
+    "panel-3-b",
+    "panel-4-a"
+   ],
+   "vs_reference": {
+    "heuristic": {
+     "win_rate": 0.590625,
+     "games": 1600
+    },
+    "ismcts:32": {
+     "win_rate": 0.6725,
+     "games": 800
+    },
+    "neural@out/s1/w114.json": {
+     "win_rate": 0.76625,
+     "games": 800
+    }
+   }
+  }
+ },
+ "exploitability": null,
+ "exploitability_note": "needs proposals from the loop; none exist yet",
+ "diversity": {
+  "distinct_triples": 19,
+  "classes": {
+   "mono": 10,
+   "two-plus-one": 10
+  },
+  "mean_list_similarity": 0.08419368415505525
+ },
+ "stability": null
+}
