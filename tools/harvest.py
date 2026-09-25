@@ -197,6 +197,35 @@ def forced_draw(seed: int, i: int) -> Pcg32:
     return Pcg32((seed ^ (i * 0x85EBCA77) ^ 0x5F0F) & MASK64, seq=FORCE_SEQ)
 
 
+#: Salt for the exposure-floor draws.
+FLOOR_SEQ = 913
+
+
+class _Exposure:
+    """What ``playtest.build_deck`` reads from a Knowledge store: games per card, nothing else."""
+
+    class _C:
+        __slots__ = ("played_games",)
+
+        def __init__(self, n: int) -> None:
+            self.played_games = n
+
+    def __init__(self, counts: dict) -> None:
+        self.cards = {k: self._C(v) for k, v in counts.items()}
+
+
+def floor_deck(reg, counts: dict, rng: Pcg32, name: str):
+    """A legal deck built around the cards with the fewest games in lists so far (the exposure
+    floor, Stage 1 plan §0.4), by ``tools/playtest.py``'s coverage builder. None if it cannot."""
+    sys.path.insert(0, str(ROOT / "tools"))
+    import playtest
+    return playtest.build_deck(reg, _Exposure(counts), rng, name)
+
+
+def deck_cards(d) -> set:
+    return set(d.legends) | set(d.main)
+
+
 def pick_forced(offered: list, chosen_idx: int, chosen_counts: dict, rng: Pcg32):
     """An option other than the agent's own, drawn with weight 1 / (1 + times its (card, kind,
     sub-mode) has been chosen so far): the rarely-taken modes are the ones exploration exists for.
@@ -290,13 +319,26 @@ def play_chunk(job: tuple) -> dict:
     lo, hi, seed, agent_a, agent_b, mix = job[:6]
     forced_share = job[6] if len(job) > 6 else 0.0
     base_chosen = dict(job[7]) if len(job) > 7 and job[7] else {}
+    floor_share = job[8] if len(job) > 8 else 0.0
+    exposure = dict(job[9]) if len(job) > 9 and job[9] else {}
     reg = runner._REG or load_default()
     names = (agent_a, agent_b)
     out = []
     cov = Coverage()
-    n_forced = 0
+    n_forced = n_floor = 0
     for i in range(lo, hi):
         a, b = D.sample_pair(reg, pair_rng(seed, i), mix=mix)
+        if floor_share > 0.0:
+            fl = Pcg32((seed ^ (i * 0xC2B2AE3D) ^ 0x3A11) & MASK64, seq=FLOOR_SEQ)
+            if fl.next_u32() < floor_share * 4294967296.0:
+                seat = fl.below(2)
+                d = floor_deck(reg, exposure, fl, f"floor-{i}")
+                if d is not None:
+                    a, b = (d, b) if seat == 0 else (a, d)
+                    n_floor += 1
+            for d in (a, b):
+                for c in deck_cards(d):
+                    exposure[c] = exposure.get(c, 0) + 1
         gs = game_seed(seed, i)
         s, visits, values, multi, _ = _play_one(reg, (a, b), names, gs, cov)
         out.append(_record(s, (a, b), names, visits, values, {"i": i}).to_json())
@@ -319,7 +361,8 @@ def play_chunk(job: tuple) -> dict:
             continue
         n_forced += 1
         out.append(_record(s2, (a, b), names, visits2, values2, {"i": i, "forced": forced}).to_json())
-    return {"records": out, "coverage": cov.to_json(), "games": hi - lo, "forced": n_forced}
+    return {"records": out, "coverage": cov.to_json(), "games": hi - lo, "forced": n_forced,
+            "floor": n_floor, "exposure": exposure if floor_share > 0.0 else {}}
 
 
 def _keep_rng(harvest_seed: int, record_seed: int) -> Pcg32:
@@ -463,7 +506,7 @@ def cmd_play(a) -> int:
         # game it recorded. Recorded, not enforced, exactly like everywhere else the digest is
         # stamped -- enforcing it would reject every file already on disk.
         man = {"format": MANIFEST_FORMAT, "out": str(out), "seed": a.seed, "agents": list(agents),
-               "mix": mix, "forced": a.forced, "rules": rules, "cards": cards_digest(),
+               "mix": mix, "forced": a.forced, "floor": a.floor, "rules": rules, "cards": cards_digest(),
                "games_target": a.games, "games_done": 0, "bytes": 0,
                "decisions": 0, "elapsed_s": 0.0, "sources": {}, "end_reasons": {}, "winners": {},
                "started": _now(), "updated": _now()}
@@ -476,6 +519,8 @@ def cmd_play(a) -> int:
         check_resumable(man, seed=a.seed, agents=agents, mix=mix, rules=rules)
         if float(man.get("forced", 0.0)) != float(a.forced):
             raise SystemExit(f"{out} was harvested with --forced {man.get('forced', 0.0)}, not {a.forced}")
+        if float(man.get("floor", 0.0)) != float(a.floor):
+            raise SystemExit(f"{out} was harvested with --floor {man.get('floor', 0.0)}, not {a.floor}")
         # Truncate back to the last committed byte: this discards a torn tail and nothing else.
         if out.exists() and out.stat().st_size != man["bytes"]:
             print(f"resume: truncating {out.stat().st_size - man['bytes']} torn byte(s)",
@@ -502,7 +547,11 @@ def cmd_play(a) -> int:
     base_chosen = {}
     if a.forced > 0 and man.get("coverage"):
         base_chosen = {Coverage._k(k): v for k, v in Coverage.from_json(man["coverage"]).chosen.items()}
-    jobs = [(lo, min(lo + chunk, target), a.seed, agents[0], agents[1], mix, a.forced, base_chosen)
+    exposure = dict(man.get("exposure") or {})
+    if a.floor > 0 and not exposure and a.floor_from:
+        exposure = dict(read_manifest(a.floor_from).get("exposure") or {}) if read_manifest(a.floor_from) else {}
+    jobs = [(lo, min(lo + chunk, target), a.seed, agents[0], agents[1], mix, a.forced, base_chosen,
+             a.floor, exposure)
             for lo in range(done, target, chunk)]
     deadline = time.time() + a.minutes * 60 if a.minutes else None
 
@@ -524,6 +573,12 @@ def cmd_play(a) -> int:
                 _tally(man["sources"], deck_source(d["name"]))
         games_here += chunk_out.get("games", len(records))
         man["forced_games"] = man.get("forced_games", 0) + chunk_out.get("forced", 0)
+        man["floor_games"] = man.get("floor_games", 0) + chunk_out.get("floor", 0)
+        if a.floor > 0:
+            # each chunk started from the same base, so add only what it counted on top of it
+            ex = man.setdefault("exposure", {})
+            for k, v in chunk_out.get("exposure", {}).items():
+                ex[k] = ex.get(k, 0) + v - exposure.get(k, 0)
         man["games_done"] = done + games_here
         man["bytes"] = out.stat().st_size
         man["decisions"] = man.get("decisions", 0) + decisions_here
@@ -750,6 +805,10 @@ def main(argv=None) -> int:
                         "Smaller loses less to an interrupted run and costs a little overhead")
     p.add_argument("--forced", type=float, default=0.0,
                    help="share of games also replayed with one forced exploratory move (Stage 1: 0.1)")
+    p.add_argument("--floor", type=float, default=0.0,
+                   help="share of games where one seat plays an exposure-floor build (Stage 1: 0.15)")
+    p.add_argument("--floor-from", default=None,
+                   help="an earlier harvest whose per-card exposure seeds the floor's counts")
     p.add_argument("--resume", action="store_true", help="continue an interrupted harvest")
     p.add_argument("--fresh", action="store_true", help="overwrite any existing harvest")
     p.add_argument("--minutes", type=float, default=None,

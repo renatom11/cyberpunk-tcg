@@ -72,3 +72,20 @@ def test_the_generator_searches_order_and_mulligan():
                 seen.add((ch.kind, bool(ag.last_visits)))
             apply(s, idx)
         assert seen and all(v is searched for _, v in seen)
+
+
+def test_the_exposure_floor_builds_around_the_least_exposed_cards():
+    reg = load_default()
+    out = harvest.play_chunk((0, 6, 2, "heuristic", "heuristic", None, 0.0, {}, 1.0, {}))
+    recs = [GameRecord.from_json(r) for r in out["records"]]
+    assert out["floor"] >= 5 and len(recs) == 6
+    floors = [d for r in recs for d in r.decks if d["name"].startswith("floor-")]
+    assert len(floors) == out["floor"]
+    # every card counted once per deck per game
+    total = sum(out["exposure"].values())
+    assert total == sum(len(set(d["legends"]) | set(d["main"])) for r in recs for d in r.decks)
+    # with every card at zero but one heavily exposed, the builder leaves the heavy one out
+    heavy = next(iter(floors[0]["main"]))
+    from cptcg.core.rng import Pcg32
+    d = harvest.floor_deck(reg, {heavy: 10_000}, Pcg32(4, seq=1), "x")
+    assert d is not None and heavy not in harvest.deck_cards(d)
