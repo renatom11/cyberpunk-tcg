@@ -69,3 +69,20 @@ def test_report_computes_the_g6_numbers(tmp_path):
 def test_list_similarity_is_multiset_jaccard():
     assert P.list_similarity(["a", "a", "b"], ["a", "b", "b"]) == 2 / 4
     assert P.list_similarity(["a"], ["a"]) == 1.0
+
+
+def test_propose_climbs_and_archives(tmp_path):
+    decks = sorted((ROOT / "data" / "decks").glob("sample_*.json"))[:3]
+    pop = tmp_path / "population.json"
+    P.main(["init", "--out", str(pop)] + [str(d) for d in decks])
+    P.main(["propose", str(pop), "--steps", "1", "--field", "2", "--workers", "1",
+            "--only", decks[0].stem])
+    lines = (tmp_path / "archive.jsonl").read_text().splitlines()
+    assert len(lines) <= 1
+    for ln in lines:
+        rec = json.loads(ln)
+        assert rec["parent"] == decks[0].stem and rec["player"] == "heuristic"
+    d = json.loads(pop.read_text())
+    assert len(d["members"]) in (3, 4)
+    for m in d["members"][3:]:
+        assert m["origin"] == f"hill-climb:{decks[0].stem}" and m["ratings"] == {}

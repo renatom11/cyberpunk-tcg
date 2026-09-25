@@ -16,6 +16,12 @@ from resampling the games inside every matchup, and stores them under the player
 the matchup cells (``matrix_<player>.json``). After two or more players it flags every deck whose
 interval under one player excludes its point estimate under another as *player-dependent*.
 
+``propose`` runs one round of proposals: for each training member (not evaluation-only), the paired
+single-card swap hill climb (``deck.builder.hill_climb``, SPRT on discordant games) against a field
+of other members under a named player; every improved list joins the population as a new member
+with origin ``hill-climb:<parent id>`` and no rating yet, and every step (accepted or not) is
+appended to ``archive.jsonl`` beside the population — the per-card swap evidence C4 reads.
+
 ``report`` computes the G6 numbers the plan asks for every generation, from the stored matrices:
 per player the residual RMS against a permutation null and the Nash support (diagnostics of
 cycling); for every pair of players the rank agreement (Spearman of BT strengths, 95% interval
@@ -263,6 +269,45 @@ def cmd_report(a) -> int:
     return 0
 
 
+def cmd_propose(a) -> int:
+    from cptcg.core.rng import Pcg32
+    from cptcg.deck.builder import hill_climb
+    from cptcg.deck.decklist import Decklist
+    reg = load_default()
+    pop = json.loads(Path(a.population).read_text())
+    members = pop["members"]
+    archive = Path(a.population).parent / "archive.jsonl"
+    rng = Pcg32(a.seed, seq=31)
+    trainable = [m for m in members if not m["evaluation_only"]]
+    if a.only:
+        trainable = [m for m in trainable if m["id"] in set(a.only)]
+    added = 0
+    for m in trainable:
+        others = [x for x in members if x["id"] != m["id"]]
+        field = [others[rng.below(len(others))] for _ in range(a.field)]
+        deck = Decklist.from_counts(m["name"], m["legends"], m["main"])
+        fdecks = [Decklist.from_counts(x["name"], x["legends"], x["main"]) for x in field]
+        champ, hist = hill_climb(reg, deck, fdecks, steps=a.steps, seed=a.seed + added,
+                                 agent=a.player, workers=a.workers)
+        with archive.open("a") as fh:
+            for st in hist:
+                fh.write(json.dumps({"parent": m["id"], "player": a.player, **st.__dict__}) + "\n")
+        if champ.counts() != deck.counts() or list(champ.legends) != list(deck.legends):
+            k = sum(1 for x in members if x["id"].startswith(m["id"] + "+hc"))
+            nid = f"{m['id']}+hc{k + 1}"
+            members.append({"id": nid, "name": f"{m['name']} +hc{k + 1}", "legends": list(champ.legends),
+                            "main": champ.counts(), "class": colour_class(reg, list(champ.legends)),
+                            "origin": f"hill-climb:{m['id']}", "source": a.player,
+                            "evaluation_only": False, "ratings": {}})
+            added += 1
+        acc = sum(1 for st in hist if st.accepted)
+        print(f"{m['name']:24s} {len(hist)} steps, {acc} accepted", flush=True)
+    pop["updated"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    Path(a.population).write_text(json.dumps(pop, indent=1) + "\n")
+    print(f"{added} new member(s); steps appended to {archive}")
+    return 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -276,6 +321,15 @@ def main(argv=None) -> int:
     r.add_argument("--tourney", required=True)
     r.add_argument("--resamples", type=int, default=1000)
     r.set_defaults(fn=cmd_rate)
+    pr = sub.add_parser("propose")
+    pr.add_argument("population")
+    pr.add_argument("--player", default="heuristic")
+    pr.add_argument("--steps", type=int, default=4)
+    pr.add_argument("--field", type=int, default=6)
+    pr.add_argument("--seed", type=int, default=20260925)
+    pr.add_argument("--workers", type=int, default=4)
+    pr.add_argument("--only", nargs="*", default=None, help="member ids to climb (default: all)")
+    pr.set_defaults(fn=cmd_propose)
     q = sub.add_parser("report")
     q.add_argument("population")
     q.add_argument("--previous", default=None)
