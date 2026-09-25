@@ -334,6 +334,9 @@ def panel_anchor(panel: dict) -> float:
 
 # ------------------------------------------------------------------ commands
 def cmd_run(a) -> int:
+    global GENERATOR, PLAYER
+    GENERATOR = a.generator or GENERATOR
+    PLAYER = a.player or PLAYER
     led = Ledger(a.dir)
     led.header.setdefault("started", _now())
     led.header["generator"] = GENERATOR
@@ -489,6 +492,8 @@ def main(argv=None) -> int:
                    help="Stage 1 value target (set by experiment 1's R2)")
     p.add_argument("--incumbent", default=None,
                    help="weights the first generation starts from (default: the shipped weights)")
+    p.add_argument("--generator", default=None, help=f"data-making agent (default {GENERATOR})")
+    p.add_argument("--player", default=None, help=f"gated agent (default {PLAYER})")
     p.add_argument("--seed-rows", nargs="*", default=None, help="Stage 1 seed rows (.npz)")
     p.add_argument("--seed-games", nargs="*", default=None,
                    help="the corpora behind --seed-rows, for the policy head's visits")
