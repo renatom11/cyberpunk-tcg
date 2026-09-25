@@ -608,3 +608,28 @@ beat, *on these decks*.
   joint play rate against independence: median lift 0.98 (search, 349 pairs) and 1.00
   (heuristic, 292). Pooled over turns: 0.98 and 0.96. **Neither player assembles the printed
   combos more often than chance.** This is the C4 number the loop has to move.
+
+## Post-KT1 signal diagnostic — experiment 2 (held-out cards): result
+
+Registered rule (decisions log, owner addition 2): the embeddings "did work" only if
+gap(cards) − gap(114) has a 95% bootstrap interval wholly above zero. Here gap = Brier on set A
+(positions where a held-out card is visible or offered) − Brier on set B (the seed-0 holdout of the
+training subset). Both heads were fitted on the boundary target, on the 206,316 rows of games that
+contain none of the four held-out cards (`out/s1/heldout_cards.json`). Output:
+`out/s2/heldout_gap.json`. The bootstrap resamples games, 1,000 times.
+
+| head | Brier, set A (7,763 games) | Brier, set B (412 games) | gap |
+|---|---|---|---|
+| card a | 0.0440 | 0.0459 | −0.0019 |
+| 114 h16 | 0.0393 | 0.0425 | −0.0031 |
+
+**gap(cards) − gap(114) = +0.0012, 95% interval [−0.0024, +0.0045]: the interval contains zero, so
+by the rule the embeddings are not doing measurable work.** Both heads do slightly *better* on
+positions with unseen cards, and the card model loses no more on them than the 114 head does,
+which it would if its per-card embeddings were what it relied on. The 114 head is also the better
+fit on both sets. Set B is small (412 games), so the interval is wide.
+
+**Combined verdict of the diagnostic.** The signal was the lever (experiment 1). The card identity is
+not, at this data size (experiment 1's R3 and experiment 2). Stage 1 runs the FAIL version on the
+boundary target, started 2026-09-25 14:41 UTC (`out/stage1/`). A card-aware head is reconsidered
+only under the conditions in `docs/stage1_plan_draft.md` §2.5.
