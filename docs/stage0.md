@@ -490,3 +490,86 @@ What the rerun adds, and what it points at:
 
 Decisions for you: whether to accept that recommendation (the FAIL version of the draft); and
 whether the per-decision-target diagnostic should be pre-registered now with its own criterion.
+
+## Post-KT1 signal diagnostic — experiment 1 (the turn-boundary target): result
+
+Pre-registered in `docs/stage0_decisions.md` (40dfe7f, 90b9b6c, owner additions eb075ec) before
+any fit. Target `y = 0.7·v_next + 0.3·z`; every fit on the same rows (1,008,514, s10k at rate 0.5,
+both perspectives) and the same seed-0 by-game split. Pipeline `signal2.sh`, finished 07:30 UTC.
+
+### Fits
+
+| head | target | holdout Brier vs its target | holdout Brier vs outcome |
+|---|---|---|---|
+| 114 h16 (`out/s2/w114_outcome_seed0.json`) | outcome | 0.1323 | 0.1323 |
+| 114 h16 (`out/s2/w114_boundary.json`) | boundary | 0.0343 | 0.1345 |
+| card a (`out/s1/wcards_a.npz`, rerun) | outcome | 0.1283 | 0.1283 |
+| card a (`out/s2/wcards_a_boundary.npz`) | boundary | 0.0295 (best epoch 6 of 11) | 0.1235 |
+
+The card model no longer peaks at epoch 1: on per-decision targets it improved until epoch 6.
+
+### R1 — does the signal change evaluation? (Spearman against the independent 128-playout label)
+
+| head | outcome-trained | boundary-trained | R1 |
+|---|---|---|---|
+| 114 h16 | 0.655 [0.627, 0.682] | **0.714 [0.688, 0.737]** | **holds** (intervals disjoint) |
+| card a | 0.672 [0.645, 0.699] | 0.700 [0.673, 0.725] | does not hold (overlap) |
+| card a, identity ablated | 0.689 [0.662, 0.715] | 0.713 [0.687, 0.737] | — |
+
+Files: `out/s2/baselines/oracle_indep_*.json`. The oracle's own noise (split-half Spearman 0.991)
+is far below these gaps.
+
+### R2 — does the signal change play?
+
+| head | panel vs heuristic (360 games) | old band high | head-to-head vs outcome twin (paired SPRT, δ 0.05, 240 games) | R2 |
+|---|---|---|---|---|
+| 114 h16 boundary | **0.783** [0.733, 0.834] | 0.713 | **67.1%**, SPRT *high*; 42 of 43 discordant pairs | **holds (both tests)** |
+| card a boundary | 0.758 [0.693, 0.824] | 0.724 | **66.7%**, SPRT *high* | holds (both tests) |
+
+Against random: 0.967 / 0.958. Files: `out/s2/panels/`, `out/s2/h2h/`.
+
+### R3 — identity under the better signal (information only, not a third KT1)
+
+* Card-aware above the boundary 114 head by more than the band: **no** (0.758 against 0.783).
+* Identity ablation drops it by more than the band: **no** (0.742 ablated against 0.758; on the
+  oracle the ablated model scores *higher*, 0.713 against 0.700).
+
+### Reading, by the registered rule
+
+**R2 holds for the 114 head, so the Stage 1 loop trains on boundary targets.** The per-decision
+target is the lever the rerun was missing: the same 10,000 games, the same head, the same split,
+and a label that changes per decision instead of per game move the 114 head from 0.578 to 0.783
+against the heuristic and win 67% head to head against their own outcome-trained twin. It also
+explains the card model's epoch-1 peak (10k outcomes against 141k parameters).
+
+The card model gains too, but its identity still does nothing measurable (R3). The
+card-aware Stage 1 stays off; experiment 2 (held-out cards) is the remaining test of whether the
+embeddings carry anything, and is running.
+
+## The deck population (G6), day one
+
+`data/population/` — 20 members (the 12 panel lists and the 8 `data/decks` lists; the two retail
+starters are evaluation-only). Each deck has a Bradley–Terry rating with a 95% bootstrap interval
+under three players: the frozen heuristic (KT2, 40 games a pair), `ismcts:32` (KT2, 20 a pair)
+and `neural@out/s1/w114.json` (new, 20 a pair). `population.py report` → `data/population/report.json`:
+
+| number | heuristic | ismcts:32 | neural (114) |
+|---|---|---|---|
+| residual RMS vs permutation null | 0.089 vs 0.069 (p < 0.001) | 0.109 vs 0.095 (p < 0.001) | 0.094 vs 0.093 (p 0.39) |
+| Nash support | 3 | 1 | 3 |
+| top five's win rate vs starters + samples, played by the same player | 0.681 | 0.703 | 0.766 |
+
+* **Two-player rank agreement** (Spearman of strengths): heuristic–ismcts 0.59 [0.19, 0.87],
+  heuristic–neural 0.62 [0.21, 0.89], ismcts–neural 0.83 [0.58, 0.92]. The two searching or
+  learned players agree with each other far more than either agrees with the heuristic.
+* **Transfer**: the top five under the neural player win 0.766 against the reference decks when it
+  plays them, 0.672 under `ismcts:32`, 0.591 under the heuristic. Rankings made by one player
+  partly transfer.
+* **Diversity**: 19 distinct Legend triples; 10 mono, 10 two-plus-one, no one-of-each; mean list
+  similarity 0.084.
+* **Player-dependent decks**: 18 of 20, on a common scale (standardised log strength, both
+  ratings' noise). Raw strengths are not comparable across players, because a stronger player
+  spreads the field wider; the first version of the flag compared them raw and was corrected
+  before this report.
+* **Exploitability and stability**: not yet defined. They need proposals and a second rating
+  round, and start with Stage 1's first generation.
