@@ -573,3 +573,38 @@ and `neural@out/s1/w114.json` (new, 20 a pair). `population.py report` → `data
   before this report.
 * **Exploitability and stability**: not yet defined. They need proposals and a second rating
   round, and start with Stage 1's first generation.
+
+## Day-0 numbers for the three instruments that had none (C3c leakage, C4 context and synergy)
+
+Same 3,000 deck pairs for both players: `out/s1/s10k` (`ismcts:32` self-play) and
+`out/s2/instruments/h3k_samedecks` (the frozen heuristic, harvested with s10k's seed, so game *i*
+has the same pair of decks). The older h20k corpus no longer replays: it predates the Q2/Q3 card
+changes, which the cards digest records and the rules digest does not. JSONs are under
+`out/s2/instruments/`.
+
+**Leakage (C3c)** — the rival's public reading of a seat after each of its own turns, 1,000 games each:
+
+| player | class | seats | possible pool after turns 1 / 3 / 5 | belief entropy after turn 3 (bits) | triple proven, median turn | never proven |
+|---|---|---|---|---|---|---|
+| heuristic | mono | 912 | 116 / 56 / 45 | 5.55 | 3 | 8% |
+| ismcts:32 | mono | 912 | 114 / 97 / 79 | 6.54 | 5 | 60% |
+| heuristic | two-plus-one | 974 | 109 / 61 / 55 | 5.86 | 3 | 1% |
+| ismcts:32 | two-plus-one | 974 | 107 / 72 / 61 | 6.07 | 3 | 13% |
+| heuristic | one-of-each | 114 | 112 / 69 / 66 | 6.09 | 2 | 0% |
+| ismcts:32 | one-of-each | 114 | 110 / 74 / 68 | 6.17 | 2 | 2% |
+
+On the same decks the search gives away much less, most of all with mono decks. This is not
+evidence of deliberate denial: the search has no term for what it reveals, and the likelier cause
+is that it Calls and plays high-RAM cards later. It is the baseline a denial-aware player has to
+beat, *on these decks*.
+
+**Context play rates and synergy realisation (C4)** — per seat-turn, 36,331 (search) and 37,995
+(heuristic):
+
+* 150 cards have a rating under each player. A card counts as *context-flat* when its play rate moves
+  less than 0.10 across rival field size, the Street Cred race and the stage. 37 cards are
+  context-flat under the search and 28 under the heuristic.
+* Over the strategy graph's direct pairs (both halves offered in the same turn, ≥ 20 turns), the
+  joint play rate against independence: median lift 0.98 (search, 349 pairs) and 1.00
+  (heuristic, 292). Pooled over turns: 0.98 and 0.96. **Neither player assembles the printed
+  combos more often than chance.** This is the C4 number the loop has to move.
