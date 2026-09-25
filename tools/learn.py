@@ -82,12 +82,17 @@ def agent_with(name: str, weights: str | Path | None) -> str:
     return f"{name}@{weights}" if weights else name
 
 
+def _initial(led: Ledger) -> str:
+    """The incumbent before anything is promoted: the shipped weights, or ``--incumbent``."""
+    return str(led.header.get("initial_incumbent") or WEIGHTS_PATH)
+
+
 # ------------------------------------------------------------------ the steps
 def step_generate(led: Ledger, g: GenerationRecord, gdir: Path, *, games: int, workers: int,
-                  dry: bool) -> bool:
+                  dry: bool, extra: list[str] | None = None) -> bool:
     """Self-play into a resumable experience file, split across the opponent pool."""
     best = led.best()
-    incumbent = best.weights if best else str(WEIGHTS_PATH)
+    incumbent = best.weights if best else _initial(led)
     past = [x for x in led.promoted if x.n != g.n]
     plan = opponent_schedule(games, len(past))
     g.notes.append("opponents: " + ", ".join(f"{k} {v}" for k, v in plan.items()))
@@ -105,7 +110,7 @@ def step_generate(led: Ledger, g: GenerationRecord, gdir: Path, *, games: int, w
         rc = _run([sys.executable, str(ROOT / "tools" / "harvest.py"), "play",
                    "--games", str(n), "--agent", agent_with(GENERATOR, incumbent),
                    "--agent-b", opp, "--seed", str(g.seed + k), "--workers", str(workers),
-                   "--out", str(out), "--resume"],
+                   "--out", str(out), "--resume", *(extra or [])],
                   log=gdir / "generate.log", dry=dry)
         ok = ok and rc == 0
     g.games = games
@@ -161,6 +166,101 @@ def step_fit(led: Ledger, g: GenerationRecord, gdir: Path, *, hidden: int, dry: 
     return rc == 0
 
 
+# ------------------------------------------------------------------ Stage 1 (plan §2.4)
+#: Harvest flags for a Stage 1 generation: 10% forced-exploration games, 15% exposure-floor seats.
+STAGE1_HARVEST = ["--forced", "0.1", "--floor", "0.15"]
+
+
+def stage1_generate_flags(led: Ledger, g: GenerationRecord, gdir: Path) -> list[str]:
+    """The floor's exposure counts carry over from the previous generation's self-play harvest."""
+    prev = gdir.parent / f"gen-{g.n - 1:03d}" / "games-self.jsonl.gz"
+    return STAGE1_HARVEST + (["--floor-from", str(prev)] if prev.exists() else [])
+
+
+def step_rows_stage1(g: GenerationRecord, gdir: Path, *, workers: int, dry: bool) -> bool:
+    """Token rows with per-decision targets (``fit_cards.py rows``: label, boundary target,
+    visits), one file per generation, over all its opponent files."""
+    games = [str(p) for p in sorted(gdir.glob("games-*.jsonl.gz"))] or (["dry"] if dry else [])
+    if not games:
+        return False
+    rc = _run([sys.executable, str(ROOT / "tools" / "fit_cards.py"), "rows", "--in", *games,
+               "--out", str(gdir / "rows"), "--rate", "0.5", "--perspectives", "both",
+               "--workers", str(workers)], log=gdir / "rows.log", dry=dry)
+    return rc == 0
+
+
+def step_fit_stage1(led: Ledger, g: GenerationRecord, gdir: Path, *, hidden: int, target: str,
+                    seed_rows: list[str], seed_games: list[str], dry: bool) -> bool:
+    """The 114 head on per-decision value targets over the replay window, then the policy head
+    from the window's stored visits, written beside it (the PUCT prior ``ismcts`` reads)."""
+    window = [x for x in led.gens if x.n > g.n - REPLAY_WINDOW]
+    rows, games = [], []
+    for x in window:
+        d = gdir.parent / f"gen-{x.n:03d}"
+        rows += [str(p) for p in sorted(d.glob("rows.npz"))]
+        games += [str(p) for p in sorted(d.glob("games-*.jsonl.gz"))]
+    if not rows and not dry:
+        g.notes.append("no rows to fit - generation produced nothing")
+        return False
+    if seed_rows:
+        # the seed corpus stays in until the window's own rows are SEED_RETIRE_RATIO times it
+        n_seed = sum(_npz_rows(Path(p)) for p in seed_rows)
+        n_self = sum(_npz_rows(Path(p)) for p in rows)
+        if seed_in_window(n_seed, n_self):
+            rows = list(seed_rows) + rows
+            games = list(seed_games) + games
+            g.notes.append(f"seed corpus in window: {n_seed:,} rows against {n_self:,} of self-play")
+        else:
+            g.notes.append(f"seed corpus retired: {n_self:,} self-play rows against {n_seed:,}")
+    g.notes.append(f"fit window: generations {[x.n for x in window]}, {len(rows)} row files, "
+                   f"value target {target}")
+    out = gdir / "weights.json"
+    rc = _run([sys.executable, str(ROOT / "tools" / "fit_cards.py"), "fit114", *rows,
+               "--hidden", str(hidden), "--target", target, "--seed", str(g.seed % 1000),
+               "--out", str(out)], log=gdir / "fit.log", dry=dry)
+    if rc != 0:
+        return False
+    rc = _run([sys.executable, str(ROOT / "tools" / "fit_policy.py"), "corpus", *games,
+               "--rate", "0.25", "--out", str(gdir / "policy-rows")], log=gdir / "fit.log", dry=dry)
+    if rc == 0:
+        rc = _run([sys.executable, str(ROOT / "tools" / "fit_policy.py"), "fit",
+                   str(gdir / "policy-rows"), "--hidden", "8", "--into", str(out)],
+                  log=gdir / "fit.log", dry=dry)
+    g.weights = str(out)
+    return rc == 0
+
+
+def step_report_stage1(g: GenerationRecord, gdir: Path, *, workers: int, dry: bool) -> None:
+    """The instruments every generation reports beside the gate (plan §0.7). Never gating: a
+    failure here is a note, not a rejection."""
+    games = str(gdir / "games-self.jsonl.gz")
+    rep = gdir / "report"
+    cmds = [
+        (["decision_coverage.py", "report", games + ".harvest.json",
+          "--out", str(rep / "coverage.json")], "coverage"),
+        (["card_context.py", games, "--games", "1000", "--out", str(rep / "context.json")], "context"),
+        (["leakage.py", games, "--games", "500", "--out", str(rep / "leakage.json")], "leakage"),
+        (["oracle.py", "agree", str(ROOT / "data" / "arena" / "oracle.json"), "--weights",
+          str(gdir / "weights.json"), "--independent", "--out", str(rep / "oracle_indep.json")], "oracle"),
+    ]
+    rep.mkdir(parents=True, exist_ok=True)
+    for args, tag in cmds:
+        rc = _run([sys.executable, str(ROOT / "tools" / args[0]), *args[1:]],
+                  log=gdir / "report.log", dry=dry)
+        if rc != 0:
+            g.notes.append(f"instrument {tag} failed (rc {rc}); see report.log")
+
+
+def _npz_rows(p: Path) -> int:
+    """Rows in a ``fit_cards.py rows`` file, from its meta member alone."""
+    try:
+        import numpy as np
+        with np.load(str(p)) as z:
+            return int(json.loads(str(z["meta"]))["rows"])
+    except Exception:
+        return 0
+
+
 def _rows(f32: Path) -> int:
     """How many rows an example file holds, from the sidecar the harvester writes beside it."""
     side = f32.with_suffix(".json")
@@ -186,7 +286,7 @@ def step_gate(led: Ledger, g: GenerationRecord, gdir: Path, *, games: int, worke
     why that is the failure this loop is shaped around.
     """
     best = led.best()
-    incumbent = agent_with(PLAYER, best.weights if best else WEIGHTS_PATH)
+    incumbent = agent_with(PLAYER, best.weights if best else _initial(led))
     cand = agent_with(PLAYER, g.weights)
     # One directory per step, so reading a result back is a glob with exactly one answer rather
     # than a guess at how the arena spelled two agent names into a file name.
@@ -238,6 +338,11 @@ def cmd_run(a) -> int:
     led.header.setdefault("started", _now())
     led.header["generator"] = GENERATOR
     led.header["player"] = PLAYER
+    if a.stage1:
+        led.header["mode"] = "stage1"
+        led.header["value_target"] = a.target
+    if a.incumbent:
+        led.header["initial_incumbent"] = a.incumbent
     deadline = time.time() + a.hours * 3600 if a.hours else None
     made = 0
     while True:
@@ -251,16 +356,28 @@ def cmd_run(a) -> int:
         if g is None:
             n = led.next_n()
             g = led.add(GenerationRecord(n=n, seed=a.seed + n * 7919, started=_now(),
-                                         parent=(led.best().weights if led.best() else str(WEIGHTS_PATH))))
+                                         parent=(led.best().weights if led.best() else _initial(led))))
         gdir = Path(a.dir) / f"gen-{g.n:03d}"
         gdir.mkdir(parents=True, exist_ok=True)
         print(f"\n=== generation {g.n}  ({g.status})  {_now()}")
 
         if g.status == "generating":
-            if not step_generate(led, g, gdir, games=a.games, workers=a.workers, dry=a.dry_run):
+            extra = stage1_generate_flags(led, g, gdir) if a.stage1 else None
+            if not step_generate(led, g, gdir, games=a.games, workers=a.workers, dry=a.dry_run,
+                                 extra=extra):
                 g.status, g.reason = "failed", "generation step failed; see generate.log"
                 led.save(); return 1
             g.status = "fitting"; led.save()
+        if g.status == "fitting" and a.stage1:
+            if not step_rows_stage1(g, gdir, workers=a.workers, dry=a.dry_run):
+                g.status, g.reason = "failed", "rows step failed; see rows.log"
+                led.save(); return 1
+            if not step_fit_stage1(led, g, gdir, hidden=a.hidden, target=a.target,
+                                   seed_rows=a.seed_rows or [], seed_games=a.seed_games or [],
+                                   dry=a.dry_run):
+                g.status, g.reason = "failed", "fit step failed; see fit.log"
+                led.save(); return 1
+            g.status = "gating"; led.save()
         if g.status == "fitting":
             if not step_examples(g, gdir, workers=a.workers, dry=a.dry_run):
                 g.status, g.reason = "failed", "examples step failed; see examples.log"
@@ -275,6 +392,8 @@ def cmd_run(a) -> int:
                 print("  (dry run: no gate verdict)")
                 return 0
             ok, why = decide(res)
+            if a.stage1:
+                step_report_stage1(g, gdir, workers=a.workers, dry=a.dry_run)
             g.status = "promoted" if ok else "rejected"
             g.reason = why
             g.finished = _now()
@@ -363,6 +482,16 @@ def main(argv=None) -> int:
     p.add_argument("--gate-games", type=int, default=360, help="games in the head-to-head gate")
     p.add_argument("--hidden", type=int, default=16)
     p.add_argument("--seed", type=int, default=20260911)
+    p.add_argument("--stage1", action="store_true",
+                   help="Stage 1 generation: forced/floor slices, token rows with per-decision "
+                        "targets, 114 head + policy head from visits, instruments reported")
+    p.add_argument("--target", choices=("boundary", "outcome"), default="boundary",
+                   help="Stage 1 value target (set by experiment 1's R2)")
+    p.add_argument("--incumbent", default=None,
+                   help="weights the first generation starts from (default: the shipped weights)")
+    p.add_argument("--seed-rows", nargs="*", default=None, help="Stage 1 seed rows (.npz)")
+    p.add_argument("--seed-games", nargs="*", default=None,
+                   help="the corpora behind --seed-rows, for the policy head's visits")
     p.set_defaults(fn=cmd_run)
 
     p = sub.add_parser("status", help="what happened so far")
