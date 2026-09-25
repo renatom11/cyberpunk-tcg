@@ -2,6 +2,7 @@
 
     python tools/fit_policy.py make --games 400 --target value  --out out/pol/v
     python tools/fit_policy.py make --games 60  --target search --out out/pol/s
+    python tools/fit_policy.py corpus out/s1/s10k.jsonl.gz --rate 0.25 --out out/pol/c
     python tools/fit_policy.py sweep out/pol/v --widths linear,2,4,8,16
     python tools/fit_policy.py fit  out/pol/v --hidden 8 --into src/cptcg/agents/weights.json
 
@@ -185,6 +186,68 @@ def cmd_make(a) -> int:
     return 0
 
 
+def corpus_rows(reg, rec, keep: float):
+    """Yield ``(features per option, visit share per option)`` for the searched decisions of one
+    harvested game, each kept with probability ``keep``.
+
+    The harvest stores the root visit counts per option (``GameRecord.visits``), so the search
+    target needs no new search: this replays the game and pairs each stored count list with the
+    options it was counted over. The keep draw is seeded by the game's own seed, so the same corpus
+    gives the same rows in any order.
+    """
+    visits = rec.visits or []
+    rng = Pcg32(rec.seed & 0xFFFFFFFF, seq=77)
+    s = new_game(reg, rec.replay().decklists(), rec.seed, DEFAULT_CONFIG, record=False)
+    for d, idx in enumerate(rec.actions):
+        opts = legal_actions(s)
+        row = visits[d] if d < len(visits) else None
+        if row and len(opts) > 1 and len(row) == len(opts) and sum(row) > 0 \
+                and rng.next_u32() < keep * 4294967296.0:
+            me = s.pending.player
+            tot = float(sum(row))
+            yield [action_features(s, me, a) for a in opts], [v / tot for v in row]
+        apply(s, idx)
+
+
+def cmd_corpus(a) -> int:
+    """Search-target rows from a harvested corpus's stored visits: no games are played."""
+    from cptcg.learn.experience import read_games
+    out = Path(a.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    reg = load_default()
+    buf = array("f")
+    game_col: list[int] = []
+    groups = 0
+    t0 = time.perf_counter()
+    n = 0
+    for src in a.corpora:
+        for gi, rec in enumerate(read_games(src)):
+            if a.max_games is not None and n >= a.max_games:
+                break
+            n += 1
+            for feats, dist in corpus_rows(reg, rec, a.rate):
+                groups += 1
+                for f, p in zip(feats, dist):
+                    buf.append(float(groups))
+                    buf.append(float(p))
+                    buf.extend(float(v) for v in f)
+                    game_col.append(n)
+            if n % 500 == 0:
+                print(f"  {n} games, {groups} decisions, {time.perf_counter() - t0:.0f}s", flush=True)
+    rows = len(buf) // (NAFEAT + 2)
+    with open(f"{out}.f32", "wb") as fh:
+        buf.tofile(fh)
+    header = {"kind": "policy-rows", "target": "search", "source": list(a.corpora), "games": n,
+              "rate": a.rate, "rules": DEFAULT_CONFIG.digest(), "when": _now(),
+              "features": list(ACTION_FEATURE_NAMES), "feature_digest": action_feature_digest(),
+              "cols": ["group", "target"] + list(ACTION_FEATURE_NAMES), "rows": rows,
+              "groups": groups, "cols_n": NAFEAT + 2, "game": game_col,
+              "seconds": round(time.perf_counter() - t0, 1)}
+    Path(f"{out}.json").write_text(json.dumps(header) + "\n", encoding="utf-8")
+    print(f"{rows} rows over {groups} decisions from {n} games -> {out}.f32")
+    return 0
+
+
 # ------------------------------------------------------------------ the fit
 def _load(prefix: str):
     import numpy as np
@@ -357,6 +420,13 @@ def main(argv=None) -> int:
     p.add_argument("--seed", type=int, default=11)
     p.add_argument("--out", required=True)
     p.set_defaults(fn=cmd_make)
+
+    p = sub.add_parser("corpus", help="search-target rows from a harvested corpus's stored visits")
+    p.add_argument("corpora", nargs="+")
+    p.add_argument("--rate", type=float, default=0.25, help="share of searched decisions kept")
+    p.add_argument("--max-games", type=int, default=None)
+    p.add_argument("--out", required=True)
+    p.set_defaults(fn=cmd_corpus)
 
     for name in ("fit", "sweep"):
         p = sub.add_parser(name, help="fit the head" if name == "fit" else "cross-entropy by width")
