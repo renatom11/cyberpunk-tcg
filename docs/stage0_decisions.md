@@ -418,3 +418,34 @@ Registered fix, before any fit:
   This gives the paired outcome Brier; it is not used in any panel.
 * Experiment 2's set B is that same seed-0 split, applied inside the training subset.
   `tools/heldout_gap.py` recomputes it.
+
+### Three owner additions, registered 2026-09-25T05:06Z — before any experiment-1 result exists
+
+At the time of writing, experiment 1 is still building its rows; no fit, agreement, panel or
+head-to-head result exists.
+
+1. **R2 gets a paired test.** The panel's between-pairing band (about ±13 points against the
+   heuristic) is too wide to detect a real gain of a few points. Each boundary-trained head also
+   plays a mirrored, deck-swapped head-to-head against its outcome-trained counterpart:
+   * `neural@out/s2/w114_boundary.json` against `neural@out/s1/w114.json`;
+   * `neural-cards@out/s2/wcards_a_boundary.npz` against `neural-cards@out/s1/wcards_a.npz`.
+
+   Both use `arena.py a-vs-b` with the paired SPRT, delta 0.05 and `--min-games 240`.
+   **R2 holds for a head if EITHER its panel rate against the heuristic clears the old head's band
+   (h16 0.713, config a 0.724), OR its head-to-head SPRT accepts "better".** Both results are
+   reported whichever way they fall.
+2. **Experiment 2's criterion, stated in the owner's words.** The card model's Brier on
+   held-out-card positions (set A) minus its Brier on seen-card positions (set B: the holdout
+   positions of games whose cards were all seen in training) is compared with the same gap for
+   the 114 head. The embeddings "did work" if the card model's extra degradation,
+   gap(cards) − gap(114), has a 95% bootstrap interval wholly above zero. This is the rule
+   `tools/heldout_gap.py` already implements. The numbers are reported either way.
+3. **The Stage 1 FAIL plan must still move every capability.** `docs/stage1_plan_draft.md` now
+   states what Stage 1 does for card knowledge (C4) without a card-aware model. The deck
+   population starts now on the 114 head:
+   * seeded with the twenty KT2 decks;
+   * rated with a bootstrap Bradley–Terry under `neural@out/s1/w114.json`, 20 games a pair;
+   * no training loop.
+
+   It runs as a pipeline step between experiment steps (after experiment 1's head-to-heads, before
+   experiment 2's fits), never beside a fit.

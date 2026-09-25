@@ -302,6 +302,68 @@ Nothing in §0 waits for the diagnostic. Stage 1 under FAIL runs the existing `i
 The gen0 panel slot stays empty under FAIL until a card-aware head passes the ablation; the plan
 records that as an open obligation rather than filling it with a head that failed the gate.
 
+### 2.5 Card knowledge (C4) without a card-aware model — what the FAIL version still does
+
+*(Added 2026-09-25 on the owner's instruction: the FAIL version must move every capability.)*
+
+Card knowledge does not have to live in the value head. In this programme it lives in three other
+places, and Stage 1 moves each of them with a number every generation:
+
+* **Search.** The search plays the engine's scripts, so it evaluates a card by what the card does,
+  whatever the value head knows. Stage 1 makes the search reach cards it would otherwise skip:
+  * the forced-exploration slice and the exposure floor (§0.4);
+  * the policy head from visits as the prior (§2.4). Its option features already carry per-card
+    features for Play options and the 31 semantic Pick features, so the prior can prefer one card
+    over another without an identity embedding.
+* **Deck-level identity.** Per-card evidence is collected on the deck population, not in the
+  network:
+  * the paired single-card swap test (\`hill_climb\`) on every member each generation;
+  * the paired Legend-swap test (\`tools/legend_swap.py\`);
+  * in-deck win-rate difference per colour context, from the population's games.
+
+  These say which cards win in which decks under the current player, with intervals. That is the
+  C4 knowledge a deck builder uses.
+* **Instruments, every generation:**
+  * the card-semantics family of the delayed suite (15 positions, solved count);
+  * context play rates (a card's play rate by the rival's board class);
+  * synergy realisation (printed combos executed when both halves were available);
+  * the starved-triples list;
+  * the per-card swap results.
+
+  The first two and the last are counts over the harvest sidecar and the population's games,
+  with no model.
+
+**When a card-aware model comes back.** Only if the pre-registered diagnostic says so:
+* experiment 1's R2 holds for the card model and R3's legs clear; or
+* experiment 2 finds the embeddings "did work"; or
+* the corpus of per-decision targets has grown past ~100k games (§0.2) and the held-out-card test
+  is re-run and passes.
+
+Until then C4's number is the card-semantics family and the swap tests, not an ablation.
+
+### 2.6 The deck population starts now, on the 114 head (G6)
+
+*(Added 2026-09-25.)* The population exists before any training loop:
+* **Seed:** the twenty KT2 decks, the twelve frozen panel lists and the eight \`data/decks\` lists.
+  The two retail starters are marked evaluation-only.
+* **Rating:** each deck gets a Bradley–Terry strength with a 95% bootstrap interval (1,000
+  resamples of games within each matchup) under three players:
+  * the frozen heuristic (KT2, 40 games a pair);
+  * \`ismcts:32\` (KT2, 20 games a pair);
+  * the Stage 1 head \`neural@out/s1/w114.json\` (new, 20 games a pair, greedy).
+
+  The first two re-read existing round robins; the third is a new round robin run between
+  experiment steps.
+* **Files:**
+  * \`data/population/population.json\`: members, lists, triples, colour class, origin, and the
+    ratings per player with intervals;
+  * \`data/population/matrix_<player>.json\`: the matchup cells.
+* **What a reader gets from day one:** a ranked list of twenty decks, each rated under three
+  players with intervals, and a player-dependent flag (a deck whose interval under one player
+  excludes the other's point estimate).
+* **What comes later:** proposals, the Legend bandit, the archive and the per-generation re-rating
+  come with the loop (§0.6). Nothing here trains anything.
+
 ## 3. What this plan does not do
 
 It does not tune the card model on the panel, in either version. It does not add a second
