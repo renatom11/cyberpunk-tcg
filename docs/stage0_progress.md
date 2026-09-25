@@ -135,3 +135,15 @@ corpus, rows, fits and monotonicity instrument finish.
   Suite: 114 head 8/132, card e 2, ablated 2.
 * Full report and recommendation: `docs/stage0.md`, "KT1 rerun — full report" (b7e88d3).
   Stage 1 not started.
+
+## Post-KT1 signal diagnostic and Stage 1 engineering — 2026-09-25
+
+* Experiment 1 and 2 pre-registered (40dfe7f, 90b9b6c) and the owner's three additions
+  registered (eb075ec) before any result. Pipeline `scratchpad/signal2.sh`: rows (05:06 UTC),
+  114 boundary and outcome-seed-0 fits (05:13), card-a boundary fit running (epoch 1 at 05:24).
+* Built while it runs, CPU-light, all tested: leakage instrument (56febb0), context play rates and
+  synergy lift (C4), population seeding/ratings/report/proposals (G6), forced-exploration and
+  exposure-floor slices in the harvest, ORDER/MULLIGAN searched by the generator, the policy head
+  from stored visits, the plan-candidate stage with its cost meter, and `learn.py run --stage1`
+  (smoke-tested on 12 games). `tools/opponent_influence.py` deleted.
+* Stage 1 launch registered (decisions log, 05:40Z): starts after the diagnostic; target from R2.
