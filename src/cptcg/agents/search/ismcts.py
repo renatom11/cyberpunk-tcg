@@ -76,7 +76,7 @@ class _Node:
     the game is zero-sum."""
 
     __slots__ = ("visits", "value", "children", "avail", "prior", "actor", "expanded", "allowed",
-                 "noise")
+                 "noise", "boost")
 
     def __init__(self) -> None:
         self.visits = 0
@@ -92,6 +92,8 @@ class _Node:
         #: Root only, and only while generating training data: mix exploration noise into this
         #: node's prior the first time it is built.
         self.noise = False
+        #: Root only: first actions of whole-turn plan candidates, given extra prior mass.
+        self.boost = None
 
     def q(self, default: float) -> float:
         return self.value / self.visits if self.visits else default
@@ -189,7 +191,21 @@ class IsmctsAgent(NeuralAgent):
     #: the generator searches them (Stage 1 plan §0.4), so the coverage table stops reading 0.
     setup_iterations = 0
 
+    #: The plan-candidate stage (design Part 2B, Stage 1 plan §0.7), off unless set: at the first
+    #: MAIN decision of each of its turns the agent runs ``plan.py``'s whole-turn walk at budget
+    #: ``plan_budget`` in one sampled world, and the first actions of its best ``plan_candidates``
+    #: lines share ``plan_mass`` of the root prior. The search still decides; the walk only makes
+    #: sure a line that needs several steps to pay off is looked at.
+    plan_candidates = 0
+    plan_budget = 8
+    plan_mass = 0.25
+    _planned_turn: int = -1
+
     # ------------------------------------------------------------------ entry point
+    def new_game(self, seed: int, me: int) -> None:
+        super().new_game(seed, me)
+        self._planned_turn = -1
+
     def act(self, s: GameState, choice: Choice) -> int:
         self.last_visits = {}          # this decision's visits, or nothing. Never the last one's.
         self.last_value = None
@@ -223,6 +239,9 @@ class IsmctsAgent(NeuralAgent):
         # Marked, not passed: the prior is computed lazily inside _select on a node's second
         # visit, so the root has to carry the instruction to have noise mixed into it.
         root.noise = self.root_noise_alpha > 0.0
+        if self.plan_candidates > 0 and choice.kind is ChoiceKind.MAIN and s.turn != self._planned_turn:
+            self._planned_turn = s.turn
+            root.boost = self._plan_first_actions(s, choice)
 
         deadline = None
         if self.max_seconds > 0.0:
@@ -405,6 +424,10 @@ class IsmctsAgent(NeuralAgent):
         prior = node.prior
         if prior is None:
             prior = self._priors(w, ch, idxs)
+            if node.boost:
+                m, k = self.plan_mass, len(node.boost)
+                prior = {a: (1.0 - m) * p + (m / k if a in node.boost else 0.0)
+                         for a, p in prior.items()}
             if node.noise:
                 prior = self._with_root_noise(prior)
                 node.noise = False
@@ -435,6 +458,23 @@ class IsmctsAgent(NeuralAgent):
             if score > best_score:
                 best_i, best_score = i, score
         return best_i
+
+    def _plan_first_actions(self, s: GameState, choice: Choice) -> frozenset:
+        """First actions of the plan walk's best lines from ``s`` (empty if none is offered)."""
+        from cptcg.agents.search.plan import PlanAgent
+        helper = getattr(self, "_planner", None)
+        if helper is None:
+            helper = self._planner = PlanAgent(0)
+            helper._model = self.model
+        helper.me, helper.rng = self.me, self.rng
+        helper.cheating, helper.known_opponent_deck = self.cheating, self.known_opponent_deck
+        helper.iterations, helper.candidates, helper.worlds = self.plan_budget, self.plan_candidates, 1
+        try:
+            lines = helper._propose(s)
+        except Exception:                    # pragma: no cover - a proposal never blocks a move
+            return frozenset()
+        offered = set(choice.options)
+        return frozenset(line[0][1] for _, line in lines if line and line[0][1] in offered)
 
     def _with_root_noise(self, prior: dict) -> dict:
         """Mix Dirichlet noise into the root prior — the AlphaZero exploration protocol.
@@ -644,6 +684,23 @@ class IsmctsExplorer(IsmctsAgent):
     root_noise_weight = 0.25
     temperature = 1.0
     setup_iterations = 8
+
+
+@register
+class IsmctsPlanned(IsmctsAgent):
+    """The search with the plan-candidate stage on (three lines at walk budget 8). Measured
+    against ``ismcts`` before the generator uses it; see ``plan_candidates``."""
+
+    name = "ismcts-plan"
+    plan_candidates = 3
+
+
+@register
+class IsmctsExplorerPlanned(IsmctsExplorer):
+    """The generator with the plan-candidate stage on."""
+
+    name = "ismcts-explore-plan"
+    plan_candidates = 3
 
 
 @register
