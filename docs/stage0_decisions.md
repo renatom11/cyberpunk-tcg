@@ -400,3 +400,21 @@ card of each type by games containing it in either list:
   *The embedding is doing work* if that interval lies wholly above zero, meaning the card model
   loses more than the aggregate head on cards whose embeddings it never trained. Otherwise the
   embedding is decorative at this data size.
+
+### Amendment before any fit (2026-09-25T05:01Z): the two heads were never on the same split
+
+While writing experiment 2's scoring I found that `split_by_game` is seeded by each command's
+`--seed`. `fit` defaults to 0 and `fit114` defaults to 1, so **in both KT1 runs the card model
+and the 114 head were early-stopped and scored on different 20% holdouts** of the same games. The
+statement "the same by-game split" in the Stage 0 report and in this log was wrong. Each Brier was
+still measured out of sample for its own head, so neither number is contaminated. But the
+comparison (0.1278 against 0.1377) is not paired. The panels, and therefore both KT1 verdicts, do
+not depend on it.
+
+Registered fix, before any fit:
+
+* Every fit in both experiments runs with `--seed 0`, so all heads share one split.
+* The outcome-trained h16 is refitted once with `--seed 0` (`out/s2/w114_outcome_seed0.json`).
+  This gives the paired outcome Brier; it is not used in any panel.
+* Experiment 2's set B is that same seed-0 split, applied inside the training subset.
+  `tools/heldout_gap.py` recomputes it.

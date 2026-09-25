@@ -561,9 +561,90 @@ def cmd_fit114(a) -> None:
     print(f"wrote {a.out}: hidden {a.hidden}, holdout Brier {best:.5f}")
 
 
+def subset_rows(rows: dict, keep: np.ndarray) -> dict:
+    """The rows where ``keep`` is true, with the ragged arrays (cards, dice, options and their visit
+    counts) sliced consistently and their offsets rebuilt."""
+    idx = np.nonzero(keep)[0]
+    out = {}
+    for flat, off in (("cards", "card_off"), ("dice", "die_off"), ("opts", "opt_off")):
+        o = rows[off]
+        lens = o[idx + 1] - o[idx]
+        sel = np.concatenate([np.arange(o[i], o[i + 1]) for i in idx]) if len(idx) else np.zeros(0, np.int64)
+        out[flat] = rows[flat][sel]
+        out[off] = np.concatenate([[0], np.cumsum(lens)]).astype(np.int64)
+        if flat == "opts":
+            out["visits"] = rows["visits"][sel]
+    for k, v in rows.items():
+        if k not in out and k not in ("card_off", "die_off", "opt_off") and len(v) == len(keep):
+            out[k] = v[idx]
+    return out
+
+
+def _game_card_sets(corpus: str) -> list:
+    """Per game, in the order ``rows`` numbers them, the set of card ids in either list."""
+    sets = []
+    for rec in read_games(corpus):
+        ids = set()
+        for d in rec.replay().decklists():
+            ids |= set(d.main) | set(d.legends)
+        sets.append(ids)
+    return sets
+
+
+def _rows_touching(rows: dict, idxs: set) -> np.ndarray:
+    """Per row: is one of the card indices visible as a token or offered as an option?"""
+    n = len(rows["label"])
+    hit = np.zeros(n, dtype=bool)
+    for flat, off in (("cards", "card_off"), ("opts", "opt_off")):
+        ids = rows[flat][:, 0].astype(np.int64)
+        m = np.isin(ids, list(idxs))
+        o = rows[off]
+        row_of = np.repeat(np.arange(n), o[1:] - o[:-1])
+        hit[row_of[m]] = True
+    return hit
+
+
+def cmd_subset(a) -> None:
+    """Held-out-card rows (pre-registered experiment 2). ``train``: rows of games whose lists hold
+    none of the cards. ``seen``: rows of the other games in which one of the cards is visible or
+    offered."""
+    z = np.load(a.rows, allow_pickle=False)
+    meta = json.loads(str(z["meta"]))
+    rows = {k: z[k] for k in z.files if k != "meta"}
+    held = json.loads(Path(a.cards).read_text())["chosen"]
+    reg = load_default()
+    by = {d.id: d.idx for d in reg.defs}
+    sets = _game_card_sets(a.corpus)
+    bad = np.array([bool(s & set(held)) for s in sets])
+    game_bad = bad[rows["game"]]
+    if a.mode == "train":
+        keep = ~game_bad
+    else:
+        keep = game_bad & _rows_touching(rows, {by[c] for c in held})
+    out = subset_rows(rows, keep)
+    meta = dict(meta, subset={"mode": a.mode, "cards": held, "rows": int(keep.sum())})
+    np.savez_compressed(a.out, meta=json.dumps(meta), **out)
+    print(f"{a.mode}: {int(keep.sum())} of {len(keep)} rows from {len(np.unique(out['game']))} games -> {a.out}")
+
+
+def cmd_eval114(a) -> None:
+    """Per-row squared error of a 114 head (weights.json) on rows; JSON with the mean."""
+    rows, _ = load_rows(a.rows)
+    rows = _select_target(rows, a.target)
+    w = json.loads(Path(a.weights).read_text())
+    w1, b1, w2, b2 = (np.array(w["w1"], np.float64), np.array(w["b1"]), np.array(w["w2"]), float(w["b2"]))
+    x = rows["agg"].astype(np.float64)
+    p = 1.0 / (1.0 + np.exp(-(np.tanh(x @ w1.T + b1) @ w2 + b2)))
+    se = (p - rows["label"]) ** 2
+    if a.errors:
+        np.savez_compressed(a.errors, se=se.astype(np.float32), game=rows["game"])
+    print(json.dumps({"rows": int(len(se)), "brier": float(se.mean())}))
+
+
 def cmd_eval(a) -> None:
     import torch
     rows, _ = load_rows(a.rows)
+    rows = _select_target(rows, a.target)
     reg = load_default()
     static = CM.static_card_table(reg)
     z = np.load(a.weights, allow_pickle=False)
@@ -574,6 +655,15 @@ def cmd_eval(a) -> None:
                 model.p[k].data.copy_(torch.from_numpy(z[k]))
     idx = np.arange(len(rows["label"]))
     ev = _eval_value(model, rows, idx, torch, ablate_seed=20260921 if a.ablate else None)
+    if a.errors:
+        se = np.zeros(len(idx), dtype=np.float32)
+        model.eval()
+        with torch.no_grad():
+            for i in range(0, len(idx), 512):
+                b = gather(rows, idx[i:i + 512])
+                p = torch.sigmoid(model.value_logit(_to_torch(b, torch))).numpy()
+                se[i:i + 512] = (p - rows["label"][idx[i:i + 512]]) ** 2
+        np.savez_compressed(a.errors, se=se, game=rows["game"])
     print(json.dumps(ev, indent=1))
 
 
@@ -627,8 +717,23 @@ def main(argv=None) -> None:
     e = sub.add_parser("eval")
     e.add_argument("rows", nargs="+")
     e.add_argument("--weights", required=True)
+    e.add_argument("--target", choices=("outcome", "boundary"), default="outcome")
+    e.add_argument("--errors", default="", help="write per-row squared errors and game ids here (.npz)")
     e.add_argument("--ablate", action="store_true")
     e.set_defaults(fn=cmd_eval)
+    s = sub.add_parser("subset", help="held-out-card rows: training games without the cards, or rows showing them")
+    s.add_argument("rows")
+    s.add_argument("--corpus", required=True, help="the corpus the rows were built from (game order)")
+    s.add_argument("--cards", required=True, help='JSON file with a "chosen" list of card ids')
+    s.add_argument("--mode", choices=("train", "seen"), required=True)
+    s.add_argument("--out", required=True)
+    s.set_defaults(fn=cmd_subset)
+    q = sub.add_parser("eval114", help="per-row squared error of a 114 head on rows")
+    q.add_argument("rows", nargs="+")
+    q.add_argument("--weights", required=True)
+    q.add_argument("--target", choices=("outcome", "boundary"), default="outcome")
+    q.add_argument("--errors", default="")
+    q.set_defaults(fn=cmd_eval114)
     a = ap.parse_args(argv)
     a.fn(a)
 

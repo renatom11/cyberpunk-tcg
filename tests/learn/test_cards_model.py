@@ -270,6 +270,33 @@ def test_rows_carry_the_target_and_fall_back_to_the_outcome_without_values():
     assert np.allclose(boot["target"][moved], expect, atol=1e-6)
 
 
+@pytest.mark.skipif(not SAMPLE.exists(), reason="no bootstrap sample")
+def test_subset_rows_keeps_ragged_arrays_aligned():
+    recs = []
+    for rec in read_games(SAMPLE):
+        recs.append(rec)
+        if len(recs) == 3:
+            break
+    rows = FC.rows_chunk(([(i, r) for i, r in enumerate(recs)], 0.5, 7, True))
+    rows.pop("n_decisions")
+    keep = np.zeros(len(rows["label"]), dtype=bool)
+    keep[::3] = True
+    sub = FC.subset_rows(rows, keep)
+    idx = np.nonzero(keep)[0]
+    assert len(sub["label"]) == len(idx) and np.array_equal(sub["game"], rows["game"][idx])
+    for j, i in enumerate(idx):
+        for flat, off in (("cards", "card_off"), ("dice", "die_off"), ("opts", "opt_off")):
+            a = rows[flat][rows[off][i]:rows[off][i + 1]]
+            b = sub[flat][sub[off][j]:sub[off][j + 1]]
+            assert np.array_equal(a, b)
+        assert np.array_equal(rows["visits"][rows["opt_off"][i]:rows["opt_off"][i + 1]],
+                              sub["visits"][sub["opt_off"][j]:sub["opt_off"][j + 1]])
+    b1 = FC.gather(rows, idx[:5])
+    b2 = FC.gather(sub, np.arange(5))
+    for k in b1:
+        assert np.array_equal(b1[k], b2[k]), k
+
+
 def test_fit114_writes_a_loadable_head_from_the_card_rows(tmp_path):
     pytest.importorskip("torch")
     from cptcg.learn.model import ValueModel
