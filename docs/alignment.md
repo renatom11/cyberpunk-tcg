@@ -214,7 +214,7 @@ Dropped or deferred, item by item (the ones the owner named, then the rest):
 | deck fingerprint as an input | Part 2A | not built | quiet |
 | rival PICKs answered by the policy in-tree | Part 2B; Stage 2 | not built | deferred by design |
 | engine tells: silent skips, PICK width | decision 2d: report cost, do not land | cost reported; frequency never measured | as instructed |
-| `tools/opponent_influence.py` | audit found it broken | still broken (imports a function that no longer exists) | quiet |
+| `tools/opponent_influence.py` | audit found it broken | deleted 2026-09-25 (the rival-facing block it ablated is no longer in the 114 vector; its historical result stays in `docs/learning.md`; the rival reading is measured by `belief_ll.py` and `leakage.py`) | closed |
 
 **The Stage 0 gate.** "All instruments produce numbers; kill test 1 passes." KT1 failed and is being
 rerun as the owner instructed. "All instruments produce numbers" is false for: leakage (C3c),
