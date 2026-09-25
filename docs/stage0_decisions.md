@@ -449,3 +449,45 @@ head-to-head result exists.
 
    It runs as a pipeline step between experiment steps (after experiment 1's head-to-heads, before
    experiment 2's fits), never beside a fit.
+
+### Stage 1 engineering landed, and the launch registered — 2026-09-25T05:40Z, before any experiment-1 result exists
+
+Under the owner's standing instruction to keep the project running without waiting for guidance
+("act without my guidance and if there is uncertainty use your best judgement"), the FAIL
+version's loop (`docs/stage1_plan_draft.md` §2.4) was built while experiment 1's card fit runs.
+At the time of writing only the two 114 fits and the first card-fit epoch exist; no agreement,
+panel or head-to-head number has been read.
+
+What landed (each with tests, none touching the frozen heuristic or the engine):
+
+* `harvest.py play --forced 0.1`: the forced-exploration slice, paired with its unforced game
+  (§0.4); `--floor 0.15 [--floor-from]`: the exposure-floor seat (§0.4).
+* `ismcts-explore` searches ORDER and MULLIGAN at budget 8 (§0.4); the measured `ismcts` does not.
+  A 12-game smoke generation already chose "go first" 9 times in 11 — the frozen rule never does.
+* `fit_policy.py corpus`: the policy head (the PUCT prior) fitted from the generation's stored
+  visits (§2.4).
+* `learn.py run --stage1 --target boundary|outcome --incumbent W --seed-rows R --seed-games G`:
+  one generation = generate (forced + floor) → token rows with per-decision targets → the 114
+  head on the chosen target over the replay window → the policy head beside it → the unchanged
+  gate → the instruments (coverage, context play rates and synergy lift, leakage, independent
+  oracle). Smoke-tested end to end on 12 games.
+* `ismcts-plan` / `ismcts-explore-plan`: the plan-candidate stage (§0.7) and `tools/plan_cost.py`.
+* Instruments: `card_context.py` (C4), `leakage.py` (C3c), `population.py report` (G6) and
+  `population.py propose` (hill-climb proposals with an archive).
+
+Registered now, for the launch after the signal diagnostic finishes:
+
+1. **Value target.** Experiment 1's rule decides it, unchanged: R2 holds for the 114 head →
+   `--target boundary`; otherwise `--target outcome`. The loop runs either way; the FAIL plan
+   moves every capability whatever the signal result.
+2. **Plan-candidate stage.** `plan_cost.py --agent ismcts-plan:32@<incumbent> --turns 200` runs
+   first. The stage is on in the generator only if the walk's share of the searching seat's time is
+   at most 15%; otherwise it stays off and the number is reported.
+3. **Size and seed.** 30,000 games a generation, the incumbent `out/s1/w114.json` (or its
+   boundary twin if R2 holds), seed rows `out/s2/rows.npz` over the corpus `out/s1/s10k`.
+   The seed retires by the loop's existing ratio.
+4. **Gate.** Unchanged (`learn.loop.decide`: head-to-head, panel, delayed suite). The identity
+   ablation is reported as not applicable to the 114 head.
+5. **Population.** After each generation the population is re-rated under the promoted head and
+   `population.py report` writes the G6 numbers. `propose` runs one hill-climb round a
+   generation under the heuristic, since the heuristic is the cheap, fixed yardstick.
