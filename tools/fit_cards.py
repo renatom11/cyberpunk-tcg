@@ -181,6 +181,12 @@ def cmd_rows(a) -> None:
     gi = 0
     for src in a.inputs:
         for rec in read_games(src):
+            meta = rec.meta or {}
+            if meta.get("forced") is not None and records and (records[-1][1].meta or {}).get("i") == meta.get("i"):
+                # a forced-exploration game shares its pair's id, so the by-game split keeps the
+                # two (identical up to the forced move) on the same side
+                records.append((records[-1][0], rec))
+                continue
             records.append((gi, rec))
             gi += 1
             if a.max_games and gi >= a.max_games:

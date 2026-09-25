@@ -188,43 +188,138 @@ def _tally(counter: dict, key, n: int = 1) -> None:
 
 
 # ------------------------------------------------------------------ workers
-def play_chunk(job: tuple) -> dict:
-    """Play games ``lo..hi``; return ``{"records": [record JSON...], "coverage": Coverage JSON}``.
-    Runs in a worker process.
+#: Salt for the forced-exploration draws, so they never share a stream with the deck pair.
+FORCE_SEQ = 911
 
-    Per decision the observer (``runner.play_game(observe=...)``) reads the mover's
-    ``last_visits`` (the search's root visit counts, keyed by option) and ``last_value`` (its root
-    win probability) when the agent exposes them, and builds the coverage record
-    (``learn.coverage.decision_record``: what was offered and what was chosen, by card id and
-    action kind). ``visits`` is stored on the record with an empty list for a decision nobody
-    searched; ``values`` only when every decision of the game had one.
+
+def forced_draw(seed: int, i: int) -> Pcg32:
+    """The forced-exploration stream of game ``i``: whether it is forced, where, and what."""
+    return Pcg32((seed ^ (i * 0x85EBCA77) ^ 0x5F0F) & MASK64, seq=FORCE_SEQ)
+
+
+def pick_forced(offered: list, chosen_idx: int, chosen_counts: dict, rng: Pcg32):
+    """An option other than the agent's own, drawn with weight 1 / (1 + times its (card, kind,
+    sub-mode) has been chosen so far): the rarely-taken modes are the ones exploration exists for.
+    None when the agent's choice is the only option."""
+    cand = [k for k in range(len(offered)) if k != chosen_idx]
+    if not cand:
+        return None
+    w = [1.0 / (1.0 + chosen_counts.get(Coverage._k(tuple(offered[k])), 0)) for k in cand]
+    r = (rng.next_u32() / 4294967296.0) * sum(w)
+    for k, x in zip(cand, w):
+        r -= x
+        if r <= 0.0:
+            return k
+    return cand[-1]
+
+
+def _play_one(reg, decks, names, gs, cov, force=None):
+    """One game as ``runner.play_game`` plays it, recording visits, values and coverage.
+
+    ``force=(ply, fn)`` replaces the mover's choice at decision ``ply`` by ``fn(s, ch, idx)``
+    *after* the agent has searched, so the stored visits at that decision are the search's opinion
+    of the position before the forced move (the policy target the design asks for). Returns the
+    finished state, the per-decision visits and values, the multi-option decision plies, and what
+    was forced.
     """
-    lo, hi, seed, agent_a, agent_b, mix = job
+    from cptcg.agents.base import make_agent
+    from cptcg.core.engine import apply, legal_actions, new_game
+    agents = [make_agent(n, gs * 2 + k) for k, n in enumerate(names)]
+    s = new_game(reg, (decks[0], decks[1]), gs, DEFAULT_CONFIG, record=True)
+    for p, ag in enumerate(agents):
+        ag.new_game(gs, p)
+    visits: list[list[int]] = []
+    values: list = []
+    multi: list[int] = []
+    forced = None
+    d = 0
+    while not s.over:
+        legal_actions(s)
+        ch = s.pending
+        ag = agents[ch.player]
+        idx = ag.act(s, ch)
+        lv = getattr(ag, "last_visits", None)
+        row = [int(lv.get(o, 0)) for o in ch.options] if lv else []
+        rec = decision_record(s, ch, idx, row)
+        if len(ch.options) > 1:
+            multi.append(d)
+        if force is not None and d == force[0]:
+            j = force[1](rec, idx)
+            if j is not None:
+                forced = {"ply": d, "turn": s.turn, "agent_choice": idx, "forced": j,
+                          "key": list(rec["off"][j])}
+                idx = j
+                rec = dict(rec, ch=j)
+        visits.append(row)
+        values.append(getattr(ag, "last_value", None))
+        cov.add(rec)
+        apply(s, idx)
+        d += 1
+        if d > 50_000:
+            raise RuntimeError(f"game {gs} exceeded 50000 actions")
+    return s, visits, values, multi, forced
+
+
+def _record(s, decks, names, visits, values, meta):
+    rep = Replay.from_game(s, decks, names)
+    any_visits = any(visits)
+    all_values = values and all(v is not None for v in values)
+    return GameRecord.from_replay(rep, visits=visits if any_visits else None,
+                                  values=values if all_values else None, meta=meta)
+
+
+def play_chunk(job: tuple) -> dict:
+    """Play games ``lo..hi``; return ``{"records": [record JSON...], "coverage": Coverage JSON,
+    "games": hi - lo, "forced": n}``. Runs in a worker process.
+
+    Per decision the mover's ``last_visits`` (the search's root visit counts, keyed by option) and
+    ``last_value`` (its root win probability) are read when the agent exposes them, and the
+    coverage record is built (``learn.coverage.decision_record``: what was offered and what was
+    chosen, by card id and action kind). ``visits`` is stored on the record with an empty list for
+    a decision nobody searched; ``values`` only when every decision of the game had one.
+
+    **Forced exploration** (Stage 1 plan §0.4), when the job's ``forced`` share is above zero: a
+    game drawn into the slice is played twice from its seed. The first play is the ordinary game
+    (its unforced pair, written as usual); then one of its multi-option decisions is chosen
+    uniformly, and the game is replayed identically up to that decision, where an option other
+    than the agent's is taken with weight inverse to its (card, kind, sub-mode) chosen-count so
+    far (the harvest's accumulated coverage at the start of the chunk plus this chunk's own), and
+    play goes on normally. The forced game is written right after its pair with
+    ``meta={"i": i, "forced": {...}}``, so a trainer can keep the pair on one side of a split.
+    """
+    lo, hi, seed, agent_a, agent_b, mix = job[:6]
+    forced_share = job[6] if len(job) > 6 else 0.0
+    base_chosen = dict(job[7]) if len(job) > 7 and job[7] else {}
     reg = runner._REG or load_default()
     names = (agent_a, agent_b)
     out = []
     cov = Coverage()
+    n_forced = 0
     for i in range(lo, hi):
         a, b = D.sample_pair(reg, pair_rng(seed, i), mix=mix)
         gs = game_seed(seed, i)
-        visits: list[list[int]] = []
-        values: list = []
+        s, visits, values, multi, _ = _play_one(reg, (a, b), names, gs, cov)
+        out.append(_record(s, (a, b), names, visits, values, {"i": i}).to_json())
+        if forced_share <= 0.0:
+            continue
+        fr = forced_draw(seed, i)
+        if fr.next_u32() >= forced_share * 4294967296.0 or not multi:
+            continue
+        ply = multi[fr.next_u32() % len(multi)]
 
-        def observe(s, ch, idx, ag):
-            lv = getattr(ag, "last_visits", None)
-            row = [int(lv.get(o, 0)) for o in ch.options] if lv else []
-            visits.append(row)
-            values.append(getattr(ag, "last_value", None))
-            cov.add(decision_record(s, ch, idx, row))
+        def chooser(rec, idx, fr=fr):
+            counts = dict(base_chosen)
+            for k, v in cov.chosen.items():
+                sk = Coverage._k(k)
+                counts[sk] = counts.get(sk, 0) + v
+            return pick_forced(rec["off"], idx, counts, fr)
 
-        s = runner.play_game(reg, (a, b), names, gs, DEFAULT_CONFIG, record=True, observe=observe)
-        rep = Replay.from_game(s, (a, b), names)
-        any_visits = any(visits)
-        all_values = values and all(v is not None for v in values)
-        rec = GameRecord.from_replay(rep, visits=visits if any_visits else None,
-                                     values=values if all_values else None, meta={"i": i})
-        out.append(rec.to_json())
-    return {"records": out, "coverage": cov.to_json()}
+        s2, visits2, values2, _, forced = _play_one(reg, (a, b), names, gs, cov, (ply, chooser))
+        if forced is None:
+            continue
+        n_forced += 1
+        out.append(_record(s2, (a, b), names, visits2, values2, {"i": i, "forced": forced}).to_json())
+    return {"records": out, "coverage": cov.to_json(), "games": hi - lo, "forced": n_forced}
 
 
 def _keep_rng(harvest_seed: int, record_seed: int) -> Pcg32:
@@ -368,7 +463,7 @@ def cmd_play(a) -> int:
         # game it recorded. Recorded, not enforced, exactly like everywhere else the digest is
         # stamped -- enforcing it would reject every file already on disk.
         man = {"format": MANIFEST_FORMAT, "out": str(out), "seed": a.seed, "agents": list(agents),
-               "mix": mix, "rules": rules, "cards": cards_digest(),
+               "mix": mix, "forced": a.forced, "rules": rules, "cards": cards_digest(),
                "games_target": a.games, "games_done": 0, "bytes": 0,
                "decisions": 0, "elapsed_s": 0.0, "sources": {}, "end_reasons": {}, "winners": {},
                "started": _now(), "updated": _now()}
@@ -379,6 +474,8 @@ def cmd_play(a) -> int:
                 f"{out} is a harvest already {man['games_done']} games in. "
                 f"Pass --resume to continue it, or --fresh to start over.")
         check_resumable(man, seed=a.seed, agents=agents, mix=mix, rules=rules)
+        if float(man.get("forced", 0.0)) != float(a.forced):
+            raise SystemExit(f"{out} was harvested with --forced {man.get('forced', 0.0)}, not {a.forced}")
         # Truncate back to the last committed byte: this discards a torn tail and nothing else.
         if out.exists() and out.stat().st_size != man["bytes"]:
             print(f"resume: truncating {out.stat().st_size - man['bytes']} torn byte(s)",
@@ -402,7 +499,10 @@ def cmd_play(a) -> int:
     # that has restarted roughly hourly all day, so a third of every interval would be thrown
     # away. --chunk trades a little scheduling overhead for that.
     chunk = a.chunk or min(250, max(1, todo // max(1, workers * 8)))
-    jobs = [(lo, min(lo + chunk, target), a.seed, agents[0], agents[1], mix)
+    base_chosen = {}
+    if a.forced > 0 and man.get("coverage"):
+        base_chosen = {Coverage._k(k): v for k, v in Coverage.from_json(man["coverage"]).chosen.items()}
+    jobs = [(lo, min(lo + chunk, target), a.seed, agents[0], agents[1], mix, a.forced, base_chosen)
             for lo in range(done, target, chunk)]
     deadline = time.time() + a.minutes * 60 if a.minutes else None
 
@@ -422,7 +522,8 @@ def cmd_play(a) -> int:
             _tally(man["winners"], "draw" if r.winner is None else f"seat{r.winner}")
             for d in r.decks:
                 _tally(man["sources"], deck_source(d["name"]))
-        games_here += len(records)
+        games_here += chunk_out.get("games", len(records))
+        man["forced_games"] = man.get("forced_games", 0) + chunk_out.get("forced", 0)
         man["games_done"] = done + games_here
         man["bytes"] = out.stat().st_size
         man["decisions"] = man.get("decisions", 0) + decisions_here
@@ -647,6 +748,8 @@ def main(argv=None) -> int:
     p.add_argument("--chunk", type=int, default=0,
                    help="games per unit of work and of resume (default: sized from the job). "
                         "Smaller loses less to an interrupted run and costs a little overhead")
+    p.add_argument("--forced", type=float, default=0.0,
+                   help="share of games also replayed with one forced exploratory move (Stage 1: 0.1)")
     p.add_argument("--resume", action="store_true", help="continue an interrupted harvest")
     p.add_argument("--fresh", action="store_true", help="overwrite any existing harvest")
     p.add_argument("--minutes", type=float, default=None,
