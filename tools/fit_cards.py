@@ -67,6 +67,7 @@ class _Acc:
         self.visits = []
         self.ctx, self.agg, self.bel_deck, self.bel_leg = [], [], [], []
         self.label, self.game, self.ply, self.mover, self.chosen = [], [], [], [], []
+        self.target = []
 
     def add(self, d: dict, label: float, game: int, ply: int, mover: int, chosen: int, visits) -> None:
         self.cards.extend(d["cards"]); self.card_off.append(len(self.cards))
@@ -81,6 +82,7 @@ class _Acc:
         self.bel_deck.append(d["belief_deck"]); self.bel_leg.append(d["belief_legends"])
         self.label.append(label); self.game.append(game); self.ply.append(ply)
         self.mover.append(mover); self.chosen.append(chosen if mover else -1)
+        self.target.append(label)          # overwritten by the turn-boundary bootstrap, see rows_chunk
 
     def arrays(self) -> dict:
         return {"cards": np.array(self.cards, dtype=np.int16).reshape(-1, len(T.CARD_TOKEN)),
@@ -96,7 +98,40 @@ class _Acc:
                 "bel_leg": np.array(self.bel_leg, dtype=np.int8).reshape(-1, 27),
                 "label": np.array(self.label, dtype=np.float32),
                 "game": np.array(self.game, dtype=np.int32), "ply": np.array(self.ply, dtype=np.int16),
-                "mover": np.array(self.mover, dtype=np.int8), "chosen": np.array(self.chosen, dtype=np.int16)}
+                "mover": np.array(self.mover, dtype=np.int8), "chosen": np.array(self.chosen, dtype=np.int16),
+                "target": np.array(self.target, dtype=np.float32)}
+
+
+#: The turn-boundary bootstrap (design Part 2C): a row's value target mixes the search's root value
+#: at the start of that seat's next turn with the game outcome. Fixed at 0.7 by the pre-registered
+#: signal diagnostic (docs/stage0_decisions.md), not tuned.
+BOOTSTRAP_LAMBDA = 0.7
+
+
+def next_turn_values(plies: list, values: list):
+    """``f(seat, turn)`` -> the search's root value, for ``seat``, at the first decision ``seat``
+    faces in its next turn after ``turn`` (``None`` when the game ends first).
+
+    ``plies[i]`` is ``(turn, active player, player to move)`` at decision ``i``; ``values[i]`` is the
+    stored byte (the value for the player to move). "Its next turn" is the first turn after ``turn``
+    in which ``seat`` is the active player."""
+    from cptcg.learn.experience import dequantise_value
+    first: dict = {}
+    for i, (t, active, mover) in enumerate(plies):
+        if active == mover and (mover, t) not in first and i < len(values):
+            first[(mover, t)] = dequantise_value(values[i])
+    own = {}
+    for (seat, t) in first:
+        own.setdefault(seat, []).append(t)
+    for seat in own:
+        own[seat].sort()
+
+    def f(seat: int, turn: int):
+        for t in own.get(seat, ()):
+            if t > turn:
+                return first[(seat, t)]
+        return None
+    return f
 
 
 def rows_chunk(job: tuple) -> dict:
@@ -109,21 +144,32 @@ def rows_chunk(job: tuple) -> dict:
     for gi, rec in batch:
         rng = _keep_rng(seed, rec.seed)
         s = new_game(reg, rec.replay().decklists(), rec.seed, DEFAULT_CONFIG)
+        plies = []          # (turn, active player, player to move) at every decision
+        pending = []        # (row index, seat, turn) for every row written from this game
         for ply, idx in enumerate(rec.actions):
             legal_actions(s)
             ch = s.pending
             n_dec += 1
+            plies.append((s.turn, s.active, ch.player))
             keep = rate >= 1.0 or rng.below(10_000) < cut
             if keep and len(ch.options) > 1:
                 me = ch.player
                 d = T.decision_tokens(s, me, ch)
                 v = rec.visits[ply] if (rec.visits and ply < len(rec.visits) and rec.visits[ply]) else None
+                pending.append((len(acc.label), me, s.turn))
                 acc.add(d, outcome(rec, me), gi, ply, 1, idx, v)
                 if both:
                     d2 = T.decision_tokens(s, 1 - me, ch)
                     d2["options"] = ()
+                    pending.append((len(acc.label), 1 - me, s.turn))
                     acc.add(d2, outcome(rec, 1 - me), gi, ply, 0, -1, None)
             apply(s, idx)
+        if rec.values:
+            nxt = next_turn_values(plies, rec.values)
+            for row, seat, turn in pending:
+                v = nxt(seat, turn)
+                if v is not None:
+                    acc.target[row] = BOOTSTRAP_LAMBDA * v + (1.0 - BOOTSTRAP_LAMBDA) * acc.label[row]
     out = acc.arrays()
     out["n_decisions"] = n_dec
     return out
@@ -265,6 +311,19 @@ def split_by_game(game: np.ndarray, holdout: float, seed: int) -> tuple[np.ndarr
 
 
 # ----------------------------------------------------------------------------- fit
+def _select_target(rows: dict, target: str) -> dict:
+    """``outcome``: the value label is the game result (every earlier fit). ``boundary``: the
+    turn-boundary bootstrap written by ``rows`` (``BOOTSTRAP_LAMBDA``); the outcome is kept as
+    ``outcome`` so the fit can also report Brier against it."""
+    rows = dict(rows)
+    rows["outcome"] = rows["label"]
+    if target == "boundary":
+        if "target" not in rows:
+            raise SystemExit("these rows carry no bootstrap target; rebuild them with this version of `rows`")
+        rows["label"] = rows["target"]
+    return rows
+
+
 def _to_torch(b: dict, torch):
     return {k: torch.from_numpy(np.ascontiguousarray(v)) for k, v in b.items()}
 
@@ -309,6 +368,7 @@ def cmd_fit(a) -> None:
     torch.set_flush_denormal(True)
     torch.manual_seed(a.seed)
     rows, metas = load_rows(a.rows)
+    rows = _select_target(rows, a.target)
     reg = load_default()
     static = CM.static_card_table(reg)
     model = CM.torch_model(static, emb=a.embed, dropout=a.dropout)
@@ -406,10 +466,12 @@ def cmd_fit(a) -> None:
         model.load_state_dict(best_state)
     ev = _eval_value(model, rows, hold_idx, torch)
     abl = _eval_value(model, rows, hold_idx, torch, ablate_seed=20260921)
+    ev_out = _eval_value(model, dict(rows, label=rows["outcome"]), hold_idx, torch)
     meta = {"name": a.name, "rows": int(len(rows["label"])), "train_rows": int(len(train_idx)),
             "holdout_rows": int(len(hold_idx)), "sources": [m["sources"] for m in metas],
             "rules": DEFAULT_CONFIG.digest(), "cards": cards_digest(), "feature_digest": feature_digest(),
             "tokens_digest": T.tokens_digest(), "static_cols": int(static.shape[1]),
+            "target": a.target, "holdout_outcome_brier": ev_out["brier"],
             "holdout": {"const": const, "network": ev["brier"], "policy_top1": ev["policy_top1"],
                         "ablated_network": abl["brier"], "ablated_policy_top1": abl["policy_top1"]},
             "history": history, "epochs": len(history), "lr": a.lr, "batch": a.batch, "l2": a.l2,
@@ -434,6 +496,7 @@ def cmd_fit114(a) -> None:
     torch.manual_seed(a.seed)
     torch.set_num_threads(a.threads)
     rows, metas = load_rows(a.rows)
+    rows = _select_target(rows, a.target)
     train_idx, hold_idx = split_by_game(rows["game"], a.holdout, a.seed)
     X = torch.from_numpy(rows["agg"].astype(np.float32))
     y = torch.from_numpy(rows["label"].astype(np.float32))
@@ -478,10 +541,15 @@ def cmd_fit114(a) -> None:
             if since >= a.patience:
                 print(f"early stop: no held-out improvement for {a.patience} epochs")
                 break
+    with torch.no_grad():
+        for p, v in zip(params, best_state):
+            p.copy_(v)
+    y = torch.from_numpy(rows["outcome"].astype(np.float32))
+    outcome_brier = brier(hold_idx)
     w1v, b1v, w2v, b2v = [p.numpy() for p in best_state]
     out = {"run": {"tool": "fit_cards.py fit114", "rows": [str(r) for r in a.rows], "seed": a.seed,
                    "holdout": a.holdout, "train_rows": int(len(train_idx)), "holdout_rows": int(len(hold_idx)),
-                   "holdout_brier": best},
+                   "holdout_brier": best, "target": a.target, "holdout_outcome_brier": outcome_brier},
            "train": {"lr": a.lr, "l2": a.l2, "batch": a.batch, "epochs": ep, "patience": a.patience},
            "format": VFORMAT, "kind": "value", "hidden": a.hidden, "activation": "tanh",
            "features": list(FEATURE_NAMES), "feature_digest": feature_digest(),
@@ -533,6 +601,8 @@ def main(argv=None) -> None:
     f.add_argument("--policy-weight", type=float, default=0.5)
     f.add_argument("--patience", type=int, default=5)
     f.add_argument("--embed", type=int, default=CM.EMB, help="identity embedding width")
+    f.add_argument("--target", choices=("outcome", "boundary"), default="outcome",
+                   help="value target: the game result, or the turn-boundary bootstrap")
     f.add_argument("--resume", action="store_true", help="continue from OUT.ckpt.pt if it exists")
     f.add_argument("--stop-after", type=int, default=0, help=argparse.SUPPRESS)   # tests: simulate a kill
     f.add_argument("--dropout", type=float, default=0.0,
@@ -544,6 +614,7 @@ def main(argv=None) -> None:
     h.add_argument("rows", nargs="+")
     h.add_argument("--out", required=True)
     h.add_argument("--hidden", type=int, default=16)
+    h.add_argument("--target", choices=("outcome", "boundary"), default="outcome")
     h.add_argument("--epochs", type=int, default=200)
     h.add_argument("--batch", type=int, default=256)
     h.add_argument("--lr", type=float, default=1e-3)

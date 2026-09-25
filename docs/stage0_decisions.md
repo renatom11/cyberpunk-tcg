@@ -333,3 +333,70 @@ unchanged.
    Brier (0.12831) is within 0.0005 of e's (0.12783). Its panels are reported next to KT1 and
    labelled secondary; they do not enter the verdict. Config a's weights were exported before the
    subnormal flush at export and hold 0.25% subnormals, which affects only inference speed.
+
+## After KT1: the owner's delegation, and the signal diagnostic, pre-registered (2026-09-25T04:59Z, before any fit)
+
+The owner answered the two open decisions with "do what you think is best". My calls, recorded
+before anything runs:
+
+1. **The FAIL version of the Stage 1 draft is accepted.** There will be no card-aware head for
+   Stage 1 and no third KT1. The next question is the learning signal.
+2. **The signal diagnostic is pre-registered here**, with its decision rules, before any fit.
+3. **`docs/strategy_guide.md` is committed.** The owner held it "until I say", and the delegation
+   covers it.
+
+### Experiment 1 — a per-decision value target
+
+* **Target, fixed now:** `y = 0.7 · v_next + 0.3 · z`. Here `v_next` is the search's stored root
+  value, from the row's seat, at the first decision that seat faces in its own next turn, and
+  `z` is the game outcome. When the game ends before that turn, `y = z`. The code is
+  `fit_cards.next_turn_values` / `BOOTSTRAP_LAMBDA`, pinned by two tests. The source is the same
+  10,000 games, rebuilt with the same rate (0.5) and seed (7), so the rows and the by-game split
+  are identical to the rerun's.
+* **Heads, fixed now:**
+  * the 114 head with h16's settings (`fit114 --hidden 16`);
+  * the card model with config a's settings (lr 1e-3, l2 1e-5, embedding 32, policy weight 0.5),
+    the only card config whose attention stays alive.
+
+  Both use `--target boundary`, early stopping on holdout Brier against `y`, and the visit
+  distribution as the policy target.
+* **R1, evaluation.** Each boundary-trained head's Spearman against the independent playout
+  oracle is compared with its outcome-trained twin (h16: 0.655 [0.627, 0.682]; config a: scored
+  in this run). It counts as *improved* only if the boundary-trained 95% interval lies wholly
+  above the outcome-trained one.
+* **R2, play.** Frozen panel, 360 games a member. It counts as *improved* only if the
+  boundary-trained head's rate against the heuristic is above the outcome-trained head's
+  between-pairing band: h16 0.713, config a 0.724.
+* **R3, identity (information only, not a third KT1).** The KT1 legs are read on the
+  boundary-trained card model, its identity ablation, and the boundary-trained 114 head.
+* **What follows.**
+  * R2 holds for the 114 head: the Stage 1 loop trains on boundary targets.
+  * R2 holds for neither head: the signal is not the lever either; the report says so and stops.
+  * R2 holds for the card model and R3's two legs clear: that is reported to the owner as the
+    first evidence that identity helps under the right signal. Nothing is started on it.
+
+### Experiment 2 — held-out cards (changed from the plan, and why)
+
+The plan said twelve cards. Measured on s10k before registering, only **187 of 10,000 games
+(1.9%)** contain none of those twelve, and 88.6% of rows show at least one of them, so that
+design cannot be trained. Registered instead: **one card per type**, the median-exposure verified
+card of each type by games containing it in either list:
+
+| type | card | games in s10k |
+|---|---|---:|
+| Legend | Royce — Psycho on the Edge | 2,296 |
+| Unit | Rockn' Rockerboy | 2,447 |
+| Program | Chrome Reverie | 2,815 |
+| Gear | Zetatech Berserk | 3,666 |
+
+**2,061 games (20.6%)** contain none of the four (`out/s1/heldout_cards.json`).
+
+* **Training.** Both heads (boundary targets, the settings above) train only on those games,
+  with the same 80/20 by-game split inside them.
+* **Set A.** Rows from the other 7,939 games in which one of the four cards is visible or offered.
+* **Set B.** The ordinary holdout rows of the 2,061 training games.
+* **Reading.** For each head, gap = Brier(A) − Brier(B). The quantity reported is
+  gap(card model) − gap(114 head), with a 95% bootstrap interval over games (1,000 resamples).
+  *The embedding is doing work* if that interval lies wholly above zero, meaning the card model
+  loses more than the aggregate head on cards whose embeddings it never trained. Otherwise the
+  embedding is decorative at this data size.

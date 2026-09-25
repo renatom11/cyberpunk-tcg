@@ -235,6 +235,41 @@ def test_a_resumed_fit_matches_an_uninterrupted_one(tmp_path):
     assert ma["holdout"] == pytest.approx(mb["holdout"], abs=1e-9)
 
 
+def test_the_boundary_target_is_the_seats_next_turn_value():
+    """The pre-registered bootstrap: a row's target mixes the search value at the first decision the
+    row's seat faces in its own next turn with the game outcome; with no next turn it is the outcome."""
+    plies = [(1, 0, 0), (1, 0, 0), (1, 0, 1),     # turn 1, seat 0 active; seat 1 reacts once
+             (2, 1, 1), (2, 1, 0), (2, 1, 1),     # turn 2, seat 1 active
+             (3, 0, 0), (3, 0, 0)]                # turn 3, seat 0 active
+    values = [10, 20, 30, 40, 50, 60, 70, 80]
+    f = FC.next_turn_values(plies, values)
+    from cptcg.learn.experience import dequantise_value
+    assert f(0, 1) == dequantise_value(70)        # seat 0 in turn 1 -> its next own turn is 3, first ply 6
+    assert f(1, 1) == dequantise_value(40)        # seat 1 in turn 1 -> turn 2, first ply where it moves
+    assert f(0, 2) == dequantise_value(70)        # seat 0 reacting in turn 2 -> turn 3
+    assert f(1, 2) is None                        # seat 1 has no turn after 2: the game ended
+    assert f(0, 3) is None
+
+
+@pytest.mark.skipif(not SAMPLE.exists(), reason="no bootstrap sample")
+def test_rows_carry_the_target_and_fall_back_to_the_outcome_without_values():
+    recs = []
+    for rec in read_games(SAMPLE):
+        recs.append(rec)
+        if len(recs) == 2:
+            break
+    plain = FC.rows_chunk(([(i, r) for i, r in enumerate(recs)], 1.0, 7, True))
+    assert np.array_equal(plain["target"], plain["label"])          # no search values: target = outcome
+    for r in recs:
+        r.values = [128] * len(r.actions)                           # every search value exactly 128/255
+    boot = FC.rows_chunk(([(i, r) for i, r in enumerate(recs)], 1.0, 7, True))
+    moved = boot["target"] != boot["label"]
+    assert moved.any()
+    v = 128 / 255
+    expect = FC.BOOTSTRAP_LAMBDA * v + (1 - FC.BOOTSTRAP_LAMBDA) * boot["label"][moved]
+    assert np.allclose(boot["target"][moved], expect, atol=1e-6)
+
+
 def test_fit114_writes_a_loadable_head_from_the_card_rows(tmp_path):
     pytest.importorskip("torch")
     from cptcg.learn.model import ValueModel
