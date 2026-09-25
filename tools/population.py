@@ -5,6 +5,8 @@ more than one player, with bootstrap intervals. No training loop.
         out/s0/panel_decks/*.json data/decks/*.json
     python tools/population.py rate data/population/population.json --player heuristic \\
         --tourney out/s0/kt2/heuristic/tournament.json [--resamples 1000]
+    python tools/population.py report data/population/population.json [--previous OLD.json] \\
+        [--out data/population/report.json]
 
 ``init`` writes the members: id, name, Legends, main list, colour class, origin, and whether the
 deck is a held-out retail starter (evaluation-only: never a training deck). ``rate`` reads a
@@ -13,6 +15,15 @@ round robin written by ``cptcg tourney`` over exactly these decks, fits Bradleyâ
 from resampling the games inside every matchup, and stores them under the player's name, beside
 the matchup cells (``matrix_<player>.json``). After two or more players it flags every deck whose
 interval under one player excludes its point estimate under another as *player-dependent*.
+
+``report`` computes the G6 numbers the plan asks for every generation, from the stored matrices:
+per player the residual RMS against a permutation null and the Nash support (diagnostics of
+cycling); for every pair of players the rank agreement (Spearman of BT strengths, 95% interval
+from resampling decks); transfer (the top five under each player, their pooled win rate against
+the evaluation-only starters and the six samples, under every player); diversity (distinct Legend
+triples, colour classes, mean pairwise list similarity); and, given ``--previous``, rating
+stability (Spearman between the two files' ratings under each player). Exploitability needs
+proposals and is reported as absent until the loop makes them.
 """
 
 from __future__ import annotations
@@ -32,6 +43,9 @@ sys.path.insert(0, str(ROOT / "src"))
 from cptcg.cards.registry import cards_digest, load_default  # noqa: E402
 from cptcg.core.config import DEFAULT_CONFIG  # noqa: E402
 from cptcg.sim.tournament import bradley_terry  # noqa: E402
+
+sys.path.insert(0, str(ROOT / "tools"))
+from meta_report import nash_support, null_draws, residual_rms, wins_matrix  # noqa: E402
 
 #: The two retail starters: held out of every training corpus, so their ratings stay clean.
 STARTERS = ("Embracing Power", "The Heist")
@@ -126,6 +140,129 @@ def cmd_rate(a) -> int:
     return 0
 
 
+def _ranks(v: np.ndarray) -> np.ndarray:
+    order = np.argsort(v, kind="stable")
+    r = np.empty(len(v))
+    r[order] = np.arange(len(v))
+    for x in np.unique(v):                     # average ties
+        m = v == x
+        r[m] = r[m].mean()
+    return r
+
+
+def spearman(a, b) -> float:
+    ra, rb = _ranks(np.asarray(a, float)), _ranks(np.asarray(b, float))
+    if ra.std() == 0 or rb.std() == 0:
+        return float("nan")
+    return float(np.corrcoef(ra, rb)[0, 1])
+
+
+def spearman_ci(a, b, resamples: int = 1000, seed: int = 20260925) -> list[float]:
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    rng = np.random.default_rng(seed)
+    draws = []
+    for _ in range(resamples):
+        k = rng.integers(0, len(a), len(a))
+        r = spearman(a[k], b[k])
+        if r == r:
+            draws.append(r)
+    lo, hi = np.percentile(draws, [2.5, 97.5])
+    return [float(lo), float(hi)]
+
+
+def list_similarity(a: list[str], b: list[str]) -> float:
+    """Multiset Jaccard of two main decks."""
+    from collections import Counter
+    ca, cb = Counter(a), Counter(b)
+    inter = sum((ca & cb).values())
+    union = sum((ca | cb).values())
+    return inter / union if union else 1.0
+
+
+def _is_reference(m: dict) -> bool:
+    return m["evaluation_only"] or m["name"].startswith("Sample ")
+
+
+def cmd_report(a) -> int:
+    pop = json.loads(Path(a.population).read_text())
+    members = pop["members"]
+    players = sorted({p for m in members for p in m["ratings"]})
+    base = Path(a.population).parent
+    out: dict = {"players": players, "members": len(members), "per_player": {}, "agreement": [],
+                 "transfer": {}, "exploitability": None,
+                 "exploitability_note": "needs proposals from the loop; none exist yet"}
+    for p in players:
+        safe = p.replace("/", "_").replace("@", "_").replace(":", "_")
+        mat = json.loads((base / f"matrix_{safe}.json").read_text())
+        w, g = wins_matrix(mat)
+        rms = residual_rms(w, g)
+        null = null_draws(w, g, a.draws, 1)
+        x, sup = nash_support(w, g)
+        out["per_player"][p] = {"residual_rms": rms, "null_mean": float(null.mean()),
+                                "null_p": float((null >= rms).mean()),
+                                "nash_support": [mat["decks"][i] for i in sup],
+                                "nash_weights": {mat["decks"][i]: float(x[i]) for i in sup}}
+    for i, p in enumerate(players):
+        for q in players[i + 1:]:
+            both = [m for m in members if p in m["ratings"] and q in m["ratings"]]
+            va = [m["ratings"][p]["bt"] for m in both]
+            vb = [m["ratings"][q]["bt"] for m in both]
+            out["agreement"].append({"a": p, "b": q, "decks": len(both), "spearman": spearman(va, vb),
+                                     "ci95": spearman_ci(va, vb, a.resamples)})
+    refs = [m["name"] for m in members if _is_reference(m)]
+    for p in players:
+        cand = sorted((m for m in members if p in m["ratings"] and not _is_reference(m)),
+                      key=lambda m: -m["ratings"][p]["bt"])[:5]
+        top = [m["name"] for m in cand]
+        row = {"top5": top, "vs_reference": {}}
+        for q in players:
+            safe = q.replace("/", "_").replace("@", "_").replace(":", "_")
+            mat = json.loads((base / f"matrix_{safe}.json").read_text())
+            names = mat["decks"]
+            won = games = 0
+            for c in mat["cells"]:
+                ni, nj = names[c["i"]], names[c["j"]]
+                if ni in top and nj in refs:
+                    won += c["wins_i"]; games += c["n"]
+                elif nj in top and ni in refs:
+                    won += c["n"] - c["wins_i"]; games += c["n"]
+            row["vs_reference"][q] = {"win_rate": won / games if games else None, "games": games}
+        out["transfer"][p] = row
+    triples = {tuple(sorted(m["legends"])) for m in members}
+    sims = [list_similarity(members[i]["main"], members[j]["main"])
+            for i in range(len(members)) for j in range(i + 1, len(members))]
+    out["diversity"] = {"distinct_triples": len(triples),
+                        "classes": {c: sum(m["class"] == c for m in members)
+                                    for c in sorted({m["class"] for m in members})},
+                        "mean_list_similarity": float(np.mean(sims)) if sims else None}
+    if a.previous:
+        prev = {m["name"]: m for m in json.loads(Path(a.previous).read_text())["members"]}
+        stab = {}
+        for p in players:
+            both = [m for m in members if p in m["ratings"] and m["name"] in prev
+                    and p in prev[m["name"]]["ratings"]]
+            if len(both) >= 3:
+                stab[p] = spearman([m["ratings"][p]["bt"] for m in both],
+                                   [prev[m["name"]]["ratings"][p]["bt"] for m in both])
+        out["stability"] = stab
+    else:
+        out["stability"] = None
+    if a.out:
+        Path(a.out).write_text(json.dumps(out, indent=1) + "\n")
+    for p, d in out["per_player"].items():
+        print(f"{p:28s} residual RMS {d['residual_rms']:.3f} (null {d['null_mean']:.3f}, p {d['null_p']:.3f})"
+              f"  Nash support {len(d['nash_support'])}")
+    for r in out["agreement"]:
+        print(f"agreement {r['a']} vs {r['b']}: {r['spearman']:.2f} [{r['ci95'][0]:.2f}, {r['ci95'][1]:.2f}]")
+    for p, r in out["transfer"].items():
+        print(f"transfer top5 under {p}: " + ", ".join(
+            f"{q} {v['win_rate']:.3f} ({v['games']})" for q, v in r["vs_reference"].items() if v["games"]))
+    d = out["diversity"]
+    print(f"diversity: {d['distinct_triples']} triples, classes {d['classes']}, "
+          f"mean list similarity {d['mean_list_similarity']:.3f}")
+    return 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -139,6 +276,13 @@ def main(argv=None) -> int:
     r.add_argument("--tourney", required=True)
     r.add_argument("--resamples", type=int, default=1000)
     r.set_defaults(fn=cmd_rate)
+    q = sub.add_parser("report")
+    q.add_argument("population")
+    q.add_argument("--previous", default=None)
+    q.add_argument("--draws", type=int, default=1000, help="permutation-null draws")
+    q.add_argument("--resamples", type=int, default=1000)
+    q.add_argument("--out", default=None)
+    q.set_defaults(fn=cmd_report)
     a = ap.parse_args(argv)
     return a.fn(a)
 

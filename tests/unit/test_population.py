@@ -41,3 +41,31 @@ def test_init_and_rate_round_trip(tmp_path):
         assert m["player_dependent"] == []          # identical ratings are never player-dependent
         assert m["class"] in ("mono", "two-plus-one", "one-of-each")
     assert (tmp_path / "matrix_p1.json").exists()
+
+
+def test_report_computes_the_g6_numbers(tmp_path):
+    decks = sorted((ROOT / "data" / "decks").glob("*.json"))[:4]
+    pop = tmp_path / "population.json"
+    P.main(["init", "--out", str(pop)] + [str(d) for d in decks])
+    names = [json.loads(d.read_text())["name"] for d in decks]
+    cells = [{"i": i, "j": j, "wins_i": 10 + 2 * (j - i), "n": 20} for i in range(4) for j in range(i + 1, 4)]
+    tj = tmp_path / "t.json"
+    tj.write_text(json.dumps({"decks": [{"name": n} for n in names], "cells": cells}))
+    for p in ("p1", "p2"):
+        P.main(["rate", str(pop), "--player", p, "--tourney", str(tj), "--resamples", "50"])
+    out = tmp_path / "report.json"
+    P.main(["report", str(pop), "--previous", str(pop), "--draws", "20", "--resamples", "50",
+            "--out", str(out)])
+    r = json.loads(out.read_text())
+    (ag,) = r["agreement"]
+    assert ag["spearman"] == 1.0                    # the same matrix under both players
+    assert r["stability"] == {"p1": 1.0, "p2": 1.0}
+    assert r["diversity"]["distinct_triples"] == len({tuple(sorted(json.loads(d.read_text())["legends"]))
+                                                      for d in decks})
+    assert set(r["per_player"]) == {"p1", "p2"} and r["exploitability"] is None
+    assert 0.0 < r["diversity"]["mean_list_similarity"] <= 1.0
+
+
+def test_list_similarity_is_multiset_jaccard():
+    assert P.list_similarity(["a", "a", "b"], ["a", "b", "b"]) == 2 / 4
+    assert P.list_similarity(["a"], ["a"]) == 1.0
