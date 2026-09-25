@@ -48,3 +48,27 @@ def test_pick_forced_prefers_the_rarely_chosen():
     got = [harvest.pick_forced(offered, 2, counts, rng) for _ in range(200)]
     assert 2 not in got and got.count(0) > 190
     assert harvest.pick_forced(offered[:1], 0, counts, rng) is None
+
+
+def test_the_generator_searches_order_and_mulligan():
+    from cptcg.agents.base import make_agent
+    from cptcg.core.actions import ChoiceKind
+    from cptcg.core.engine import apply, legal_actions, new_game
+    reg = load_default()
+    a, b = D.sample_pair(reg, harvest.pair_rng(9, 0))
+    for name, searched in (("ismcts-explore:16", True), ("ismcts:16", False)):
+        s = new_game(reg, (a, b), 77, DEFAULT_CONFIG)
+        ag = make_agent(name, 1)
+        ag.new_game(77, 0)
+        seen = set()
+        while s.turn == 0 or s.pending.kind in (ChoiceKind.ORDER, ChoiceKind.MULLIGAN):
+            legal_actions(s)
+            ch = s.pending
+            if ch.kind not in (ChoiceKind.ORDER, ChoiceKind.MULLIGAN):
+                break
+            ag.me = ch.player
+            idx = ag.act(s, ch)
+            if len(ch.options) > 1:
+                seen.add((ch.kind, bool(ag.last_visits)))
+            apply(s, idx)
+        assert seen and all(v is searched for _, v in seen)

@@ -185,6 +185,10 @@ class IsmctsAgent(NeuralAgent):
     #: log-odds, the other is a move logit trained against a visit distribution.
     policy_temp = 1.0
 
+    #: Iterations for ORDER and MULLIGAN. 0 hands them to the frozen rule (the measured player);
+    #: the generator searches them (Stage 1 plan §0.4), so the coverage table stops reading 0.
+    setup_iterations = 0
+
     # ------------------------------------------------------------------ entry point
     def act(self, s: GameState, choice: Choice) -> int:
         self.last_visits = {}          # this decision's visits, or nothing. Never the last one's.
@@ -192,7 +196,17 @@ class IsmctsAgent(NeuralAgent):
         kind = choice.kind
         # Turn order and the mulligan are one-off, pre-board decisions with no sequence to search,
         # and the frozen policies for them are inherited deliberately.
-        if kind is ChoiceKind.ORDER or kind is ChoiceKind.MULLIGAN or len(choice.options) == 1:
+        setup = kind is ChoiceKind.ORDER or kind is ChoiceKind.MULLIGAN
+        if setup and self.setup_iterations > 0 and len(choice.options) > 1:
+            # Searched at a small budget (two options) where the agent makes training data: the
+            # frozen rule never goes first, so a delegated ORDER leaves "go first" unvisited.
+            full = self.iterations
+            self.iterations = self.setup_iterations
+            try:
+                i = self._search(s, choice)
+            finally:
+                self.iterations = full
+        elif setup or len(choice.options) == 1:
             i = super().act(s, choice)
         else:
             i = self._search(s, choice)
@@ -629,6 +643,7 @@ class IsmctsExplorer(IsmctsAgent):
     root_noise_alpha = 0.3
     root_noise_weight = 0.25
     temperature = 1.0
+    setup_iterations = 8
 
 
 @register
