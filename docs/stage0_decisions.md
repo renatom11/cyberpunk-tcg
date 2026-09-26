@@ -518,3 +518,22 @@ The owner asked for the loop to run on their laptop and approved a separate data
 `transfer/stage1-inputs` (never merged): the s10k corpus and the incumbent now, and the loop's
 state at hand-over (`docs/stage1_local.md`). The cloud runs the loop until the laptop is ready,
 then stops, so that no generation is written by two machines.
+
+### Generation 0 rejected; a diagnostic registered before it runs — 2026-09-26 14:15 UTC
+
+Gate (`out/stage1/loop/ledger.json`): head to head against `out/s2/w114_boundary.json`, both
+`ismcts:32`, 360 games: **41.4%**, cluster [0.343, 0.485], 15 of 61 discordant pairs; panel vs
+heuristic 0.794; delayed suite 6/132; independent-oracle Spearman 0.714 (the incumbent's is also
+0.714). The candidate differs from the incumbent in two ways: a refitted value head, and a policy
+head the incumbent does not carry. Whenever a policy head is present, `IsmctsAgent._priors` uses it
+instead of the one-ply value previews. Its held-out top-move agreement with the search is 51.5%.
+
+Diagnostic, run once: generation 0's weights with the `policy` block removed
+(`gen-000/weights_value_only.json`) play `arena.py a-vs-b` against the incumbent. Same settings as
+the gate: 360 games, `ismcts:32`, 4 workers.
+
+* **Value-only not worse** (SPRT not "low", and cluster high ≥ 0.5): the policy prior caused the
+  loss. From generation 1 the loop keeps the policy head beside the weights and adopts it only if
+  the same value head with the prior beats itself without it (paired SPRT "high").
+* **Value-only also worse**: the refitted value head is the problem. This is reported, and
+  generation 1's fit is examined before anything else changes.
