@@ -20,8 +20,8 @@ Reboot, open **Ubuntu**, then:
     python3 -m venv .venv && . .venv/bin/activate
     pip install numpy "torch==2.14.0" --index-url https://download.pytorch.org/whl/cpu
 
-WSL uses half the machine's memory by default (about 7.5 GB here), which is enough: the 114
-head's fit needs well under that.
+WSL uses half the machine's memory by default (about 7.5 GB here), which is enough. The rows are
+built `--lite` (only the 114 head's arrays): a 30,000-game generation peaks at 3.5 GB.
 
 ## 2. Bring over the inputs
 
@@ -33,9 +33,14 @@ branch:
     mkdir -p out/s1 out/s2 out/stage1
     mv transfer/s10k transfer/s10k.harvest.json out/s1/
     mv transfer/w114_boundary.json out/s2/
-    # optional, to continue generation 0 where the cloud stopped instead of starting it again:
+    # the loop's state, so the laptop continues where the cloud stopped:
     [ -d transfer/loop ] && mv transfer/loop out/stage1/loop
     rm -rf transfer && git reset -q
+
+**Hand-over, so the two machines never write the same generation:** tell the cloud session when
+the laptop is set up (step 1 done). It stops its loop at the next safe point, pushes its latest
+`out/stage1/loop` state to the transfer branch, and says so; only then fetch (step 2) and run
+(step 3). Until then the cloud keeps the loop going.
 
 ## 3. Run
 

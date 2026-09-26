@@ -19,7 +19,7 @@ python3 -c "import numpy, torch" 2>/dev/null || { echo "install numpy and torch 
 mkdir -p out/stage1
 if [ ! -e out/s2/rows.npz ]; then
   echo "building seed rows with $W workers..."
-  python3 tools/fit_cards.py rows --in out/s1/s10k --out out/s2/rows --rate 0.5 --perspectives both --workers "$W"
+  python3 tools/fit_cards.py rows --in out/s1/s10k --out out/s2/rows --rate 0.5 --perspectives both --lite --workers "$W"
 fi
 echo "Stage 1 loop, $W workers, log out/stage1/loop.log"
 python3 tools/learn.py run --stage1 --target boundary --incumbent out/s2/w114_boundary.json \

@@ -503,3 +503,18 @@ threshold's subject after seeing the number is what the rule exists to prevent.
 
 Experiment 2 finished at 14:40 (`docs/stage0.md`). Stage 1 launched on the boundary target from
 `out/s2/w114_boundary.json` (the registered rule), 30,000 games a generation, `out/stage1/loop/`.
+
+### Generation 0's rows step ran out of memory; fixed and resumed — 2026-09-26 05:38 UTC
+
+Generation 0 played all 30,000 games (plus 3,018 forced replays) by 22:16 UTC on 09-25. Its rows
+step was then killed at chunk 13 of 33 (23:05; no traceback). Arithmetic: full token rows are
+3.2 GB uncompressed per 10,000 games, and the merge held parts and result together, so 33,018
+games needed more than the VM's 15 GB. The FAIL loop fits only the 114 head, so Stage 1 rows are
+now `--lite` (aggregates, context, labels), the 114 fit reads only the arrays it uses, and the merge
+frees parts as it goes. Generation 0: 2,918,130 rows in 6 min at a 3.5 GB peak. `learn.py retry 0`
+put the generation back to `fitting`; nothing about the registered loop changed.
+
+The owner asked for the loop to run on their laptop and approved a separate data branch,
+`transfer/stage1-inputs` (never merged): the s10k corpus and the incumbent now, and the loop's
+state at hand-over (`docs/stage1_local.md`). The cloud runs the loop until the laptop is ready,
+then stops, so that no generation is written by two machines.
