@@ -147,3 +147,13 @@ corpus, rows, fits and monotonicity instrument finish.
   from stored visits, the plan-candidate stage with its cost meter, and `learn.py run --stage1`
   (smoke-tested on 12 games). `tools/opponent_influence.py` deleted.
 * Stage 1 launch registered (decisions log, 05:40Z): starts after the diagnostic; target from R2.
+
+## Determinism reference for other machines — 2026-09-26 19:00 UTC
+
+For a local machine to prove it plays the same game (the owner's local-compute brief): at commit
+237a5b0, rules 149b39c8f55e9d41, cards a8d592aef8f17b13, feature digest 1bc67d46b5185755,
+action-feature digest 80e501e0146e6747; `harvest.py play --games 100 --agent ismcts:32 --seed
+20260927 --workers 1` gives a file whose **decompressed** sha256 is
+`c649394dffc3577e742a98697bf08521b4a2ba6e161f544f5903fba181ada14a`. The gzip container may carry a
+timestamp, so the compressed file's hash is not the comparison. Stage 1 generation 1 resumed after
+the 18:47 reboot at 17,250 of 25,500 self-play games.
