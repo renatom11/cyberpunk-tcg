@@ -633,3 +633,26 @@ fit on both sets. Set B is small (412 games), so the interval is wide.
 not, at this data size (experiment 1's R3 and experiment 2). Stage 1 runs the FAIL version on the
 boundary target, started 2026-09-25 14:41 UTC (`out/stage1/`). A card-aware head is reconsidered
 only under the conditions in `docs/stage1_plan_draft.md` §2.5.
+
+## Stage 1 generation 0 (2026-09-25/26): rejected, and why
+
+30,000 games (25,500 self-play with `ismcts-explore:32`, 3,000 against the heuristic, 1,500
+against random), 3,018 forced-exploration replays, 15% exposure-floor seats. The value head was
+refitted on the boundary target (seed s10k rows + 2.9M generation rows, holdout Brier 0.0499).
+The policy head was fitted from the stored visits (held-out top-move agreement 51.5%).
+
+| candidate against the incumbent `w114_boundary` (both `ismcts:32`, 360 games) | rate | cluster | discordant pairs won | SPRT |
+|---|---|---|---|---|
+| generation 0 as gated (value + policy prior) | 0.414 | [0.343, 0.485] | 15 / 61 | continue → rejected |
+| generation 0, value head only (registered diagnostic) | 0.528 | [0.499, 0.556] | 23 / 36 | continue |
+
+Panel against the heuristic (as gated) 0.794; delayed suite 6/132; independent-oracle Spearman
+0.714, the same as the incumbent.
+
+**Reading (registered rule):** value-only is not worse, so the policy prior caused the loss. A
+hidden-8 head on the 52 move features agrees with the search only half the time, and as the PUCT
+prior it is worse than the one-ply value previews it replaces. From generation 1 the policy head
+is kept in `weights_policy.json`. It is adopted only if the same value head plays better with it
+than without it (paired SPRT "high"); the result is noted in the ledger either way. The value head
+alone did not clear the gate either (52.8% is not a significant win). Generation 1 trains on twice
+the self-play.

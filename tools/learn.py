@@ -223,14 +223,44 @@ def step_fit_stage1(led: Ledger, g: GenerationRecord, gdir: Path, *, hidden: int
                "--out", str(out)], log=gdir / "fit.log", dry=dry)
     if rc != 0:
         return False
+    # The policy head goes into a *copy*: generation 0 showed a head that agrees with the search
+    # half the time makes a worse prior than the one-ply previews (41.4% head to head with it,
+    # 52.8% without; docs/stage0_decisions.md). It is adopted only by step_policy_gate_stage1.
+    with_policy = gdir / "weights_policy.json"
     rc = _run([sys.executable, str(ROOT / "tools" / "fit_policy.py"), "corpus", *games,
                "--rate", "0.25", "--out", str(gdir / "policy-rows")], log=gdir / "fit.log", dry=dry)
     if rc == 0:
+        if not dry:
+            with_policy.write_text(out.read_text(encoding="utf-8"), encoding="utf-8")
         rc = _run([sys.executable, str(ROOT / "tools" / "fit_policy.py"), "fit",
-                   str(gdir / "policy-rows"), "--hidden", "8", "--into", str(out)],
+                   str(gdir / "policy-rows"), "--hidden", "8", "--into", str(with_policy)],
                   log=gdir / "fit.log", dry=dry)
     g.weights = str(out)
     return rc == 0
+
+
+def step_policy_gate_stage1(g: GenerationRecord, gdir: Path, *, games: int, workers: int,
+                            dry: bool) -> None:
+    """Adopt the fitted policy head only if it helps: the same value head with the prior against
+    itself without it, paired SPRT, "high" to adopt. Recorded in the notes either way; done once."""
+    mark = gdir / "gate" / "policy"
+    with_policy = gdir / "weights_policy.json"
+    if (mark / "verdict.json").exists() or not (with_policy.exists() or dry):
+        return
+    _run([sys.executable, str(ROOT / "tools" / "arena.py"), "a-vs-b",
+          agent_with(PLAYER, with_policy), agent_with(PLAYER, gdir / "weights.json"),
+          "-n", str(games), "-j", str(workers), "--out", str(mark), "--no-docs"],
+         log=gdir / "gate.log", dry=dry)
+    if dry:
+        return
+    res = _read_json(next(iter(sorted(mark.glob("a-vs-b*.json"))), Path("x")))
+    adopt = res.get("verdict") == "high"
+    if adopt:
+        g.weights = str(with_policy)
+    g.notes.append(f"policy head {'adopted' if adopt else 'not adopted'}: with it {res.get('rate', 0):.3f} "
+                   f"against the same value head without it, SPRT {res.get('verdict')!r}")
+    (mark / "verdict.json").write_text(json.dumps({"adopt": adopt, **{k: res.get(k) for k in (
+        "rate", "verdict", "games", "cluster_low", "cluster_high")}}) + "\n", encoding="utf-8")
 
 
 def step_report_stage1(g: GenerationRecord, gdir: Path, *, workers: int, dry: bool) -> None:
@@ -393,6 +423,9 @@ def cmd_run(a) -> int:
                 led.save(); return 1
             g.status = "gating"; led.save()
         if g.status == "gating":
+            if a.stage1:
+                step_policy_gate_stage1(g, gdir, games=a.gate_games, workers=a.workers, dry=a.dry_run)
+                led.save()
             res = step_gate(led, g, gdir, games=a.gate_games, workers=a.workers, dry=a.dry_run)
             if a.dry_run:
                 print("  (dry run: no gate verdict)")
