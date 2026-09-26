@@ -183,8 +183,11 @@ def step_rows_stage1(g: GenerationRecord, gdir: Path, *, workers: int, dry: bool
     games = [str(p) for p in sorted(gdir.glob("games-*.jsonl.gz"))] or (["dry"] if dry else [])
     if not games:
         return False
+    if (gdir / "rows.npz").exists() and _npz_rows(gdir / "rows.npz") > 0:
+        g.notes.append("rows already built; reused")      # a generation's games never change
+        return True
     rc = _run([sys.executable, str(ROOT / "tools" / "fit_cards.py"), "rows", "--in", *games,
-               "--out", str(gdir / "rows"), "--rate", "0.5", "--perspectives", "both",
+               "--out", str(gdir / "rows"), "--rate", "0.5", "--perspectives", "both", "--lite",
                "--workers", str(workers)], log=gdir / "rows.log", dry=dry)
     return rc == 0
 
@@ -406,6 +409,21 @@ def cmd_run(a) -> int:
     return 0
 
 
+def cmd_retry(a) -> int:
+    """Put a failed generation back to the step it failed in, so the next ``run`` resumes it
+    instead of starting a new one. Its games stay; only the failed step reruns."""
+    led = Ledger(a.dir)
+    g = next((x for x in led.gens if x.n == a.n), None)
+    if g is None or g.status != "failed":
+        raise SystemExit(f"generation {a.n} is {'missing' if g is None else g.status}, not failed")
+    step = "generating" if "generation step" in g.reason else "fitting"
+    g.notes.append(f"retried {_now()} from {step!r} after: {g.reason}")
+    g.status, g.reason = step, ""
+    led.save()
+    print(f"generation {a.n} -> {step}")
+    return 0
+
+
 def cmd_status(a) -> int:
     led = Ledger(a.dir)
     if not led.gens:
@@ -413,7 +431,7 @@ def cmd_status(a) -> int:
         return 0
     best = led.best()
     print(f"{len(led.gens)} generation(s); incumbent: "
-          f"{'gen ' + str(best.n) if best else 'the shipped weights (none promoted yet)'}")
+          f"{'gen ' + str(best.n) if best else _initial(led) + ' (none promoted yet)'}")
     print(f"{'gen':>4} {'status':<10} {'games':>7}  reason")
     for g in led.gens:
         print(f"{g.n:>4} {g.status:<10} {g.games:>7}  {g.reason}")
@@ -498,6 +516,11 @@ def main(argv=None) -> int:
     p.add_argument("--seed-games", nargs="*", default=None,
                    help="the corpora behind --seed-rows, for the policy head's visits")
     p.set_defaults(fn=cmd_run)
+
+    p = sub.add_parser("retry", help="resume a failed generation from the step that failed")
+    common(p)
+    p.add_argument("n", type=int)
+    p.set_defaults(fn=cmd_retry)
 
     p = sub.add_parser("status", help="what happened so far")
     common(p)

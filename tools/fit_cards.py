@@ -60,7 +60,10 @@ def _keep_rng(harvest_seed: int, record_seed: int) -> Pcg32:
 class _Acc:
     """Flat, offset-indexed accumulation of ragged rows."""
 
-    def __init__(self) -> None:
+    def __init__(self, lite: bool = False) -> None:
+        #: lite: only what the 114 head fits on (aggregates, context and the labels); the card
+        #: tokens, dice, option features and beliefs are ~85% of a row file's memory.
+        self.lite = lite
         self.cards, self.card_off = [], [0]
         self.dice, self.die_off = [], [0]
         self.opts, self.opt_off = [], [0]
@@ -70,6 +73,12 @@ class _Acc:
         self.target = []
 
     def add(self, d: dict, label: float, game: int, ply: int, mover: int, chosen: int, visits) -> None:
+        if self.lite:
+            self.ctx.append(d["context"]); self.agg.append(d["aggregates"])
+            self.label.append(label); self.game.append(game); self.ply.append(ply)
+            self.mover.append(mover); self.chosen.append(chosen if mover else -1)
+            self.target.append(label)
+            return
         self.cards.extend(d["cards"]); self.card_off.append(len(self.cards))
         self.dice.extend(d["dice"]); self.die_off.append(len(self.dice))
         opts = d.get("options", ()) if mover else ()
@@ -85,6 +94,11 @@ class _Acc:
         self.target.append(label)          # overwritten by the turn-boundary bootstrap, see rows_chunk
 
     def arrays(self) -> dict:
+        if self.lite:
+            return {k: v for k, v in self._full().items() if k in LITE_KEYS}
+        return self._full()
+
+    def _full(self) -> dict:
         return {"cards": np.array(self.cards, dtype=np.int16).reshape(-1, len(T.CARD_TOKEN)),
                 "card_off": np.array(self.card_off, dtype=np.int64),
                 "dice": np.array(self.dice, dtype=np.int16).reshape(-1, len(T.DIE_TOKEN)),
@@ -101,6 +115,9 @@ class _Acc:
                 "mover": np.array(self.mover, dtype=np.int8), "chosen": np.array(self.chosen, dtype=np.int16),
                 "target": np.array(self.target, dtype=np.float32)}
 
+
+#: The arrays a lite row file carries: everything the 114 head's fit, eval and split read.
+LITE_KEYS = ("ctx", "agg", "label", "game", "ply", "mover", "chosen", "target")
 
 #: The turn-boundary bootstrap (design Part 2C): a row's value target mixes the search's root value
 #: at the start of that seat's next turn with the game outcome. Fixed at 0.7 by the pre-registered
@@ -136,9 +153,10 @@ def next_turn_values(plies: list, values: list):
 
 def rows_chunk(job: tuple) -> dict:
     """Rows for one batch of records. Runs in a worker."""
-    batch, rate, seed, both = job
+    batch, rate, seed, both = job[:4]
+    lite = job[4] if len(job) > 4 else False
     reg = load_default()
-    acc = _Acc()
+    acc = _Acc(lite)
     cut = int(round(max(0.0, rate) * 10_000))
     n_dec = 0
     for gi, rec in batch:
@@ -195,7 +213,7 @@ def cmd_rows(a) -> None:
             break
     both = a.perspectives == "both"
     chunk = max(1, len(records) // max(1, (a.workers or 1) * 8))
-    jobs = [(records[i:i + chunk], a.rate, a.seed, both) for i in range(0, len(records), chunk)]
+    jobs = [(records[i:i + chunk], a.rate, a.seed, both, a.lite) for i in range(0, len(records), chunk)]
     parts = []
     if (a.workers or 1) > 1:
         with ProcessPoolExecutor(max_workers=a.workers) as ex:
@@ -207,7 +225,7 @@ def cmd_rows(a) -> None:
             parts.append(rows_chunk(j))
     merged: dict = {}
     n_dec = sum(p.pop("n_decisions") for p in parts)
-    for key in parts[0]:
+    for key in list(parts[0]):
         if key.endswith("_off"):
             offs = [parts[0][key]]
             base = int(parts[0][key][-1])
@@ -217,9 +235,12 @@ def cmd_rows(a) -> None:
             merged[key] = np.concatenate(offs)
         else:
             merged[key] = np.concatenate([p[key] for p in parts])
+        for p in parts:                   # free each key as soon as it is merged: halves the peak
+            p.pop(key, None)
     meta = {"format": ROWS_FORMAT, "rows": int(len(merged["label"])), "decisions": n_dec,
             "games": len(records), "rate": a.rate, "seed": a.seed, "perspectives": a.perspectives,
             "sources": [str(x) for x in a.inputs], "rules": DEFAULT_CONFIG.digest(), "cards": cards_digest(),
+            "lite": bool(a.lite),
             "feature_digest": feature_digest(), "tokens_digest": T.tokens_digest(),
             "mean_label": float(merged["label"].mean()) if len(merged["label"]) else None,
             "seconds": round(time.time() - t0, 1)}
@@ -231,8 +252,12 @@ def cmd_rows(a) -> None:
 
 
 # ----------------------------------------------------------------------------- loading rows
-def load_rows(paths: list[str]) -> tuple[dict, list[dict]]:
-    """Concatenate row files; game ids are renumbered across files."""
+def load_rows(paths: list[str], keys=None) -> tuple[dict, list[dict]]:
+    """Concatenate row files; game ids are renumbered across files.
+
+    ``keys``: load only these arrays (npz members are read one at a time, so a full row file costs
+    only what is asked of it). A file missing a requested key — a lite file asked for card tokens —
+    is refused by name."""
     merged: dict = {}
     metas = []
     game_base = 0
@@ -244,7 +269,12 @@ def load_rows(paths: list[str]) -> tuple[dict, list[dict]]:
         if meta["tokens_digest"] != T.tokens_digest():
             raise SystemExit(f"{p}: token layout {meta['tokens_digest']} != {T.tokens_digest()}")
         metas.append(meta)
-        part = {k: z[k] for k in z.files if k != "meta"}
+        want = [k for k in z.files if k != "meta"] if keys is None else list(keys)
+        missing = [k for k in want if k not in z.files]
+        if missing:
+            raise SystemExit(f"{p}: no {missing} in these rows"
+                             + (" (a --lite file; rebuild without --lite for the card model)" if meta.get("lite") else ""))
+        part = {k: z[k] for k in want}
         part["game"] = part["game"] + game_base
         game_base = int(part["game"].max()) + 1 if len(part["game"]) else game_base
         if not merged:
@@ -317,6 +347,11 @@ def split_by_game(game: np.ndarray, holdout: float, seed: int) -> tuple[np.ndarr
 
 
 # ----------------------------------------------------------------------------- fit
+def _keys114(target: str) -> tuple:
+    """What the 114 head's fit and eval read; ``target`` only when they fit to it."""
+    return ("agg", "label", "game") + (("target",) if target == "boundary" else ())
+
+
 def _select_target(rows: dict, target: str) -> dict:
     """``outcome``: the value label is the game result (every earlier fit). ``boundary``: the
     turn-boundary bootstrap written by ``rows`` (``BOOTSTRAP_LAMBDA``); the outcome is kept as
@@ -501,7 +536,7 @@ def cmd_fit114(a) -> None:
     from cptcg.learn.model import feature_digest, FORMAT as VFORMAT
     torch.manual_seed(a.seed)
     torch.set_num_threads(a.threads)
-    rows, metas = load_rows(a.rows)
+    rows, metas = load_rows(a.rows, keys=_keys114(a.target))
     rows = _select_target(rows, a.target)
     train_idx, hold_idx = split_by_game(rows["game"], a.holdout, a.seed)
     X = torch.from_numpy(rows["agg"].astype(np.float32))
@@ -635,7 +670,7 @@ def cmd_subset(a) -> None:
 
 def cmd_eval114(a) -> None:
     """Per-row squared error of a 114 head (weights.json) on rows; JSON with the mean."""
-    rows, _ = load_rows(a.rows)
+    rows, _ = load_rows(a.rows, keys=_keys114(a.target))
     rows = _select_target(rows, a.target)
     w = json.loads(Path(a.weights).read_text())
     w1, b1, w2, b2 = (np.array(w["w1"], np.float64), np.array(w["b1"]), np.array(w["w2"]), float(w["b2"]))
@@ -684,6 +719,8 @@ def main(argv=None) -> None:
     r.add_argument("--perspectives", choices=("move", "both"), default="both")
     r.add_argument("--workers", type=int, default=4)
     r.add_argument("--max-games", type=int, default=0)
+    r.add_argument("--lite", action="store_true",
+                   help="only the 114 head's arrays (about 15%% of the memory); the card model refuses these")
     r.set_defaults(fn=cmd_rows)
     f = sub.add_parser("fit")
     f.add_argument("rows", nargs="+")

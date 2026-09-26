@@ -315,3 +315,23 @@ def test_fit114_writes_a_loadable_head_from_the_card_rows(tmp_path):
     reg = load_default()
     s = new_game(reg, sample_pair(reg, Pcg32(3)), 3)
     assert 0.0 < m.value(s, 0) < 1.0
+
+
+def test_lite_rows_carry_the_114_heads_arrays_unchanged(tmp_path):
+    import numpy as np
+    import fit_cards as F
+    sample = str(ROOT / "data" / "experience" / "bootstrap-sample.jsonl.gz")
+    for lite in (False, True):
+        args = ["rows", "--in", sample, "--out", str(tmp_path / ("lite" if lite else "full")),
+                "--rate", "0.5", "--workers", "1", "--max-games", "6"] + (["--lite"] if lite else [])
+        F.main(args)
+    full, _ = F.load_rows([str(tmp_path / "full.npz")])
+    lite, metas = F.load_rows([str(tmp_path / "lite.npz")])
+    assert metas[0]["lite"] is True and set(lite) == set(F.LITE_KEYS)
+    for k in F.LITE_KEYS:
+        assert np.array_equal(full[k], lite[k]), k
+    sel, _ = F.load_rows([str(tmp_path / "full.npz")], keys=F._keys114("boundary"))
+    assert set(sel) == {"agg", "label", "game", "target"}
+    import pytest
+    with pytest.raises(SystemExit, match="lite"):
+        F.load_rows([str(tmp_path / "lite.npz")], keys=("cards",))
