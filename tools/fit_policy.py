@@ -276,19 +276,25 @@ def _forward(W1, b1, w2, b2, X):
     return np.tanh(X @ W1.T + b1) @ w2 + b2
 
 
-def _group_softmax(logits, group):
-    """Softmax inside each decision. Shifted by the group max, so a big logit cannot overflow."""
+def _segments(group):
+    """(order, starts) that make each decision one contiguous segment, computed once per array."""
     import numpy as np
     order = np.argsort(group, kind="stable")
     g = group[order]
+    starts = np.flatnonzero(np.r_[True, g[1:] != g[:-1]])
+    return order, starts
+
+
+def _group_softmax(logits, group, seg=None):
+    """Softmax inside each decision. Shifted by the group max, so a big logit cannot overflow.
+    Vectorised with ``reduceat`` over contiguous segments; ``seg`` (from ``_segments``) skips the
+    sort when the same grouping is used every epoch."""
+    import numpy as np
+    order, starts = seg if seg is not None else _segments(group)
     z = logits[order]
-    starts = np.searchsorted(g, np.unique(g))
-    ends = np.append(starts[1:], len(g))
-    out = np.empty_like(z)
-    for s_, e_ in zip(starts, ends):
-        seg = z[s_:e_]
-        seg = np.exp(seg - seg.max())
-        out[s_:e_] = seg / seg.sum()
+    counts = np.diff(np.r_[starts, len(z)])
+    e = np.exp(z - np.repeat(np.maximum.reduceat(z, starts), counts))
+    out = e / np.repeat(np.add.reduceat(e, starts), counts)
     back = np.empty_like(out)
     back[order] = out
     return back
@@ -297,10 +303,9 @@ def _group_softmax(logits, group):
 def _agree(p, target, group):
     """Share of decisions where the head's best move is the target's best move."""
     import numpy as np
-    order = np.argsort(group, kind="stable")
-    g, a, b = group[order], p[order], target[order]
-    starts = np.searchsorted(g, np.unique(g))
-    ends = np.append(starts[1:], len(g))
+    order, starts = _segments(group)
+    a, b = p[order], target[order]
+    ends = np.r_[starts[1:], len(a)]
     hit = 0
     for s_, e_ in zip(starts, ends):
         hit += int(np.argmax(a[s_:e_]) == np.argmax(b[s_:e_]))
@@ -326,19 +331,24 @@ def train(X, y, group, is_train, *, hidden, l2, epochs, patience, seed, log=prin
     ms = [np.zeros_like(p) for p in ps]
     vs = [np.zeros_like(p) for p in ps]
     best, best_w, bad, t = 1e18, None, 0, 0
+    # the train/holdout slices and their decision segments are fixed: cut them once, not per epoch
+    Xtr, ytr, gtr = X[tr], y[tr], group[tr]
+    Xho, yho, gho = X[ho], y[ho], group[ho]
+    seg_tr, seg_ho = _segments(gtr), _segments(gho)
+    n_ho = max(1, len(seg_ho[1]))
     for ep in range(epochs):
         # full-batch: the matrices here are small (52 columns) and the loss is per decision, so
         # batching by decision would complicate the grouping for no measured gain
-        Z = X[tr] @ W1.T + b1
+        Z = Xtr @ W1.T + b1
         H = Z if lin else np.tanh(Z)
         logits = H @ w2 + b2
-        p = _group_softmax(logits, group[tr])
-        gl = (p - y[tr])                      # d(cross-entropy)/d(logit) inside a softmax group
+        p = _group_softmax(logits, gtr, seg_tr)
+        gl = (p - ytr)                        # d(cross-entropy)/d(logit) inside a softmax group
         gw2 = H.T @ gl + l2 * w2
         gb2 = gl.sum()
         dH = np.outer(gl, w2)
         dZ = dH if lin else dH * (1 - H * H)
-        gW1 = dZ.T @ X[tr] + l2 * W1
+        gW1 = dZ.T @ Xtr + l2 * W1
         gb1 = dZ.sum(axis=0)
         t += 1
         for k, (par, grad) in enumerate(zip(ps, [gW1, gb1, gw2])):
@@ -348,8 +358,8 @@ def train(X, y, group, is_train, *, hidden, l2, epochs, patience, seed, log=prin
             vhat = vs[k] / (1 - 0.999 ** t)
             par -= 0.02 * mhat / (np.sqrt(vhat) + 1e-8)
         b2 -= 0.02 * gb2 / max(1.0, abs(gb2))
-        ph = _group_softmax(_forward(W1, b1, w2, b2, X[ho]), group[ho])
-        loss = float(-(y[ho] * np.log(np.clip(ph, 1e-12, 1))).sum() / max(1, len(np.unique(group[ho]))))
+        ph = _group_softmax(_forward(W1, b1, w2, b2, Xho), gho, seg_ho)
+        loss = float(-(yho * np.log(np.clip(ph, 1e-12, 1))).sum() / n_ho)
         if loss < best - 1e-6:
             best, best_w, bad = loss, (W1.copy(), b1.copy(), w2.copy(), b2), 0
         else:
