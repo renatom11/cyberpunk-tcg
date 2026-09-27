@@ -537,3 +537,25 @@ the gate: 360 games, `ismcts:32`, 4 workers.
   the same value head with the prior beats itself without it (paired SPRT "high").
 * **Value-only also worse**: the refitted value head is the problem. This is reported, and
   generation 1's fit is examined before anything else changes.
+
+### The gate's head to head goes from 360 to 1,200 games; generation 1 re-gated — registered 2026-09-27 02:10 UTC, before the re-gate runs
+
+Generation 1 (value head only; its policy prior lost its own test at 0.375, SPRT "low", and was not
+adopted) scored **53.6%** against the incumbent, 31 of 49 discordant pairs, cluster
+[0.485, 0.587]. SPRT "continue" at the 360-game cap, so it was rejected. Panel against the
+heuristic 0.856 (generation 0: 0.794), delayed suite 20/132 (generation 0: 6), independent-oracle
+Spearman 0.712. Generation 0's value head had scored 52.8%, also "continue".
+
+At 360 games the paired test cannot resolve a gain of a few points. Nothing is promoted, and every
+generation keeps self-playing with the same incumbent. Registered now, before any new number:
+
+* The head-to-head cap is **1,200 games** for every Stage 1 generation from 1 on. `learn.loop.decide`
+  is unchanged: SPRT "high", between-pairing band above 50%, no panel regression beyond tolerance,
+  no delayed-suite loss. The arena's seeds are deterministic, so the first 360 games replay the
+  original gate's games exactly. The SPRT's boundaries keep their error control when a truncated
+  "continue" test is extended. This adds power, not leniency.
+* Generation 1 is re-gated under the new cap with `learn.py regate 1`, which reuses the stored
+  panel and suite. The ledger keeps both results. If generation 1 is promoted, generation 2
+  (0 games so far) restarts from it; its directory is renamed `gen-002.pre-regate`, not deleted.
+* Generation 0 is not re-gated. Its gated candidate carried the policy prior that lost, and the
+  loop's rule then was to gate what it built.
