@@ -23,6 +23,6 @@ if [ ! -e out/s2/rows.npz ]; then
 fi
 echo "Stage 1 loop, $W workers, log out/stage1/loop.log"
 python3 tools/learn.py run --stage1 --target boundary --incumbent out/s2/w114_boundary.json \
-  --dir out/stage1/loop --games 30000 --hours 10000 -j "$W" \
+  --dir out/stage1/loop --games 30000 --gate-games 1200 --hours 10000 -j "$W" \
   --generator ismcts-explore:32 --player ismcts:32 \
   --seed-rows out/s2/rows.npz --seed-games out/s1/s10k 2>&1 | tee -a out/stage1/loop.log

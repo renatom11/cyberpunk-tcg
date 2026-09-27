@@ -442,6 +442,56 @@ def cmd_run(a) -> int:
     return 0
 
 
+def cmd_regate(a) -> int:
+    """Re-run a rejected generation's head to head at a larger cap and re-apply ``decide``.
+
+    The panel and the delayed suite are reused from its gate, and both head-to-head results stay
+    in the ledger. Registered in docs/stage0_decisions.md (the cap went from 360 to 1,200 games).
+    If the generation is promoted, a later generation that has not played a game yet is set
+    aside (status ``abandoned``, directory renamed), so the next ``run`` starts from the new
+    incumbent instead of the old one."""
+    global PLAYER
+    PLAYER = a.player or PLAYER
+    led = Ledger(a.dir)
+    g = next((x for x in led.gens if x.n == a.n), None)
+    if g is None or g.status != "rejected":
+        raise SystemExit(f"generation {a.n} is {'missing' if g is None else g.status}, not rejected")
+    gdir = Path(a.dir) / f"gen-{g.n:03d}"
+    best = next((x for x in reversed(led.gens) if x.status == "promoted" and x.n < g.n), None)
+    incumbent = agent_with(PLAYER, best.weights if best else _initial(led))
+    d = gdir / "gate" / f"avb-{a.games}"
+    rc = _run([sys.executable, str(ROOT / "tools" / "arena.py"), "a-vs-b", agent_with(PLAYER, g.weights),
+               incumbent, "-n", str(a.games), "-j", str(a.workers), "--out", str(d), "--no-docs"],
+              log=gdir / "gate.log", dry=a.dry_run)
+    if a.dry_run or rc != 0:
+        return rc
+    avb = _read_json(next(iter(sorted(d.glob("*.json"))), Path("x")))
+    panel, delayed = g.gate.get("panel", {}), g.gate.get("delayed", {})
+    base_panel = best.gate.get("panel_anchor") if best else None
+    base_delayed = (best.gate.get("delayed", {}) if best else {}).get("solved")
+    here = panel_anchor(panel)
+    res = GateResult(sprt=avb.get("verdict", "continue"), win_rate=100.0 * avb.get("rate", 0.0),
+                     pairing_lo=100.0 * float(avb.get("cluster_low") or 0.0), panel=here,
+                     panel_incumbent=float(base_panel if base_panel is not None else here),
+                     delayed=int(delayed.get("solved", 0)),
+                     delayed_incumbent=int(base_delayed if base_delayed is not None else 0))
+    ok, why = decide(res)
+    g.gate["a_vs_b_first"] = g.gate.get("a_vs_b")
+    g.gate["a_vs_b"] = avb
+    g.notes.append(f"re-gated {_now()} at {a.games} games: {'PROMOTED' if ok else 'rejected'}: {why}")
+    g.status, g.reason = ("promoted" if ok else "rejected"), why
+    if ok:
+        for x in led.gens:
+            xdir = Path(a.dir) / f"gen-{x.n:03d}"
+            if x.n > g.n and x.status == "generating" and not list(xdir.glob("games-*.jsonl.gz")):
+                x.status, x.reason = "abandoned", f"generation {g.n} promoted on re-gate before it played a game"
+                if xdir.exists():
+                    xdir.rename(xdir.with_name(xdir.name + ".pre-regate"))
+    led.save()
+    print(f"generation {g.n}: {g.status.upper()}: {why}")
+    return 0
+
+
 def cmd_retry(a) -> int:
     """Put a failed generation back to the step it failed in, so the next ``run`` resumes it
     instead of starting a new one. Its games stay; only the failed step reruns."""
@@ -549,6 +599,13 @@ def main(argv=None) -> int:
     p.add_argument("--seed-games", nargs="*", default=None,
                    help="the corpora behind --seed-rows, for the policy head's visits")
     p.set_defaults(fn=cmd_run)
+
+    p = sub.add_parser("regate", help="re-run a rejected generation's head to head at a larger cap")
+    common(p)
+    p.add_argument("n", type=int)
+    p.add_argument("--games", type=int, default=1200)
+    p.add_argument("--player", default=None)
+    p.set_defaults(fn=cmd_regate)
 
     p = sub.add_parser("retry", help="resume a failed generation from the step that failed")
     common(p)
