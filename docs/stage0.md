@@ -656,3 +656,13 @@ is kept in `weights_policy.json`. It is adopted only if the same value head play
 than without it (paired SPRT "high"); the result is noted in the ledger either way. The value head
 alone did not clear the gate either (52.8% is not a significant win). Generation 1 trains on twice
 the self-play.
+
+### Generation 1: better on every measure, not promoted
+
+Value head only (its policy prior lost its own on/off test, 0.375, SPRT "low"). Against the
+incumbent: 53.6% at the 360-game gate (SPRT "continue"). Extended under the registered 1,200-game
+cap, it reached **SPRT "high" at 1,000 games, 53.7%, 81 of 125 discordant pairs**. The
+between-pairing band's low end was 49.8%, and the gate requires it above 50%, so it was rejected.
+Against the heuristic it scored 0.856 (generation 0 as gated: 0.794; the day-0 `ismcts:32` panel:
+see §5). The delayed suite rose to **20/132** (generation 0: 6/132). Independent-oracle Spearman
+0.712.

@@ -559,3 +559,9 @@ generation keeps self-playing with the same incumbent. Registered now, before an
   (0 games so far) restarts from it; its directory is renamed `gen-002.pre-regate`, not deleted.
 * Generation 0 is not re-gated. Its gated candidate carried the policy prior that lost, and the
   loop's rule then was to gate what it built.
+
+Result (02:30 UTC): generation 1 at the extended cap, SPRT **"high"** after 1,000 games (stopped
+early), 53.7%, 81 of 125 discordant pairs; between-pairing band [0.498, 0.576]. `decide`'s second
+check (band low above 50%) fails by 0.2 points, so generation 1 stays **rejected**, as the rule
+says. The loop continues from the same incumbent; generation 2 trains on the window of
+generations 0–2.
